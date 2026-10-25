@@ -13,8 +13,10 @@
 | 编辑器浏览器 | 9 / 9 通过；编辑/试玩、拖动、撤销、重命名、双格式导出、断链、调查、资源目录、草稿、移动与独立 Studio | [editor-browser-check.json](editor-browser-check.json) |
 | 作者构建 | 四种新建项目分别导出并生成实际独立作品；Studio 是完整本地包 | tests/editor.test.mjs、编辑器浏览器第 9 项 |
 | 来源 | 92 个文件与四个固定源提交验证通过 | docs/provenance.json |
-| Windows 编译 | 已实现宿主和工作流，正在提交原生 CI 验收；当前不记为通过 | .github/workflows/windows.yml |
-| Windows 实际执行 | 待 Windows CI 运行；浏览器测试不代替原生执行 | tools/test-windows.ps1 |
+| Windows 编译 | .NET 10 自包含 win-x64 EXE 和便携 ZIP 构建通过 | [原生工作流](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40174916074) |
+| Windows 实际执行 | 5 份报告通过：宿主策略、编辑器首次/重启、作品首次/重启 | [acceptance.json](windows/acceptance.json) 与 windows/*.json |
+
+Windows WebView2 捕获：[编辑器](previews/windows-studio.png)、[作品重启读档](previews/windows-game-restored.png)。
 
 编辑器截图：[桌面](previews/studio-desktop.png)、[校园样例](previews/studio-campus.png)、[移动](previews/studio-mobile.png)。字体为随编辑器分发的改名 OFL 子集，不依赖截图机器安装中文字体。
 
@@ -24,7 +26,7 @@
 
 预览初始化通知竞争已修复为双向握手。调查 document 模式在未提供独立文书 cue 时，以节点正文呈现，编辑器调查样例据此通过真实文书/取证流程。
 
-Windows 专用工作流独立运行宿主文件/路径策略、真实 WebView2 启动、原生工程打开/另存/导出/重开、全屏与最小化、进程重启后的编辑器和作品存档。文件路径由 CI 预设，使用相同的原生 I/O 和消息处理；不冒充人工点击系统选择器。构建与原生执行证据须在实际成功后补录。
+Windows 专用工作流独立运行宿主文件/路径策略、真实 WebView2 启动、原生工程打开/另存/导出/重开、全屏与最小化、进程重启后的编辑器和作品存档。文件路径由 CI 预设，使用相同的原生 I/O 和消息处理；不冒充人工点击系统选择器。Windows Server 2025 / WebView2 155 上实际编译与运行通过，源提交、逐文件宿主哈希和五份报告保存在 [原生验收](windows/acceptance.json)。报告含 8 项策略、编辑器首次 9 项/重启 10 项、作品首次/重启各 6 项检查；重复启动检查分别列明，未合并成不同功能数量。
 
 此前 Rain 自研 VM 的 16 路线/6692 段落，以及 Healing/NetLove/Circuit 固定原码对照仍对应原记录；本轮没有更改其玩法解释规则，不把固定源码证据当作最新四作发行验收。
 

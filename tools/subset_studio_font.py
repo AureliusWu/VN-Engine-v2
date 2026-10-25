@@ -8,7 +8,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('font', type=Path)
 args = parser.parse_args()
 root = Path(__file__).resolve().parents[1]
-paths = list((root / 'editor').rglob('*')) + list((root / 'src').rglob('*.ts'))
+paths = list((root / 'editor').rglob('*')) + list((root / 'src').rglob('*.ts')) + list((root / 'examples/runtime').rglob('*'))
 text = ''.join(p.read_text(encoding='utf-8') for p in paths if p.suffix in {'.json', '.mjs', '.html', '.css', '.ts'})
 font = TTFont(args.font)
 options = subset.Options()

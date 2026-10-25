@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "platform": "Microsoft Windows NT 10.0.26100.0",
+  "webView": "155.0.4283.62",
+  "mode": "game",
+  "restart": true,
+  "result": "passed",
+  "checks": [
+    "Standalone packaged game runs in a native window with local graphics",
+    "Game windows disable the privileged editor bridge",
+    "A full native process restart restores the previously chosen game route",
+    "Minimising and restoring the native window pauses and resumes its actual engine session",
+    "Native fullscreen restores the original window",
+    "Editor/player startup uses local resources without external network requests"
+  ],
+  "notes": [
+    "CI presets file picker paths; actual native file IO and WebView2 RPC are exercised. Manual interaction with OS file/folder dialogs is not claimed."
+  ]
+}

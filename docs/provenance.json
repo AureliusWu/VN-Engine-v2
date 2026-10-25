@@ -64,7 +64,7 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "e1194755e797cd59a4f80489e89d6faac488b8219c963a222446cb7248c0bb9b"
+      "targetSha256": "a895b29d6c332c6eb3928d488b3a6df04e9cc565dd8c7515101176e9d44c7053"
     },
     {
       "target": "editor/index.html",
@@ -107,7 +107,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "55fc10c444e7d8f60689fa2637d4f4916ece73b588268d1416c36e47724ab7ab"
+      "targetSha256": "ab1f467d8cdfb35521699d84e84aadcf9c726d53e5cdbb67c98e4c2ec2cb95d4"
     },
     {
       "target": "editor/style.css",
@@ -839,7 +839,7 @@
       "target": "tools/subset_studio_font.py",
       "mode": "new",
       "origins": [],
-      "targetSha256": "f3dec46cb105d6f7752fdc1137c042ecda0242ea1d8278cc66d85c0fd8a63901"
+      "targetSha256": "f257d283325eccf5c84813ba306d007821050356e6bfe73864dbfe18e385b7dc"
     },
     {
       "target": "tools/test-windows.ps1",

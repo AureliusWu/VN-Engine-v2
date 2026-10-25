@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "result": "passed",
+  "checks": [
+    "Relative paths reject traversal, encodings, drive paths and Windows device aliases",
+    "Only the exact trusted top-level editor document may use native commands",
+    "Atomic UTF-8 JSON saves preserve existing bytes when parsing fails",
+    "Asset IO is bound to an authorised root, token and declared manifest files",
+    "Save-as copies referenced assets and refuses conflicting destination resources",
+    "Missing resources block runtime export before writing JSON",
+    "The native player verifies every build-manifest size/hash before launch",
+    "Player save profiles are stable per game and isolated from each other"
+  ]
+}

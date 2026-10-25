@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "platform": "Microsoft Windows NT 10.0.26100.0",
+  "webView": "155.0.4283.62",
+  "mode": "studio",
+  "restart": false,
+  "result": "passed",
+  "checks": [
+    "Native WinForms/WebView2 window starts the bundled editor and own runtime preview",
+    "Trusted editor RPC opens JSON through native file IO and loads manifest-only local assets",
+    "Native save writes the edited workspace atomically and copies referenced local assets",
+    "Native export produces engine project JSON without editor metadata",
+    "Saved workspace reopens from its new directory with its copied assets",
+    "The native bridge rejects undeclared commands",
+    "Minimising and restoring the native window pauses and resumes its actual engine session",
+    "Native fullscreen restores the original window",
+    "Editor/player startup uses local resources without external network requests"
+  ],
+  "notes": [
+    "CI presets file picker paths; actual native file IO and WebView2 RPC are exercised. Manual interaction with OS file/folder dialogs is not claimed."
+  ]
+}

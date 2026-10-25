@@ -1,0 +1,48 @@
+{
+  "schema": 1,
+  "engine": "0.3.0",
+  "sourceCommit": "4a6051072d6b4ecd034d271d4ee8cb927f664b65",
+  "workflowRun": 40174916074,
+  "workflowURL": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40174916074",
+  "checkedAt": "2026-10-25T08:01:41Z",
+  "platform": "Microsoft Windows NT 10.0.26100.0",
+  "dotnetSDK": "10.0.402",
+  "webView": "155.0.4283.62",
+  "reports": {
+    "game-first.json": {
+      "result": "passed",
+      "checks": 6
+    },
+    "studio-first.json": {
+      "result": "passed",
+      "checks": 9
+    },
+    "studio-restart.json": {
+      "result": "passed",
+      "checks": 10
+    },
+    "game-restart.json": {
+      "result": "passed",
+      "checks": 6
+    },
+    "host-policy.json": {
+      "result": "passed",
+      "checks": 8
+    }
+  },
+  "hostSourceSHA256": {
+    "app.manifest": "e8dc96686929912a581ab122b3f1b4e85602fae02bab5825cef27b33263ee742",
+    "HostWindow.cs": "5343e21b51ba3b2e0e30eca1e5945790f33d535c595adaa7040e953852b2df15",
+    "HostFiles.cs": "a19ec844c59f3552ac02305c772b2eb9731bc4a748e5a9bfd8782d68b801894b",
+    "SmokeTests.cs": "a04b3fd7d1e829d67ee7cf7094426514f2f94632a22e677a2398304e1873c4b2",
+    "HostTests.cs": "54421bbcc2ac5eea22502de5b1efda8fec6c7f3747c3fa3e0b30d75da4780a87",
+    "Program.cs": "3305918616a350947074e6af96dd004232b361458c5c0522db409f7d6ccd7f66",
+    "VNEngine.Windows.csproj": "7d379b62f09cd101bbba9986e1fed3ed2741f0e9bf2706a5aaf75859bed94c2d"
+  },
+  "notes": [
+    "CI presets file picker paths; native file IO and WebView2 RPC execute normally.",
+    "Manual OS dialog interaction, signed installer and physical Windows hardware acceptance remain separate.",
+    "Source-game repositories were not changed or migrated.",
+    "Report JSON is normalised to UTF-8 LF; original payloads are retained in the CI artifact. Host hashes refer to canonical repository source bytes."
+  ]
+}

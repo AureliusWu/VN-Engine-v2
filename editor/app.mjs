@@ -78,9 +78,13 @@ function renderGraph(graph) {
   const svg = (name, attrs, text) => { const e = document.createElementNS('http://www.w3.org/2000/svg', name); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); if (text) e.textContent = text; return e; };
   const defs = svg('defs', {}), marker = svg('marker', { id: 'arrow', viewBox: '0 0 10 10', refX: '9', refY: '5', markerWidth: '7', markerHeight: '7', orient: 'auto-start-reverse' });
   marker.append(svg('path', { d: 'M 0 0 L 10 5 L 0 10 z', style: 'fill:#8ab4ba;stroke:none' })); defs.append(marker); $('edges').append(defs);
+  const totals = new Map(), seen = new Map();
+  for (const edge of graph.edges) { const pair = JSON.stringify([edge.from, edge.to]); totals.set(pair, (totals.get(pair) ?? 0) + 1); }
   for (const edge of graph.edges) {
     const a = points.get(edge.from), b = points.get(edge.to); if (!a || !b) continue;
-    const x1 = a.x + 205, y1 = a.y + 54, x2 = b.x, y2 = b.y + 54, bend = Math.max(50, Math.abs(x2 - x1) / 2);
+    const pair = JSON.stringify([edge.from, edge.to]), index = seen.get(pair) ?? 0; seen.set(pair, index + 1);
+    const offset = (index - (totals.get(pair) - 1) / 2) * 25;
+    const x1 = a.x + 205, y1 = a.y + 54 + offset, x2 = b.x, y2 = b.y + 54 + offset, bend = Math.max(50, Math.abs(x2 - x1) / 2);
     const path = svg('path', { d: `M${x1} ${y1} C${x1 + bend} ${y1},${x2 - bend} ${y2},${x2} ${y2}`, 'marker-end': 'url(#arrow)' });
     $('edges').append(path, svg('text', { x: (x1 + x2) / 2, y: (y1 + y2) / 2 - 12, 'text-anchor': 'middle' }, edge.label.slice(0, 20)));
   }

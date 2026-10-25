@@ -35,7 +35,10 @@ jobs:
         run: |
           Copy-Item build/windows/site build/windows/app/site -Recurse
           Copy-Item build/windows/demo-game build/windows/app/demo-game -Recurse
-          Copy-Item docs/WINDOWS.md build/windows/app/README.md
+          Copy-Item hosts/windows/PORTABLE.md build/windows/app/README.md
+          Copy-Item docs build/windows/app/docs -Recurse
+          Copy-Item THIRD_PARTY_NOTICES.md build/windows/app/THIRD_PARTY_NOTICES.md
+          Copy-Item licenses build/windows/app/licenses -Recurse
           Copy-Item LICENSE build/windows/app/LICENSE.txt
       - name: Ensure WebView2 Runtime
         shell: pwsh
