@@ -266,7 +266,7 @@
       "target": "hosts/windows/HostWindow.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "cffb8ec70adaa82b52320143aedd4902cce0505dce0e83e01763a1c7a0ccf862"
+      "targetSha256": "5343e21b51ba3b2e0e30eca1e5945790f33d535c595adaa7040e953852b2df15"
     },
     {
       "target": "hosts/windows/Program.cs",
@@ -284,7 +284,7 @@
       "target": "hosts/windows/VNEngine.Windows.csproj",
       "mode": "new",
       "origins": [],
-      "targetSha256": "78d8ded2f443d72f6b9913c98d22cba95955473171e5449f95a59feda579fb75"
+      "targetSha256": "7d379b62f09cd101bbba9986e1fed3ed2741f0e9bf2706a5aaf75859bed94c2d"
     },
     {
       "target": "hosts/windows/app.manifest",

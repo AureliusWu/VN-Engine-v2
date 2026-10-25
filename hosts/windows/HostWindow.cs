@@ -88,10 +88,8 @@ internal sealed class HostWindow : Form
         core.AddWebResourceRequestedFilter("*", CoreWebView2WebResourceContext.All);
         core.WebResourceRequested += OnResource;
         if (options.Smoke && game != null) await core.AddScriptToExecuteOnDocumentCreatedAsync("localStorage.setItem(" + JsonSerializer.Serialize("vn-engine:" + game.Game + ":settings") + ",JSON.stringify({textDelayMs:0,voiceEnabled:false,music:false}))");
-        web.CoreWebView2Controller.AcceleratorKeyPressed += (_, e) =>
-        {
-            if (e.VirtualKey == 122 && e.KeyEventKind == CoreWebView2KeyEventKind.KeyDown) { e.Handled = true; BeginInvoke((Action)ToggleFullScreen); }
-        };
+        core.ContainsFullScreenElementChanged += (_, _) => { if (core.ContainsFullScreenElement != fullScreen) ToggleFullScreen(); };
+        await core.AddScriptToExecuteOnDocumentCreatedAsync("window.addEventListener('keydown',event=>{if(event.key!=='F11')return;event.preventDefault();const task=document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen();task?.catch(()=>{});},true)");
         if (options.Smoke) core.NavigationCompleted += async (_, e) =>
         {
             if (!e.IsSuccess || !core.Source.StartsWith("https://" + host + "/", StringComparison.Ordinal)) { Fail(new InvalidOperationException("原生页面导航失败：" + e.WebErrorStatus)); return; }
@@ -221,8 +219,12 @@ internal sealed class HostWindow : Form
     }
     private async Task NotifyVisibility()
     {
-        if (web.CoreWebView2 == null || !AllowedNavigation(web.CoreWebView2.Source, false)) return;
-        try { await web.CoreWebView2.ExecuteScriptAsync("window.dispatchEvent(new CustomEvent('vn-engine-host-visibility',{detail:{hidden:" + (WindowState == FormWindowState.Minimized ? "true" : "false") + "}}))"); } catch { }
+        try
+        {
+            if (IsDisposed || Disposing || web.IsDisposed || web.CoreWebView2 == null || !AllowedNavigation(web.CoreWebView2.Source, false)) return;
+            await web.CoreWebView2.ExecuteScriptAsync("window.dispatchEvent(new CustomEvent('vn-engine-host-visibility',{detail:{hidden:" + (WindowState == FormWindowState.Minimized ? "true" : "false") + "}}))");
+        }
+        catch { }
     }
     private void OpenGame()
     {
