@@ -7,13 +7,7 @@ internal sealed record HostOptions(string Site, string? GameDirectory, string? P
     internal static HostOptions Parse(string[] args)
     {
         string? Value(string key) { var index = Array.IndexOf(args, key); if (index < 0) return null; if (index + 1 >= args.Length || args[index + 1].StartsWith("--")) throw new ArgumentException("缺少参数：" + key); return Path.GetFullPath(args[index + 1]); }
-        var gameDirectory = Value("--game");
-        if (gameDirectory == null)
-        {
-            var bundledGame = Path.Combine(AppContext.BaseDirectory, "game");
-            if (File.Exists(Path.Combine(bundledGame, "index.html")) && File.Exists(Path.Combine(bundledGame, "project.json"))) gameDirectory = bundledGame;
-        }
-        return new(Value("--site") ?? Path.Combine(AppContext.BaseDirectory, "site"), gameDirectory, Value("--user-data-dir"), args.Contains("--smoke-test"), args.Contains("--verify-persistence"), Value("--report") ?? Path.Combine(AppContext.BaseDirectory, "windows-smoke.json"));
+        return new(Value("--site") ?? Path.Combine(AppContext.BaseDirectory, "site"), Value("--game"), Value("--user-data-dir"), args.Contains("--smoke-test"), args.Contains("--verify-persistence"), Value("--report") ?? Path.Combine(AppContext.BaseDirectory, "windows-smoke.json"));
     }
 }
 internal static class Program
@@ -34,7 +28,7 @@ internal static class Program
         catch (Exception error)
         {
             if (options?.Smoke == true) { Directory.CreateDirectory(Path.GetDirectoryName(options.Report)!); File.WriteAllText(options.Report, JsonSerializer.Serialize(new { result = "failed", error = error.ToString() })); }
-            else MessageBox.Show("VN Engine 未能启动：\n" + error.Message + "\n\n请确认已安装 Microsoft Edge WebView2 Runtime，且游戏内容目录与程序放在一起。", "VN Engine", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            else MessageBox.Show("VN Engine 未能启动：\n" + error.Message + "\n\n请确认已安装 Microsoft Edge WebView2 Runtime，且 site 目录与程序放在一起。", "VN Engine", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return 1;
         }
     }
