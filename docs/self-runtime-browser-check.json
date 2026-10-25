@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "checkedAt": "2026-10-25T06:19:47.781Z",
+  "browser": "153.0.8010.0",
+  "checks": [
+    "Own renderer draws backgrounds/portraits/CG and same-line load suppresses one-shot effects",
+    "History filters, keyboard focus guard, reread and interface pause use the own session",
+    "Chat bubbles, conditional call prose and on-site portraits render as distinct modes",
+    "Hotspots, evidence documents, retry, chapter unlock and journal saves run in our investigation driver",
+    "Rain-form author data reaches its ending and reloads using only the own script VM",
+    "Own renderer remains usable at 390px without horizontal overflow",
+    "Four-mode own runtime reloads from a real offline service-worker cache",
+    "Real Web Audio/HTML audio playback releases auto only after the test voice finishes",
+    "A failed portrait download keeps dialogue and choices playable",
+    "Standalone output boots and truly reloads offline from a nested deployment directory"
+  ],
+  "result": "passed"
+}

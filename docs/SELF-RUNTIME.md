@@ -1,0 +1,78 @@
+# 自研运行时 0.2
+
+主运行链为本仓库自己的 TypeScript 解释器/状态机、调度器、DOM 渲染器、输入控制、媒体调度和打包器。它直接在浏览器中执行本地项目数据，不加载 Ren’Py、Unity、Godot、外部 VN 框架或在线服务。React/Electron/Tauri 均不是主链依赖。
+
+## 运行与打包
+
+```bash
+npm ci
+npm run demo
+```
+
+访问 `http://127.0.0.1:4173/engine/`。原 0.1 技术检查页仍在 `/`，自研播放器入口在 `/engine/`。
+
+四份独立项目位于 `examples/runtime/{campus,netlove,circuit,rain}.json`。用以下命令生成可独立部署、可离线运行的作品目录：
+
+```bash
+npm run build:game -- examples/runtime/rain.json build/my-game
+python -m http.server 8000 --directory build/my-game
+```
+
+输出目录必须新建或为空，已有文件会被保留并拒绝覆盖。打包包括自己的运行模块、项目数据、实际媒体、字体许可、PWA manifest、按文件指纹生成的 worker 与 `build-manifest.json`。无需 SDK 下载或四作原仓库。用 HTTP/HTTPS 打开；本地双击 file:// 不具备 service worker 与模块 fetch 所需环境。
+
+## 最小接入
+
+```ts
+import { mountGame } from '@aureliuswu/vn-engine-v2';
+const game = mountGame(document.getElementById('game')!, project, {
+  baseURL: new URL('./', location.href), storage: localStorage
+});
+// 页面或路由实际卸载时释放计时器、DOM、声音与资源请求。
+game.dispose();
+```
+
+`mountGame` 只在调用时接触浏览器；导入模块没有 DOM、localStorage 或 AudioContext 副作用。也可只使用 `createProject`/`RuntimeSession`，由其他宿主自行绘制。
+
+## 项目与驱动
+
+| `project.type` | 自研驱动 | 作者数据 |
+| --- | --- | --- |
+| `narrative` | `NarrativeDriver` + `NarrativeEngine` | 段落/选项/条件文本，可选择 Healing/NetLove 的已有规则 |
+| `script` | `ScriptDriver` + `ScriptEngine` | 显式变量、剧本块、跳转、选择、条件路由与结局 |
+| `rain` | `compileRainProgram` → `ScriptEngine` | Rain schema 1 数据直接转入自研 VM，保留选择回应 |
+| `investigation` | `InvestigationDriver` + `InvestigationEngine` | 章节、节点、动作、证据、热点、推理与重试 |
+
+所有项目显式声明 `schema:1/game/version/title/assets`。样例采用 `vn-self-*` 身份。游戏身份和版本进入存档 envelope，不接受另一个游戏的进度；原四作的存档键未被修改。
+
+## 数据解释器
+
+`ScriptProgram` 包含数值/布尔变量和 `ScriptBlock`。出口只有四种指令：
+
+| 指令 | 作用 |
+| --- | --- |
+| `jump` | 进入声明的剧本块 |
+| `choice` | 等待明确选择，应用 `add` 或 `set`，再跳转 |
+| `branch` | 按顺序检查 `eq/gte`，必须有末尾无条件回退 |
+| `end` | 停留在结局，保留最后段落 |
+
+无对白的逻辑块由 VM 消化，不会凭空增加一页文字。选择后回应被编成带稳定台词 ID 的独立块，播放完再进入原目标。逻辑循环、未知变量/指令、类型错误、越界数值、重名与断链都会拒绝；执行和重放均有预算。作者 JSON 不会转换为可执行 JavaScript。
+
+存档只保存位置与之前选择。变量、历史与持续画面状态由重放推导；导入的派生值不构成权威。调查驱动另用动作日志重放取证、失败重试与跨章行为，不给调查强加线性快进或随意回跳。
+
+## 演出与媒体
+
+`StageCue` 支持 background/portrait/cg、music/ambience、voice/sound、fade/flash/shake、pauseMs 和调查文书。背景、人物、CG 与背景音是持续状态；动作音效、闪白等是本次访问的一次性事件。读档与历史重读重建画面，不补播旧动作音效或震屏；当前段落的语音可重新开始。
+
+`RuntimeSession` 用 Unicode grapheme 逐字显示。点击先补全当前句，再推进；剧情停顿、后台、面板、隐藏界面、语音等待和选择门槛分别参与调度。自动阅读不会替人选选项；已读快进按台词 ID 加实际文本识别，遇到未读或选择即停止。同段落重新读档也产生新 visit，迟到的旧事件不能接管新画面。
+
+图片用请求身份隔离迟到回调。缺图或声音失败保留可阅读状态。播放器首次交互后才建立音频上下文；关闭音乐会取消不需要的音乐下载。销毁时取消计时器、动画、订阅、下载和声音。
+
+## 资源与界面
+
+`AssetCatalog` 使用 ID 与相对路径。打包器检查真实文件、可选 SHA-256、输出冲突与离开项目目录的符号链接；所有实际输出都记入哈希清单。字体需要附自己的许可记录。自研样例的 SVG 和测试音由代码生成，仅验证能力，不冒充正式角色差分、CG 或配音。
+
+DOM 宿主包括阅读层、聊天气泡、通话视图、调查文书/热点、证据簿、历史搜索与重读、设置、存读档、导入导出、全屏和触控按钮。使用原生语义按钮、键盘焦点与弹层焦点约束。输入框内的文字和快捷键不会推进剧情；减少动态效果与透明度可调整。
+
+## 当前边界
+
+这是能独立执行与打包的自研叙事引擎 alpha。尚未提供可视化编辑器、复杂场景动画轨道、3D/物理/战斗、Windows 原生宿主和兼容 Ren’Py 二进制存档的迁移器。四作仍在原仓库运行；正式迁移要保留数据身份并完成各自实包回归。

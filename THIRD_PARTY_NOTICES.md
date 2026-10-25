@@ -11,3 +11,5 @@
 精确提交、来源路径与内容哈希见 `docs/provenance.json`。原四作的完整正文、角色美术、声音与模型没有随引擎重新分发。
 
 Ren’Py SDK 未包含在仓库内，其自身与所含第三方组件依原许可证分发。开发依赖 TypeScript 与 Playwright 使用各自的 Apache-2.0 等许可；npm 安装包自带许可文件。
+
+0.2 新增解释器、调度、DOM/媒体宿主与打包器为本仓库自研代码。examples/runtime 的 SVG 和合成测试音是代码生成的技术示例。VN Runtime Sans 同样由上述 OFL 字体子集化并改名，其许可随项目资源一同分发。

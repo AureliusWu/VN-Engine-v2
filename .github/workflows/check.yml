@@ -24,6 +24,16 @@ jobs:
       - run: npm ci
       - run: npm run check
       - run: python -m adapters.renpy --story examples/renpy/story.json --out examples/renpy/game
+      - name: Build self-runtime standalone samples
+        run: |
+          node tools/package-game.mjs examples/runtime/campus.json build/standalone-campus
+          node tools/package-game.mjs examples/runtime/netlove.json build/standalone-chat
+          node tools/package-game.mjs examples/runtime/circuit.json build/standalone-investigation
+          node tools/package-game.mjs examples/runtime/rain.json build/standalone-script
+      - uses: actions/upload-artifact@v4
+        with:
+          name: vn-engine-standalone-samples
+          path: build/standalone-*
   browser:
     runs-on: ubuntu-latest
     steps:

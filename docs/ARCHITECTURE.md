@@ -1,42 +1,41 @@
 # 架构与接口
 
-v0.1.0 把运行规则与宿主分开。TypeScript 核心导入时没有浏览器副作用，React、Electron、Tauri 与 DOM 界面均可在外部接入；音频类仅在构造和调用时使用浏览器能力。
-
-## 分工
+v0.2 主链由本仓库自研模块承担。解释器/状态机 → 玩法驱动 → 播放调度 → DOM/媒体宿主 → 独立离线构建，均能在没有外部游戏引擎的情况下工作。
 
 | 层 | 入口 | 责任 |
 | --- | --- | --- |
-| 剧情运行 | `NarrativeEngine` | `newGame/getScene/recordLine/advance/choose/continueStory/replay/reread` |
-| 调查运行 | `InvestigationEngine` | `initial/actions/transition/explore/reachable/validateChapter` |
-| 章节进度 | `InvestigationEngine` | `newCampaign/complete/startChapter/restoreCampaign/unlocked` |
-| 数据适配 | `createHealingEngine/createNetLoveEngine/createCircuitEngine` | 保留各作的入口、数值、解析规则与原始形状 |
-| 存档边界 | `createHealingSaveCodec/createNetLoveSaveCodec/decodeCircuitSave` | 验证身份与位置、路线重建、只读原生格式桥接 |
-| 存储宿主 | `createStore/writeBatch` | 注入 StoragePort，区分 empty/invalid/unavailable，保留失败原件 |
-| 表现重建 | `presentationAt/healingPresentationAt/netlovePresentationAt/cgAt` | 从原文前缀恢复人物、表情与事件图时机 |
-| 媒体宿主 | `SceneLoop/RecordedVoice/voiceFor` | 缓存限额、取消、访问身份、播放生命周期、准确台词绑定 |
-| 阅读宿主 | `canRead/canAutoAdvance/ReadingVisit` | 后台、面板、隐藏界面、手动暂停和自动推进条件 |
-| 原生编译 | `python -m adapters.renpy` | Rain 格式校验与 DSL 输出，交给 Ren’Py 执行 |
+| 作者数据 | EngineProject / ScriptProgram | 显式身份、版本、玩法、变量、剧本与资源 |
+| 自研解释器 | ScriptEngine | 数据指令、条件、赋值/累加、回应、隐藏逻辑块、结局与重放 |
+| 自研状态机 | NarrativeEngine / InvestigationEngine | 段落与路线；调查循环、证据与章节 |
+| 玩法驱动 | NarrativeDriver / ScriptDriver / InvestigationDriver | 统一 frame/action/history 接口，分别保留不同机制 |
+| 调度器 | RuntimeSession | Grapheme 打字、停顿、暂停作用域、自动、已读快进、visit 身份 |
+| 自研 DOM 宿主 | DOMRenderer / mountGame | 实际图层、聊天/通话、调查、键盘/触控、弹层、存读档与设置 |
+| 媒体宿主 | MediaDirector / SceneLoop / RecordedVoice | 访问隔离、音乐取消/缓存、语音等待、一次性音效与暂停恢复 |
+| 资源 | AssetCatalog | 角色/背景/CG/音频/字体 ID、部署 base 和本地资源路径 |
+| 作品打包 | tools/package-game.mjs | 自己的运行模块、原文、资源、许可、哈希与作用域离线包 |
+| 兼容入口 | adapters/{healing,netlove,circuit,rain-runtime} | 四作已有数据规则与身份边界 |
+| 原生历史工具 | adapters/renpy | 保留 Rain → Ren’Py DSL 的已有开发/兼容路径，不参与自研主链 |
 
 ## 状态权威
 
-校园/聊天剧情的权威输入是原文图、位置和此前选择。数值、历史、条件对白与表情均能重建。`replay` 有步数预算，不执行存档中的脚本；`reread` 只接受当前合法路线已经读到的段落，并取到达目标所需的最短选择前缀。
+校园/聊天保存原文位置和先前选择，数值、历史、条件文本与表情可重建。旧 Healing 仍以场景/行号绑定，重排需要迁移。新作品建议使用独立 Line.id。声音变体还需实际 speaker/text 匹配。
 
-旧 Healing 台词没有全部独立 ID。适配器保留原场景 ID + 行号，声音还需精确 speaker/text 校验；不得宣称重排文本后仍然兼容。新文本应显式写稳定的 `Line.id`，配音变体以 ID 与实际文本共同绑定。
+ScriptEngine 的数值和布尔变量有声明和边界，指令仅 jump/choice/branch/end；不执行任意代码。选择回应保留稳定台词 ID，隐藏路由不会增加虚构对白。持续图层随合法执行重建，一次性事件绑定 visit，读档不补播过去的动作。
 
-调查状态为 `(chapterId, nodeId, evidence)`。搜索将证据排序后加入状态键，允许返回调查中心、改变证据后再次进入同一节点。构造时检查所有可达库存状态、证据门槛和可通关性；超过预算会报告未完成验证，不静默视为通过。
+调查状态使用节点与证据集合联合验证，允许有意义的调查循环。RuntimeDriver 的存档保存实际动作日志，恢复重新执行取证、推理、重试与跨章动作；无法通过注入 completed 或 evidence 跳过门槛。已有 Circuit 原生 envelope 的只读桥接仍单独保留。
 
-`isState` 只校验形状和节点约束；外部恢复必须使用 `reachable` 或 `restoreCampaign`，防止只满足局部门槛却无法从章首到达。章节完成需要标准结局、核心证据与合法完成前缀。新核心的 archive 保留单次可达库存，避免拼出互斥证据集合。
+## 调度与宿主
 
-## 宿主责任
+RuntimeSession 无 DOM 依赖，可注入 Clock。打字、停顿和自动剩余时间有独立状态；后台、面板、隐藏和语音分别参与门控。取消或读档递增 generation，同一段重新访问也递增 visit。已读以台词 ID + 实际文本判断，快进不跨未读和选项；调查不启用线性快进。
 
-- UI 负责键盘、按钮、打字计时、全屏、无障碍和实际的画面渲染。阅读门控只提供判定；宿主计时器必须调用它。
-- 宿主在换段、重新读入同一段或重读时生成新的 visit；把面板、document.visibilityState 等条件传给声音播放器。
-- 音乐使用外部的 AudioContext 与 GainNode。`SceneLoop` 不创建全局音频上下文；销毁时调用 `dispose`。配音关闭或销毁时调用 `stop`。
-- 资源路径由宿主按部署 base URL 解析。离线文件列表来自实际构建产物；存档不进入 SW 缓存。
-- `tools/serve.mjs` 仅为本地样例服务器，绑定 127.0.0.1。正式网站、桌面封装、自动存档时机与发行脚本由各宿主决定。
+DOMRenderer 消费快照，不计算路线。图片请求与动画绑定当前访问；聊天和通话使用自己的呈现，调查热点只关联当前可用动作。弹层搜索输入不触发阅读快捷键，焦点在弹层内受约束。错误资源与不可用存储保留可阅读状态。
 
-## 原生 Ren’Py 边界
+MediaDirector 消费 visit 和阅读条件，使用注入的 AudioContext/Audio 工厂。首次浏览器交互后由 mountGame 建立上下文；单次音效不随每个打字 tick 重放，读档/重读也不补播。dispose 清理订阅、计时器、图片探测、音乐下载和播放对象。
 
-Python 适配器沿用 Rain 的 schema_version 1、`affection/trust/truth_known` 状态定义与 n/h/p 说话人约定，具有明确的 Rain 兼容范围。它保留原编译算法、分支回应、音频清单和稳定台词标识。宿主需要角色定义、ambient channel、`ending_card` screen；立绘还需要 `heroine_position` transform。最小样例不使用立绘资源。
+## 构建与平台
 
-Ren’Py 的 save_directory、persistent、回滚与平台运行仍由原生项目控制。Web 核心不解析 Ren’Py 存档。后续需要通用 Ren’Py 作者格式时，应单独版本化适配协议。
+普通模块导入没有 DOM/存储/音频副作用；框架宿主可以只用 createProject + RuntimeSession，也可直接 mountGame。作品构建使用明确相对资源、本地许可和实际字节指纹；lib 与资源都在部署作用域内，独立产物在子目录断网重载经过浏览器测试。
+
+浏览器 Web/PWA 是本轮实际平台。Electron/Tauri/原生 Windows 宿主、可视化编辑器、复杂动画轨道和其他渲染后端尚未验收。
+
+详细数据和调用约定见 [自研运行时](SELF-RUNTIME.md)；原四作的正式迁移见 [接入与兼容](MIGRATION.md)。

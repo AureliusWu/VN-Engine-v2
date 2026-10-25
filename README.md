@@ -1,79 +1,72 @@
 # VN Engine v2
 
-从《雨停之前》《湿性愈合》《“网”恋》《回路》中抽取的叙事引擎雏形，当前版本 **0.1.0**。
+**自研叙事引擎 · v0.2.0 alpha**
 
-已包含可运行代码、三种 Web 玩法样例、一个原生 Ren’Py 编译样例、来源记录和回归测试。四作保留各自的剧情、视觉形式和存档身份；本轮未修改四作，也未将它们迁移到这个仓库。
+从《雨停之前》《湿性愈合》《“网”恋》《回路》中沉淀规则，并补齐自己的剧本解释器、播放调度、画面渲染、输入控制、媒体与离线打包。现在能直接执行、绘制和打包作品；主运行链无需 Ren’Py 或其他游戏引擎。
 
-![Web 运行样例](docs/previews/demo-desktop.png)
+![自研运行时](docs/previews/self-engine-desktop.png)
 
-## 已沉淀的能力
+## 已实现
 
-| 模块 | 能力 | 主要来源 |
-| --- | --- | --- |
-| `src/narrative/` | 段落推进、选项、数值、结局解析、章节停顿、路线重放与安全重读 | Healing、NetLove |
-| `src/investigation/` | 调查循环、证据收集、证据门槛、推理失败与重试、章节解锁 | Circuit |
-| `src/adapters/` | 三作原生数据形状、身份与规则的适配入口 | Healing、NetLove、Circuit |
-| `adapters/renpy/` | 结构化剧本校验、状态路线枚举、标准 Ren’Py DSL 编译 | Rain |
-| `src/presentation/` | 读档/历史重读时重建表情，匿名聊天隐藏人物，按段落触发 CG | Healing、NetLove |
-| `src/audio/` | 限额音乐缓存、换场景取消下载、迟到回调隔离、配音暂停/重播与台词绑定 | NetLove；同实现见 Healing、Circuit |
-| `src/history/`、`src/lifecycle/` | 已读搜索、面板/后台/隐藏界面的阅读门控、同段落的新访问身份 | 四作既有交互经验 |
-| `src/storage/` | 原生存档解析、从选择重算状态、独立命名空间、失败保留与批量写入回滚 | Healing、NetLove、Circuit |
-| `tools/pwa.mjs`、`tools/validate-graph.mjs` | 按实际文件指纹生成离线包、作用域隔离、静态图检查 | NetLove、Rain |
+| 能力 | 实现 |
+| --- | --- |
+| 剧本执行 | 自研 ScriptEngine：数值/布尔状态、跳转、条件分支、选项回应、结局、路线重建 |
+| 不同玩法 | 校园 VN、聊天/通话、调查/证据/推理、Rain 结构化剧本四种入口 |
+| 自研播放器 | 逐字阅读、停顿、自动、已读快进、后台/面板/隐藏暂停、访问隔离 |
+| 画面与演出 | 背景、立绘、按段落 CG、聊天气泡、通话视图、文书、热点、淡入/闪白/震屏 |
+| 声音 | 循环音乐、环境音、逐段语音与动作音效；换场景取消、面板恢复、缺资源继续 |
+| 系统 | 独立存档、损坏保留、历史搜索/重读、设置、导入导出、全屏、键盘与触控 |
+| 独立作品构建 | 自研运行模块 + 本地项目/资源 + PWA + 文件哈希；支持子目录与断网重开 |
 
-TypeScript 核心无 React、Electron、Tauri 运行时依赖，可由不同界面层调用。Ren’Py 继续承担《雨停之前》的原生运行、回滚和存档。
+核心为 TypeScript，无 React/Electron/Tauri 运行依赖。浏览器是绘制与媒体宿主；状态与执行规则由引擎控制。原 Ren’Py 编译器保留为兼容工具。
 
-## 运行
+## 运行自研引擎
 
-需要 Node.js 22+、npm，以及用于原生适配器检查的 Python 3.10+。
+需要 Node.js 22+、npm；完整检查还需 Python 3.10+。
 
 ```bash
 npm ci
-npm run check
 npm run demo
 ```
 
-打开 `http://127.0.0.1:4173`，可切换校园视觉小说、聊天叙事和调查推理。示例使用独立的 `vn-engine-demo:*` 存档与离线缓存。也可查看 Ren’Py 适配入口。
+打开 **http://127.0.0.1:4173/engine/**，切换四种玩法。原 0.1 诊断页保留在 `/`。
 
-浏览器交互及真实断网复验：
+## 打包独立作品
 
 ```bash
+npm run build:game -- examples/runtime/rain.json build/my-game
+python -m http.server 8000 --directory build/my-game
+```
+
+访问 http://127.0.0.1:8000，下载完成后可离线游玩。输出目录必须新建或为空。构建结果包含自己写的运行模块和实际资源，不依赖此开发服务器。CI 同时构建四份独立样例并保留为 `vn-engine-standalone-samples` artifact。
+
+```ts
+import { mountGame } from '@aureliuswu/vn-engine-v2';
+const game = mountGame(document.getElementById('game')!, project, {
+  baseURL: new URL('./', location.href), storage: localStorage
+});
+// 路由实际卸载时：game.dispose();
+```
+
+目前 `private: true`，通过仓库构建或本地依赖接入，尚未发布 npm 包。
+
+## 验证
+
+```bash
+npm run check
 npx playwright install chromium
 npm run test:browser
 ```
 
-原生编译样例：
+- 53 项 Node、6 项 Python、18 项浏览器场景通过。
+- 自研 VM 对照 Rain 原作：26 场景、16 条完整路线、6692 次段落访问；原台词/选项回应顺序、数值/布尔状态、结局与存档重放一致。
+- 浏览器覆盖真实画面、聊天/通话、热点与文书、调查解锁、音频等待、缺图恢复、移动布局、真实断网和独立产物子目录部署。
+- 原 0.1 的四作提取层对照证据保留；来源文件与新增自研模块分别记录。
 
-```bash
-python -m adapters.renpy --story examples/renpy/story.json --out examples/renpy/game
-```
+完整证据和范围见 [验证记录](docs/VALIDATION.md)。自研样例的 SVG 与合成测试音用于验证能力，四作正式美术和声音继续在各自仓库维护。
 
-生成后，用 Ren’Py 8.5.3 SDK 打开 `examples/renpy`。仓库包含最小宿主 screen；SDK 本身未打包。
+## 使用与后续
 
-## 调用核心
+[自研运行时说明](docs/SELF-RUNTIME.md) · [架构](docs/ARCHITECTURE.md) · [四作接入与兼容](docs/MIGRATION.md) · [来源清单](docs/provenance.json) · [许可](THIRD_PARTY_NOTICES.md)
 
-```ts
-import { NarrativeEngine, createSaveCodec } from '@aureliuswu/vn-engine-v2';
-
-const engine = new NarrativeEngine({
-  game: 'my-game', storyVersion: 'my-story-v1', entry: 'start', stats: {},
-  scenes: [{ id: 'start', lines: [{ id: 'start-001', speaker: '旁白', text: '开始。' }], ending: 'done' }]
-});
-const state = engine.newGame();
-const save = createSaveCodec(engine).encode(state);
-```
-
-目前保持 `private: true`，通过仓库构建与本地依赖接入；尚未发布 npm 包。
-
-## 验证与边界
-
-- 35 项 Node 测试、6 项 Python 测试、8 项浏览器场景通过。
-- 原码对照：Healing 65 场景 / 1296 条完整路线；NetLove 43 场景 / 288 条完整路线。
-- Circuit 11 章 / 1521 个可达调查状态 / 1731 次动作转换一致。
-- Rain 26 场景 / 16 条路线，生成脚本与原编译器逐字一致。
-- 浏览器验证包含存读档、重读改选、聊天/通话、证据门槛、失败重试、章节解锁、390px 布局和真实断网重开。
-
-以上记录对应 [来源快照](docs/provenance.json)；详细证据见 [验证记录](docs/VALIDATION.md)。尚未执行此仓库的 Windows 客户端或 Ren’Py SDK 运行验收，也未接入四作的正式发行流程。
-
-本阶段形成可复用核心与适配接口。可视化编辑器、完整渲染/演出系统、原项目的全部生产工具链与新游戏的发行器仍需后续实现。
-
-继续阅读：[架构与接口](docs/ARCHITECTURE.md) · [抽取范围](docs/EXTRACTION.md) · [接入与兼容](docs/MIGRATION.md) · [后续工作](docs/ROADMAP.md) · [来源与许可](THIRD_PARTY_NOTICES.md)。
+当前已形成可独立运行和打包的自研 alpha。可视化编辑器、完整动画轨道和 Windows 原生宿主仍待实现。四个正式项目尚未迁移，原剧情、存档与已公开发行未被改写。

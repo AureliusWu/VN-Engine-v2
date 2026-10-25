@@ -1,22 +1,26 @@
-# v0.1.0 验证记录
+# v0.2.0 自研运行时验证
 
-日期：2026-10-25。以下对应本次抽取的代码与 provenance 精确源提交。
+日期：2026-10-25。当前代码形成自主执行、绘制、交互和打包闭环；不依赖 Ren’Py 执行自研样例。
 
 | 检查 | 实际结果 | 证据 |
 | --- | --- | --- |
-| TypeScript 严格编译 | 通过，无 React/Electron/Tauri 编译依赖 | `npm run build` |
-| 独立依赖安装 | 通过；在独立临时目录执行 `npm ci --offline --ignore-scripts --no-audit --no-fund`，安装 3 个开发包 | package-lock 固定版本 |
-| Node 回归 | 35 / 35 通过 | `tests/*.test.mjs` |
-| Python 原生适配 | 6 / 6 通过 | `tests/renpy/test_adapter.py` |
-| Healing 原码对照 | 65 场景、118611 次段落访问、1296 条完整路线一致 | [upstream-check.json](upstream-check.json) |
-| NetLove 原码对照 | 43 场景、17251 次段落访问、288 条完整路线一致 | [upstream-check.json](upstream-check.json) |
-| Circuit 原码对照 | 11 章、1521 个可达库存状态、1731 次动作转换一致 | [upstream-check.json](upstream-check.json) |
-| Rain 原码对照 | 26 场景、16 条路线，原编译器与抽取编译器两个输出逐字一致 | [rain-upstream-check.json](rain-upstream-check.json) |
-| 浏览器真实交互 | 8 项场景通过；后台自动计时条件另以单元检查覆盖 | [browser-check.json](browser-check.json) |
-| 真实断网重开 | 下载完成后切换浏览器上下文为 offline，重载、切换模式、恢复原档通过 | 浏览器第 7 项 |
-| 视图检查 | 1280px 桌面与 390px 移动视图；无横向溢出；截图已人工检查 | [桌面](previews/demo-desktop.png)、[移动](previews/demo-mobile.png) |
+| TypeScript 编译 | 通过；严格模式；导入模块无浏览器副作用 | npm run build |
+| Node | 53 / 53 通过；含调度、暂停、Grapheme、VM、日志恢复、媒体和打包 | tests/*.test.mjs |
+| 原生历史工具 | Python 6 / 6 通过，原编译适配保留 | tests/renpy |
+| Rain 自研 VM 对照 | 26 原场景 → 32 自研执行块；16 路线、6692 次段落、168 次选择回应访问 | [rain-self-runtime-check.json](rain-self-runtime-check.json) |
+| 自研宿主浏览器 | 10 / 10 通过 | [self-runtime-browser-check.json](self-runtime-browser-check.json) |
+| 原诊断页浏览器 | 8 / 8 通过，作为旧模块回归 | [browser-check.json](browser-check.json) |
+| 独立作品构建 | 四种项目均构建通过；拒绝已有输出、损坏哈希、逃逸链接和路径冲突 | tests/package.test.mjs |
+| 实际独立产物 | 在 /play/ 子目录启动、选项回应、PWA 下载、真实断网刷新通过 | 自研浏览器第 10 项 |
+| 媒体 | 真实 Web Audio/HTML audio 播放；语音结束才释放自动阅读 | 自研浏览器第 8 项 |
+| 失败恢复 | 立绘下载失败仍可读与选择；损坏存档不改变当前进度 | 浏览器与 Node |
+| 视图 | 1280px 与 390px 无横向溢出；截图检查后修正立绘素材透明边界 | [桌面](previews/self-engine-desktop.png)、[移动](previews/self-engine-mobile.png) |
 
-原码对照覆盖状态、对白变体、人物表现重建、完整结局路线与解析后的存档。Circuit 对照使用原章节数据但跳过美术装饰器；它不证明声音证据文件或正式 UI 的播放效果。Rain 检查的是编译器一致性，没有启动 SDK。
+## 原数据对照的范围
+
+自研 Rain 对照逐条检查原台词 ID 与选择回应的准确顺序，检查数值/布尔最终状态、可达结局和自研存档重放。比较器只调用原 Python 状态枚举器产生期望结果，自研程序执行完全由 TypeScript VM 完成；没有调用 Ren’Py SDK、WASM 或运行时。
+
+v0.1 的 Healing 1296 路线、NetLove 288 路线、Circuit 1521 状态/1731 转换等提取证据保留在 [旧验收记录](VALIDATION-v0.1.0.md)。本轮原提取状态机规则未改动；新驱动、调度与宿主另有专门回归。完整源项目对照报告仍明确对应 provenance 的固定提交，不冒充四作最新发行验收。
 
 ## 复现
 
@@ -25,19 +29,16 @@ npm ci
 npm run check
 npx playwright install chromium
 npm run test:browser
+npm run verify:rain -- /path/to/pinned/Rain docs/rain-self-runtime-check.json
 ```
 
-`npm run check` 执行构建、Node 测试、Python 测试与来源哈希检查。浏览器检查另行启动本地服务器，自行关闭；输出写入被忽略的 test-results。可通过 `VN_ENGINE_TEST_OUTPUT` 改变测试输出目录。
+普通 CI 运行 Node/Python、来源校验和两组浏览器，并构建四份独立作品。浏览器报告、截图和构建 artifact 在对应 Actions 提交中留档。原作源码比较需要明确提供的固定源码，普通 CI 不获取四作完整媒体。
 
-本环境使用已安装的 Chromium 可执行文件运行 Playwright，采用正常站点隔离与 Web 安全设置；通过 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH` 指定该文件。默认运行使用 Playwright 安装的浏览器。
+## 本轮未完成的范围
 
-源码比较需要外部精确快照，命令见 [接入与兼容](MIGRATION.md)。普通 CI 不下载四作完整正文和媒体；该对照报告保留源提交，可在适配器变化后重跑。
+- 四个正式游戏切换到新核心后的完整 PWA/Windows 迁移与旧档验收。
+- Windows 原生桌面宿主和原生系统集成。
+- 可视化编辑器、复杂动画轨道、3D/物理/战斗。
+- 四作正式素材与声音的创作质量；样例 SVG/测试音只验证引擎。
 
-## 尚未验收
-
-- 此仓库生成的 Windows Electron/Tauri 客户端：尚未实现与运行。
-- Ren’Py 8.5.3 SDK 的 lint、实际对话、原生存档/回滚：本轮未执行。
-- 四个正式游戏切换依赖后的完整实包回归：本轮没有切换依赖。
-- 全部演出、角色美术、配音听感与剧情创作质量：属于源项目，不能用核心测试替代。
-
-仓库提供 GitHub Actions 检查工作流；远端运行结果以对应提交 Actions 页面为准。
+Ren’Py 兼容工具仍通过原测试，但其 SDK 实际执行不是本轮自研运行时证据。

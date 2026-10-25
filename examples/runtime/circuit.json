@@ -1,0 +1,674 @@
+{
+  "game": "vn-self-investigation",
+  "title": "夜间记录 · 引擎样例",
+  "type": "investigation",
+  "chapters": [
+    {
+      "id": "chapter-one",
+      "order": 0,
+      "title": "调查样例 1",
+      "entryNode": "hub",
+      "nodes": {
+        "hub": {
+          "kind": "investigation",
+          "text": "调查两份资料，再进入推理。调查可以回到同一节点。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "inspect-a",
+              "label": "查看记录",
+              "next": "a",
+              "collect": "record",
+              "hidesWhenCollected": "record"
+            },
+            {
+              "id": "inspect-b",
+              "label": "查看照片",
+              "next": "b",
+              "collect": "photo",
+              "hidesWhenCollected": "photo"
+            },
+            {
+              "id": "reason",
+              "label": "开始推理",
+              "next": "puzzle",
+              "requiresEvidence": [
+                "record",
+                "photo"
+              ]
+            }
+          ],
+          "scene": {
+            "hotspots": [
+              {
+                "id": "desk",
+                "actionId": "inspect-a",
+                "label": "桌上的记录",
+                "x": 30,
+                "y": 40
+              }
+            ]
+          }
+        },
+        "a": {
+          "kind": "evidence",
+          "text": "已收集记录。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "return",
+              "label": "返回调查",
+              "next": "hub"
+            }
+          ],
+          "requiresEvidence": [
+            "record"
+          ]
+        },
+        "b": {
+          "kind": "evidence",
+          "text": "已收集照片。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "return",
+              "label": "返回调查",
+              "next": "hub"
+            }
+          ],
+          "requiresEvidence": [
+            "photo"
+          ]
+        },
+        "puzzle": {
+          "kind": "puzzle",
+          "text": "两份资料可以相互印证。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "right",
+              "label": "核对时间一致",
+              "next": "complete",
+              "requiresEvidence": [
+                "record",
+                "photo"
+              ]
+            },
+            {
+              "id": "wrong",
+              "label": "直接下结论",
+              "next": "failure"
+            }
+          ],
+          "requiresEvidence": [
+            "record",
+            "photo"
+          ],
+          "puzzle": {
+            "prompt": "哪种推理有证据支持？",
+            "hint": "核对两份资料的时间。"
+          }
+        },
+        "failure": {
+          "kind": "ending",
+          "text": "推理失败；可以清空证据重新调查。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "retry",
+              "label": "重新调查",
+              "next": "hub",
+              "resetEvidence": true
+            }
+          ],
+          "outcome": "failure"
+        },
+        "complete": {
+          "kind": "ending",
+          "text": "本章完成，下一章现已解锁。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "replay",
+              "label": "重玩本章",
+              "next": "hub",
+              "resetEvidence": true
+            }
+          ],
+          "requiresEvidence": [
+            "record",
+            "photo"
+          ],
+          "outcome": "complete"
+        }
+      },
+      "evidence": {
+        "record": {
+          "title": "记录",
+          "detail": "一份带时间的记录。"
+        },
+        "photo": {
+          "title": "照片",
+          "detail": "一张可以核对时间的照片。"
+        }
+      },
+      "requiredEvidence": [
+        "record",
+        "photo"
+      ]
+    },
+    {
+      "id": "chapter-two",
+      "order": 1,
+      "title": "调查样例 2",
+      "entryNode": "hub",
+      "nodes": {
+        "hub": {
+          "kind": "investigation",
+          "text": "调查两份资料，再进入推理。调查可以回到同一节点。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "inspect-a",
+              "label": "查看记录",
+              "next": "a",
+              "collect": "record",
+              "hidesWhenCollected": "record"
+            },
+            {
+              "id": "inspect-b",
+              "label": "查看照片",
+              "next": "b",
+              "collect": "photo",
+              "hidesWhenCollected": "photo"
+            },
+            {
+              "id": "reason",
+              "label": "开始推理",
+              "next": "puzzle",
+              "requiresEvidence": [
+                "record",
+                "photo"
+              ]
+            }
+          ],
+          "scene": {
+            "hotspots": [
+              {
+                "id": "desk",
+                "actionId": "inspect-a",
+                "label": "桌上的记录",
+                "x": 30,
+                "y": 40
+              }
+            ]
+          }
+        },
+        "a": {
+          "kind": "evidence",
+          "text": "已收集记录。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "return",
+              "label": "返回调查",
+              "next": "hub"
+            }
+          ],
+          "requiresEvidence": [
+            "record"
+          ]
+        },
+        "b": {
+          "kind": "evidence",
+          "text": "已收集照片。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "return",
+              "label": "返回调查",
+              "next": "hub"
+            }
+          ],
+          "requiresEvidence": [
+            "photo"
+          ]
+        },
+        "puzzle": {
+          "kind": "puzzle",
+          "text": "两份资料可以相互印证。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "right",
+              "label": "核对时间一致",
+              "next": "complete",
+              "requiresEvidence": [
+                "record",
+                "photo"
+              ]
+            },
+            {
+              "id": "wrong",
+              "label": "直接下结论",
+              "next": "failure"
+            }
+          ],
+          "requiresEvidence": [
+            "record",
+            "photo"
+          ],
+          "puzzle": {
+            "prompt": "哪种推理有证据支持？",
+            "hint": "核对两份资料的时间。"
+          }
+        },
+        "failure": {
+          "kind": "ending",
+          "text": "推理失败；可以清空证据重新调查。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "retry",
+              "label": "重新调查",
+              "next": "hub",
+              "resetEvidence": true
+            }
+          ],
+          "outcome": "failure"
+        },
+        "complete": {
+          "kind": "ending",
+          "text": "本章完成，下一章现已解锁。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "replay",
+              "label": "重玩本章",
+              "next": "hub",
+              "resetEvidence": true
+            }
+          ],
+          "requiresEvidence": [
+            "record",
+            "photo"
+          ],
+          "outcome": "complete"
+        }
+      },
+      "evidence": {
+        "record": {
+          "title": "记录",
+          "detail": "一份带时间的记录。"
+        },
+        "photo": {
+          "title": "照片",
+          "detail": "一张可以核对时间的照片。"
+        }
+      },
+      "requiredEvidence": [
+        "record",
+        "photo"
+      ]
+    }
+  ],
+  "stage": {
+    "defaults": {
+      "background": "dispatch"
+    },
+    "nodes": {
+      "chapter-one/a": {
+        "document": {
+          "title": "现场记录",
+          "lines": [
+            "这是一份技术样例文书。",
+            "证据只由调查动作取得，读档需要重放合法动作。"
+          ]
+        }
+      },
+      "chapter-one/b": {
+        "document": {
+          "title": "影像核对",
+          "lines": [
+            "这是一份技术样例文书。",
+            "证据只由调查动作取得，读档需要重放合法动作。"
+          ]
+        }
+      },
+      "chapter-one/failure": {
+        "effect": {
+          "type": "shake",
+          "durationMs": 350
+        },
+        "sound": "cue"
+      },
+      "chapter-two/a": {
+        "document": {
+          "title": "现场记录",
+          "lines": [
+            "这是一份技术样例文书。",
+            "证据只由调查动作取得，读档需要重放合法动作。"
+          ]
+        }
+      },
+      "chapter-two/b": {
+        "document": {
+          "title": "影像核对",
+          "lines": [
+            "这是一份技术样例文书。",
+            "证据只由调查动作取得，读档需要重放合法动作。"
+          ]
+        }
+      },
+      "chapter-two/failure": {
+        "effect": {
+          "type": "shake",
+          "durationMs": 350
+        },
+        "sound": "cue"
+      }
+    }
+  },
+  "schema": 1,
+  "version": "self-demo-v1",
+  "font": "ui-font",
+  "assets": [
+    {
+      "id": "ui-font",
+      "kind": "font",
+      "src": "assets/ui.woff2",
+      "license": {
+        "name": "SIL OFL 1.1",
+        "src": "assets/OFL.txt"
+      }
+    },
+    {
+      "id": "classroom",
+      "kind": "background",
+      "src": "assets/classroom.svg",
+      "alt": "引擎技术样例背景"
+    },
+    {
+      "id": "campus",
+      "kind": "background",
+      "src": "assets/classroom.svg",
+      "alt": "引擎技术样例背景"
+    },
+    {
+      "id": "bedroom",
+      "kind": "background",
+      "src": "assets/bedroom.svg",
+      "alt": "引擎技术样例背景"
+    },
+    {
+      "id": "balcony",
+      "kind": "background",
+      "src": "assets/bedroom.svg",
+      "alt": "引擎技术样例背景"
+    },
+    {
+      "id": "dispatch",
+      "kind": "background",
+      "src": "assets/dispatch.svg",
+      "alt": "引擎技术样例背景"
+    },
+    {
+      "id": "lin/neutral",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "lin/smile",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "lin/shy",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "lin/worried",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "lin/hurt",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "lin/surprised",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "chen/neutral",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "chen/smile",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "chen/shy",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "chen/worried",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "chen/hurt",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "chen/surprised",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "tinghe/neutral",
+      "kind": "portrait",
+      "src": "assets/contact.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "tinghe/smile",
+      "kind": "portrait",
+      "src": "assets/contact.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "tinghe/shy",
+      "kind": "portrait",
+      "src": "assets/contact.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "tinghe/worried",
+      "kind": "portrait",
+      "src": "assets/contact.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "tinghe/hurt",
+      "kind": "portrait",
+      "src": "assets/contact.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "tinghe/surprised",
+      "kind": "portrait",
+      "src": "assets/contact.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "xumi/neutral",
+      "kind": "portrait",
+      "src": "assets/contact.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "xumi/smile",
+      "kind": "portrait",
+      "src": "assets/contact.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "xumi/shy",
+      "kind": "portrait",
+      "src": "assets/contact.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "xumi/worried",
+      "kind": "portrait",
+      "src": "assets/contact.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "xumi/hurt",
+      "kind": "portrait",
+      "src": "assets/contact.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "xumi/surprised",
+      "kind": "portrait",
+      "src": "assets/contact.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "heroine/neutral",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "heroine/smile",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "heroine/shy",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "heroine/worried",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "heroine/hurt",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "heroine/surprised",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "alt": "引擎技术样例立绘"
+    },
+    {
+      "id": "page-together",
+      "kind": "cg",
+      "src": "assets/letter.svg",
+      "alt": "信笺事件插图"
+    },
+    {
+      "id": "page-letter",
+      "kind": "cg",
+      "src": "assets/letter.svg",
+      "alt": "信笺事件插图"
+    },
+    {
+      "id": "page-quiet",
+      "kind": "cg",
+      "src": "assets/letter.svg",
+      "alt": "信笺事件插图"
+    },
+    {
+      "id": "cue",
+      "kind": "audio",
+      "src": "assets/cue.wav",
+      "alt": "合成测试音"
+    },
+    {
+      "id": "voice-test",
+      "kind": "audio",
+      "src": "assets/voice-test.wav",
+      "alt": "合成测试音"
+    },
+    {
+      "id": "music-test",
+      "kind": "audio",
+      "src": "assets/music-test.wav",
+      "alt": "合成测试音"
+    }
+  ],
+  "settings": {
+    "textDelayMs": 28,
+    "autoDelayMs": 1600,
+    "volume": 0.2,
+    "voiceVolume": 0.45
+  }
+}

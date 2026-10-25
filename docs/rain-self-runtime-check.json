@@ -1,0 +1,16 @@
+{
+  "repository": "Rain",
+  "sourceScenes": 26,
+  "selfRuntimeBlocks": 32,
+  "routes": 16,
+  "paragraphVisits": 6692,
+  "responseLineVisits": 168,
+  "checks": [
+    "all original line IDs and post-choice responses in exact order",
+    "boolean/numeric final state",
+    "all reachable native endings",
+    "self-runtime save replay"
+  ],
+  "usesRenpyRuntime": false,
+  "result": "passed"
+}

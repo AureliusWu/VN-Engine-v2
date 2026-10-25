@@ -16,26 +16,42 @@ async function listJS(dir) {
   }
   return result;
 }
+async function listRuntime(dir = 'examples/runtime') {
+  const files = [];
+  for (const entry of await readdir(resolve(root, dir), { withFileTypes: true })) {
+    const path = dir + '/' + entry.name;
+    if (entry.isDirectory()) files.push(...await listRuntime(path));
+    else files.push(path);
+  }
+  return files;
+}
 export async function createDemoServer() {
   const names = [...Object.keys(aliases), ...fixtures, ...await listJS('dist')];
   const files = await Promise.all(names.map(async name => ({ name, bytes: await readFile(resolve(root, aliases[name] ?? name)) })));
   const worker = renderWorker({ namespace: 'vn-engine-demo', version: fingerprintFiles(files), urls: names });
+  const engineFiles = [...(await listRuntime()).map(path => ({ name: path.slice('examples/runtime/'.length), path })),
+    ...(await listJS('dist')).map(path => ({ name: 'lib/' + path.slice('dist/'.length), path }))];
+  const engineBytes = await Promise.all(engineFiles.map(async file => ({ name: file.name, bytes: await readFile(resolve(root, file.path)) })));
+  const engineWorker = renderWorker({ namespace: 'vn-self-engine', version: fingerprintFiles(engineBytes), urls: engineFiles.map(file => file.name) });
   return createServer(async (request, response) => {
     try {
       const name = decodeURIComponent(new URL(request.url, 'http://localhost').pathname).replace(/^\//, '') || 'index.html';
-      if (name === 'sw.js') {
-        response.writeHead(200, { 'Content-Type': 'text/javascript', 'Cache-Control': 'no-cache' }); response.end(worker); return;
+      if (name === 'engine') { response.writeHead(302, { Location: '/engine/' }); response.end(); return; }
+      if (name === 'sw.js' || name === 'engine/sw.js') {
+        response.writeHead(200, { 'Content-Type': 'text/javascript', 'Cache-Control': 'no-cache' }); response.end(name === 'sw.js' ? worker : engineWorker); return;
       }
-      const path = resolve(root, aliases[name] ?? name);
+      const mapped = name.startsWith('engine/lib/') ? 'dist/' + name.slice('engine/lib/'.length)
+        : name.startsWith('engine/') ? 'examples/runtime/' + (name.slice('engine/'.length) || 'index.html') : aliases[name] ?? name;
+      const path = resolve(root, mapped);
       // A demo server, never a directory listing or arbitrary workspace file server.
-      if (!path.startsWith(root + sep) || !/^(examples|dist)\//.test(aliases[name] ?? name)) { response.writeHead(404); response.end(); return; }
+      if (!path.startsWith(root + sep) || !/^(examples|dist)\//.test(mapped)) { response.writeHead(404); response.end(); return; }
       const bytes = await readFile(path);
-      const type = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.rpy': 'text/plain', '.woff2': 'font/woff2' }[extname(path)] ?? 'application/octet-stream';
+      const type = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.rpy': 'text/plain', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.wav': 'audio/wav' }[extname(path)] ?? 'application/octet-stream';
       response.writeHead(200, { 'Content-Type': type + '; charset=utf-8', 'Cache-Control': 'no-cache' }); response.end(bytes);
     } catch { response.writeHead(404); response.end('Not found'); }
   });
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const server = await createDemoServer();
-  server.listen(Number(process.env.PORT ?? 4173), '127.0.0.1', () => console.log(`VN Engine v2: http://127.0.0.1:${server.address().port}`));
+  server.listen(Number(process.env.PORT ?? 4173), '127.0.0.1', () => console.log(`VN Engine v2 自研运行时: http://127.0.0.1:${server.address().port}/engine/`));
 }

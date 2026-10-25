@@ -10,7 +10,8 @@
   "notes": [
     "Snapshots were read from exact commits; source working trees were not modified.",
     "Verbatim files are checked against original SHA-256. Adapted targets retain source hashes and have independent regression evidence.",
-    "New demo texts and host tools are independent of the four original stories."
+    "New demo texts and host tools are independent of the four original stories.",
+    "0.2 adds a self-developed interpreter, scheduler, renderer and standalone builder; legacy source projects remain unchanged."
   ],
   "files": [
     {
@@ -69,6 +70,128 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ]
+    },
+    {
+      "target": "examples/runtime/app.mjs",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "3371754bf298c0720d546248040970d0198f30396bc6e837d27260d4ed7a3934"
+    },
+    {
+      "target": "examples/runtime/assets/OFL.txt",
+      "mode": "verbatim",
+      "origins": [
+        {
+          "repository": "AureliusWu/Rain",
+          "commit": "d96510fc73ebe6a354bbf638613f8e4483f3366b",
+          "path": "licenses/SourceHanSans-OFL.txt",
+          "sha256": "fcac737e761ec63dbfbdce11030a1780161920d80315edba9c8beff1c2bac5a2"
+        }
+      ],
+      "targetSha256": "fcac737e761ec63dbfbdce11030a1780161920d80315edba9c8beff1c2bac5a2"
+    },
+    {
+      "target": "examples/runtime/assets/bedroom.svg",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "d27ebbcf89dffb01f30bee19e17cd32d8884fcf08be09ac23f21b4b12f3aec0e"
+    },
+    {
+      "target": "examples/runtime/assets/classroom.svg",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "2761edf9563cc9db15629d70e03096d184d0e89698d142100d3c4710092a3808"
+    },
+    {
+      "target": "examples/runtime/assets/contact.svg",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "38288a51a6a6b801e1b42670a434b27213710cbb5da2674e16f56a1ea8be48e9"
+    },
+    {
+      "target": "examples/runtime/assets/cue.wav",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "ab910ded3f306a65f67341b17d18a9fd043473f7980ff3ebc7fb290af8b20b7b"
+    },
+    {
+      "target": "examples/runtime/assets/dispatch.svg",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "81e38f0e92842a93b873a905100517f0bd30b87f361bf43a2c82cc1031121781"
+    },
+    {
+      "target": "examples/runtime/assets/letter.svg",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "a689306c319cc780d734852399617f9be661eadc5045b2899ff7ae05dfefe8ce"
+    },
+    {
+      "target": "examples/runtime/assets/music-test.wav",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "406b3d388ab2d18e2cee5db1fc228019082df074c57c302114a87c77b79d02d1"
+    },
+    {
+      "target": "examples/runtime/assets/student.svg",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "fde972e6206aa75ec276623cab9975043b05072298847bef39fa84f0e9052b05"
+    },
+    {
+      "target": "examples/runtime/assets/ui.woff2",
+      "mode": "adapted",
+      "origins": [
+        {
+          "repository": "AureliusWu/Rain",
+          "commit": "d96510fc73ebe6a354bbf638613f8e4483f3366b",
+          "path": "game/fonts/SourceHanSansLite.ttf",
+          "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
+        }
+      ],
+      "targetSha256": "fdd65f34fc82e7dc3811ce00f36579b0f24d3ce95c61ae2e241c9354a19b3b79"
+    },
+    {
+      "target": "examples/runtime/assets/voice-test.wav",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "dc137b1d691bdfa4e5a069e7cb1663f3225588f838395779b96720d643292496"
+    },
+    {
+      "target": "examples/runtime/campus.json",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "0e2c8b75ec80c8066a1212e428cc51f7618010ee2690b68c91b06f966e13271e"
+    },
+    {
+      "target": "examples/runtime/circuit.json",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "95a449f3f44682a7ea4683936a8a32b1ac4a82b9f3b4ac8f43381e12e50c2430"
+    },
+    {
+      "target": "examples/runtime/index.html",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "37ea2c92eaedfb5128487ff6dc68c950945bd305c40dc7a218f61c14c389dc85"
+    },
+    {
+      "target": "examples/runtime/netlove.json",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "5b6ecbc8e6ca8bed58754cfc8b52f8e062112db46c84e2d6084628f1381bcddc"
+    },
+    {
+      "target": "examples/runtime/rain.json",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "a1f61d836aaf5535cf82fb8910a6b362a7ec5f78708432a90d255aee9ea87f37"
+    },
+    {
+      "target": "examples/runtime/style.css",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "278d3e3e9cbdd89cad487bd4ccb93354c86934477e4bbf956578c21965e3c74e"
     },
     {
       "target": "licenses/Healing-LICENSE.txt",
@@ -192,6 +315,31 @@
       ]
     },
     {
+      "target": "src/adapters/rain-runtime.ts",
+      "mode": "adapted",
+      "origins": [
+        {
+          "repository": "AureliusWu/Rain",
+          "commit": "d96510fc73ebe6a354bbf638613f8e4483f3366b",
+          "path": "tools/compile_story.py",
+          "sha256": "5b59372411798f5cb1b0ce493ddb5d5ef31a28d61d2e55f72d8e51364acd9134"
+        },
+        {
+          "repository": "AureliusWu/Rain",
+          "commit": "d96510fc73ebe6a354bbf638613f8e4483f3366b",
+          "path": "tools/story_model.py",
+          "sha256": "6673033986abdd34c3b046e64470f48267d1a7202f8f04d342ccf66fc19895fe"
+        }
+      ],
+      "targetSha256": "c35ff762637f94fc73140305c5abfa219d6f776ba1390ddae9c00d9e3439178f"
+    },
+    {
+      "target": "src/assets/catalog.ts",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "e361de0f2e96bdc21d565f17dcd2933dbe7f1336bf057d195584289c01ce1c92"
+    },
+    {
       "target": "src/audio/catalog.ts",
       "mode": "adapted",
       "targetSha256": "74bac8c2a2bbc82983bc7915b84276d88bffe654ad06e05e4b8d2b8efa23ae25",
@@ -252,7 +400,7 @@
     {
       "target": "src/index.ts",
       "mode": "new",
-      "targetSha256": "5544d52f28d35e402829fc876a7560b6de5286bd917a65f1d0eacdbcc229dbd2",
+      "targetSha256": "42060c0ec156beb5b7e014bf1e4702bff01c3fbeb3396b1700e02fb02286f80c",
       "origins": []
     },
     {
@@ -369,6 +517,72 @@
       ]
     },
     {
+      "target": "src/render/dom-style.ts",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "32aed4c5528ec8c80cd70663c31b6d544aa9b2536e7790c7340036dd2433c41f"
+    },
+    {
+      "target": "src/render/dom.ts",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "79683bd55788c79e16b6de730bbb07ad203e77a2adfa8808223dcac5ae046e54"
+    },
+    {
+      "target": "src/render/mount.ts",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "b17205ff364486c41bb83012b8e59b01fea20b113c608dc316f173c51674a355"
+    },
+    {
+      "target": "src/runtime/drivers.ts",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "c61ce90ffb40fed5ca29eeadaa6811968066a76f84d92e9e1e342fb00d3afe8c"
+    },
+    {
+      "target": "src/runtime/media.ts",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "1aaad1c8f7038a3caa259ded873cd54d9e482ccf74de45ef076c7bcaeb70be2a"
+    },
+    {
+      "target": "src/runtime/project.ts",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "d0c75ccd8de926f21736599e1c115094f4ff110ca0c38a347911aa56ec87146b"
+    },
+    {
+      "target": "src/runtime/session.ts",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "3bfb92428dccaf8a88f2a0e46ec4fa45a03f9ae3d2c6ac6b3bfcda2a1d71e0f7"
+    },
+    {
+      "target": "src/script/engine.ts",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "7d54cb1b1f53fbc62c57aad1d8cf29a0ef60f23936b625aad52896e5aa89e1f7"
+    },
+    {
+      "target": "src/script/types.ts",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "cb57fb121479950d295ee609fce625a6f03364b246d465df589b5f9d0bb0ad48"
+    },
+    {
+      "target": "src/stage/cues.ts",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "651d52d71cb428c1148d7614e48f7c28501229184b299702818dbcfb698d7f77"
+    },
+    {
+      "target": "src/stage/types.ts",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "2c72911191b060feb27421a2a36639255d60279e1d225bc0d6c0e74fd50061f6"
+    },
+    {
       "target": "src/storage/preferences.ts",
       "mode": "adapted",
       "targetSha256": "3f73e5e5e3bd65da5cab1a8a14e4a50f2007b300b232571bd12726037484da6a",
@@ -420,10 +634,22 @@
       ]
     },
     {
+      "target": "src/version.ts",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "acac4c83a6834e3c7b152963723eb61d1959e0e278ce95e9fa44b628190aa815"
+    },
+    {
       "target": "tools/check-provenance.mjs",
       "mode": "new",
       "targetSha256": "1e4368a8d1bde6d2d8e3936da9854986e98d85b61c186a5d5a6cbf545715aebe",
       "origins": []
+    },
+    {
+      "target": "tools/compare-rain-runtime.mjs",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "ee13a4cdab6c262ab91e295db397e948b2883e5f69a3b457b6167eb49de038b3"
     },
     {
       "target": "tools/compare-upstream.mjs",
@@ -436,6 +662,18 @@
       "mode": "new",
       "targetSha256": "167fa63981d863cfb66cc08bdc8055772323d68d338d76c57894e84ae14c5319",
       "origins": []
+    },
+    {
+      "target": "tools/generate-runtime-audio.py",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "0e19afdf5a818676748d238c813ca52e38569ccf0642f034ecdb08ed47ccb5aa"
+    },
+    {
+      "target": "tools/package-game.mjs",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "a8ede9a0fc30e4e6f644e581c1896557ecc90160e1814aec326d43dfc59d40b4"
     },
     {
       "target": "tools/pwa.mjs",
@@ -453,7 +691,7 @@
     {
       "target": "tools/serve.mjs",
       "mode": "new",
-      "targetSha256": "22ab8fb32938088877be023fc03846f299b4ab14eb6bf78d4457d6dc1acf1a3f",
+      "targetSha256": "4576ca5c98dcfead62ffcf851803569d21d1f2d2033fceb3d4bbdef71b6ee702",
       "origins": []
     },
     {
@@ -461,6 +699,12 @@
       "mode": "new",
       "targetSha256": "164e96b7a77b131fd677658762d6f277de6615d7ed525720254284066db7a463",
       "origins": []
+    },
+    {
+      "target": "tools/subset_runtime_font.py",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "d113029442ef926daff9ad8c8a22136563ddfb6dca3892000ac51160487819c8"
     },
     {
       "target": "tools/validate-graph.mjs",

@@ -1,0 +1,37 @@
+import { AssetCatalog, type Asset } from '../assets/catalog.js';
+import { NarrativeEngine } from '../narrative/engine.js';
+import type { NarrativeConfig, Scene } from '../narrative/types.js';
+import { createHealingEngine, healingPresentationAt } from '../adapters/healing.js';
+import { createNetLoveEngine, netlovePresentationAt } from '../adapters/netlove.js';
+import { InvestigationEngine } from '../investigation/engine.js';
+import type { InvestigationChapter } from '../investigation/types.js';
+import { ScriptEngine } from '../script/engine.js';
+import type { ScriptProgram } from '../script/types.js';
+import { createRainRuntime, type RainStory } from '../adapters/rain-runtime.js';
+import type { StageCue } from '../stage/types.js';
+import { NarrativeDriver, ScriptDriver, InvestigationDriver, type NarrativeStage, type InvestigationStage } from './drivers.js';
+import { RuntimeSession, type RuntimeSettings, type Clock } from './session.js';
+
+type ProjectBase = { schema: 1; game: string; version: string; title: string; assets: readonly Asset[]; font?: string; settings?: Partial<RuntimeSettings> };
+export type EngineProject = ProjectBase & (
+  { type: 'narrative'; adapter?: 'healing' | 'netlove'; entry?: string; stats?: Record<string, number>; scenes: readonly Scene[]; stage?: NarrativeStage }
+  | { type: 'script'; program: ScriptProgram; defaults?: StageCue }
+  | { type: 'rain'; story: RainStory; defaults?: StageCue }
+  | { type: 'investigation'; chapters: readonly InvestigationChapter[]; stage?: InvestigationStage }
+);
+export function createProject(project: EngineProject, baseURL: string | URL, options: { clock?: Clock; settings?: Partial<RuntimeSettings> } = {}) {
+  if (project.schema !== 1 || !project.game || !project.version || !project.title || !Array.isArray(project.assets)) throw new Error('Invalid engine project');
+  const assets = new AssetCatalog(project.assets, baseURL);
+  let driver: NarrativeDriver | ScriptDriver | InvestigationDriver;
+  if (project.type === 'narrative') {
+    let config: NarrativeConfig, presentation = project.stage?.presentation;
+    if (project.adapter === 'healing') { config = createHealingEngine(project.scenes).config; presentation = healingPresentationAt; }
+    else if (project.adapter === 'netlove') { config = createNetLoveEngine(project.scenes).config; presentation = netlovePresentationAt; }
+    else config = { game: project.game, storyVersion: project.version, entry: project.entry ?? project.scenes[0]?.id, stats: project.stats ?? {}, scenes: project.scenes };
+    driver = new NarrativeDriver(new NarrativeEngine({ ...config, game: project.game, storyVersion: project.version, legacyStoryVersions: [] }), { ...project.stage, presentation });
+  } else if (project.type === 'investigation') driver = new InvestigationDriver(project.game, project.version, new InvestigationEngine(project.chapters), project.stage);
+  else if (project.type === 'script') driver = new ScriptDriver(new ScriptEngine({ ...project.program, game: project.game, version: project.version }), project.defaults);
+  else if (project.type === 'rain') driver = new ScriptDriver(createRainRuntime(project.story, { game: project.game, version: project.version }), project.defaults);
+  else throw new Error('Unknown project runtime');
+  return { session: new RuntimeSession(driver, { clock: options.clock, settings: { ...project.settings, ...options.settings } }), assets };
+}

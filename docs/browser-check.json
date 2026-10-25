@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "checkedAt": "2026-10-25T05:11:49.484Z",
+  "checkedAt": "2026-10-25T06:18:29.927Z",
   "browser": "153.0.8010.0",
   "checks": [
     "Healing branch, paragraph CG cue and exact-position save/load",
