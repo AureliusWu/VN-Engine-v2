@@ -1,0 +1,93 @@
+using System.Text.Json;
+
+namespace VNEngine.Windows;
+
+internal static class SmokeTests
+{
+    private static bool running;
+    internal static async Task Run(HostWindow window)
+    {
+        if (running) return; running = true;
+        var checks = new List<string>();
+        async Task<string> JS(string script) => await window.Browser.CoreWebView2.ExecuteScriptAsync(script);
+        async Task Wait(string script)
+        {
+            var until = DateTime.UtcNow.AddSeconds(35);
+            while (DateTime.UtcNow < until) { if (await JS(script) == "true") return; await Task.Delay(100); }
+            throw new TimeoutException("原生浏览器检查超时：" + script);
+        }
+        if (!window.IsGame)
+        {
+            await Wait("document.body.dataset.editorReady === 'true' && !!document.querySelector('#preview').contentDocument?.querySelector('.vn-engine')");
+            checks.Add("Native WinForms/WebView2 window starts the bundled editor and own runtime preview");
+            if (window.Options.VerifyPersistence)
+            {
+                if (await JS("localStorage.getItem('vn-native-smoke:studio') === 'retained'") != "true") throw new InvalidDataException("编辑器本地配置未持久化");
+                checks.Add("Editor profile survives a complete process restart");
+            }
+            else await JS("localStorage.setItem('vn-native-smoke:studio','retained')");
+            await JS("document.querySelector('[data-command=open]').click()");
+            await Wait("document.body.dataset.projectType === 'narrative' && document.querySelector('#preview').contentDocument?.querySelector('.vn-portrait')?.naturalWidth > 0");
+            checks.Add("Trusted editor RPC opens JSON through native file IO and loads manifest-only local assets");
+            await JS("(()=>{const input=document.querySelector('[aria-label=\"作品名称\"]'); input.value='Windows native smoke'; input.dispatchEvent(new Event('change'));})()");
+            await Wait("document.body.dataset.dirty === 'true'");
+            await JS("document.querySelector('[data-command=save]').click()");
+            await Wait("document.body.dataset.dirty === 'false'");
+            var saved = window.SmokeSavedFile ?? throw new IOException("没有保存原生工程");
+            using (var document = JsonDocument.Parse(HostFiles.ReadJson(saved))) if (HostFiles.Project(document.RootElement).GetProperty("title").GetString() != "Windows native smoke") throw new InvalidDataException("工程写入结果不同");
+            HostFiles.LocalFile(Path.GetDirectoryName(saved)!, "assets/student.svg");
+            checks.Add("Native save writes the edited workspace atomically and copies referenced local assets");
+            await JS("document.querySelector('[data-command=export]').click()");
+            var export = Path.Combine(window.SmokeFolder, "project.json");
+            var exportUntil = DateTime.UtcNow.AddSeconds(10); while (!File.Exists(export) && DateTime.UtcNow < exportUntil) await Task.Delay(100);
+            using (var document = JsonDocument.Parse(HostFiles.ReadJson(export))) if (document.RootElement.GetProperty("type").GetString() != "narrative" || document.RootElement.TryGetProperty("format", out _)) throw new InvalidDataException("运行数据导出不是原始引擎工程");
+            checks.Add("Native export produces engine project JSON without editor metadata");
+            var previousRevision = await JS("Number(document.body.dataset.previewRevision)");
+            await JS("document.querySelector('[data-command=open]').click()");
+            await Wait("Number(document.body.dataset.previewRevision)>" + previousRevision + " && document.querySelector('#project-name').textContent === 'Windows native smoke' && document.querySelector('#preview').contentDocument?.querySelector('.vn-portrait')?.naturalWidth > 0");
+            checks.Add("Saved workspace reopens from its new directory with its copied assets");
+            await JS("window.nativeDenied=false; const onDenied=e=>{if(e.data?.id==='smoke-invalid'){window.nativeDenied=e.data.ok===false;chrome.webview.removeEventListener('message',onDenied)}};chrome.webview.addEventListener('message',onDenied);chrome.webview.postMessage({id:'smoke-invalid',command:'read-any-file',path:'C:/Windows/win.ini'})");
+            await Wait("window.nativeDenied === true");
+            checks.Add("The native bridge rejects undeclared commands");
+        }
+        else
+        {
+            await Wait("!!document.querySelector('.vn-engine') && document.querySelector('.vn-portrait')?.naturalWidth > 0");
+            checks.Add("Standalone packaged game runs in a native window with local graphics");
+            if (window.Browser.CoreWebView2.Settings.IsWebMessageEnabled) throw new InvalidOperationException("作品窗口暴露了桌面文件桥");
+            checks.Add("Game windows disable the privileged editor bridge");
+            if (!window.Options.VerifyPersistence)
+            {
+                await JS("document.querySelector('[data-control=next]').click()");
+                await Wait("!!document.querySelector('[data-action=together]')");
+                await JS("document.querySelector('[data-action=together]').click()");
+                await Wait("document.querySelector('.vn-text').textContent.length > 5 && !document.querySelector('[data-action=together]')");
+                await Task.Delay(250);
+                await JS("document.querySelector('[data-control=save]').click();localStorage.setItem('vn-native-smoke:expected',document.querySelector('.vn-text').textContent)");
+                if (await JS("!!localStorage.getItem('vn-engine:" + window.GameKey + ":save:1')") != "true") throw new InvalidDataException("作品存档未写入原生配置目录");
+                checks.Add("Real choices and engine saves execute in the Windows player");
+            }
+            else
+            {
+                await JS("document.querySelector('[data-control=load]').click()");
+                await Wait("document.querySelector('.vn-text').textContent === localStorage.getItem('vn-native-smoke:expected')");
+                checks.Add("A full native process restart restores the previously chosen game route");
+            }
+        }
+        var saveControl = window.IsGame ? "document.querySelector('[data-control=save]')" : "document.querySelector('#preview').contentDocument.querySelector('[data-control=save]')";
+        window.WindowState = FormWindowState.Minimized; await Wait(saveControl + "?.disabled === true");
+        window.WindowState = FormWindowState.Normal; await Wait(saveControl + "?.disabled === false");
+        checks.Add("Minimising and restoring the native window pauses and resumes its actual engine session");
+        var previous = window.FormBorderStyle; window.ToggleFullScreen();
+        if (window.FormBorderStyle != FormBorderStyle.None) throw new InvalidOperationException("原生全屏失败");
+        window.ToggleFullScreen(); if (window.FormBorderStyle != previous) throw new InvalidOperationException("原生窗口恢复失败");
+        checks.Add("Native fullscreen restores the original window");
+        if (window.BlockedRequests.Count != 0) throw new InvalidOperationException("页面尝试下载外部资源：" + string.Join(", ", window.BlockedRequests));
+        checks.Add("Editor/player startup uses local resources without external network requests");
+        var report = new { schema = 1, platform = Environment.OSVersion.ToString(), webView = window.Browser.CoreWebView2.Environment.BrowserVersionString, mode = window.IsGame ? "game" : "studio", restart = window.Options.VerifyPersistence, result = "passed", checks, notes = new[] { "CI presets file picker paths; actual native file IO and WebView2 RPC are exercised. Manual interaction with OS file/folder dialogs is not claimed." } };
+        Directory.CreateDirectory(Path.GetDirectoryName(window.Options.Report)!);
+        File.WriteAllText(window.Options.Report, JsonSerializer.Serialize(report, new JsonSerializerOptions { WriteIndented = true }));
+        await using (var image = File.Create(Path.ChangeExtension(window.Options.Report, ".png"))) await window.Browser.CoreWebView2.CapturePreviewAsync(Microsoft.Web.WebView2.Core.CoreWebView2CapturePreviewImageFormat.Png, image);
+        window.Finish();
+    }
+}

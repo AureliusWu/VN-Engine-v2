@@ -13,14 +13,16 @@ export class AssetCatalog {
   private urls = new Map<string, string>();
   private readonly baseHref: string;
   get baseURL(): URL { return new URL(this.baseHref); }
-  constructor(assets: readonly Asset[], baseURL: string | URL) {
+  constructor(assets: readonly Asset[], baseURL: string | URL, resolveURL?: (path: string) => string) {
     const base = new URL(baseURL); this.baseHref = base.href;
     if (!['http:', 'https:', 'file:'].includes(base.protocol) || !base.pathname.endsWith('/')) throw new Error('Asset base must be a directory URL');
     for (const asset of assets) {
       if (!asset.id || this.entries.has(asset.id) || !['background', 'portrait', 'cg', 'audio', 'font'].includes(asset.kind)
         || !localAssetPath(asset.src) || (asset.license && (!asset.license.name || !localAssetPath(asset.license.src)))
         || (asset.sha256 !== undefined && !/^[a-f0-9]{64}$/.test(asset.sha256))) throw new Error('Invalid asset manifest');
-      this.entries.set(asset.id, this.copy(asset)); this.urls.set(asset.id, new URL(asset.src, base).href);
+      const url = new URL(resolveURL ? resolveURL(asset.src) : new URL(asset.src, base).href);
+      if (!['http:', 'https:', 'file:', 'blob:'].includes(url.protocol)) throw new Error('Unsupported resolved asset URL');
+      this.entries.set(asset.id, this.copy(asset)); this.urls.set(asset.id, url.href);
     }
   }
   private copy(asset: Asset): Asset { return { ...asset, ...(asset.license ? { license: { ...asset.license } } : {}) }; }

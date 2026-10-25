@@ -19,9 +19,9 @@ export type EngineProject = ProjectBase & (
   | { type: 'rain'; story: RainStory; defaults?: StageCue }
   | { type: 'investigation'; chapters: readonly InvestigationChapter[]; stage?: InvestigationStage }
 );
-export function createProject(project: EngineProject, baseURL: string | URL, options: { clock?: Clock; settings?: Partial<RuntimeSettings> } = {}) {
+export function createProject(project: EngineProject, baseURL: string | URL, options: { clock?: Clock; settings?: Partial<RuntimeSettings>; assetURL?: (path: string) => string } = {}) {
   if (project.schema !== 1 || !project.game || !project.version || !project.title || !Array.isArray(project.assets)) throw new Error('Invalid engine project');
-  const assets = new AssetCatalog(project.assets, baseURL);
+  const assets = new AssetCatalog(project.assets, baseURL, options.assetURL);
   let driver: NarrativeDriver | ScriptDriver | InvestigationDriver;
   if (project.type === 'narrative') {
     let config: NarrativeConfig, presentation = project.stage?.presentation;

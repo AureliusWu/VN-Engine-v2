@@ -4,12 +4,12 @@ import { MediaDirector } from '../runtime/media.js';
 import type { StoragePort } from '../storage/store.js';
 import { DOMRenderer } from './dom.js';
 
-export type MountOptions = { baseURL?: string | URL; storage?: StoragePort | null; audio?: boolean };
+export type MountOptions = { baseURL?: string | URL; storage?: StoragePort | null; audio?: boolean; assetURL?: (path: string) => string };
 
 /** One entry point: own interpreter/state machine + scheduler + DOM + media. */
 export function mountGame(root: HTMLElement, project: EngineProject, options: MountOptions = {}) {
   const baseURL = options.baseURL ?? new URL('./', root.ownerDocument.baseURI);
-  const { session, assets } = createProject(project, baseURL);
+  const { session, assets } = createProject(project, baseURL, { assetURL: options.assetURL });
   let storage = options.storage;
   if (storage === undefined) try { storage = root.ownerDocument.defaultView?.localStorage; } catch { storage = null; }
   let media: MediaDirector | undefined, context: AudioContext | undefined, disposed = false;
@@ -33,7 +33,10 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
   let renderer: DOMRenderer;
   try { renderer = new DOMRenderer(root, session, assets, { title: project.title, font: project.font, storage, onUnlockAudio: unlockAudio }); }
   catch (error) { session.dispose(); throw error; }
+  const view = root.ownerDocument.defaultView;
+  const hostVisibility = (event: Event) => { const hidden = (event as CustomEvent<unknown>).detail; if (hidden && typeof hidden === 'object' && 'hidden' in hidden && typeof hidden.hidden === 'boolean') session.pause('native-host', hidden.hidden); };
+  view?.addEventListener('vn-engine-host-visibility', hostVisibility);
   return { session, renderer, assets, unlockAudio, dispose() {
-    if (disposed) return; disposed = true; media?.dispose(); session.dispose(); renderer.dispose(); if (context) void context.close().catch(() => {});
+    if (disposed) return; disposed = true; view?.removeEventListener('vn-engine-host-visibility', hostVisibility); media?.dispose(); session.dispose(); renderer.dispose(); if (context) void context.close().catch(() => {});
   } };
 }

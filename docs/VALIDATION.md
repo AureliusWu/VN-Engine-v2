@@ -1,29 +1,32 @@
-# v0.2.1 引擎优化验证
+# v0.3.0 编辑器与 Windows 宿主验证
 
-日期：2026-10-25。当前代码形成自主执行、绘制、交互和打包闭环；不依赖 Ren’Py 执行自研样例。
+日期：2026-10-25。只修改 VN-Engine-v2；四个正式游戏没有迁移，后续迁移仅在用户主动、明确提出后执行。
 
 | 检查 | 实际结果 | 证据 |
 | --- | --- | --- |
-| TypeScript 编译 | 通过；严格模式；导入模块无浏览器副作用 | npm run build |
-| Node | 62 / 62 通过；含调度、暂停、Grapheme、VM、日志恢复、媒体和打包 | tests/*.test.mjs |
-| 原生历史工具 | Python 6 / 6 通过，原编译适配保留 | tests/renpy |
-| Rain 自研 VM 对照 | 26 原场景 → 32 自研执行块；16 路线、6692 次段落、168 次选择回应访问 | [rain-self-runtime-check.json](rain-self-runtime-check.json) |
-| 自研宿主浏览器 | 10 / 10 通过 | [self-runtime-browser-check.json](self-runtime-browser-check.json) |
-| 优化稳定性浏览器 | 4 / 4 通过；节点复用、演出暂停、失败清理与控件更新 | [stability-browser-check.json](stability-browser-check.json) |
-| 原诊断页浏览器 | 8 / 8 通过，作为旧模块回归 | [browser-check.json](browser-check.json) |
-| 独立作品构建 | 四种项目均构建通过；拒绝已有输出、损坏哈希、逃逸链接和路径冲突 | tests/package.test.mjs |
-| 实际独立产物 | 在 /play/ 子目录启动、选项回应、PWA 下载、真实断网刷新通过 | 自研浏览器第 10 项 |
-| 媒体 | 真实 Web Audio/HTML audio 播放；语音结束才释放自动阅读 | 自研浏览器第 8 项 |
-| 失败恢复 | 立绘下载失败仍可读与选择；损坏存档不改变当前进度 | 浏览器与 Node |
-| 视图 | 1280px 与 390px 无横向溢出；截图检查后修正立绘素材透明边界 | [桌面](previews/self-engine-desktop.png)、[移动](previews/self-engine-mobile.png) |
+| TypeScript | 严格编译通过；模块导入无浏览器副作用 | npm run build |
+| Node | 74 / 74 通过；原核心 62 项和作者工具 12 项 | npm run check；tests/editor.test.mjs |
+| Python 历史适配 | 6 / 6 通过 | tests/renpy |
+| 旧诊断页浏览器 | 8 / 8 通过 | [browser-check.json](browser-check.json) |
+| 自研播放器浏览器 | 10 / 10 通过；含媒体、存档、独立打包子目录部署、真实断网重开 | [self-runtime-browser-check.json](self-runtime-browser-check.json) |
+| 播放稳定性浏览器 | 4 / 4 通过 | [stability-browser-check.json](stability-browser-check.json) |
+| 编辑器浏览器 | 9 / 9 通过；编辑/试玩、拖动、撤销、重命名、双格式导出、断链、调查、资源目录、草稿、移动与独立 Studio | [editor-browser-check.json](editor-browser-check.json) |
+| 作者构建 | 四种新建项目分别导出并生成实际独立作品；Studio 是完整本地包 | tests/editor.test.mjs、编辑器浏览器第 9 项 |
+| 来源 | 92 个文件与四个固定源提交验证通过 | docs/provenance.json |
+| Windows 编译 | 已实现宿主和工作流，正在提交原生 CI 验收；当前不记为通过 | .github/workflows/windows.yml |
+| Windows 实际执行 | 待 Windows CI 运行；浏览器测试不代替原生执行 | tools/test-windows.ps1 |
 
-本轮优化范围、六项旧版本复现与局部性能基准见 [OPTIMIZATION-0.2.1.md](OPTIMIZATION-0.2.1.md)。保留 [0.2.0 验证记录](VALIDATION-v0.2.0.md)。
+编辑器截图：[桌面](previews/studio-desktop.png)、[校园样例](previews/studio-campus.png)、[移动](previews/studio-mobile.png)。字体为随编辑器分发的改名 OFL 子集，不依赖截图机器安装中文字体。
 
-## 原数据对照的范围
+## 验证范围
 
-自研 Rain 对照逐条检查原台词 ID 与选择回应的准确顺序，检查数值/布尔最终状态、可达结局和自研存档重放。比较器只调用原 Python 状态枚举器产生期望结果，自研程序执行完全由 TypeScript VM 完成；没有调用 Ren’Py SDK、WASM 或运行时。
+编辑器的预览直接调用自研 mountGame，使用真实选择、调查证据门控和原生 EngineProject。JSON 格式错误保留旧数据；断链禁用导出且支持撤销；目录选择使用真实 SVG 文件的 blob URL；页面重载恢复应用后的工程与尚未应用的 JSON。单独产物检查不依赖开发仓库的文件。
 
-v0.1 的 Healing 1296 路线、NetLove 288 路线、Circuit 1521 状态/1731 转换等提取证据保留在 [旧验收记录](VALIDATION-v0.1.0.md)。本轮原提取状态机规则未改动；新驱动、调度与宿主另有专门回归。完整源项目对照报告仍明确对应 provenance 的固定提交，不冒充四作最新发行验收。
+预览初始化通知竞争已修复为双向握手。调查 document 模式在未提供独立文书 cue 时，以节点正文呈现，编辑器调查样例据此通过真实文书/取证流程。
+
+Windows 专用工作流独立运行宿主文件/路径策略、真实 WebView2 启动、原生工程打开/另存/导出/重开、全屏与最小化、进程重启后的编辑器和作品存档。文件路径由 CI 预设，使用相同的原生 I/O 和消息处理；不冒充人工点击系统选择器。构建与原生执行证据须在实际成功后补录。
+
+此前 Rain 自研 VM 的 16 路线/6692 段落，以及 Healing/NetLove/Circuit 固定原码对照仍对应原记录；本轮没有更改其玩法解释规则，不把固定源码证据当作最新四作发行验收。
 
 ## 复现
 
@@ -32,16 +35,9 @@ npm ci
 npm run check
 npx playwright install chromium
 npm run test:browser
-npm run verify:rain -- /path/to/pinned/Rain docs/rain-self-runtime-check.json
+npm run build:studio -- build/studio
 ```
 
-普通 CI 运行 Node/Python、来源校验和三组浏览器，并构建四份独立作品。浏览器报告、截图和构建 artifact 在对应 Actions 提交中留档。原作源码比较需要明确提供的固定源码，普通 CI 不获取四作完整媒体。
+Windows 构建和原生检查命令见 [WINDOWS.md](WINDOWS.md)。原生实际执行、系统文件对话框人工操作、签名安装发行与实体设备验收分别记录。
 
-## 本轮未完成的范围
-
-- 四作迁移不在当前任务范围，仅用户主动、明确提出后执行。
-- Windows 原生桌面宿主和原生系统集成。
-- 可视化编辑器、复杂动画轨道、3D/物理/战斗。
-- 四作正式素材与声音的创作质量；样例 SVG/测试音只验证引擎。
-
-Ren’Py 兼容工具仍通过原测试，但其 SDK 实际执行不是本轮自研运行时证据。
+保留此前的 [0.2.1](VALIDATION-v0.2.1.md)、[0.2.0](VALIDATION-v0.2.0.md)、[0.1](VALIDATION-v0.1.0.md) 证据。当前可用初版不包含复杂动画时间线、协作编辑或战斗系统；正式游戏迁移继续等待用户主动提出。

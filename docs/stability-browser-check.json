@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "checkedAt": "2026-10-25T06:52:56.291Z",
+  "checkedAt": "2026-10-25T07:51:42.799Z",
   "browser": "153.0.8010.0",
   "checks": [
     "Failed mount releases the session timer and leaves no partial renderer",

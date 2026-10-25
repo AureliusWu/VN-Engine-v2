@@ -1,6 +1,6 @@
 {
   "schema": 1,
-  "checkedAt": "2026-10-25T06:52:54.881Z",
+  "checkedAt": "2026-10-25T07:51:41.335Z",
   "browser": "153.0.8010.0",
   "checks": [
     "Own renderer draws backgrounds/portraits/CG and same-line load suppresses one-shot effects",

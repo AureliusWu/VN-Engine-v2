@@ -12,3 +12,6 @@
 - 只维护 `main`，保留远端前移，不强推。四作保持各自运行链；迁移修改必须等待用户主动、明确提出，不由引擎优化任务自动触发。
 - `dist/`、node_modules、SDK、游戏成品和生成的 Ren’Py 脚本不入库。预览与证据可留在 docs；保留许可。
 - 自研宿主更改运行 `tests/runtime-browser.mjs`；打包器必须用生成产物做子目录部署和断网重开。自研 Rain 适配修改后执行 `tools/compare-rain-runtime.mjs` 的原作 16 路线对照。
+
+- 作者工具修改运行 `tests/editor.test.mjs` 与 `npm run test:editor`，验证工程格式、撤销、断链、目录资源和真实预览；编辑器工程与运行数据分别导出。
+- Windows 宿主修改必须通过 `.github/workflows/windows.yml` 的编译、原生 WebView2 与进程重启检查；系统对话框人工操作和 CI 预设路径分别记录。不得用 Linux 编译或浏览器代替原生执行成功的证据。

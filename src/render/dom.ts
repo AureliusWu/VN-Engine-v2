@@ -128,8 +128,9 @@ export class DOMRenderer {
         this.currentBubble = this.el('div', undefined, 'vn-bubble vn-current'); this.bubbleText = this.el('span');
         this.currentBubble.append(this.el('small', frame.speaker), this.bubbleText); this.chat.append(this.currentBubble); this.chatPinned = true;
       }
-      this.documentView.hidden = !frame.stage.document;
-      if (frame.stage.document) this.documentView.replaceChildren(this.el('h3', frame.stage.document.title), ...frame.stage.document.lines.map(line => this.el('p', line)));
+      const document = frame.stage.document ?? (frame.mode === 'document' ? { title: frame.speaker, lines: [frame.text] } : undefined);
+      this.documentView.hidden = !document;
+      if (document) this.documentView.replaceChildren(this.el('h3', document.title), ...document.lines.map(line => this.el('p', line)));
       this.hotspots.replaceChildren();
       for (const hotspot of frame.hotspots ?? []) {
         if (!frame.actions.some(action => action.id === hotspot.actionId)) continue;

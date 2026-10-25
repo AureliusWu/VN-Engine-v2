@@ -10,6 +10,7 @@ const escape = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;',
 async function modules(directory) {
   const result = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
+    if (entry.isDirectory() && entry.name === 'editor') continue;
     const path = resolve(directory, entry.name);
     if (entry.isDirectory()) result.push(...await modules(path)); else if (entry.name.endsWith('.js')) result.push(path);
   }

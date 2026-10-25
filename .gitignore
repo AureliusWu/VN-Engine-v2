@@ -9,3 +9,5 @@ playwright-report/
 .DS_Store
 examples/renpy/game/story_generated.rpy
 examples/renpy/game/images_generated.rpy
+hosts/windows/bin/
+hosts/windows/obj/

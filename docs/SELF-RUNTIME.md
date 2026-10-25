@@ -76,3 +76,7 @@ DOM 宿主包括阅读层、聊天气泡、通话视图、调查文书/热点、
 ## 当前边界
 
 这是能独立执行与打包的自研叙事引擎 alpha。尚未提供可视化编辑器、复杂场景动画轨道、3D/物理/战斗、Windows 原生宿主和兼容 Ren’Py 二进制存档的迁移器。四作仍在原仓库运行。当前只优化引擎；迁移留到最后，必须等待用户主动、明确提出后才执行。
+
+## 0.3 作者与桌面入口
+
+Studio 直接维护 EngineProject，预览共用 createProject/mountGame，见 [EDITOR.md](EDITOR.md)。mountGame 可注入 assetURL 将已授权本地文件映射到临时 blob 或本地来源；默认目录 URL 和清单验证保持不变。宿主的 `vn-engine-host-visibility` 事件以布尔 hidden 状态门控同一会话，销毁会移除监听。Windows 原生窗口与受限文件桥见 [WINDOWS.md](WINDOWS.md)。游戏独立构建不带作者模块。

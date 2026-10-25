@@ -1,0 +1,17 @@
+{
+  "schema": 1,
+  "checkedAt": "2026-10-25T07:51:51.716Z",
+  "browser": "153.0.8010.0",
+  "result": "passed",
+  "checks": [
+    "Visual script properties refresh the actual self-developed runtime preview",
+    "Node dragging/undo and safe rename preserve branches; workspace and runtime exports keep distinct formats",
+    "Invalid JSON preserves the previous document; broken branches block export and can be undone",
+    "Chat and inventory-based investigation use separate editor graphs and their real runtime interactions",
+    "Existing independent engine samples load with their local resource manifest and own presentation",
+    "Browser directory selection maps real local image bytes into preview without changing relative project paths",
+    "Draft recovery preserves both the applied document and unapplied JSON across a page reload",
+    "Authored markup stays inert and the editor remains usable at 390px without page overflow",
+    "The packaged Studio starts editor and preview using only its bundled files"
+  ]
+}

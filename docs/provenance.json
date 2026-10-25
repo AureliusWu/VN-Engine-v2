@@ -12,7 +12,8 @@
     "Verbatim files are checked against original SHA-256. Adapted targets retain source hashes and have independent regression evidence.",
     "New demo texts and host tools are independent of the four original stories.",
     "0.2 adds a self-developed interpreter, scheduler, renderer and standalone builder; legacy source projects remain unchanged.",
-    "0.2.1 optimizes engine internals only. Source-game migration is explicitly gated on the user actively requesting it."
+    "0.2.1 optimizes engine internals only. Source-game migration is explicitly gated on the user actively requesting it.",
+    "0.3 adds original editor and Windows host code; the host uses the same self-developed engine and migration remains explicitly user-gated."
   ],
   "files": [
     {
@@ -58,6 +59,61 @@
           "sha256": "6673033986abdd34c3b046e64470f48267d1a7202f8f04d342ccf66fc19895fe"
         }
       ]
+    },
+    {
+      "target": "editor/app.mjs",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "e1194755e797cd59a4f80489e89d6faac488b8219c963a222446cb7248c0bb9b"
+    },
+    {
+      "target": "editor/index.html",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "413bebc9e23c4595a18d39f6a9bee2d0d08816b2eac14a2cb7abae059061f021"
+    },
+    {
+      "target": "editor/native.mjs",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "1325d8e348a36f612758cc73d7ed2afd1134f552fb18b725f0260fc671260317"
+    },
+    {
+      "target": "editor/preview.css",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "f0efda9dd2bb022cd44034853c681beaf17a723fef968ecc888684093b66a019"
+    },
+    {
+      "target": "editor/preview.html",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "c1fb3eacd632c52626d43911f489eb0a47749779b07e71964d998a87ba907995"
+    },
+    {
+      "target": "editor/preview.mjs",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "91b96a346f92950d3f281a13071f2df2274c54d1017d71787eb21a44d9dde5c8"
+    },
+    {
+      "target": "editor/studio-font.woff2",
+      "mode": "adapted",
+      "origins": [
+        {
+          "repository": "AureliusWu/Rain",
+          "commit": "d96510fc73ebe6a354bbf638613f8e4483f3366b",
+          "path": "game/fonts/SourceHanSansLite.ttf",
+          "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
+        }
+      ],
+      "targetSha256": "55fc10c444e7d8f60689fa2637d4f4916ece73b588268d1416c36e47724ab7ab"
+    },
+    {
+      "target": "editor/style.css",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "0aca8d80146ee59370d2b82a60ab637a3f78c9f55d48e169cf78e5b4d6e446d1"
     },
     {
       "target": "examples/demo/demo-font.woff2",
@@ -193,6 +249,48 @@
       "mode": "new",
       "origins": [],
       "targetSha256": "278d3e3e9cbdd89cad487bd4ccb93354c86934477e4bbf956578c21965e3c74e"
+    },
+    {
+      "target": "hosts/windows/HostFiles.cs",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "a19ec844c59f3552ac02305c772b2eb9731bc4a748e5a9bfd8782d68b801894b"
+    },
+    {
+      "target": "hosts/windows/HostTests.cs",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "54421bbcc2ac5eea22502de5b1efda8fec6c7f3747c3fa3e0b30d75da4780a87"
+    },
+    {
+      "target": "hosts/windows/HostWindow.cs",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "cffb8ec70adaa82b52320143aedd4902cce0505dce0e83e01763a1c7a0ccf862"
+    },
+    {
+      "target": "hosts/windows/Program.cs",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "3305918616a350947074e6af96dd004232b361458c5c0522db409f7d6ccd7f66"
+    },
+    {
+      "target": "hosts/windows/SmokeTests.cs",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "a04b3fd7d1e829d67ee7cf7094426514f2f94632a22e677a2398304e1873c4b2"
+    },
+    {
+      "target": "hosts/windows/VNEngine.Windows.csproj",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "78d8ded2f443d72f6b9913c98d22cba95955473171e5449f95a59feda579fb75"
+    },
+    {
+      "target": "hosts/windows/app.manifest",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "e8dc96686929912a581ab122b3f1b4e85602fae02bab5825cef27b33263ee742"
     },
     {
       "target": "licenses/Healing-LICENSE.txt",
@@ -338,7 +436,7 @@
       "target": "src/assets/catalog.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "769c73c4b3d92899d0ce8ec34869f864230b349095a58943d53f9bef3ba3aa3a"
+      "targetSha256": "539cddc0f0597c9016dd65f25a1b765c40bbb19bd57e116b949a4da2f22e1de8"
     },
     {
       "target": "src/audio/catalog.ts",
@@ -384,6 +482,18 @@
           "sha256": "96a6297419f4f89b5713e13f255d9eeb15d59d6ee8cd6905261c35a84c38d518"
         }
       ]
+    },
+    {
+      "target": "src/editor/index.ts",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "6cc4a73de5a8aeacd6d628fe3082fe62190efe8c0f8f6d7fe4a871778606b370"
+    },
+    {
+      "target": "src/editor/model.ts",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "8e9c4d790b2630a22061bbe73b02f226ed892712fcdb1a5716f7cf0af256635e"
     },
     {
       "target": "src/history/search.ts",
@@ -527,13 +637,13 @@
       "target": "src/render/dom.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "7d6f1893b17f7ff932d090fb2d4cef060aa2190d2e691619030131571938959c"
+      "targetSha256": "eefc8be21a75283dc0b41d5ac1ddb8dbda4b8789227ea61885c2d2f87ff2c74e"
     },
     {
       "target": "src/render/mount.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "a3bf31a13ee8c945cce5cce82490433380e2e826292570675cd2ad0ba8b7f0c0"
+      "targetSha256": "27c6cc5f4f46e728bc2876c2a8e83d3db0609f32fd81a32fe25be2da93d7fd0a"
     },
     {
       "target": "src/runtime/drivers.ts",
@@ -551,7 +661,7 @@
       "target": "src/runtime/project.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "d0c75ccd8de926f21736599e1c115094f4ff110ca0c38a347911aa56ec87146b"
+      "targetSha256": "4618a51366bc38c3bfe59f9086d0573af86036d254519b6e7930b8f540cdd8d4"
     },
     {
       "target": "src/runtime/readonly.ts",
@@ -644,7 +754,7 @@
       "target": "src/version.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "2898c68e93d877ad372836e37253cccd0b11f10d699f31f06d6d79a68e06b217"
+      "targetSha256": "8fa5cc3643cc3bb77a2dfb844a283426dfdbeda2375d461ec1d3731cd49e40da"
     },
     {
       "target": "tools/benchmark-runtime.mjs",
@@ -655,7 +765,7 @@
     {
       "target": "tools/check-provenance.mjs",
       "mode": "new",
-      "targetSha256": "1e4368a8d1bde6d2d8e3936da9854986e98d85b61c186a5d5a6cbf545715aebe",
+      "targetSha256": "034baab16ca3d09a52e51d5427a0d40cfef0728cd0a7bfe4a40a50c57ee9c5ef",
       "origins": []
     },
     {
@@ -686,7 +796,13 @@
       "target": "tools/package-game.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "a8ede9a0fc30e4e6f644e581c1896557ecc90160e1814aec326d43dfc59d40b4"
+      "targetSha256": "09f511778f7fad21592f8a1cdc631b486fa3afed2c256189d6e43bdcd6c1f42f"
+    },
+    {
+      "target": "tools/package-studio.mjs",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "b7e36c093bd42c9b41f72be8fca816c2d9c3bda309f9f1afe464d2d34f5d4c3c"
     },
     {
       "target": "tools/pwa.mjs",
@@ -704,7 +820,7 @@
     {
       "target": "tools/serve.mjs",
       "mode": "new",
-      "targetSha256": "4576ca5c98dcfead62ffcf851803569d21d1f2d2033fceb3d4bbdef71b6ee702",
+      "targetSha256": "a26d64487a7ebf836ca5470af56b958b794731bdf41afc9581e36d0605c2a1cf",
       "origins": []
     },
     {
@@ -718,6 +834,18 @@
       "mode": "new",
       "origins": [],
       "targetSha256": "d113029442ef926daff9ad8c8a22136563ddfb6dca3892000ac51160487819c8"
+    },
+    {
+      "target": "tools/subset_studio_font.py",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "f3dec46cb105d6f7752fdc1137c042ecda0242ea1d8278cc66d85c0fd8a63901"
+    },
+    {
+      "target": "tools/test-windows.ps1",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "b31751c286d6f0b5bfebce73c465ac0176a5d94125e86354dfac129fe9c5829a"
     },
     {
       "target": "tools/validate-graph.mjs",

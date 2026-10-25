@@ -1,0 +1,68 @@
+name: Windows native host
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: windows-host-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  windows:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+      - run: npm ci
+      - run: npm run build
+      - name: Bundle local editor and independent engine sample
+        run: |
+          node tools/package-studio.mjs build/windows/site
+          node tools/package-game.mjs examples/runtime/campus.json build/windows/demo-game
+      - name: Publish self-contained Windows host
+        run: dotnet publish hosts/windows/VNEngine.Windows.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -o build/windows/app
+      - name: Assemble portable folder
+        shell: pwsh
+        run: |
+          Copy-Item build/windows/site build/windows/app/site -Recurse
+          Copy-Item build/windows/demo-game build/windows/app/demo-game -Recurse
+          Copy-Item docs/WINDOWS.md build/windows/app/README.md
+          Copy-Item LICENSE build/windows/app/LICENSE.txt
+      - name: Ensure WebView2 Runtime
+        shell: pwsh
+        run: |
+          $Found = @("${env:ProgramFiles(x86)}/Microsoft/EdgeWebView/Application", "$env:ProgramFiles/Microsoft/EdgeWebView/Application", "$env:LOCALAPPDATA/Microsoft/EdgeWebView/Application") | Where-Object { Test-Path $_ }
+          if (-not $Found) {
+            $Installer = Join-Path $env:RUNNER_TEMP 'WebView2Setup.exe'
+            Invoke-WebRequest 'https://go.microsoft.com/fwlink/p/?LinkId=2124703' -OutFile $Installer
+            $Install = Start-Process $Installer -ArgumentList '/silent','/install' -Wait -PassThru
+            if ($Install.ExitCode -notin @(0,3010)) { throw "WebView2 install failed: $($Install.ExitCode)" }
+          }
+      - name: Native file IO, WebView2 launch and full process restart checks
+        shell: pwsh
+        run: ./tools/test-windows.ps1 -Executable build/windows/app/VNEngine.exe -Site build/windows/app/site -Game build/windows/app/demo-game
+      - name: Archive Windows portable app
+        shell: pwsh
+        run: |
+          $Version = (Get-Content package.json -Raw | ConvertFrom-Json).version
+          Compress-Archive -Path build/windows/app/* -DestinationPath "build/VNEngine-Studio-$Version-win-x64.zip"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: VNEngine-Studio-win-x64
+          path: build/VNEngine-Studio-*-win-x64.zip
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: windows-native-evidence
+          path: |
+            test-results/windows/*.json
+            test-results/windows/*.png

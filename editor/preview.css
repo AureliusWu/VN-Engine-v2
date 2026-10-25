@@ -1,0 +1,3 @@
+@font-face{font-family:VNStudio;src:url(./studio-font.woff2) format("woff2");font-display:swap}
+html,body{margin:0;background:#0c131b;color:#becbd7;font-family:VNStudio,system-ui,sans-serif}main{margin:auto;max-width:1280px;padding:10px}#error{margin:18px;font-size:14px;white-space:pre-wrap}html{color-scheme:dark}
+#game .vn-stage{min-height:430px;aspect-ratio:16/9}#game .vn-reading{min-height:170px;padding:17px 22px}#game .vn-text{font-size:16px;min-height:50px;margin-bottom:12px}#game .vn-chat{bottom:185px}#game .vn-document{bottom:200px}#game .vn-toolbar{gap:5px;padding:9px 12px}#game .vn-toolbar button{font-size:11px;padding:5px 8px}

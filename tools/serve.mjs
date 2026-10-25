@@ -36,15 +36,18 @@ export async function createDemoServer() {
   return createServer(async (request, response) => {
     try {
       const name = decodeURIComponent(new URL(request.url, 'http://localhost').pathname).replace(/^\//, '') || 'index.html';
-      if (name === 'engine') { response.writeHead(302, { Location: '/engine/' }); response.end(); return; }
+      if (name === 'engine' || name === 'editor') { response.writeHead(302, { Location: '/' + name + '/' }); response.end(); return; }
       if (name === 'sw.js' || name === 'engine/sw.js') {
         response.writeHead(200, { 'Content-Type': 'text/javascript', 'Cache-Control': 'no-cache' }); response.end(name === 'sw.js' ? worker : engineWorker); return;
       }
       const mapped = name.startsWith('engine/lib/') ? 'dist/' + name.slice('engine/lib/'.length)
+        : name.startsWith('lib/') ? 'dist/' + name.slice('lib/'.length)
+        : name.startsWith('samples/') ? 'examples/runtime/' + name.slice('samples/'.length)
+        : name === 'editor/' ? 'editor/index.html'
         : name.startsWith('engine/') ? 'examples/runtime/' + (name.slice('engine/'.length) || 'index.html') : aliases[name] ?? name;
       const path = resolve(root, mapped);
       // A demo server, never a directory listing or arbitrary workspace file server.
-      if (!path.startsWith(root + sep) || !/^(examples|dist)\//.test(mapped)) { response.writeHead(404); response.end(); return; }
+      if (!path.startsWith(root + sep) || !/^(examples|dist|editor)\//.test(mapped)) { response.writeHead(404); response.end(); return; }
       const bytes = await readFile(path);
       const type = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.rpy': 'text/plain', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.wav': 'audio/wav' }[extname(path)] ?? 'application/octet-stream';
       response.writeHead(200, { 'Content-Type': type + '; charset=utf-8', 'Cache-Control': 'no-cache' }); response.end(bytes);
