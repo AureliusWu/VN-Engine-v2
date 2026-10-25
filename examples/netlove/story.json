@@ -1,0 +1,85 @@
+{
+  "scenes": [
+    {
+      "id": "arrival",
+      "chapter": 1,
+      "title": "聊天叙事 · 最小样例",
+      "noSprite": true,
+      "character": "tinghe",
+      "lines": [
+        {
+          "id": "chat_001",
+          "speaker": "谢听禾",
+          "text": "匿名聊天保留聊天形式，不显示在场立绘。",
+          "medium": "chat"
+        },
+        {
+          "id": "chat_002",
+          "speaker": "我",
+          "text": "回复内容决定电话中的条件对白。",
+          "medium": "chat"
+        }
+      ],
+      "choices": [
+        {
+          "id": "honest",
+          "text": "说明真实情况",
+          "next": "call",
+          "effect": {
+            "honesty": 1
+          }
+        },
+        {
+          "id": "reserve",
+          "text": "暂时保留",
+          "next": "call"
+        }
+      ]
+    },
+    {
+      "id": "call",
+      "chapter": 1,
+      "noSprite": true,
+      "lines": [
+        {
+          "id": "call_001",
+          "speaker": "许弥",
+          "text": "电话里只传来对方的声音。",
+          "medium": "call",
+          "variant": {
+            "stat": "honesty",
+            "min": 1,
+            "text": "谢谢你在聊天里说明情况。电话接通了。"
+          }
+        }
+      ],
+      "next": "meeting"
+    },
+    {
+      "id": "meeting",
+      "chapter": 1,
+      "character": "tinghe",
+      "lines": [
+        {
+          "id": "meet_001",
+          "speaker": "谢听禾",
+          "text": "线下见面时才出现角色。",
+          "expression": "smile"
+        }
+      ],
+      "next": "end"
+    },
+    {
+      "id": "end",
+      "chapter": 1,
+      "ending": "complete",
+      "lines": [
+        {
+          "id": "end_001",
+          "speaker": "旁白",
+          "text": "聊天最小样例结束。"
+        }
+      ]
+    }
+  ]
+}

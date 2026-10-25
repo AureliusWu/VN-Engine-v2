@@ -1,0 +1,348 @@
+{
+  "chapters": [
+    {
+      "id": "chapter-one",
+      "order": 0,
+      "title": "调查样例 1",
+      "entryNode": "hub",
+      "nodes": {
+        "hub": {
+          "kind": "investigation",
+          "text": "调查两份资料，再进入推理。调查可以回到同一节点。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "inspect-a",
+              "label": "查看记录",
+              "next": "a",
+              "collect": "record",
+              "hidesWhenCollected": "record"
+            },
+            {
+              "id": "inspect-b",
+              "label": "查看照片",
+              "next": "b",
+              "collect": "photo",
+              "hidesWhenCollected": "photo"
+            },
+            {
+              "id": "reason",
+              "label": "开始推理",
+              "next": "puzzle",
+              "requiresEvidence": [
+                "record",
+                "photo"
+              ]
+            }
+          ],
+          "scene": {
+            "hotspots": [
+              {
+                "id": "desk",
+                "actionId": "inspect-a",
+                "label": "桌上的记录",
+                "x": 30,
+                "y": 40
+              }
+            ]
+          }
+        },
+        "a": {
+          "kind": "evidence",
+          "text": "已收集记录。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "return",
+              "label": "返回调查",
+              "next": "hub"
+            }
+          ],
+          "requiresEvidence": [
+            "record"
+          ]
+        },
+        "b": {
+          "kind": "evidence",
+          "text": "已收集照片。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "return",
+              "label": "返回调查",
+              "next": "hub"
+            }
+          ],
+          "requiresEvidence": [
+            "photo"
+          ]
+        },
+        "puzzle": {
+          "kind": "puzzle",
+          "text": "两份资料可以相互印证。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "right",
+              "label": "核对时间一致",
+              "next": "complete",
+              "requiresEvidence": [
+                "record",
+                "photo"
+              ]
+            },
+            {
+              "id": "wrong",
+              "label": "直接下结论",
+              "next": "failure"
+            }
+          ],
+          "requiresEvidence": [
+            "record",
+            "photo"
+          ],
+          "puzzle": {
+            "prompt": "哪种推理有证据支持？",
+            "hint": "核对两份资料的时间。"
+          }
+        },
+        "failure": {
+          "kind": "ending",
+          "text": "推理失败；可以清空证据重新调查。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "retry",
+              "label": "重新调查",
+              "next": "hub",
+              "resetEvidence": true
+            }
+          ],
+          "outcome": "failure"
+        },
+        "complete": {
+          "kind": "ending",
+          "text": "本章完成，下一章现已解锁。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "replay",
+              "label": "重玩本章",
+              "next": "hub",
+              "resetEvidence": true
+            }
+          ],
+          "requiresEvidence": [
+            "record",
+            "photo"
+          ],
+          "outcome": "complete"
+        }
+      },
+      "evidence": {
+        "record": {
+          "title": "记录",
+          "detail": "一份带时间的记录。"
+        },
+        "photo": {
+          "title": "照片",
+          "detail": "一张可以核对时间的照片。"
+        }
+      },
+      "requiredEvidence": [
+        "record",
+        "photo"
+      ]
+    },
+    {
+      "id": "chapter-two",
+      "order": 1,
+      "title": "调查样例 2",
+      "entryNode": "hub",
+      "nodes": {
+        "hub": {
+          "kind": "investigation",
+          "text": "调查两份资料，再进入推理。调查可以回到同一节点。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "inspect-a",
+              "label": "查看记录",
+              "next": "a",
+              "collect": "record",
+              "hidesWhenCollected": "record"
+            },
+            {
+              "id": "inspect-b",
+              "label": "查看照片",
+              "next": "b",
+              "collect": "photo",
+              "hidesWhenCollected": "photo"
+            },
+            {
+              "id": "reason",
+              "label": "开始推理",
+              "next": "puzzle",
+              "requiresEvidence": [
+                "record",
+                "photo"
+              ]
+            }
+          ],
+          "scene": {
+            "hotspots": [
+              {
+                "id": "desk",
+                "actionId": "inspect-a",
+                "label": "桌上的记录",
+                "x": 30,
+                "y": 40
+              }
+            ]
+          }
+        },
+        "a": {
+          "kind": "evidence",
+          "text": "已收集记录。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "return",
+              "label": "返回调查",
+              "next": "hub"
+            }
+          ],
+          "requiresEvidence": [
+            "record"
+          ]
+        },
+        "b": {
+          "kind": "evidence",
+          "text": "已收集照片。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "return",
+              "label": "返回调查",
+              "next": "hub"
+            }
+          ],
+          "requiresEvidence": [
+            "photo"
+          ]
+        },
+        "puzzle": {
+          "kind": "puzzle",
+          "text": "两份资料可以相互印证。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "right",
+              "label": "核对时间一致",
+              "next": "complete",
+              "requiresEvidence": [
+                "record",
+                "photo"
+              ]
+            },
+            {
+              "id": "wrong",
+              "label": "直接下结论",
+              "next": "failure"
+            }
+          ],
+          "requiresEvidence": [
+            "record",
+            "photo"
+          ],
+          "puzzle": {
+            "prompt": "哪种推理有证据支持？",
+            "hint": "核对两份资料的时间。"
+          }
+        },
+        "failure": {
+          "kind": "ending",
+          "text": "推理失败；可以清空证据重新调查。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "retry",
+              "label": "重新调查",
+              "next": "hub",
+              "resetEvidence": true
+            }
+          ],
+          "outcome": "failure"
+        },
+        "complete": {
+          "kind": "ending",
+          "text": "本章完成，下一章现已解锁。",
+          "location": "值班室",
+          "time": "夜间",
+          "visual": "dispatch",
+          "progress": 20,
+          "actions": [
+            {
+              "id": "replay",
+              "label": "重玩本章",
+              "next": "hub",
+              "resetEvidence": true
+            }
+          ],
+          "requiresEvidence": [
+            "record",
+            "photo"
+          ],
+          "outcome": "complete"
+        }
+      },
+      "evidence": {
+        "record": {
+          "title": "记录",
+          "detail": "一份带时间的记录。"
+        },
+        "photo": {
+          "title": "照片",
+          "detail": "一张可以核对时间的照片。"
+        }
+      },
+      "requiredEvidence": [
+        "record",
+        "photo"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+{
+  "schema": 1,
+  "checkedAt": "2026-10-25T05:03:33.616Z",
+  "checks": [
+    {
+      "repository": "Healing",
+      "scenes": 65,
+      "paragraphVisits": 118611,
+      "fullRoutes": 1296,
+      "endings": [
+        "lin-final",
+        "chen-final",
+        "tang-final",
+        "friends-final"
+      ],
+      "result": "passed"
+    },
+    {
+      "repository": "NetLove",
+      "scenes": 43,
+      "paragraphVisits": 17251,
+      "fullRoutes": 288,
+      "endings": [
+        "tinghe-final",
+        "xumi-final",
+        "friends-final",
+        "letter-final"
+      ],
+      "result": "passed"
+    },
+    {
+      "repository": "Circuit",
+      "chapters": 11,
+      "inventoryStates": 1521,
+      "actionTransitions": 1731,
+      "result": "passed"
+    }
+  ],
+  "excludes": [
+    "UI/media decorators",
+    "native Windows execution",
+    "RenPy execution (separate Python comparison)"
+  ]
+}

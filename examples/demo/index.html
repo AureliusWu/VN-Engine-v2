@@ -1,0 +1,9 @@
+<!doctype html>
+<html lang="zh-CN"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>VN Engine v2 · 运行示例</title><link rel="stylesheet" href="./style.css"></head>
+<body><main>
+  <header><div><span class="eyebrow">AURELIUSWU · ENGINE PROTOTYPE 0.1</span><h1>VN Engine <span>v2</span></h1><p>从四个项目沉淀的叙事与调查能力</p></div><span id="offline-state" role="status">离线资源准备中</span></header>
+  <nav aria-label="运行模式"><button data-mode="healing" aria-pressed="true">校园视觉小说</button><button data-mode="netlove" aria-pressed="false">聊天叙事</button><button data-mode="circuit" aria-pressed="false">调查与推理</button><button data-mode="renpy" aria-pressed="false">Ren’Py 适配</button></nav>
+  <section class="workspace"><article id="stage" aria-live="polite"></article><aside><h2>运行状态</h2><div id="state"></div><div id="evidence"></div><p class="note">独立技术样例；四个原项目的正文与素材继续由各自仓库维护。</p></aside></section>
+  <footer><div class="controls"><button id="restart">新游戏</button><button id="save">存档</button><button id="load">读档</button><button id="history">历史记录</button><button id="hide">隐藏界面</button></div><span id="message" role="status"></span></footer>
+  <section id="history-panel" hidden><div class="panel-head"><h2>已读记录</h2><button id="close-history">关闭</button></div><input id="query" aria-label="搜索已读记录" placeholder="搜索已读内容"><div id="records"></div></section>
+</main><script type="module" src="./app.mjs"></script></body></html>

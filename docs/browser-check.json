@@ -1,0 +1,16 @@
+{
+  "schema": 1,
+  "checkedAt": "2026-10-25T05:11:49.484Z",
+  "browser": "153.0.8010.0",
+  "checks": [
+    "Healing branch, paragraph CG cue and exact-position save/load",
+    "History search/reread resets future decisions; hidden interface keeps position",
+    "NetLove independent save namespace, conditional call text and meeting presentation",
+    "Circuit investigation, evidence gates, failed ending/retry and sequential chapter unlock",
+    "Native RenPy adapter is kept separate from the browser runtime",
+    "390px mobile layout without horizontal overflow",
+    "Actual offline reload, cached mode switching and persisted save restore",
+    "No uncaught browser exceptions or writes into the original game save keys"
+  ],
+  "result": "passed"
+}

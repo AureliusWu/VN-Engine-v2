@@ -1,0 +1,161 @@
+{
+  "schema_version": 1,
+  "version": "0.1.0",
+  "title": "原生编译适配示例",
+  "entry": "p00_entry",
+  "initial_state": {
+    "affection": 0,
+    "trust": 0,
+    "truth_known": false
+  },
+  "expected_routes": 2,
+  "state_definitions": {
+    "affection": {
+      "type": "int",
+      "meaning": "示例状态",
+      "min": 0,
+      "max": 4
+    },
+    "trust": {
+      "type": "int",
+      "meaning": "示例状态",
+      "min": 0,
+      "max": 4
+    },
+    "truth_known": {
+      "type": "bool",
+      "meaning": "示例状态"
+    }
+  },
+  "chapters": [
+    {
+      "id": "chapter_one",
+      "title": "原生 RenPy 适配",
+      "goal": "验证编译与分支",
+      "entry": "p00_entry"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "p00_entry",
+      "chapter": "chapter_one",
+      "location": "sample_room",
+      "time": "10:00",
+      "dramatic_purpose": "验证原生编译契约",
+      "lines": [
+        {
+          "id": "p00_line",
+          "speaker": "n",
+          "text": "引擎仓库输出标准 Ren’Py DSL。"
+        }
+      ],
+      "choices": [
+        {
+          "id": "trust_choice",
+          "text": "保留信任",
+          "effects": {
+            "trust": 1
+          },
+          "next": "trusted",
+          "response": [
+            {
+              "id": "response_line",
+              "speaker": "h",
+              "text": "选择回应也保留稳定台词 ID。"
+            }
+          ]
+        },
+        {
+          "id": "affection_choice",
+          "text": "保留好感",
+          "effects": {
+            "affection": 1
+          },
+          "next": "other"
+        }
+      ]
+    },
+    {
+      "id": "trusted",
+      "chapter": "chapter_one",
+      "location": "sample_room",
+      "time": "10:01",
+      "dramatic_purpose": "验证原生编译契约",
+      "lines": [
+        {
+          "id": "trusted_line",
+          "speaker": "p",
+          "text": "选择改变了信任。"
+        }
+      ],
+      "next": "resolve"
+    },
+    {
+      "id": "other",
+      "chapter": "chapter_one",
+      "location": "sample_room",
+      "time": "10:01",
+      "dramatic_purpose": "验证原生编译契约",
+      "lines": [
+        {
+          "id": "other_line",
+          "speaker": "p",
+          "text": "选择改变了好感。"
+        }
+      ],
+      "next": "resolve"
+    },
+    {
+      "id": "resolve",
+      "chapter": "chapter_one",
+      "location": "sample_room",
+      "time": "10:02",
+      "dramatic_purpose": "验证原生编译契约",
+      "routes": [
+        {
+          "when": {
+            "trust": {
+              "gte": 1
+            }
+          },
+          "next": "end_trust"
+        },
+        {
+          "next": "end_other"
+        }
+      ]
+    },
+    {
+      "id": "end_trust",
+      "chapter": "chapter_one",
+      "location": "sample_room",
+      "time": "10:03",
+      "dramatic_purpose": "验证原生编译契约",
+      "lines": [
+        {
+          "id": "end_trust_line",
+          "speaker": "n",
+          "text": "原生信任分支结束。"
+        }
+      ],
+      "ending": "trust",
+      "ending_title": "信任"
+    },
+    {
+      "id": "end_other",
+      "chapter": "chapter_one",
+      "location": "sample_room",
+      "time": "10:03",
+      "dramatic_purpose": "验证原生编译契约",
+      "lines": [
+        {
+          "id": "end_other_line",
+          "speaker": "n",
+          "text": "原生好感分支结束。"
+        }
+      ],
+      "ending": "other",
+      "ending_title": "好感"
+    }
+  ]
+}

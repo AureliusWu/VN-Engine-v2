@@ -1,0 +1,8 @@
+{
+  "repository": "Rain",
+  "scenes": 26,
+  "routes": 16,
+  "script_sha256": "2a35de5307aa6f4b99ca19789478b99b8a931a9bd0620d0076d015c3f183d274",
+  "result": "passed",
+  "execution": "compiler parity only; RenPy SDK and Windows not executed"
+}

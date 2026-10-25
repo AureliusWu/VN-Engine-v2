@@ -1,0 +1,479 @@
+{
+  "schema": 2,
+  "recordedAt": "2026-10-25",
+  "sources": {
+    "Rain": "d96510fc73ebe6a354bbf638613f8e4483f3366b",
+    "Healing": "9001f1732d35e1d496db570fa4b053868b3c9f11",
+    "NetLove": "9333cce0032aa85357431e6ba906d5719dc548c8",
+    "Circuit": "ca506b5eb87fdb9a63a321d590ac4269c16bfad6"
+  },
+  "notes": [
+    "Snapshots were read from exact commits; source working trees were not modified.",
+    "Verbatim files are checked against original SHA-256. Adapted targets retain source hashes and have independent regression evidence.",
+    "New demo texts and host tools are independent of the four original stories."
+  ],
+  "files": [
+    {
+      "target": "adapters/__init__.py",
+      "mode": "new",
+      "targetSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "origins": []
+    },
+    {
+      "target": "adapters/renpy/__init__.py",
+      "mode": "new",
+      "targetSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "origins": []
+    },
+    {
+      "target": "adapters/renpy/__main__.py",
+      "mode": "new",
+      "targetSha256": "6d92b54aa563c82d1b9f48446597d672acfff7d7e3dd12e442684ff9fcd40a14",
+      "origins": []
+    },
+    {
+      "target": "adapters/renpy/compiler.py",
+      "mode": "adapted",
+      "targetSha256": "7a5dc49dd6ac909a071808fc668393ef9bc8a4ce3c6ffae25daf01ad5875bfbe",
+      "origins": [
+        {
+          "repository": "AureliusWu/Rain",
+          "commit": "d96510fc73ebe6a354bbf638613f8e4483f3366b",
+          "path": "tools/compile_story.py",
+          "sha256": "5b59372411798f5cb1b0ce493ddb5d5ef31a28d61d2e55f72d8e51364acd9134"
+        }
+      ]
+    },
+    {
+      "target": "adapters/renpy/story_model.py",
+      "mode": "verbatim",
+      "targetSha256": "6673033986abdd34c3b046e64470f48267d1a7202f8f04d342ccf66fc19895fe",
+      "origins": [
+        {
+          "repository": "AureliusWu/Rain",
+          "commit": "d96510fc73ebe6a354bbf638613f8e4483f3366b",
+          "path": "tools/story_model.py",
+          "sha256": "6673033986abdd34c3b046e64470f48267d1a7202f8f04d342ccf66fc19895fe"
+        }
+      ]
+    },
+    {
+      "target": "examples/demo/demo-font.woff2",
+      "mode": "adapted",
+      "targetSha256": "001072ebb494bfc5b1f9e8e36a07d008ec913da9e3f4f6921f728ea3d452d1ae",
+      "origins": [
+        {
+          "repository": "AureliusWu/Rain",
+          "commit": "d96510fc73ebe6a354bbf638613f8e4483f3366b",
+          "path": "game/fonts/SourceHanSansLite.ttf",
+          "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
+        }
+      ]
+    },
+    {
+      "target": "licenses/Healing-LICENSE.txt",
+      "mode": "verbatim",
+      "targetSha256": "18b51f395f21b905ff80d3817b714ed596ab5b36920f29ec8765ed1f72a8c1c7",
+      "origins": [
+        {
+          "repository": "AureliusWu/Healing",
+          "commit": "9001f1732d35e1d496db570fa4b053868b3c9f11",
+          "path": "LICENSE",
+          "sha256": "18b51f395f21b905ff80d3817b714ed596ab5b36920f29ec8765ed1f72a8c1c7"
+        }
+      ]
+    },
+    {
+      "target": "licenses/NetLove-LICENSE.txt",
+      "mode": "verbatim",
+      "targetSha256": "18b51f395f21b905ff80d3817b714ed596ab5b36920f29ec8765ed1f72a8c1c7",
+      "origins": [
+        {
+          "repository": "AureliusWu/NetLove",
+          "commit": "9333cce0032aa85357431e6ba906d5719dc548c8",
+          "path": "LICENSE",
+          "sha256": "18b51f395f21b905ff80d3817b714ed596ab5b36920f29ec8765ed1f72a8c1c7"
+        }
+      ]
+    },
+    {
+      "target": "licenses/Rain-LICENSE.txt",
+      "mode": "verbatim",
+      "targetSha256": "68122b5c19ac955bab6398e9846184255af2d75168782ac6b20329a4d1893075",
+      "origins": [
+        {
+          "repository": "AureliusWu/Rain",
+          "commit": "d96510fc73ebe6a354bbf638613f8e4483f3366b",
+          "path": "LICENSE",
+          "sha256": "68122b5c19ac955bab6398e9846184255af2d75168782ac6b20329a4d1893075"
+        }
+      ]
+    },
+    {
+      "target": "licenses/SourceHanSans-OFL.txt",
+      "mode": "verbatim",
+      "targetSha256": "fcac737e761ec63dbfbdce11030a1780161920d80315edba9c8beff1c2bac5a2",
+      "origins": [
+        {
+          "repository": "AureliusWu/Rain",
+          "commit": "d96510fc73ebe6a354bbf638613f8e4483f3366b",
+          "path": "licenses/SourceHanSans-OFL.txt",
+          "sha256": "fcac737e761ec63dbfbdce11030a1780161920d80315edba9c8beff1c2bac5a2"
+        }
+      ]
+    },
+    {
+      "target": "src/adapters/circuit.ts",
+      "mode": "adapted",
+      "targetSha256": "44f59fb72f88a0086c9d5904919ce0c3d1e530b3852d22a433fb87e03bf001ac",
+      "origins": [
+        {
+          "repository": "AureliusWu/Circuit",
+          "commit": "ca506b5eb87fdb9a63a321d590ac4269c16bfad6",
+          "path": "src/game/saves.ts",
+          "sha256": "c3406afabeb59ace420c8da3176dd7de1d1f48010231b457a416ee11d5437c6b"
+        },
+        {
+          "repository": "AureliusWu/Circuit",
+          "commit": "ca506b5eb87fdb9a63a321d590ac4269c16bfad6",
+          "path": "src/game/campaign.ts",
+          "sha256": "844f110b749b64ca06117a1812d87ca8fbc338dc79d1fdba0bb7d17bc1fe60cc"
+        }
+      ]
+    },
+    {
+      "target": "src/adapters/healing.ts",
+      "mode": "adapted",
+      "targetSha256": "f8eb7330df507e0ac6eea9254d57dc0434f265631973a45b85847f9a1ee055c0",
+      "origins": [
+        {
+          "repository": "AureliusWu/Healing",
+          "commit": "9001f1732d35e1d496db570fa4b053868b3c9f11",
+          "path": "src/game/engine.ts",
+          "sha256": "ec20884d455ecf0503382afa2f32f8bad97a06d0278d13d8a1cceb7784e32182"
+        },
+        {
+          "repository": "AureliusWu/Healing",
+          "commit": "9001f1732d35e1d496db570fa4b053868b3c9f11",
+          "path": "src/game/presentation.ts",
+          "sha256": "39a197bf7484ad47317ad07b0cfed04de14b0f193f56429890e385b82b042a40"
+        },
+        {
+          "repository": "AureliusWu/Healing",
+          "commit": "9001f1732d35e1d496db570fa4b053868b3c9f11",
+          "path": "src/game/storage.ts",
+          "sha256": "2d1ba3220280554f5cd024ea472c2292fa11573ef1a2c45cf1ac1d488aa1d7fd"
+        }
+      ]
+    },
+    {
+      "target": "src/adapters/netlove.ts",
+      "mode": "adapted",
+      "targetSha256": "2491e10215a789abf07c8dd790e09f35f562724fc811687ffd4d97a06300f7ca",
+      "origins": [
+        {
+          "repository": "AureliusWu/NetLove",
+          "commit": "9333cce0032aa85357431e6ba906d5719dc548c8",
+          "path": "src/game/engine.ts",
+          "sha256": "fc162c3056b90099910045063c0e2d288f6fe3f52456fee3c7223632c9d66cdf"
+        },
+        {
+          "repository": "AureliusWu/NetLove",
+          "commit": "9333cce0032aa85357431e6ba906d5719dc548c8",
+          "path": "src/game/presentation.ts",
+          "sha256": "038942471e3947e43e0359b07530f30541e2207fc4e7fa3271cfd019d80ec56b"
+        },
+        {
+          "repository": "AureliusWu/NetLove",
+          "commit": "9333cce0032aa85357431e6ba906d5719dc548c8",
+          "path": "src/game/storage.ts",
+          "sha256": "a57ecdb90c7e4d57c5311827fe2cfea06d4d4da7b6498fcfd50799e85eb58b81"
+        }
+      ]
+    },
+    {
+      "target": "src/audio/catalog.ts",
+      "mode": "adapted",
+      "targetSha256": "74bac8c2a2bbc82983bc7915b84276d88bffe654ad06e05e4b8d2b8efa23ae25",
+      "origins": [
+        {
+          "repository": "AureliusWu/Healing",
+          "commit": "9001f1732d35e1d496db570fa4b053868b3c9f11",
+          "path": "src/game/voice-catalog.ts",
+          "sha256": "0cae6d9aa86a3e7e0e57f1f65fd847c85dd47e131d4431747a6ce0af9981ea75"
+        },
+        {
+          "repository": "AureliusWu/NetLove",
+          "commit": "9333cce0032aa85357431e6ba906d5719dc548c8",
+          "path": "src/game/voice-catalog.ts",
+          "sha256": "9f9f900ec26b61f73b9096f4ef59a5f9cab2f7405e656392eb07fa996f55a18c"
+        }
+      ]
+    },
+    {
+      "target": "src/audio/recorded-voice.ts",
+      "mode": "verbatim",
+      "targetSha256": "6c53df34a4721e73efe7de6de1c75c2f83fa6dec7b2c7cff8348be7c739584d7",
+      "origins": [
+        {
+          "repository": "AureliusWu/NetLove",
+          "commit": "9333cce0032aa85357431e6ba906d5719dc548c8",
+          "path": "src/game/voice.ts",
+          "sha256": "6c53df34a4721e73efe7de6de1c75c2f83fa6dec7b2c7cff8348be7c739584d7"
+        }
+      ]
+    },
+    {
+      "target": "src/audio/scene-loop.ts",
+      "mode": "verbatim",
+      "targetSha256": "96a6297419f4f89b5713e13f255d9eeb15d59d6ee8cd6905261c35a84c38d518",
+      "origins": [
+        {
+          "repository": "AureliusWu/NetLove",
+          "commit": "9333cce0032aa85357431e6ba906d5719dc548c8",
+          "path": "src/game/sceneLoop.ts",
+          "sha256": "96a6297419f4f89b5713e13f255d9eeb15d59d6ee8cd6905261c35a84c38d518"
+        }
+      ]
+    },
+    {
+      "target": "src/history/search.ts",
+      "mode": "verbatim",
+      "targetSha256": "709e050b8731d937cda3f90a0d9456af22a16b3e900d66a160533e736310b517",
+      "origins": [
+        {
+          "repository": "AureliusWu/Healing",
+          "commit": "9001f1732d35e1d496db570fa4b053868b3c9f11",
+          "path": "src/game/history.ts",
+          "sha256": "709e050b8731d937cda3f90a0d9456af22a16b3e900d66a160533e736310b517"
+        }
+      ]
+    },
+    {
+      "target": "src/index.ts",
+      "mode": "new",
+      "targetSha256": "5544d52f28d35e402829fc876a7560b6de5286bd917a65f1d0eacdbcc229dbd2",
+      "origins": []
+    },
+    {
+      "target": "src/investigation/engine.ts",
+      "mode": "adapted",
+      "targetSha256": "a6b1fe1231146a127a5d880c5e03533eb8fdbb9b9460bbaf726cf3d7886c7928",
+      "origins": [
+        {
+          "repository": "AureliusWu/Circuit",
+          "commit": "ca506b5eb87fdb9a63a321d590ac4269c16bfad6",
+          "path": "src/story/engine.ts",
+          "sha256": "5e66943ce6cf7eaafc9647785c0067184182aea95ee97fd6a835346b2b919d45"
+        },
+        {
+          "repository": "AureliusWu/Circuit",
+          "commit": "ca506b5eb87fdb9a63a321d590ac4269c16bfad6",
+          "path": "src/game/campaign.ts",
+          "sha256": "844f110b749b64ca06117a1812d87ca8fbc338dc79d1fdba0bb7d17bc1fe60cc"
+        }
+      ]
+    },
+    {
+      "target": "src/investigation/types.ts",
+      "mode": "adapted",
+      "targetSha256": "5836584a0afeb4e2e20f36f1a4c98840539317f9cc73520bf3eb340c2cbc089c",
+      "origins": [
+        {
+          "repository": "AureliusWu/Circuit",
+          "commit": "ca506b5eb87fdb9a63a321d590ac4269c16bfad6",
+          "path": "src/story/types.ts",
+          "sha256": "c638e656db0396e6ea547a8b29d5ea692e86b47c2666eb7b0d70e03fbd075adc"
+        }
+      ]
+    },
+    {
+      "target": "src/lifecycle/reading.ts",
+      "mode": "new",
+      "targetSha256": "7744f95f8815e6bd92b3e8a62724dbe68cc80977c6c21bafcc79c8b86e936163",
+      "origins": []
+    },
+    {
+      "target": "src/narrative/engine.ts",
+      "mode": "adapted",
+      "targetSha256": "3b1c753bf3e6afd485f061ed31fb2132965b4a593c9bf2578e15a66d357ebbe9",
+      "origins": [
+        {
+          "repository": "AureliusWu/Healing",
+          "commit": "9001f1732d35e1d496db570fa4b053868b3c9f11",
+          "path": "src/game/engine.ts",
+          "sha256": "ec20884d455ecf0503382afa2f32f8bad97a06d0278d13d8a1cceb7784e32182"
+        },
+        {
+          "repository": "AureliusWu/Healing",
+          "commit": "9001f1732d35e1d496db570fa4b053868b3c9f11",
+          "path": "src/game/reread.ts",
+          "sha256": "d1a9d6b21bf71c3a5e363544309a2fa06df5ddd5cada71334513563b6f11490b"
+        },
+        {
+          "repository": "AureliusWu/NetLove",
+          "commit": "9333cce0032aa85357431e6ba906d5719dc548c8",
+          "path": "src/game/engine.ts",
+          "sha256": "fc162c3056b90099910045063c0e2d288f6fe3f52456fee3c7223632c9d66cdf"
+        },
+        {
+          "repository": "AureliusWu/NetLove",
+          "commit": "9333cce0032aa85357431e6ba906d5719dc548c8",
+          "path": "src/game/history-preview.ts",
+          "sha256": "0c11c6f12abe120c1be0e7eb45cd2bedfeb1a490c1a93d33f3996c3be5d1d6ee"
+        }
+      ]
+    },
+    {
+      "target": "src/narrative/types.ts",
+      "mode": "adapted",
+      "targetSha256": "2fc6d0dff85f2641780eac0e6563b12e7c5b565694f7436afc31a797369f6b62",
+      "origins": [
+        {
+          "repository": "AureliusWu/Healing",
+          "commit": "9001f1732d35e1d496db570fa4b053868b3c9f11",
+          "path": "src/game/types.ts",
+          "sha256": "7103fbdf64ca30fd5d74048167152deb6efb7b24fdbc8b19682b625d7bdac7a2"
+        },
+        {
+          "repository": "AureliusWu/NetLove",
+          "commit": "9333cce0032aa85357431e6ba906d5719dc548c8",
+          "path": "src/game/types.ts",
+          "sha256": "a2016c0a9872779c8d5914d8f556d700250ef1d157fac866bb461e2ea8ab5829"
+        }
+      ]
+    },
+    {
+      "target": "src/presentation/frame.ts",
+      "mode": "adapted",
+      "targetSha256": "8421a001faddb2d093978ccb139b0f72bec0e326a1875564bbb5e1138dd7b018",
+      "origins": [
+        {
+          "repository": "AureliusWu/Healing",
+          "commit": "9001f1732d35e1d496db570fa4b053868b3c9f11",
+          "path": "src/game/presentation.ts",
+          "sha256": "39a197bf7484ad47317ad07b0cfed04de14b0f193f56429890e385b82b042a40"
+        },
+        {
+          "repository": "AureliusWu/Healing",
+          "commit": "9001f1732d35e1d496db570fa4b053868b3c9f11",
+          "path": "src/game/scene-media.ts",
+          "sha256": "00ccd12c77c3663a27cfe66a826b5da18422d33e54e43b66d3d5b5b8f9e3b95b"
+        },
+        {
+          "repository": "AureliusWu/NetLove",
+          "commit": "9333cce0032aa85357431e6ba906d5719dc548c8",
+          "path": "src/game/presentation.ts",
+          "sha256": "038942471e3947e43e0359b07530f30541e2207fc4e7fa3271cfd019d80ec56b"
+        }
+      ]
+    },
+    {
+      "target": "src/storage/preferences.ts",
+      "mode": "adapted",
+      "targetSha256": "3f73e5e5e3bd65da5cab1a8a14e4a50f2007b300b232571bd12726037484da6a",
+      "origins": [
+        {
+          "repository": "AureliusWu/NetLove",
+          "commit": "9333cce0032aa85357431e6ba906d5719dc548c8",
+          "path": "src/game/storage.ts",
+          "sha256": "a57ecdb90c7e4d57c5311827fe2cfea06d4d4da7b6498fcfd50799e85eb58b81"
+        }
+      ]
+    },
+    {
+      "target": "src/storage/save.ts",
+      "mode": "adapted",
+      "targetSha256": "327740f0d657fae8a9c1147e3008925972b19d4ae5193fa5eeb104e7dfbdaa0a",
+      "origins": [
+        {
+          "repository": "AureliusWu/Healing",
+          "commit": "9001f1732d35e1d496db570fa4b053868b3c9f11",
+          "path": "src/game/storage.ts",
+          "sha256": "2d1ba3220280554f5cd024ea472c2292fa11573ef1a2c45cf1ac1d488aa1d7fd"
+        },
+        {
+          "repository": "AureliusWu/NetLove",
+          "commit": "9333cce0032aa85357431e6ba906d5719dc548c8",
+          "path": "src/game/storage.ts",
+          "sha256": "a57ecdb90c7e4d57c5311827fe2cfea06d4d4da7b6498fcfd50799e85eb58b81"
+        }
+      ]
+    },
+    {
+      "target": "src/storage/store.ts",
+      "mode": "adapted",
+      "targetSha256": "7af19541b94746e6020511c98af91e8c1162e428fd0c7a645a332a247f203702",
+      "origins": [
+        {
+          "repository": "AureliusWu/Healing",
+          "commit": "9001f1732d35e1d496db570fa4b053868b3c9f11",
+          "path": "src/game/backup.ts",
+          "sha256": "177d8972b1c4387f21226861cda09de6cfb9bab8f34ab8ebf7c32ac8da39aea9"
+        },
+        {
+          "repository": "AureliusWu/Circuit",
+          "commit": "ca506b5eb87fdb9a63a321d590ac4269c16bfad6",
+          "path": "src/game/saves.ts",
+          "sha256": "c3406afabeb59ace420c8da3176dd7de1d1f48010231b457a416ee11d5437c6b"
+        }
+      ]
+    },
+    {
+      "target": "tools/check-provenance.mjs",
+      "mode": "new",
+      "targetSha256": "1e4368a8d1bde6d2d8e3936da9854986e98d85b61c186a5d5a6cbf545715aebe",
+      "origins": []
+    },
+    {
+      "target": "tools/compare-upstream.mjs",
+      "mode": "new",
+      "targetSha256": "4750b5a2a3fa58c95f784284a7c58f60660d2d4a69470aa248c26a32edec0128",
+      "origins": []
+    },
+    {
+      "target": "tools/compare_rain.py",
+      "mode": "new",
+      "targetSha256": "167fa63981d863cfb66cc08bdc8055772323d68d338d76c57894e84ae14c5319",
+      "origins": []
+    },
+    {
+      "target": "tools/pwa.mjs",
+      "mode": "verbatim",
+      "targetSha256": "18c0bcd19ad0cf158983d14fe48254cb73f89492f35789a828186b853901f59c",
+      "origins": [
+        {
+          "repository": "AureliusWu/NetLove",
+          "commit": "9333cce0032aa85357431e6ba906d5719dc548c8",
+          "path": "scripts/pwa-build.mjs",
+          "sha256": "18c0bcd19ad0cf158983d14fe48254cb73f89492f35789a828186b853901f59c"
+        }
+      ]
+    },
+    {
+      "target": "tools/serve.mjs",
+      "mode": "new",
+      "targetSha256": "22ab8fb32938088877be023fc03846f299b4ab14eb6bf78d4457d6dc1acf1a3f",
+      "origins": []
+    },
+    {
+      "target": "tools/subset_demo_font.py",
+      "mode": "new",
+      "targetSha256": "164e96b7a77b131fd677658762d6f277de6615d7ed525720254284066db7a463",
+      "origins": []
+    },
+    {
+      "target": "tools/validate-graph.mjs",
+      "mode": "verbatim",
+      "targetSha256": "7385f28e51f7b633e3e64ec15b51891d4b5edbc17d1f3a0a7d18c9d5887ecdb7",
+      "origins": [
+        {
+          "repository": "AureliusWu/Rain",
+          "commit": "d96510fc73ebe6a354bbf638613f8e4483f3366b",
+          "path": "scripts/vn-contract.mjs",
+          "sha256": "7385f28e51f7b633e3e64ec15b51891d4b5edbc17d1f3a0a7d18c9d5887ecdb7"
+        }
+      ]
+    }
+  ]
+}

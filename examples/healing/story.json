@@ -1,0 +1,138 @@
+{
+  "scenes": [
+    {
+      "id": "arrival",
+      "chapter": 1,
+      "title": "校园 VN · 最小样例",
+      "character": "lin",
+      "background": "classroom",
+      "lines": [
+        {
+          "speaker": "林见夏",
+          "text": "这是从校园视觉小说抽出的运行示例。",
+          "expression": "smile"
+        },
+        {
+          "speaker": "我",
+          "text": "选择会改变数值，读档会从选择重新计算。"
+        }
+      ],
+      "choices": [
+        {
+          "id": "together",
+          "text": "共同完成",
+          "next": "resolve",
+          "effect": {
+            "honesty": 3,
+            "lin": 2,
+            "chen": 2
+          }
+        },
+        {
+          "id": "letter",
+          "text": "留下回信",
+          "next": "resolve",
+          "effect": {
+            "honesty": 2
+          }
+        },
+        {
+          "id": "quiet",
+          "text": "暂时留白",
+          "next": "resolve"
+        }
+      ]
+    },
+    {
+      "id": "resolve",
+      "chapter": 1,
+      "resolve": true,
+      "lines": [
+        {
+          "speaker": "旁白",
+          "text": "运行时按当前数值解析结局。"
+        }
+      ]
+    },
+    {
+      "id": "end-together",
+      "chapter": 1,
+      "ending": "together",
+      "cg": "page-together",
+      "cgFrom": 1,
+      "continuation": "c2-open",
+      "lines": [
+        {
+          "speaker": "旁白",
+          "text": "结局：共同完成。插图在下一段触发。"
+        },
+        {
+          "speaker": "林见夏",
+          "text": "插图已经触发；存档与重读应恢复同一段落。",
+          "expression": "shy"
+        }
+      ]
+    },
+    {
+      "id": "end-letter",
+      "chapter": 1,
+      "ending": "letter",
+      "cg": "page-letter",
+      "cgFrom": 1,
+      "continuation": "c2-open",
+      "lines": [
+        {
+          "speaker": "旁白",
+          "text": "结局：留下回信。插图在下一段触发。"
+        },
+        {
+          "speaker": "林见夏",
+          "text": "插图已经触发；存档与重读应恢复同一段落。",
+          "expression": "shy"
+        }
+      ]
+    },
+    {
+      "id": "end-quiet",
+      "chapter": 1,
+      "ending": "quiet",
+      "cg": "page-quiet",
+      "cgFrom": 1,
+      "continuation": "c2-open",
+      "lines": [
+        {
+          "speaker": "旁白",
+          "text": "结局：暂时留白。插图在下一段触发。"
+        },
+        {
+          "speaker": "林见夏",
+          "text": "插图已经触发；存档与重读应恢复同一段落。",
+          "expression": "shy"
+        }
+      ]
+    },
+    {
+      "id": "c2-open",
+      "chapter": 2,
+      "chapterEnd": true,
+      "continuation": "final",
+      "lines": [
+        {
+          "speaker": "旁白",
+          "text": "章节完成会停下，继续需要明确操作。"
+        }
+      ]
+    },
+    {
+      "id": "final",
+      "chapter": 3,
+      "ending": "complete",
+      "lines": [
+        {
+          "speaker": "旁白",
+          "text": "最小样例结束。"
+        }
+      ]
+    }
+  ]
+}

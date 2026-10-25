@@ -1,0 +1,32 @@
+{
+  "name": "@aureliuswu/vn-engine-v2",
+  "version": "0.1.0",
+  "description": "Narrative engine prototype extracted from Rain, Healing, NetLove and Circuit",
+  "private": true,
+  "type": "module",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./pwa": "./tools/pwa.mjs",
+    "./validation": "./tools/validate-graph.mjs"
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "npm run build && node --test tests/*.test.mjs",
+    "test:renpy": "python -m unittest discover -s tests/renpy -v",
+    "test:browser": "npm run build && node tests/browser.mjs",
+    "demo": "npm run build && node tools/serve.mjs",
+    "check": "npm test && npm run test:renpy && node tools/check-provenance.mjs",
+    "verify:upstream": "npm run build && node tools/compare-upstream.mjs"
+  },
+  "devDependencies": {
+    "typescript": "5.9.3",
+    "playwright": "1.63.0"
+  }
+}
