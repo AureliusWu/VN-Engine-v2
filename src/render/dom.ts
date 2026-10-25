@@ -2,7 +2,7 @@ import { filterHistory } from '../history/search.js';
 import { isRecord } from '../storage/save.js';
 import type { StoragePort } from '../storage/store.js';
 import type { AssetCatalog, AssetKind } from '../assets/catalog.js';
-import type { RuntimeSession, RuntimeSettings } from '../runtime/session.js';
+import type { RuntimeSession, RuntimeSettings, RuntimeView } from '../runtime/session.js';
 import { DOM_STYLE } from './dom-style.js';
 
 export type DOMRendererOptions = { title?: string; font?: string; storage?: StoragePort | null; onUnlockAudio?: () => void };
@@ -24,6 +24,7 @@ export class DOMRenderer {
   private effect: HTMLElement;
   private chat: HTMLElement;
   private currentBubble: HTMLElement;
+  private bubbleText: HTMLElement;
   private call: HTMLElement;
   private documentView: HTMLElement;
   private hotspots: HTMLElement;
@@ -32,7 +33,8 @@ export class DOMRenderer {
   private modal: HTMLElement;
   private restoreButton: HTMLButtonElement;
   private buttons = new Map<string, HTMLButtonElement>();
-  private disconnect: () => void;
+  private disconnect: () => void = () => {};
+  private lastView?: RuntimeView;
   private visit = -1;
   private actionsKey = '';
   private disposed = false;
@@ -43,6 +45,9 @@ export class DOMRenderer {
   private onVisibility: () => void;
   private onKey: (event: KeyboardEvent) => void;
   private onPointer: () => void;
+  private onChatScroll: () => void;
+  private chatPinned = true;
+  private scrollFrame?: number;
   constructor(readonly root: HTMLElement, readonly session: RuntimeSession, readonly assets: AssetCatalog, readonly options: DOMRendererOptions = {}) {
     this.document = root.ownerDocument;
     this.saveKey = `vn-engine:${session.driver.game}:save:1`; this.settingsKey = `vn-engine:${session.driver.game}:settings`;
@@ -53,7 +58,7 @@ export class DOMRenderer {
     host.append(style); this.stage = this.el('div', undefined, 'vn-stage');
     this.background = this.image('vn-image vn-background'); this.portrait = this.image('vn-image vn-portrait'); this.cg = this.image('vn-image vn-cg');
     this.effect = this.el('div', undefined, 'vn-effect'); this.title = this.el('div', undefined, 'vn-scene-title'); this.mode = this.el('div', undefined, 'vn-mode');
-    this.chat = this.el('div', undefined, 'vn-chat'); this.currentBubble = this.el('div', undefined, 'vn-bubble vn-current');
+    this.chat = this.el('div', undefined, 'vn-chat'); this.currentBubble = this.el('div', undefined, 'vn-bubble vn-current'); this.bubbleText = this.el('span');
     this.call = this.el('div', undefined, 'vn-call'); this.call.append(this.el('span', '◌', 'vn-call-icon'), this.el('p', '语音通话'), this.el('p', '当前为远程交流'));
     this.documentView = this.el('div', undefined, 'vn-document'); this.hotspots = this.el('div', undefined, 'vn-hotspots');
     this.reading = this.el('div', undefined, 'vn-reading'); this.speaker = this.el('div', undefined, 'vn-speaker'); this.text = this.el('p', undefined, 'vn-text');
@@ -62,8 +67,8 @@ export class DOMRenderer {
     this.stage.append(this.background, this.portrait, this.cg, this.chat, this.call, this.documentView, this.hotspots, this.effect, this.title, this.mode, this.reading, this.restoreButton);
     this.toolbar = this.el('div', undefined, 'vn-toolbar');
     for (const [id, label, handler] of [
-      ['auto', '自动', () => session.setAuto(!session.getSnapshot().auto)],
-      ['skip', '已读快进', () => { if (!session.setSkip(!session.getSnapshot().skipping)) this.notify('只能快进已经读过的段落'); }],
+      ['auto', '自动', () => session.setAuto(!session.getView().auto)],
+      ['skip', '已读快进', () => { if (!session.setSkip(!session.getView().skipping)) this.notify('只能快进已经读过的段落'); }],
       ['save', '存档', () => this.save()], ['load', '读档', () => this.load()], ['history', '历史', () => this.history()],
       ['evidence', '证据簿', () => this.evidence()], ['settings', '设置', () => this.settings()],
       ['hide', '隐藏界面', () => session.hide(true)], ['fullscreen', '全屏', () => this.fullscreen()],
@@ -74,8 +79,12 @@ export class DOMRenderer {
     host.append(this.stage, this.toolbar, this.modal); root.append(host);
     this.onVisibility = () => session.pause('background', this.document.visibilityState === 'hidden');
     this.onKey = event => this.key(event); this.onPointer = () => options.onUnlockAudio?.();
-    this.document.addEventListener('visibilitychange', this.onVisibility); host.addEventListener('keydown', this.onKey); host.addEventListener('pointerdown', this.onPointer);
-    this.disconnect = session.subscribe(() => this.render()); this.onVisibility(); this.render();
+    this.onChatScroll = () => { this.chatPinned = this.chat.scrollHeight - this.chat.scrollTop - this.chat.clientHeight < 24; };
+    try {
+      this.document.addEventListener('visibilitychange', this.onVisibility); host.addEventListener('keydown', this.onKey); host.addEventListener('pointerdown', this.onPointer);
+      this.chat.addEventListener('scroll', this.onChatScroll);
+      this.disconnect = session.subscribe(() => this.render()); this.onVisibility(); this.render();
+    } catch (error) { this.dispose(); throw error; }
   }
   private el<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, className?: string): HTMLElementTagNameMap[K] {
     const node = this.document.createElement(tag); if (text !== undefined) node.textContent = text; if (className) node.className = className; return node;
@@ -100,18 +109,24 @@ export class DOMRenderer {
   }
   private render() {
     if (this.disposed) return;
-    const snapshot = this.session.getSnapshot(), frame = snapshot.frame;
-    this.element.style.setProperty('--vn-opacity', String(snapshot.settings.opacity));
-    this.element.dataset.mode = frame.mode; this.element.dataset.scene = frame.sceneId; this.element.dataset.line = frame.lineId;
-    this.element.dataset.visit = String(snapshot.visit); this.element.dataset.ready = String(snapshot.ready); this.element.dataset.paused = String(snapshot.paused);
-    if (snapshot.visit !== this.visit) {
+    const snapshot = this.session.getView(), frame = snapshot.frame, previous = this.lastView;
+    if (snapshot === previous) return;
+    this.lastView = snapshot;
+    if (snapshot.settings.opacity !== previous?.settings.opacity) this.element.style.setProperty('--vn-opacity', String(snapshot.settings.opacity));
+    if (snapshot.ready !== previous?.ready) this.element.dataset.ready = String(snapshot.ready);
+    if (snapshot.paused !== previous?.paused) this.element.dataset.paused = String(snapshot.paused);
+    const entered = snapshot.visit !== this.visit;
+    if (entered) {
+      this.cancelScroll();
+      this.element.dataset.mode = frame.mode; this.element.dataset.scene = frame.sceneId; this.element.dataset.line = frame.lineId; this.element.dataset.visit = String(snapshot.visit);
       this.visit = snapshot.visit; this.title.textContent = frame.title; this.mode.textContent = { vn: 'STORY', chat: 'CHAT', call: 'CALL', investigation: 'INVESTIGATION', document: 'EVIDENCE' }[frame.mode];
       this.paint(this.background, frame.stage.background, 'background'); this.paint(this.portrait, frame.stage.portrait, 'portrait'); this.paint(this.cg, frame.stage.cg, 'cg');
       this.chat.hidden = frame.mode !== 'chat'; this.call.hidden = frame.mode !== 'call';
       if (frame.mode === 'chat') {
         this.chat.replaceChildren();
         for (const record of this.session.history().slice(-5)) { if (record.lineId === frame.lineId) continue; const bubble = this.el('div', undefined, 'vn-bubble'); bubble.append(this.el('small', record.speaker), this.el('span', record.text)); this.chat.append(bubble); }
-        this.currentBubble = this.el('div', undefined, 'vn-bubble vn-current'); this.chat.append(this.currentBubble);
+        this.currentBubble = this.el('div', undefined, 'vn-bubble vn-current'); this.bubbleText = this.el('span');
+        this.currentBubble.append(this.el('small', frame.speaker), this.bubbleText); this.chat.append(this.currentBubble); this.chatPinned = true;
       }
       this.documentView.hidden = !frame.stage.document;
       if (frame.stage.document) this.documentView.replaceChildren(this.el('h3', frame.stage.document.title), ...frame.stage.document.lines.map(line => this.el('p', line)));
@@ -120,7 +135,7 @@ export class DOMRenderer {
         if (!frame.actions.some(action => action.id === hotspot.actionId)) continue;
         const button = this.button(hotspot.label, () => this.session.act(hotspot.actionId)); button.style.left = `${hotspot.x}%`; button.style.top = `${hotspot.y}%`; button.dataset.action = hotspot.actionId; this.hotspots.append(button);
       }
-      for (const animation of [...this.effect.getAnimations(), ...this.stage.getAnimations()]) animation.cancel();
+      for (const animation of this.animations()) animation.cancel();
       this.effect.style.background = 'transparent';
       if (!snapshot.settings.reducedMotion && ['start', 'advance', 'action'].includes(snapshot.reason) && frame.stage.effect) {
         const effect = frame.stage.effect, duration = Math.max(0, Math.min(2000, effect.durationMs ?? 450));
@@ -129,23 +144,49 @@ export class DOMRenderer {
         else if (effect.type === 'shake') this.stage.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(0)' }], { duration });
       }
     }
-    this.speaker.textContent = frame.speaker; this.text.textContent = frame.mode === 'chat' ? '聊天消息会按阅读节奏逐步显示。' : snapshot.text;
-    if (frame.mode === 'chat') { this.currentBubble.replaceChildren(this.el('small', frame.speaker), this.el('span', snapshot.text)); this.chat.scrollTop = this.chat.scrollHeight; }
-    this.reading.hidden = snapshot.hidden; this.toolbar.hidden = snapshot.hidden; this.restoreButton.hidden = !snapshot.hidden;
-    this.hotspots.hidden = snapshot.hidden;
-    for (const button of this.hotspots.querySelectorAll('button')) button.disabled = !snapshot.ready || snapshot.paused;
-    const actionsKey = `${snapshot.visit}:${snapshot.ready}:${snapshot.paused}`;
+    if (snapshot.settings.reducedMotion && (!previous?.settings.reducedMotion || entered)) {
+      for (const animation of this.animations()) animation.cancel(); this.effect.style.background = 'transparent';
+    } else if (entered || snapshot.paused !== previous?.paused) {
+      for (const animation of this.animations()) {
+        if (snapshot.paused && animation.playState === 'running') animation.pause();
+        else if (!snapshot.paused && animation.playState === 'paused') animation.play();
+      }
+    }
+    if (entered) this.speaker.textContent = frame.speaker;
+    if (entered || snapshot.text !== previous?.text) {
+      if (frame.mode === 'chat') { this.text.textContent = '聊天消息会按阅读节奏逐步显示。'; this.bubbleText.textContent = snapshot.text; if (this.chatPinned) this.queueScroll(); }
+      else this.text.textContent = snapshot.text;
+    }
+    if (snapshot.hidden !== previous?.hidden) {
+      this.reading.hidden = snapshot.hidden; this.toolbar.hidden = snapshot.hidden; this.restoreButton.hidden = !snapshot.hidden; this.hotspots.hidden = snapshot.hidden;
+    }
+    if (entered || snapshot.ready !== previous?.ready || snapshot.paused !== previous?.paused) for (const button of this.hotspots.querySelectorAll('button')) button.disabled = !snapshot.ready || snapshot.paused;
+    const actionsKey = `${snapshot.visit}:${snapshot.complete}:${snapshot.ready}:${snapshot.paused}`;
     if (actionsKey !== this.actionsKey) {
       this.actionsKey = actionsKey; this.actions.replaceChildren();
       if (!snapshot.complete || frame.canAdvance) { const next = this.button(snapshot.complete ? '下一段' : '显示全文', () => this.session.next()); next.dataset.control = 'next'; next.disabled = snapshot.paused || (snapshot.complete && !snapshot.ready); this.actions.append(next); }
       if (snapshot.ready) for (const action of frame.actions) { const button = this.button(action.label, () => this.session.act(action.id)); button.dataset.action = action.id; if (action.tone) button.dataset.tone = action.tone; button.disabled = snapshot.paused; this.actions.append(button); }
       if (snapshot.ready && frame.ending) this.actions.append(this.el('span', frame.ending === 'failure' ? '调查需要重新核对' : '已到达结局'));
     }
-    for (const id of ['auto', 'skip', 'save', 'load', 'history', 'evidence', 'settings', 'hide', 'restart']) this.buttons.get(id)!.disabled = snapshot.paused;
-    this.buttons.get('skip')!.disabled ||= !snapshot.supportsSkip;
-    this.buttons.get('evidence')!.hidden = !frame.evidence;
-    this.buttons.get('auto')!.setAttribute('aria-pressed', String(snapshot.auto)); this.buttons.get('skip')!.setAttribute('aria-pressed', String(snapshot.skipping));
+    if (entered || snapshot.paused !== previous?.paused) {
+      for (const id of ['auto', 'skip', 'save', 'load', 'history', 'evidence', 'settings', 'hide', 'restart']) this.buttons.get(id)!.disabled = snapshot.paused;
+      this.buttons.get('skip')!.disabled ||= !snapshot.supportsSkip;
+    }
+    if (entered) this.buttons.get('evidence')!.hidden = !frame.evidence;
+    if (snapshot.auto !== previous?.auto) this.buttons.get('auto')!.setAttribute('aria-pressed', String(snapshot.auto));
+    if (snapshot.skipping !== previous?.skipping) this.buttons.get('skip')!.setAttribute('aria-pressed', String(snapshot.skipping));
   }
+  private animations(): Animation[] { return [...(this.effect.getAnimations?.() ?? []), ...(this.stage.getAnimations?.() ?? [])]; }
+  private queueScroll() {
+    const view = this.document.defaultView;
+    if (!view || this.scrollFrame !== undefined) return;
+    const visit = this.visit;
+    this.scrollFrame = view.requestAnimationFrame(() => {
+      this.scrollFrame = undefined;
+      if (!this.disposed && this.visit === visit && this.chatPinned) this.chat.scrollTop = this.chat.scrollHeight;
+    });
+  }
+  private cancelScroll() { if (this.scrollFrame !== undefined) { this.document.defaultView?.cancelAnimationFrame(this.scrollFrame); this.scrollFrame = undefined; } }
   notify(message: string) { if (!this.disposed) this.status.textContent = message; }
   private save() {
     try { if (!this.options.storage) throw new Error(); this.options.storage.setItem(this.saveKey, JSON.stringify(this.session.save())); this.notify('已保存当前段落'); }
@@ -179,11 +220,11 @@ export class DOMRenderer {
     };
     input.addEventListener('input', show); panel.append(input, list); show(); input.focus();
   }
-  private evidence() { const panel = this.panel('证据簿'); const evidence = this.session.getSnapshot().frame.evidence ?? []; if (!evidence.length) panel.append(this.el('p', '尚未取得证据')); for (const item of evidence) panel.append(this.el('h3', item.title), this.el('p', item.detail)); }
+  private evidence() { const panel = this.panel('证据簿'); const evidence = this.session.getView().frame.evidence ?? []; if (!evidence.length) panel.append(this.el('p', '尚未取得证据')); for (const item of evidence) panel.append(this.el('h3', item.title), this.el('p', item.detail)); }
   private settings() {
-    const panel = this.panel('阅读设置'), snapshot = this.session.getSnapshot();
+    const panel = this.panel('阅读设置'), snapshot = this.session.getView();
     const configure = (value: Partial<RuntimeSettings>) => {
-      this.session.configure(value); try { this.options.storage?.setItem(this.settingsKey, JSON.stringify(this.session.getSnapshot().settings)); } catch { this.notify('设置已生效，本次无法保存设置'); }
+      this.session.configure(value); try { this.options.storage?.setItem(this.settingsKey, JSON.stringify(this.session.getView().settings)); } catch { this.notify('设置已生效，本次无法保存设置'); }
     };
     for (const [key, label, min, max, step] of [['textDelayMs', '文字间隔', 0, 100, 1], ['autoDelayMs', '自动阅读间隔', 200, 5000, 100], ['opacity', '阅读区透明度', .25, 1, .05], ['volume', '音乐与音效音量', 0, 1, .05], ['voiceVolume', '语音音量', 0, 1, .05]] as const) {
       const row = this.el('label', undefined, 'vn-setting'), input = this.el('input'); input.type = 'range'; input.min = String(min); input.max = String(max); input.step = String(step); input.value = String(snapshot.settings[key]); input.setAttribute('aria-label', label);
@@ -216,14 +257,15 @@ export class DOMRenderer {
     const target = event.target as HTMLElement;
     if (target.closest('button,input,textarea,select,[contenteditable=true]')) return;
     if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); this.options.onUnlockAudio?.(); this.session.next(); }
-    else if (/^[1-9]$/.test(event.key)) { const action = this.session.getSnapshot().frame.actions[Number(event.key) - 1]; if (action) { event.preventDefault(); this.session.act(action.id); } }
-    else if (event.key.toLowerCase() === 'h') { event.preventDefault(); this.session.hide(!this.session.getSnapshot().hidden); }
-    else if (event.key.toLowerCase() === 'a') { event.preventDefault(); this.session.setAuto(!this.session.getSnapshot().auto); }
+    else if (/^[1-9]$/.test(event.key)) { const action = this.session.getView().frame.actions[Number(event.key) - 1]; if (action) { event.preventDefault(); this.session.act(action.id); } }
+    else if (event.key.toLowerCase() === 'h') { event.preventDefault(); this.session.hide(!this.session.getView().hidden); }
+    else if (event.key.toLowerCase() === 'a') { event.preventDefault(); this.session.setAuto(!this.session.getView().auto); }
   }
   dispose() {
     if (this.disposed) return; this.disposed = true; this.disconnect(); this.session.pause('panel', false);
     this.document.removeEventListener('visibilitychange', this.onVisibility); this.element.removeEventListener('keydown', this.onKey); this.element.removeEventListener('pointerdown', this.onPointer);
+    this.chat.removeEventListener('scroll', this.onChatScroll); this.cancelScroll();
     for (const { probe } of this.probes.values()) { probe.onload = null; probe.onerror = null; probe.removeAttribute('src'); } this.probes.clear();
-    for (const animation of [...this.effect.getAnimations(), ...this.stage.getAnimations()]) animation.cancel(); this.element.remove();
+    for (const animation of this.animations()) animation.cancel(); this.element.remove();
   }
 }

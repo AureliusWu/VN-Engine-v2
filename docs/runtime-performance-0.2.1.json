@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "baselineCommit": "472859f6a86ec5d7dc1ad15a949e70a22b7980dd",
+  "optimizedVersion": "0.2.1",
+  "baseline": {
+    "schema": 1,
+    "node": "v24.22.1",
+    "platform": "linux",
+    "cases": [
+      {
+        "name": "paragraph",
+        "method": "getSnapshot",
+        "readsPerSample": 5000,
+        "samples": 7,
+        "medianMs": 26.014,
+        "structuredCloneCalls": 35000,
+        "checksum": 3640000
+      },
+      {
+        "name": "document",
+        "method": "getSnapshot",
+        "readsPerSample": 1000,
+        "samples": 7,
+        "medianMs": 45.695,
+        "structuredCloneCalls": 7000,
+        "checksum": 728000
+      }
+    ],
+    "scope": "Same frame fixtures, one process per variant on the same host. Warmed read-only host-view vs defensive-snapshot microbenchmark, not end-to-end FPS."
+  },
+  "optimized": {
+    "schema": 1,
+    "node": "v24.22.1",
+    "platform": "linux",
+    "cases": [
+      {
+        "name": "paragraph",
+        "method": "getView",
+        "readsPerSample": 5000,
+        "samples": 7,
+        "medianMs": 0.1,
+        "structuredCloneCalls": 0,
+        "checksum": 3640000
+      },
+      {
+        "name": "document",
+        "method": "getView",
+        "readsPerSample": 1000,
+        "samples": 7,
+        "medianMs": 0.042,
+        "structuredCloneCalls": 0,
+        "checksum": 728000
+      }
+    ],
+    "scope": "Same frame fixtures, one process per variant on the same host. Warmed read-only host-view vs defensive-snapshot microbenchmark, not end-to-end FPS."
+  },
+  "notes": [
+    "The built-in renderer and media director now use getView. Public getSnapshot still returns a detached mutable copy.",
+    "Timing is a warmed local microbenchmark; it does not measure end-to-end FPS or predict another device."
+  ]
+}

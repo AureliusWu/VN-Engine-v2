@@ -1,0 +1,12 @@
+{
+  "schema": 1,
+  "checkedAt": "2026-10-25T06:52:56.291Z",
+  "browser": "153.0.8010.0",
+  "checks": [
+    "Failed mount releases the session timer and leaves no partial renderer",
+    "Typing reuses message nodes and preserves the reader scroll position",
+    "Scene effects pause with panels, resume once and cancel immediately for reduced motion",
+    "Revealing text updates controls even when an authored hold is still pending"
+  ],
+  "result": "passed"
+}

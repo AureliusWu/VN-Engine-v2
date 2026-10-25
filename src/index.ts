@@ -27,3 +27,4 @@ export * from './runtime/media.js';
 export * from './render/dom.js';
 export * from './render/mount.js';
 export * from './version.js';
+export type { DeepReadonly } from './runtime/readonly.js';

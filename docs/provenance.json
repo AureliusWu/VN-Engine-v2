@@ -11,7 +11,8 @@
     "Snapshots were read from exact commits; source working trees were not modified.",
     "Verbatim files are checked against original SHA-256. Adapted targets retain source hashes and have independent regression evidence.",
     "New demo texts and host tools are independent of the four original stories.",
-    "0.2 adds a self-developed interpreter, scheduler, renderer and standalone builder; legacy source projects remain unchanged."
+    "0.2 adds a self-developed interpreter, scheduler, renderer and standalone builder; legacy source projects remain unchanged.",
+    "0.2.1 optimizes engine internals only. Source-game migration is explicitly gated on the user actively requesting it."
   ],
   "files": [
     {
@@ -75,7 +76,7 @@
       "target": "examples/runtime/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "3371754bf298c0720d546248040970d0198f30396bc6e837d27260d4ed7a3934"
+      "targetSha256": "0c0ee2f91d41a9f5333fe001b9fc8a4a3f6dddea084a42d8dfce7e8e1a31acf6"
     },
     {
       "target": "examples/runtime/assets/OFL.txt",
@@ -173,7 +174,7 @@
       "target": "examples/runtime/index.html",
       "mode": "new",
       "origins": [],
-      "targetSha256": "37ea2c92eaedfb5128487ff6dc68c950945bd305c40dc7a218f61c14c389dc85"
+      "targetSha256": "97ad53d019c4af75020bf39901ee56f7c2640e3e08e2b8265c8c393d1cb5e5ae"
     },
     {
       "target": "examples/runtime/netlove.json",
@@ -337,7 +338,7 @@
       "target": "src/assets/catalog.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "e361de0f2e96bdc21d565f17dcd2933dbe7f1336bf057d195584289c01ce1c92"
+      "targetSha256": "769c73c4b3d92899d0ce8ec34869f864230b349095a58943d53f9bef3ba3aa3a"
     },
     {
       "target": "src/audio/catalog.ts",
@@ -400,7 +401,7 @@
     {
       "target": "src/index.ts",
       "mode": "new",
-      "targetSha256": "42060c0ec156beb5b7e014bf1e4702bff01c3fbeb3396b1700e02fb02286f80c",
+      "targetSha256": "42b4318effa28fbfeac075b6ac9c4d9e218c5127a8c0a35d284d2fa9c4d7de7a",
       "origins": []
     },
     {
@@ -526,13 +527,13 @@
       "target": "src/render/dom.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "79683bd55788c79e16b6de730bbb07ad203e77a2adfa8808223dcac5ae046e54"
+      "targetSha256": "7d6f1893b17f7ff932d090fb2d4cef060aa2190d2e691619030131571938959c"
     },
     {
       "target": "src/render/mount.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "b17205ff364486c41bb83012b8e59b01fea20b113c608dc316f173c51674a355"
+      "targetSha256": "a3bf31a13ee8c945cce5cce82490433380e2e826292570675cd2ad0ba8b7f0c0"
     },
     {
       "target": "src/runtime/drivers.ts",
@@ -544,7 +545,7 @@
       "target": "src/runtime/media.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "1aaad1c8f7038a3caa259ded873cd54d9e482ccf74de45ef076c7bcaeb70be2a"
+      "targetSha256": "d44e3f9b48ef4693a3c418fdfe6fe0376745d4eed35a718ec2d59d897fa242ca"
     },
     {
       "target": "src/runtime/project.ts",
@@ -553,10 +554,16 @@
       "targetSha256": "d0c75ccd8de926f21736599e1c115094f4ff110ca0c38a347911aa56ec87146b"
     },
     {
+      "target": "src/runtime/readonly.ts",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "0c927dfe1cde980d9cf4dcb04f62a1d9bbf10224e7bf6aef64c36db67d9091cb"
+    },
+    {
       "target": "src/runtime/session.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "3bfb92428dccaf8a88f2a0e46ec4fa45a03f9ae3d2c6ac6b3bfcda2a1d71e0f7"
+      "targetSha256": "0b4cb0bc7c105de29f03fad2a63b0b76578e86437e170a5a746d14c883d984f1"
     },
     {
       "target": "src/script/engine.ts",
@@ -637,7 +644,13 @@
       "target": "src/version.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "acac4c83a6834e3c7b152963723eb61d1959e0e278ce95e9fa44b628190aa815"
+      "targetSha256": "2898c68e93d877ad372836e37253cccd0b11f10d699f31f06d6d79a68e06b217"
+    },
+    {
+      "target": "tools/benchmark-runtime.mjs",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "c2c0328eb60dfb30cb14a43c0bbdeb7c0bd7b1340a78b23294105cfb785f010c"
     },
     {
       "target": "tools/check-provenance.mjs",

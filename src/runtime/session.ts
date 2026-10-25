@@ -1,4 +1,5 @@
 import type { ReadRecord, RuntimeDriver, RuntimeFrame } from '../stage/types.js';
+import { freezeData, type DeepReadonly } from './readonly.js';
 
 export type RuntimeSettings = {
   textDelayMs: number; autoDelayMs: number; skipDelayMs: number; reducedMotion: boolean;
@@ -14,6 +15,7 @@ export type RuntimeSnapshot = {
   paused: boolean; pauseReasons: readonly string[]; hidden: boolean; auto: boolean; skipping: boolean; voiceBlocked: boolean;
   settings: RuntimeSettings; supportsSkip: boolean; supportsReread: boolean;
 };
+export type RuntimeView = DeepReadonly<RuntimeSnapshot>;
 
 export function runtimeSettings(value: Partial<RuntimeSettings>): RuntimeSettings {
   const result = { ...DEFAULT_RUNTIME_SETTINGS };
@@ -27,7 +29,10 @@ export function runtimeSettings(value: Partial<RuntimeSettings>): RuntimeSetting
 /** Owns text timing, pause scopes, auto/read-skip and every interactive visit. */
 export class RuntimeSession {
   private listeners = new Set<() => void>();
-  private current: RuntimeFrame;
+  private current!: DeepReadonly<RuntimeFrame>;
+  private view?: RuntimeView;
+  private displayed = '';
+  private readonly segmenter = new Intl.Segmenter('zh', { granularity: 'grapheme' });
   private glyphs: string[] = [];
   private count = 0;
   private hold = 0;
@@ -46,19 +51,25 @@ export class RuntimeSession {
   private generation = 0;
   private disposed = false;
   constructor(readonly driver: RuntimeDriver, options: { settings?: Partial<RuntimeSettings>; clock?: Clock } = {}) {
-    this.clock = options.clock ?? systemClock; this.settings = runtimeSettings(options.settings ?? {});
-    this.current = driver.frame(); this.enter('start');
+    this.clock = options.clock ?? systemClock; this.settings = Object.freeze(runtimeSettings(options.settings ?? {}));
+    this.enter('start');
   }
   private readonly clock: Clock;
   subscribe(listener: () => void): () => void { if (this.disposed) return () => {}; this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
   getSnapshot(): RuntimeSnapshot {
-    return { frame: structuredClone(this.current), visit: this.visit, reason: this.reason,
-      text: this.glyphs.slice(0, this.count).join(''), complete: this.count >= this.glyphs.length,
-      ready: this.count >= this.glyphs.length && this.hold <= 0, paused: this.pauses.size > 0 || this.hidden,
-      pauseReasons: [...this.pauses], hidden: this.hidden, auto: this.automatic, skipping: this.skipping, voiceBlocked: this.voiceBlocked,
-      settings: { ...this.settings }, supportsSkip: this.driver.supportsSkip, supportsReread: this.driver.supportsReread };
+    return structuredClone(this.getView()) as RuntimeSnapshot;
   }
-  private emit() { if (!this.disposed) for (const listener of [...this.listeners]) listener(); }
+  /** Stable immutable view for renderers; getSnapshot retains its mutable-copy contract. */
+  getView(): RuntimeView {
+    if (this.view) return this.view;
+    this.view = Object.freeze({ frame: this.current, visit: this.visit, reason: this.reason,
+      text: this.displayed, complete: this.count >= this.glyphs.length,
+      ready: this.count >= this.glyphs.length && this.hold <= 0, paused: this.pauses.size > 0 || this.hidden,
+      pauseReasons: Object.freeze([...this.pauses]), hidden: this.hidden, auto: this.automatic, skipping: this.skipping, voiceBlocked: this.voiceBlocked,
+      settings: this.settings, supportsSkip: this.driver.supportsSkip, supportsReread: this.driver.supportsReread });
+    return this.view;
+  }
+  private emit() { this.view = undefined; if (!this.disposed) for (const listener of [...this.listeners]) listener(); }
   private readKey(frame = this.current) { return `${frame.lineId}\u0000${frame.text}`; }
   private cancel() {
     if (this.timer) {
@@ -69,12 +80,13 @@ export class RuntimeSession {
     this.generation++;
   }
   private enter(reason: VisitReason) {
-    this.cancel(); this.current = structuredClone(this.driver.frame()); this.visit++; this.reason = reason;
+    this.cancel(); this.current = freezeData(structuredClone(this.driver.frame())); this.visit++; this.reason = reason;
     if (['start', 'restore', 'reread'].includes(reason)) { this.automatic = false; this.skipping = false; }
     this.voiceBlocked = false; this.autoRemaining = undefined;
     this.eligibleSkip = this.read.has(this.readKey());
-    this.glyphs = [...new Intl.Segmenter('zh', { granularity: 'grapheme' }).segment(this.current.text)].map(segment => segment.segment);
+    this.glyphs = [...this.segmenter.segment(this.current.text)].map(segment => segment.segment);
     this.count = this.settings.textDelayMs === 0 || this.settings.reducedMotion ? this.glyphs.length : 0;
+    this.displayed = this.count === this.glyphs.length ? this.current.text : '';
     const pause = this.current.stage.pauseMs;
     this.hold = typeof pause === 'number' && Number.isFinite(pause) ? Math.max(0, Math.min(30000, pause)) : 0;
     if (!this.eligibleSkip || this.current.actions.length || !this.current.canAdvance) this.skipping = false;
@@ -94,7 +106,8 @@ export class RuntimeSession {
       if (this.disposed || generation !== this.generation || this.pauses.size || this.hidden) return;
       this.timer = undefined;
       if (kind === 'typing') {
-        this.count = this.skipping ? this.glyphs.length : Math.min(this.glyphs.length, this.count + 1);
+        if (this.skipping) { this.count = this.glyphs.length; this.displayed = this.current.text; }
+        else { this.displayed += this.glyphs[this.count]; this.count++; }
         if (this.count === this.glyphs.length) this.read.add(this.readKey());
       } else if (kind === 'hold') this.hold = 0;
       else {
@@ -108,13 +121,13 @@ export class RuntimeSession {
   }
   next(): boolean {
     if (this.disposed || this.pauses.size || this.hidden) return false;
-    if (this.count < this.glyphs.length) { this.cancel(); this.count = this.glyphs.length; this.read.add(this.readKey()); this.emit(); this.schedule(); return true; }
+    if (this.count < this.glyphs.length) { this.cancel(); this.count = this.glyphs.length; this.displayed = this.current.text; this.read.add(this.readKey()); this.emit(); this.schedule(); return true; }
     if (this.hold > 0 || !this.current.canAdvance || !this.driver.advance()) return false;
     this.enter('advance'); return true;
   }
   act(id: string): boolean {
-    const snapshot = this.getSnapshot();
-    if (this.disposed || snapshot.paused || !snapshot.ready || !snapshot.frame.actions.some(action => action.id === id) || !this.driver.act(id)) return false;
+    if (this.disposed || this.pauses.size || this.hidden || this.count < this.glyphs.length || this.hold > 0
+      || !this.current.actions.some(action => action.id === id) || !this.driver.act(id)) return false;
     this.enter('action'); return true;
   }
   pause(reason: string, paused: boolean) {
@@ -135,11 +148,14 @@ export class RuntimeSession {
     this.cancel(); this.voiceBlocked = blocked; this.emit(); this.schedule();
   }
   configure(value: Partial<RuntimeSettings>) {
-    if (this.disposed) return; this.cancel(); this.settings = runtimeSettings({ ...this.settings, ...value });
-    if (this.settings.textDelayMs === 0 || this.settings.reducedMotion) { this.count = this.glyphs.length; this.read.add(this.readKey()); }
+    if (this.disposed) return;
+    const next = runtimeSettings({ ...this.settings, ...value });
+    if ((Object.keys(next) as (keyof RuntimeSettings)[]).every(key => next[key] === this.settings[key])) return;
+    this.cancel(); this.settings = Object.freeze(next);
+    if (this.settings.textDelayMs === 0 || this.settings.reducedMotion) { this.count = this.glyphs.length; this.displayed = this.current.text; this.read.add(this.readKey()); }
     this.emit(); this.schedule();
   }
-  history(): readonly ReadRecord[] { return structuredClone(this.driver.history(this.getSnapshot().complete)); }
+  history(): readonly ReadRecord[] { return structuredClone(this.driver.history(this.count >= this.glyphs.length)); }
   reread(id: string): boolean {
     if (this.disposed || this.hidden || !this.driver.supportsReread || !this.driver.reread(id)) return false;
     this.enter('reread'); return true;

@@ -30,7 +30,9 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
     }
     void media.unlock();
   };
-  const renderer = new DOMRenderer(root, session, assets, { title: project.title, font: project.font, storage, onUnlockAudio: unlockAudio });
+  let renderer: DOMRenderer;
+  try { renderer = new DOMRenderer(root, session, assets, { title: project.title, font: project.font, storage, onUnlockAudio: unlockAudio }); }
+  catch (error) { session.dispose(); throw error; }
   return { session, renderer, assets, unlockAudio, dispose() {
     if (disposed) return; disposed = true; media?.dispose(); session.dispose(); renderer.dispose(); if (context) void context.close().catch(() => {});
   } };

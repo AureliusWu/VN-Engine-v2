@@ -1,6 +1,7 @@
-import { mountGame } from './lib/index.js';
+import { mountGame, ENGINE_VERSION } from './lib/index.js';
 
 const root = document.getElementById('game'), error = document.getElementById('error');
+document.getElementById('engine-version').textContent = 'v' + ENGINE_VERSION;
 let current, generation = 0;
 async function select(name) {
   const visit = ++generation;

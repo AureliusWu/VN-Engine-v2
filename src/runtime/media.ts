@@ -1,11 +1,11 @@
 import { SceneLoop } from '../audio/scene-loop.js';
 import { RecordedVoice, voiceBlocksAuto, type VoiceClip } from '../audio/recorded-voice.js';
 import type { AssetCatalog } from '../assets/catalog.js';
-import type { RuntimeSession, RuntimeSnapshot } from './session.js';
+import type { RuntimeSession, RuntimeView } from './session.js';
 
 export type MediaOptions = { context: AudioContext; createAudio?: (src: string) => HTMLAudioElement; onError?: (message: string) => void };
 
-/** Scene media consumes session visits; text ticks never replay an effect. */
+/** Visit-driven media; asynchronous graph operations reconcile the latest intent. */
 export class MediaDirector {
   private voice: RecordedVoice;
   private music: SceneLoop;
@@ -14,71 +14,129 @@ export class MediaDirector {
   private effect?: HTMLAudioElement;
   private visit = -1;
   private handling = false;
+  private pending?: RuntimeView;
+  private last?: RuntimeView;
   private disposed = false;
   private playable = false;
   private unlocked = false;
-  private resuming?: Promise<void>;
+  private graphTask?: Promise<void>;
+  private graphDirty = false;
+  private missing = new Set<string>();
   private disconnect: () => void;
   private unvoice: () => void;
   private createAudio: (src: string) => HTMLAudioElement;
+
   constructor(readonly session: RuntimeSession, readonly assets: AssetCatalog, readonly options: MediaOptions) {
     this.createAudio = options.createAudio ?? (src => new Audio(src));
+    this.unlocked = options.context.state === 'running';
     this.voice = new RecordedVoice(this.createAudio);
     this.bus = options.context.createGain(); this.bus.connect(options.context.destination);
     this.music = new SceneLoop(options.context, this.bus); this.ambience = new SceneLoop(options.context, this.bus);
     this.unvoice = this.voice.subscribe(() => session.setVoiceBlocked(voiceBlocksAuto(this.voice.getState())));
-    this.disconnect = session.subscribe(() => this.update(session.getSnapshot()));
-    this.update(session.getSnapshot());
+    this.disconnect = session.subscribe(() => this.update(session.getView()));
+    this.update(session.getView());
   }
+
   private audioURL(id?: string | null): string | undefined {
     if (!id) return undefined;
-    try { return this.assets.url(id, 'audio'); } catch { this.options.onError?.(`声音资源不可用：${id}`); return undefined; }
+    try { return this.assets.url(id, 'audio'); }
+    catch { if (!this.missing.has(id)) { this.missing.add(id); this.options.onError?.(`声音资源不可用：${id}`); } return undefined; }
   }
-  private update(snapshot: RuntimeSnapshot) {
-    if (this.disposed || this.handling) return;
+  private sameMedia(a: RuntimeView | undefined, b: RuntimeView): boolean {
+    return !!a && a.visit === b.visit && a.paused === b.paused
+      && a.settings.music === b.settings.music && a.settings.volume === b.settings.volume
+      && a.settings.voiceEnabled === b.settings.voiceEnabled && a.settings.voiceVolume === b.settings.voiceVolume
+      && a.settings.soundEffects === b.settings.soundEffects;
+  }
+  private update(snapshot: RuntimeView) {
+    if (this.disposed) return;
+    this.pending = snapshot;
+    if (this.handling) return;
     this.handling = true;
     try {
-      const { settings, frame } = snapshot;
-      this.playable = !snapshot.paused;
-      this.bus.gain.value = settings.music ? settings.volume : 0;
-      this.music.select(settings.music ? this.audioURL(frame.stage.music) : undefined); this.ambience.select(settings.music ? this.audioURL(frame.stage.ambience) : undefined);
-      if (!this.playable && this.options.context.state === 'running') void this.options.context.suspend().catch(() => {});
-      if (this.playable && this.unlocked && this.options.context.state === 'suspended') void this.resumeGraph();
-      this.voice.configure(settings.voiceEnabled, settings.voiceVolume, this.playable, !snapshot.pauseReasons.includes('background'), false);
-      const source = this.audioURL(frame.stage.voice);
-      const clip: VoiceClip | undefined = source ? { id: frame.stage.voice!, lineId: frame.lineId, speaker: frame.speaker, text: frame.text, src: source } : undefined;
-      this.voice.enter(clip, String(snapshot.visit));
-      if (snapshot.visit !== this.visit) {
-        this.visit = snapshot.visit; this.stopEffect();
-        const effect = this.audioURL(frame.stage.sound);
-        if (effect && settings.soundEffects && ['start', 'advance', 'action'].includes(snapshot.reason) && this.playable) {
-          const player = this.createAudio(effect); this.effect = player; player.volume = settings.volume;
-          void player.play().catch(() => { if (this.effect === player) this.options.onError?.('动作音效暂时无法播放'); });
-        }
+      while (this.pending && !this.disposed) {
+        const next = this.pending; this.pending = undefined;
+        if (this.sameMedia(this.last, next)) continue;
+        this.last = next; this.apply(next);
       }
-      if (!this.playable) this.effect?.pause();
     } finally { this.handling = false; }
+  }
+  private apply(snapshot: RuntimeView) {
+    const { settings, frame } = snapshot;
+    const changedPlayback = this.playable !== !snapshot.paused;
+    this.playable = !snapshot.paused;
+    this.bus.gain.value = settings.music ? settings.volume : 0;
+    this.music.select(settings.music ? this.audioURL(frame.stage.music) : undefined);
+    this.ambience.select(settings.music ? this.audioURL(frame.stage.ambience) : undefined);
+    if (changedPlayback) void this.reconcileGraph();
+    try {
+      this.voice.configure(settings.voiceEnabled, settings.voiceVolume, this.playable, this.playable, false);
+      if (settings.voiceEnabled) {
+        const source = this.audioURL(frame.stage.voice);
+        const clip: VoiceClip | undefined = source ? { id: frame.stage.voice!, lineId: frame.lineId, speaker: frame.speaker, text: frame.text, src: source } : undefined;
+        this.voice.enter(clip, String(snapshot.visit));
+      }
+    } catch { this.voice.stop(); this.options.onError?.('语音暂时不可用，可以继续阅读'); }
+    // A listener may have advanced during the voice notification above.
+    if (this.disposed || this.session.getView().visit !== snapshot.visit) return;
+    if (snapshot.visit !== this.visit) {
+      this.visit = snapshot.visit; this.stopEffect();
+      const source = settings.soundEffects ? this.audioURL(frame.stage.sound) : undefined;
+      if (source && ['start', 'advance', 'action'].includes(snapshot.reason) && this.playable) {
+        try {
+          const player = this.createAudio(source); this.effect = player; player.volume = settings.volume;
+          player.onended = () => { if (this.effect === player) this.stopEffect(); };
+          player.onerror = () => { if (this.effect === player) { this.stopEffect(); this.options.onError?.('动作音效暂时无法播放'); } };
+          void player.play().catch(() => { if (this.effect === player) { this.stopEffect(); this.options.onError?.('动作音效暂时无法播放'); } });
+        } catch { this.stopEffect(); this.options.onError?.('动作音效暂时不可用，可以继续阅读'); }
+      }
+    } else if (!settings.soundEffects) this.stopEffect();
+    if (this.effect) { this.effect.volume = settings.volume; if (!this.playable) this.effect.pause(); }
+  }
+
+  private reconcileGraph(): Promise<void> {
+    this.graphDirty = true;
+    if (this.graphTask) return this.graphTask;
+    const task = this.runGraph(); this.graphTask = task;
+    void task.then(() => {
+      if (this.graphTask === task) this.graphTask = undefined;
+      if (this.graphDirty && !this.disposed) void this.reconcileGraph();
+    });
+    return task;
+  }
+  private async runGraph(): Promise<void> {
+    try {
+      while (this.graphDirty && !this.disposed) {
+        this.graphDirty = false;
+        const wanted = this.unlocked && this.playable;
+        const before = this.options.context.state;
+        const transitioning = (wanted && before === 'suspended') || (!wanted && before === 'running');
+        if (wanted && this.options.context.state === 'suspended') await this.options.context.resume();
+        else if (!wanted && this.options.context.state === 'running') await this.options.context.suspend();
+        if (this.disposed) return;
+        const latest = this.unlocked && this.playable;
+        if (transitioning && latest === wanted && this.options.context.state === before) throw new Error('Audio graph did not transition');
+        if ((latest && this.options.context.state === 'suspended') || (!latest && this.options.context.state === 'running')) this.graphDirty = true;
+        if (latest && this.options.context.state === 'running') { void this.music.ensure(); void this.ambience.ensure(); }
+      }
+    } catch { this.graphDirty = false; this.options.onError?.('声音暂时无法恢复，可以继续阅读'); }
   }
   async unlock() {
     if (this.disposed) return;
     this.unlocked = true;
     try {
-      if (this.playable && this.options.context.state !== 'running') await this.resumeGraph();
-      if (this.disposed || !this.playable) { if (this.options.context.state === 'running') await this.options.context.suspend(); return; }
-      await Promise.all([this.music.ensure(), this.ambience.ensure()]); this.voice.unlock();
+      await this.reconcileGraph();
+      if (this.disposed || !this.playable) return;
+      await Promise.all([this.music.ensure(), this.ambience.ensure()]);
+      if (!this.disposed && this.playable) this.voice.unlock();
     } catch { this.options.onError?.('声音尚未启用，可再次点击声音按钮'); }
   }
-  private resumeGraph(): Promise<void> {
-    if (this.resuming) return this.resuming;
-    this.resuming = this.options.context.resume().then(async () => {
-      if (this.disposed || !this.playable) { if (this.options.context.state === 'running') await this.options.context.suspend(); return; }
-      await Promise.all([this.music.ensure(), this.ambience.ensure()]);
-    }).catch(() => { this.options.onError?.('声音暂时无法恢复，可以继续阅读'); }).finally(() => { this.resuming = undefined; });
-    return this.resuming;
+  private stopEffect() {
+    const player = this.effect; if (!player) return; this.effect = undefined;
+    player.onended = null; player.onerror = null; player.pause(); player.removeAttribute('src'); player.load();
   }
-  private stopEffect() { if (this.effect) { this.effect.pause(); this.effect.removeAttribute('src'); this.effect.load(); this.effect = undefined; } }
   dispose() {
-    if (this.disposed) return; this.disposed = true; this.disconnect(); this.unvoice();
+    if (this.disposed) return; this.disposed = true; this.pending = undefined; this.disconnect(); this.unvoice();
     this.voice.stop(); this.music.dispose(); this.ambience.dispose(); this.stopEffect(); this.bus.disconnect(); this.session.setVoiceBlocked(false);
   }
 }
