@@ -16,14 +16,14 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 - CI：`npm run check`
 - 正式总 Gate：`npm run gate:release`
 
-## 本轮新增的规范化能力
+## 已落地的规范化能力
 
 | 项目 | 状态 | 证据 / 行为 |
 | --- | --- | --- |
 | Project identity | PASS | 校验 `schema / game / version / title / type` 并实际创建 runtime |
 | Stable story structure | PASS | 继续复用 Narrative / Script / Investigation 自身结构校验 |
 | Asset manifest integrity | PASS | 复用 `AssetCatalog`，检查 ID、kind、路径与 manifest |
-| Asset reference validation | PASS | 对背景、立绘、CG、BGM、Ambience、SE、Voice、Font 做 ID + kind 交叉检查 |
+| Asset reference validation | PASS | 对背景、立绘、CG、BGM、Ambience、SE、Voice、Font、Video 与 fallback 做 ID + kind 交叉检查 |
 | Placeholder text gate | PASS | development 记 warning；release 对 `TODO / FIXME / PLACEHOLDER / lorem ipsum` 失败 |
 | Asset status gate | PARTIAL | 支持读取 `PLACEHOLDER / DRAFT / REVIEW / READY / DEPRECATED`；当前资产 schema 尚未强制要求 status |
 | Build Identity | PASS | 独立构建 manifest 写入 Game Version、Engine Version、Commit SHA、Build Time |
@@ -31,6 +31,16 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Release commit lock | PASS | `VN_RELEASE_BUILD=1` 时缺少 `VN_ENGINE_COMMIT` / `GITHUB_SHA` 直接失败 |
 | Release validation mode | PASS | `--release` 与 `VN_RELEASE_BUILD=1` 提升规范约束 |
 | Machine-readable evidence | PASS | validator 返回 contract、mode、assets、references、lines、endings、warnings |
+| Save Contract v2 | PASS | 独立 `save_version / game_version`、默认 6 手动槽、Quick、Auto、Migration Registry、损坏存档隔离 |
+| Session persistence binding | PASS | `bindSessionPersistence()` 直接通过 `RuntimeSession.save()/restore()` 工作 |
+| Auto Save runtime binding | PASS | `mountGame()` 每次进入新的 visit 写独立 Auto Slot，不覆盖手动/Quick |
+| Persistent Meta State | PASS | 独立 Meta key，记录 `ending_seen / cg_unlocked / playthrough_count / true_route_unlocked` |
+| Replay Context isolation | PASS | Replay Context 独立生成，不写普通 Save / Route 状态 |
+| Collection data API | PASS | 可计算 CG / Ending 的 unlock progress；当前仍缺正式 Gallery / Collection UI |
+| Formal Stage Layer vocabulary | PASS | 固定 Layer：background / character-back / character / character-front / cg / effect / ui |
+| Presentation Timeline contract | PASS | Move / Scale / Opacity / Camera keyframe 有正式数据契约与 authoring validation |
+| Timeline final-state settlement | PASS | Skip / Reduced Motion 可确定性收敛到 timeline 最终状态 |
+| Video asset + cue contract | PASS | `video` 成为正式 AssetKind；cue 支持 fallback，并纳入 compliance 引用检查 |
 
 ## Engine Compliance Matrix
 
@@ -46,20 +56,20 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Conditional branch | PASS | Narrative / Script VM |
 | Save | PASS | Narrative / Script / Investigation 均有可验证存档 |
 | Load | PASS | 非法存档拒绝、损坏数据保留 |
-| Save version identity | PARTIAL | 各 runtime 已带 schema + game/story version；尚未统一成同一 Save Migration API |
-| Manual Save | PASS | DOM runtime 当前提供独立手动存档入口 |
-| Quick Save | ENGINE_GAP | 尚未作为独立 quick slot 暴露 |
-| Quick Load | ENGINE_GAP | 尚未作为独立 quick slot 暴露 |
-| Auto Save | ENGINE_GAP | 尚未形成统一关键节点自动存档策略 |
+| Save version identity | PASS | Save Contract v2 统一 `save_version / game_version` 与 migration registry |
+| Manual Save | PASS | v2 默认 6 个独立 manual slots；旧 DOM 单槽仍兼容 |
+| Quick Save | PASS | 独立 Quick Slot + Session binding |
+| Quick Load | PASS | 独立 Quick Slot + Session restore |
+| Auto Save | PASS | mount runtime 自动写独立 Auto Slot |
 | Rollback | ENGINE_GAP | History reread 可回读，但不等同完整状态 Rollback |
 | History | PASS | 有 history + search + reread |
 | Auto | PASS | 自研 scheduler |
 | Skip Read | PASS | 仅已读文本，Choice 处停止 |
 | Hide UI | PASS | DOM runtime |
 | Settings persistence | PASS | 阅读与声音设置持久化 |
-| Persistent Meta State | PARTIAL | 各作品可实现，但尚无统一 `MetaState` API |
-| CG Gallery | ENGINE_GAP | 引擎未提供通用 Gallery 模块 |
-| Ending Collection | ENGINE_GAP | 引擎未提供通用 Ending Collection 模块 |
+| Persistent Meta State | PASS | 独立 MetaState API 与 mount runtime 更新 |
+| CG Gallery | PARTIAL | unlock / progress / replay context 已有；正式 Gallery UI 未接入 |
+| Ending Collection | PARTIAL | seen / progress / replay context 已有；正式 Collection UI 未接入 |
 | BGM | PASS | Runtime media |
 | SE | PASS | Runtime media |
 | Ambience | PASS | Runtime media |
@@ -68,53 +78,47 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Fade | PASS | DOM effect |
 | Flash | PASS | DOM effect |
 | Shake | PASS | DOM effect |
-| Move / Scale / Camera | ENGINE_GAP | 尚无正式时间线 API |
-| Formal Layer API | PARTIAL | DOM 有固定渲染层，但没有公开枚举式 Layer 编排 API |
-| Video | ENGINE_GAP | 尚无正式 Video cue + fallback |
+| Move / Scale / Camera | PARTIAL | Timeline resolver 与收敛逻辑已完成；DOM 实际动画消费尚未接入 |
+| Formal Layer API | PARTIAL | 正式 Layer vocabulary 已定义；DOM 仍主要使用固定内部层结构 |
+| Video | PARTIAL | Asset/Cue/Fallback/Compliance 已完成；DOM video playback 尚未接入 |
 | Investigation / nontraditional play | PASS | Investigation runtime |
 | Mini game contract | PARTIAL | 可通过自定义 runtime 承载，但未提供统一 entry/exit/save/skip contract |
 | Web Build | PASS | Standalone + PWA |
 | PWA offline | PASS | Service Worker / fingerprint |
 | Windows Build | PASS | 独立 Windows host workflow 与验收记录 |
 | Visual Editor | PASS | Studio 初版已接入同一执行链 |
-| Build Identity | PASS | 本轮加入正式 build manifest |
-| Project Compliance Gate | PASS | 本轮加入 |
+| Build Identity | PASS | 正式 build manifest |
+| Project Compliance Gate | PASS | 项目级自动 Gate |
 
 ## 与 SPEC 的边界
 
-引擎只提供能力，不强迫作品启用全部能力。作品如果声明支持 Gallery、Rollback、Video、小游戏等，而引擎尚未具备对应正式能力，应明确记录为 `ENGINE_GAP`，不得在 Script 层长期堆临时 Hack。
+引擎只提供能力，不强迫作品启用全部能力。作品如果声明支持 Gallery、Rollback、Video、小游戏等，而引擎尚未具备对应正式能力，应明确记录为 `ENGINE_GAP` 或 `PARTIAL`，不得在 Script 层长期堆临时 Hack。
 
-自动化 Gate 负责机械可验证项：ID、引用、资源类型、占位文本、构建身份、Checksum、结构有效性。剧情质量、角色一致性、CG 构图、演出节奏、UI 体验和音频体验继续由人工 QA 判断。
+自动化 Gate 负责机械可验证项：ID、引用、资源类型、占位文本、构建身份、Checksum、结构有效性、Timeline authoring 和 Video fallback 引用。剧情质量、角色一致性、CG 构图、演出节奏、UI 体验和音频体验继续由人工 QA 判断。
 
 ## 下一阶段优先级
 
-### P0 — Save Contract 2
+### P0 — Persistence UI closure
 
-- 多 Manual Slot
-- 独立 Quick Slot
-- Auto Save Slot
-- 统一 `save_version / game_version`
-- Migration registry
-- Corrupted save isolation evidence
+- DOM Save UI 升级为多 Manual Slot
+- Quick Save / Quick Load 显式控件与快捷键
+- Auto Save 状态提示
+- Save metadata / screenshot thumbnail（若作品启用）
 
-### P0 — Meta / Collection
+### P0 — Meta / Collection UI
 
-- `MetaState`
-- `ending_seen`
-- `cg_unlocked`
-- `playthrough_count`
-- CG Gallery
-- Ending Collection
-- Replay Context，不污染正常 Save / Route
+- CG Gallery 正式界面
+- Ending Collection 正式界面
+- True Route unlock policy 数据化
+- Replay 结束后安全返回 Collection
 
-### P1 — Presentation Timeline
+### P1 — Presentation runtime closure
 
-- Formal Layer
-- Move / Scale
-- Camera
-- Animation timeline
-- Skip 收敛到最终状态
-- Video + fallback
+- DOM 消费 Formal Layer API
+- DOM 执行 Move / Scale / Camera Timeline
+- Timeline 与 pause / hide / background 生命周期联动
+- Skip 后动画实际落到最终 CSS 状态
+- Video 元素播放、结束、Skip 与 fallback
 
 ### P1 — Release Evidence
 
