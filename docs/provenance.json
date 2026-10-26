@@ -511,7 +511,7 @@
     {
       "target": "src/index.ts",
       "mode": "new",
-      "targetSha256": "42b4318effa28fbfeac075b6ac9c4d9e218c5127a8c0a35d284d2fa9c4d7de7a",
+      "targetSha256": "5cc965871d5ff58d59b3965d64cbeedda08a401f5d4c279910887dfae569c850",
       "origins": []
     },
     {
@@ -796,7 +796,7 @@
       "target": "tools/package-game.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "09f511778f7fad21592f8a1cdc631b486fa3afed2c256189d6e43bdcd6c1f42f"
+      "targetSha256": "03c0dd064fc499db76b50ffbf16b5d46a6e8288f8dd9bba5504fb8f984f1fcaf"
     },
     {
       "target": "tools/package-studio.mjs",
@@ -859,6 +859,18 @@
           "sha256": "7385f28e51f7b633e3e64ec15b51891d4b5edbc17d1f3a0a7d18c9d5887ecdb7"
         }
       ]
+    },
+    {
+      "target": "src/compliance/project.ts",
+      "mode": "new",
+      "targetSha256": "37b1b18f11a43a8065cf27edbfba131804a46486878f92fc4965ba46c40ab3d7",
+      "origins": []
+    },
+    {
+      "target": "tools/validate-project.mjs",
+      "mode": "new",
+      "targetSha256": "b2db9c9ef45382d4f6a9c491a17e4ffc5ffe5dd48176a3f75a5c120def6b7f5f",
+      "origins": []
     }
   ]
 }
