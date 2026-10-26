@@ -18,6 +18,7 @@ export * from './storage/preferences.js';
 export * from './meta/state.js';
 export * from './stage/types.js';
 export * from './stage/cues.js';
+export * from './stage/timeline.js';
 export * from './assets/catalog.js';
 export * from './script/types.js';
 export * from './script/engine.js';
