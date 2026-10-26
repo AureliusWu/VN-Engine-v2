@@ -4,6 +4,8 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 
 本文件只记录**可以由代码、测试、构建或明确证据验证的引擎能力**。剧情质量、美术构图、演出节奏、音频体验等仍属于作品级人工 QA，不因引擎具备接口而自动记为 PASS。
 
+用户提供的最高规范已更新为 [GALGAME SPEC v0.2](GALGAME_SPEC_v0.2.md)。现有机器契约和本页原有状态仍对应 v0.1；v0.2 的逐项差距、适用范围与实际证据见 [v0.2 Gap Audit](GALGAME_SPEC_v0.2_GAP_AUDIT.md)。不能通过改版本标识宣称完成 v0.2。
+
 状态统一使用：`PASS / PARTIAL / ENGINE_GAP / UNVERIFIED / N/A`。
 
 ## 当前基线
