@@ -29,7 +29,6 @@ export async function packageGame(projectFile, output) {
   if (existing && (!existing.isDirectory() || (await readdir(destination)).length)) throw new Error('Output must be a new or empty directory; existing files are preserved');
   const project = JSON.parse(await readFile(source, 'utf8'));
   const complianceMode = process.env.VN_RELEASE_BUILD === '1' ? 'release' : 'development';
-  const compliance = validateProjectCompliance(project, { mode: complianceMode });
   const instance = createProject(project, pathToFileURL(sourceRoot + sep)); instance.session.dispose();
   if (!/^[a-zA-Z0-9_-]+$/.test(project.game)) throw new Error('Packaged game ID needs a path-safe identifier');
   const files = new Map();
@@ -50,6 +49,8 @@ export async function packageGame(projectFile, output) {
       files.set(asset.license.src, await readFile(license));
     }
   }
+  if (project.font && !project.assets.find(asset => asset.id === project.font)?.license) throw new Error('Bundled project font needs its own license record');
+  const compliance = validateProjectCompliance(project, { mode: complianceMode });
   files.set('project.json', Buffer.from(JSON.stringify(project, null, 2) + '\n'));
   for (const path of await modules(resolve(repository, 'dist'))) {
     const name = 'lib/' + relative(resolve(repository, 'dist'), path).split(sep).join('/');
@@ -65,7 +66,6 @@ catch(failure){error.textContent='启动未完成：'+failure.message;}
   files.set('icon.svg', Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="36" fill="#1d393e"/><path d="M48 136V56h22l52 54V56h22v80h-22L70 82v54z" fill="#c2ebd5"/></svg>'));
   files.set('manifest.webmanifest', Buffer.from(JSON.stringify({ id: './', name: project.title, short_name: project.title, start_url: './', scope: './', display: 'standalone', background_color: '#111820', theme_color: '#1d393e', icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }] })));
   files.set('LICENSE.txt', await readFile(resolve(repository, 'LICENSE')));
-  if (project.font && !project.assets.find(asset => asset.id === project.font)?.license) throw new Error('Bundled project font needs its own license record');
   const bytes = [...files].map(([name, bytes]) => ({ name, bytes }));
   const version = fingerprintFiles(bytes);
   files.set('sw.js', Buffer.from(renderWorker({ namespace: 'vn-self-' + project.game, version, urls: [...files.keys()] })));
