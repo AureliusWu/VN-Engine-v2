@@ -30,6 +30,7 @@
     "validate:spec:release": "npm run build && node tools/validate-project.mjs --release examples/runtime/campus.json examples/runtime/netlove.json examples/runtime/circuit.json examples/runtime/rain.json",
     "check": "npm test && npm run test:renpy && node tools/check-provenance.mjs && node tools/validate-project.mjs examples/runtime/campus.json examples/runtime/netlove.json examples/runtime/circuit.json examples/runtime/rain.json",
     "gate:release": "npm run check && npm run validate:spec:release && npm run test:browser",
+    "provenance:refresh": "node tools/refresh-provenance.mjs",
     "verify:upstream": "npm run build && node tools/compare-upstream.mjs",
     "build:game": "npm run build && node tools/package-game.mjs",
     "verify:rain": "npm run build && node tools/compare-rain-runtime.mjs",
