@@ -2,6 +2,7 @@ import { AssetCatalog, type AssetKind } from '../assets/catalog.js';
 import type { RainLine } from '../adapters/rain-runtime.js';
 import { createProject, type EngineProject } from '../runtime/project.js';
 import type { StageCue } from '../stage/types.js';
+import { validatePresentationTimeline } from '../stage/timeline.js';
 
 export const GALGAME_SPEC_CONTRACT = 'GALGAME_SPEC-v0.1';
 export type ComplianceMode = 'development' | 'release';
@@ -36,6 +37,11 @@ function cueReferences(cue: StageCue | undefined, context: string): AssetReferen
   add(cue.ambience, 'audio', 'ambience');
   add(cue.sound, 'audio', 'sound');
   add(cue.voice, 'audio', 'voice');
+  if (cue.timeline) validatePresentationTimeline(cue.timeline);
+  if (cue.video) {
+    add(cue.video.asset, 'video', 'video.asset');
+    if (cue.video.fallback) add(cue.video.fallback.asset, cue.video.fallback.kind, 'video.fallback');
+  }
   return result;
 }
 
