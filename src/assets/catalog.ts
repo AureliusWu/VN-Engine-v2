@@ -1,4 +1,4 @@
-export type AssetKind = 'background' | 'portrait' | 'cg' | 'audio' | 'font';
+export type AssetKind = 'background' | 'portrait' | 'cg' | 'audio' | 'font' | 'video';
 export type Asset = { id: string; kind: AssetKind; src: string; alt?: string; sha256?: string; license?: { name: string; src: string } };
 
 export function localAssetPath(path: string): boolean {
@@ -17,7 +17,7 @@ export class AssetCatalog {
     const base = new URL(baseURL); this.baseHref = base.href;
     if (!['http:', 'https:', 'file:'].includes(base.protocol) || !base.pathname.endsWith('/')) throw new Error('Asset base must be a directory URL');
     for (const asset of assets) {
-      if (!asset.id || this.entries.has(asset.id) || !['background', 'portrait', 'cg', 'audio', 'font'].includes(asset.kind)
+      if (!asset.id || this.entries.has(asset.id) || !['background', 'portrait', 'cg', 'audio', 'font', 'video'].includes(asset.kind)
         || !localAssetPath(asset.src) || (asset.license && (!asset.license.name || !localAssetPath(asset.license.src)))
         || (asset.sha256 !== undefined && !/^[a-f0-9]{64}$/.test(asset.sha256))) throw new Error('Invalid asset manifest');
       const url = new URL(resolveURL ? resolveURL(asset.src) : new URL(asset.src, base).href);
