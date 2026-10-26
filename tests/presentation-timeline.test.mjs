@@ -43,7 +43,7 @@ test('video is a first-class asset kind and compliance validates video fallback 
   const project = {
     schema: 1, game: 'timeline-demo', version: '1.0.0', title: 'Timeline demo', assets, type: 'script',
     defaults: { video: { asset: 'opening', fallback: { asset: 'opening-fallback', kind: 'cg' } }, timeline: { durationMs: 100 } },
-    program: { schema: 1, game: 'timeline-demo', version: '1.0.0', entry: 'start', variables: {}, blocks: [{ id: 'start', lines: [{ id: 'line-1', speaker: '', text: 'ready' }], exit: { type: 'end', ending: 'done' } }] }
+    program: { schema: 1, game: 'timeline-demo', version: '1.0.0', entry: 'start', variables: {}, blocks: [{ id: 'start', lines: [{ id: 'line-1', speaker: 'Narrator', text: 'ready' }], exit: { type: 'end', ending: 'done' } }] }
   };
   assert.equal(validateProjectCompliance(project).references, 2);
   project.defaults.video.fallback.asset = 'missing';
