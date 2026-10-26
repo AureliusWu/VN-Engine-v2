@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile, readdir, stat, realpath } from 'node:fs/pro
 import { resolve, dirname, relative, sep } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { createProject, localAssetPath, ENGINE_VERSION } from '../dist/index.js';
+import { createProject, localAssetPath, ENGINE_VERSION, validateProjectCompliance } from '../dist/index.js';
 import { fingerprintFiles, renderWorker } from './pwa.mjs';
 
 const repository = resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -16,6 +16,10 @@ async function modules(directory) {
   }
   return result;
 }
+function buildTimestamp() {
+  const epoch = Number(process.env.SOURCE_DATE_EPOCH);
+  return Number.isFinite(epoch) && epoch >= 0 ? new Date(epoch * 1000).toISOString() : new Date().toISOString();
+}
 
 /** Bundle local author data with our compiled runtime; no game engine downloads. */
 export async function packageGame(projectFile, output) {
@@ -24,6 +28,8 @@ export async function packageGame(projectFile, output) {
   try { existing = await stat(destination); } catch (error) { if (error.code !== 'ENOENT') throw error; }
   if (existing && (!existing.isDirectory() || (await readdir(destination)).length)) throw new Error('Output must be a new or empty directory; existing files are preserved');
   const project = JSON.parse(await readFile(source, 'utf8'));
+  const complianceMode = process.env.VN_RELEASE_BUILD === '1' ? 'release' : 'development';
+  const compliance = validateProjectCompliance(project, { mode: complianceMode });
   const instance = createProject(project, pathToFileURL(sourceRoot + sep)); instance.session.dispose();
   if (!/^[a-zA-Z0-9_-]+$/.test(project.game)) throw new Error('Packaged game ID needs a path-safe identifier');
   const files = new Map();
@@ -63,8 +69,18 @@ catch(failure){error.textContent='启动未完成：'+failure.message;}
   const bytes = [...files].map(([name, bytes]) => ({ name, bytes }));
   const version = fingerprintFiles(bytes);
   files.set('sw.js', Buffer.from(renderWorker({ namespace: 'vn-self-' + project.game, version, urls: [...files.keys()] })));
-  const metadata = { schema: 1, game: project.game, version: project.version, engine: 'VN Engine v2 self runtime ' + ENGINE_VERSION, contentFingerprint: version,
-    files: [...files].map(([name, bytes]) => ({ name, size: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') })) };
+  const commitSha = process.env.VN_ENGINE_COMMIT ?? process.env.GITHUB_SHA ?? 'UNVERIFIED';
+  if (complianceMode === 'release' && commitSha === 'UNVERIFIED') throw new Error('Release build requires VN_ENGINE_COMMIT or GITHUB_SHA');
+  const metadata = {
+    schema: 1,
+    game: project.game,
+    version: project.version,
+    engine: 'VN Engine v2 self runtime ' + ENGINE_VERSION,
+    buildIdentity: { gameVersion: project.version, engineVersion: ENGINE_VERSION, commitSha, buildTime: buildTimestamp() },
+    compliance: { contract: compliance.contract, mode: compliance.mode, warnings: [...compliance.warnings] },
+    contentFingerprint: version,
+    files: [...files].map(([name, bytes]) => ({ name, size: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') }))
+  };
   files.set('build-manifest.json', Buffer.from(JSON.stringify(metadata, null, 2) + '\n'));
   await mkdir(destination, { recursive: true });
   for (const [name, bytes] of files) { const path = resolve(destination, name); if (!path.startsWith(destination + sep)) throw new Error('Unsafe output path'); await mkdir(dirname(path), { recursive: true }); await writeFile(path, bytes); }
