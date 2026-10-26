@@ -1,6 +1,8 @@
 import type { EngineProject } from '../runtime/project.js';
 import { createProject } from '../runtime/project.js';
 import { MediaDirector } from '../runtime/media.js';
+import { bindSessionPersistence, createSaveContract } from '../storage/contract.js';
+import { createMetaStateStore } from '../meta/state.js';
 import type { StoragePort } from '../storage/store.js';
 import { DOMRenderer } from './dom.js';
 
@@ -12,6 +14,23 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
   const { session, assets } = createProject(project, baseURL, { assetURL: options.assetURL });
   let storage = options.storage;
   if (storage === undefined) try { storage = root.ownerDocument.defaultView?.localStorage; } catch { storage = null; }
+  const persistence = bindSessionPersistence(session, createSaveContract({ game: project.game, gameVersion: project.version, storage }));
+  const meta = createMetaStateStore(project.game, storage);
+  let progressVisit = -1, countedEnding = false;
+  const persistProgress = () => {
+    const snapshot = session.getView();
+    if (snapshot.visit === progressVisit) return;
+    progressVisit = snapshot.visit;
+    if (snapshot.reason === 'start') countedEnding = false;
+    persistence.autoSave();
+    if (snapshot.frame.stage.cg) meta.unlockCg(snapshot.frame.stage.cg);
+    if (snapshot.frame.ending) {
+      meta.markEndingSeen(snapshot.frame.ending);
+      if (!countedEnding && snapshot.reason !== 'restore' && snapshot.reason !== 'reread') { meta.recordPlaythrough(); countedEnding = true; }
+    }
+  };
+  persistProgress();
+  const disconnectProgress = session.subscribe(persistProgress);
   let media: MediaDirector | undefined, context: AudioContext | undefined, disposed = false;
   const unlockAudio = () => {
     if (disposed || options.audio === false) return;
@@ -32,11 +51,11 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
   };
   let renderer: DOMRenderer;
   try { renderer = new DOMRenderer(root, session, assets, { title: project.title, font: project.font, storage, onUnlockAudio: unlockAudio }); }
-  catch (error) { session.dispose(); throw error; }
+  catch (error) { disconnectProgress(); session.dispose(); throw error; }
   const view = root.ownerDocument.defaultView;
   const hostVisibility = (event: Event) => { const hidden = (event as CustomEvent<unknown>).detail; if (hidden && typeof hidden === 'object' && 'hidden' in hidden && typeof hidden.hidden === 'boolean') session.pause('native-host', hidden.hidden); };
   view?.addEventListener('vn-engine-host-visibility', hostVisibility);
-  return { session, renderer, assets, unlockAudio, dispose() {
-    if (disposed) return; disposed = true; view?.removeEventListener('vn-engine-host-visibility', hostVisibility); media?.dispose(); session.dispose(); renderer.dispose(); if (context) void context.close().catch(() => {});
+  return { session, renderer, assets, persistence, meta, unlockAudio, dispose() {
+    if (disposed) return; disposed = true; disconnectProgress(); view?.removeEventListener('vn-engine-host-visibility', hostVisibility); media?.dispose(); session.dispose(); renderer.dispose(); if (context) void context.close().catch(() => {});
   } };
 }
