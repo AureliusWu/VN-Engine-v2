@@ -1,6 +1,6 @@
 # GALGAME SPEC v0.2 差距审计
 
-审计基线：`3075a7480fe43423a1516dc1328cf84f4cac1742`，2026-10-27；当前已验证进展更新至 `c0cca95`，统一 QA 阶段结果以最新 CI 为准。规范正文来自用户提供的交接文件，见 [GALGAME SPEC v0.2](GALGAME_SPEC_v0.2.md)。引擎保持 `0.3.0 alpha`；本表不代表任何作品已达到 RELEASE。
+审计基线：`3075a7480fe43423a1516dc1328cf84f4cac1742`，2026-10-27；当前已验证进展更新至 `bc253ca`。规范正文来自用户提供的交接文件，见 [GALGAME SPEC v0.2](GALGAME_SPEC_v0.2.md)。引擎保持 `0.3.0 alpha`；本表不代表任何作品已达到 RELEASE。
 
 状态：`PASS` 表示所描述的有限能力有实现和证据；`PARTIAL` 表示有一部分；`ENGINE_GAP` 表示缺少明确的引擎能力；`UNVERIFIED` 表示没有对应证据；`N/A` 只在具体项目明确不适用时使用。状态不因接口存在而提升。v0.1 原机器契约仍为 `GALGAME_SPEC-v0.1`。
 
@@ -20,7 +20,7 @@
 | 设置、输入、字号、安全区域、无障碍（§45–49、96） | PARTIAL | 有 DOM 设置、键盘交互、样式和现有浏览器检查；作品具体设备、安全区域、字体与可访问体验须逐项验收。 |
 | 作品打包、PWA、桌面与 CI（§62–71、80、115–117） | PARTIAL | 生成指纹、SHA256 与 build identity；正式打包调用 v0.2 美术 / 设备证据门禁。每个作品的实际发行、离线和各平台验收仍需单独证据；不能据此声称 v0.2 全量合规。 |
 | 编辑器与数据驱动（§84–85、119） | PARTIAL | Studio 和项目格式存在；新增运行时能力还需评估编辑器适配，不把既有编辑器成功当作新能力验收。 |
-| QA / 证据 / 错误处理（§72–81、86–90、121–125） | PARTIAL | 结构化项目检查、媒体 / 存档失败处理和 v0.2 人工美术 / 设备证据门禁已接入；新增统一 QA_REPORT 聚合结构、真实文件 / 解码、人工记录及候选包复核；不宣称覆盖全部 v0.2 创作与人工条款，最新 CI 待确认。 |
+| QA / 证据 / 错误处理（§72–81、86–90、121–125） | PARTIAL | 结构化项目检查、媒体 / 存档失败处理和 v0.2 人工美术 / 设备证据门禁已接入；新增统一 QA_REPORT 聚合结构、真实文件 / 解码、人工记录及候选包复核；不宣称覆盖全部 v0.2 创作与人工条款，`bc253ca` 浏览器 / Windows CI 已通过。 |
 
 ## v0.2 新增 / 强化项
 
@@ -36,7 +36,9 @@
 
 ## 基线验证与边界
 
-- 当前 `cb03e9c`：94 项 Node、6 项 Python、102 项来源检查和完整浏览器回归通过；[Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40453349708) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40453349702) 均成功。Windows 实际执行图层 / 轨道控件到 WebView2 终态和进程重启检查；镜头关键帧作者流程另由 Chromium 专项覆盖。
+- 当前 `bc253ca`：111 项 Node、6 项 Python、115 项来源检查，浏览器和 Windows CI 全部通过，四样例实际文件 / 解码 / 构建包检查通过但正式人工验收保持 BLOCKED；详见 [顺序优化与证据](OPTIMIZATION-v0.2-QUEUE.md)。
+
+- 演出作者控件阶段 `cb03e9c`：94 项 Node、6 项 Python、102 项来源检查和完整浏览器回归通过；[Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40453349708) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40453349702) 均成功。Windows 实际执行图层 / 轨道控件到 WebView2 终态和进程重启检查；镜头关键帧作者流程另由 Chromium 专项覆盖。
 - 基线 `npm run check`：85 项 Node、6 项 Python 通过；98 个模块来源校验通过。
 - 基线 GitHub Actions：Engine checks 和 Windows native host 在 `3075a748` 上成功；这不证明后续提交或实体移动设备验收通过。
 - 规范同时包含作品创作、艺术质量与人工审核要求；引擎只能提供记录与门禁，不能凭自动化替代判断。未声明适用范围前不得把这些要求整体标为 N/A。

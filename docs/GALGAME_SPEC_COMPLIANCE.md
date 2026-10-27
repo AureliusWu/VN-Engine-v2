@@ -34,7 +34,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Build checksum | PASS | 独立构建继续为每个 runtime 文件写入 SHA256 |
 | Release commit lock | PASS | `VN_RELEASE_BUILD=1` 时缺少 `VN_ENGINE_COMMIT` / `GITHUB_SHA` 直接失败 |
 | Release validation mode | PASS | `--release` 与 `VN_RELEASE_BUILD=1` 提升规范约束 |
-| Machine-readable evidence | PASS | validator 返回结构结果；新增 QA_REPORT 聚合实际字节 / 解码 / 人工证据 / 构建包，最新完整 CI 另列 |
+| Machine-readable evidence | PASS | validator 返回结构结果；新增 QA_REPORT 聚合实际字节 / 解码 / 人工证据 / 构建包，`bc253ca` 完整 CI 通过，范围见验证记录 |
 | Save Contract v2 | PASS | 独立 `save_version / game_version`、默认 6 手动槽、Quick、Auto、Migration Registry、损坏存档隔离 |
 | Session persistence binding | PASS | `bindSessionPersistence()` 直接通过 `RuntimeSession.save()/restore()` 工作 |
 | Auto Save runtime binding | PASS | `mountGame()` 每次进入新的 visit 写独立 Auto Slot，不覆盖手动/Quick |
@@ -121,7 +121,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 ### P1 — Release Evidence
 
 - 作品专用的 `gate:release -- project.json` 输出结构化检查结果；按作品发行流程保存为 CI artifact
-- `QA_REPORT`、实际资产解码、候选包复核与人工 QA Gate 已接入，最新 CI 待确认
+- `QA_REPORT`、实际资产解码、候选包复核与人工 QA Gate 已接入，`bc253ca` 浏览器 / Windows CI 已通过
 - Windows / Web / PWA 的 build identity 与 checksum 可在报告中汇总；平台体验仍需人工证据
 - RC / RELEASE 时强制 `VN_RELEASE_BUILD=1`
 

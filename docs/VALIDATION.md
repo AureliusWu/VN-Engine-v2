@@ -98,3 +98,5 @@ Key Visual 提交 `45e76c4` 的 Windows 工作流成功，浏览器 CI 在作者
 统一 QA / 母版阶段新增测试：人工 QA 缺项与适用性、Neutral 失败传给差分、独立失败汇总、实际包文件损坏 / 同版本旧故事拒绝、CLI 阻断报告保留，以及 Chromium 实际解码和正式候选端到端门禁。所有人工 PASS 数据均明确为合成测试夹具，不是作品或实体设备证据。本地四种样例的实际文件、解码和候选包检查通过；它们缺少正式美术与人工记录，报告均保持 BLOCKED。
 
 本阶段本地最终 `npm run check`：111 项 Node、6 项 Python、115 项来源检查通过；完整 `npm run test:browser` 和 QA 的真实 Chromium 解码 / 正式候选 API 与 CLI 端到端专项通过。四样例生成实际 QA_REPORT 与 build manifest，文件 / 解码 / 包校验均 PASS，人工与艺术验收缺失继续 BLOCKED。最新工作流结果单独确认。
+
+统一 QA 提交 `bc253ca371efad19f1201814650db39a799a896d` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40462250715) 和 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40462250734) 均成功；CI 生成并上传 [alpha-qa-reports](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40462250715/artifacts/12714878378)。四种样例真实字节 / 解码 / 包复核均 PASS，正式人工验收继续 BLOCKED。完整闭环记录见 [optimization-v0.2-validation.json](optimization-v0.2-validation.json)。

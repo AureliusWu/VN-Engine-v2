@@ -1,0 +1,121 @@
+{
+  "schema": 1,
+  "checkedAt": "2026-10-27T06:47:04.602Z",
+  "repository": "AureliusWu/VN-Engine-v2",
+  "implementationCommit": "bc253ca371efad19f1201814650db39a799a896d",
+  "engineVersion": "0.3.0 alpha",
+  "scope": "Engine only; no game migrations or publication.",
+  "steps": [
+    {
+      "order": 1,
+      "capability": "Collection authoring, replay capture and true-route policy",
+      "commit": "36d492a92c593dc45d7b4d59ea1013a76a1a5bb9",
+      "status": "PASS"
+    },
+    {
+      "order": 2,
+      "capability": "Key Visual scope and lifetime",
+      "commit": "9986aa7e1b9aad72c16bca6a7187e05b7bde0add",
+      "status": "PASS"
+    },
+    {
+      "order": 3,
+      "capability": "Bounded in-session state rollback",
+      "commit": "2d2cb34c81b73e1ec42cdfaba6edaac98dd5ca2a",
+      "status": "PASS"
+    },
+    {
+      "order": 4,
+      "capability": "Mini-game lifecycle v1 with switches adapter",
+      "commit": "c0cca9500d10abb5a5c50eb7c919cb8b83b4bd02",
+      "status": "PASS"
+    },
+    {
+      "order": 5,
+      "capability": "QA aggregation, decoding, master inheritance and local release candidate gate",
+      "commit": "bc253ca371efad19f1201814650db39a799a896d",
+      "status": "PASS"
+    }
+  ],
+  "checks": {
+    "node": 111,
+    "python": 6,
+    "provenanceFiles": 115,
+    "browser": "PASS",
+    "windowsNative": "PASS"
+  },
+  "workflows": [
+    {
+      "id": 40462250734,
+      "name": "Windows native host",
+      "head": "bc253ca371efad19f1201814650db39a799a896d",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40462250734"
+    },
+    {
+      "id": 40462250715,
+      "name": "Engine checks",
+      "head": "bc253ca371efad19f1201814650db39a799a896d",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40462250715"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12715321067,
+      "name": "vn-engine-standalone-samples",
+      "size": 765976,
+      "expired": false
+    },
+    {
+      "id": 12715027631,
+      "name": "engine-browser-evidence",
+      "size": 2531701,
+      "expired": false
+    },
+    {
+      "id": 12714878378,
+      "name": "alpha-qa-reports",
+      "size": 40992,
+      "expired": false
+    }
+  ],
+  "alphaSampleReports": [
+    {
+      "sample": "campus",
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "productionAcceptance": "BLOCKED"
+    },
+    {
+      "sample": "netlove",
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "productionAcceptance": "BLOCKED"
+    },
+    {
+      "sample": "circuit",
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "productionAcceptance": "BLOCKED"
+    },
+    {
+      "sample": "rain",
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "productionAcceptance": "BLOCKED"
+    }
+  ],
+  "unverified": [
+    "Actual production art and source authenticity",
+    "Full listening and video playback on target devices",
+    "Physical mobile-device acceptance"
+  ],
+  "fullGalgameSpecCertification": false
+}
