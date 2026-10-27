@@ -290,7 +290,7 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "3d921f631c0488379e90b3d2119e508e9ea3de4ce9a92cffa9344381a5c7e1f7"
+      "targetSha256": "f8efc0bd05669ac7e6d509cffc17c23e6a90bf49400e6c49d8001eeba3570efa"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",

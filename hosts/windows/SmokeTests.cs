@@ -84,7 +84,11 @@ internal static class SmokeTests
                     const query = selector => root.querySelector(selector), clickText = text => [...query('.vn-modal').querySelectorAll('button')].find(b => b.textContent === text)?.click();
                     const deadline = Date.now() + 7000;
                     while (query('.vn-video').currentTime < .05 && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 50));
-                    if (query('.vn-video').currentTime < .05) throw Error('Native video did not play');
+                    if (query('.vn-video').currentTime < .05) {
+                      const v = query('.vn-video');
+                      throw Error('Native video did not play: ' + JSON.stringify({hidden:v.hidden, error:v.error?.code, ready:v.readyState, network:v.networkState,
+                        src:v.currentSrc, reduced:matchMedia('(prefers-reduced-motion: reduce)').matches, fallback:query('.vn-video-fallback').dataset.asset, status:query('.vn-status').textContent}));
+                    }
                     query('[data-control=gallery]').click();
                     if (query('.vn-modal img') || query('.vn-modal').textContent.includes('Hidden title')) throw Error('Locked CG was exposed');
                     clickText('关闭'); instance.session.configure({reducedMotion:true});
@@ -102,7 +106,9 @@ internal static class SmokeTests
                     instance.dispose(); root.remove(); window.nativeCollectionSmoke = 'passed';
                   }).catch(error => { window.nativeCollectionSmoke = 'failed: ' + error.message; });
                   """);
-                await Wait("window.nativeCollectionSmoke === 'passed'");
+                await Wait("!!window.nativeCollectionSmoke && window.nativeCollectionSmoke !== 'pending'");
+                var collectionResult = await JS("window.nativeCollectionSmoke");
+                if (collectionResult != "\"passed\"") throw new InvalidDataException("Native collection/video check: " + collectionResult);
                 checks.Add("Native WebView2 plays local video, falls back on reduced motion, and preserves timeline, gallery and replay state");
             }
             else
