@@ -66,6 +66,8 @@ internal static class SmokeTests
                 await JS("document.querySelector('[data-control=save]').click();document.querySelector('[data-slot=\"1\"] button').click();localStorage.setItem('vn-native-smoke:expected',document.querySelector('.vn-text').textContent)");
                 if (await JS("!!localStorage.getItem('vn-engine:" + window.GameKey + ":v2:save:manual-1')") != "true") throw new InvalidDataException("作品存档未写入原生配置目录");
                 checks.Add("Real choices and engine saves execute in the Windows player");
+                // CI's Windows runner may request reduced motion; emulate normal preference only for this playback test.
+                await window.Browser.CoreWebView2.CallDevToolsProtocolMethodAsync("Emulation.setEmulatedMedia", "{\"features\":[{\"name\":\"prefers-reduced-motion\",\"value\":\"no-preference\"}]}");
                 await JS("""
                   window.nativeCollectionSmoke = 'pending';
                   import('./lib/index.js').then(async ({createProject, mountGame}) => {
@@ -109,7 +111,8 @@ internal static class SmokeTests
                 await Wait("!!window.nativeCollectionSmoke && window.nativeCollectionSmoke !== 'pending'");
                 var collectionResult = await JS("window.nativeCollectionSmoke");
                 if (collectionResult != "\"passed\"") throw new InvalidDataException("Native collection/video check: " + collectionResult);
-                checks.Add("Native WebView2 plays local video, falls back on reduced motion, and preserves timeline, gallery and replay state");
+                await window.Browser.CoreWebView2.CallDevToolsProtocolMethodAsync("Emulation.setEmulatedMedia", "{\"features\":[]}");
+                checks.Add("Native WebView2 plays local video under emulated normal motion; explicit reduced motion falls back, preserving timeline, gallery and replay state");
             }
             else
             {
