@@ -83,7 +83,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Shake | PASS | DOM effect |
 | Move / Scale / Camera | PARTIAL | DOM 已执行轨道并覆盖暂停、终态与恢复；本次 Windows CI 和可视化作者控件仍需验证 |
 | Formal Layer API | PARTIAL | DOM 已接入五个视觉资源层与 effect / ui 轨道；本次 Windows CI 和可视化作者控件仍需验证 |
-| Video | PARTIAL | Asset/Cue/Fallback/Compliance 已完成；DOM video playback 尚未接入 |
+| Video | PARTIAL | 本地播放、失败回退、暂停 / 跳过 / 减少动态和编辑器配置已接入；本次 Windows 原生及完整 CI 结果待确认，不同设备编解码支持需作品验证 |
 | Investigation / nontraditional play | PASS | Investigation runtime |
 | Mini game contract | PARTIAL | 可通过自定义 runtime 承载，但未提供统一 entry/exit/save/skip contract |
 | Web Build | PASS | Standalone + PWA |
@@ -114,7 +114,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 ### P1 — Presentation runtime closure
 
 - DOM 已消费 Formal Layer 与时间线；继续确认 Windows 原生 CI，并补可视化作者控件
-- Video 元素播放、结束、Skip 与 fallback
+- Video 已接入 DOM 和编辑器；等待本次 Windows 原生及完整 CI 验收
 
 ### P1 — Release Evidence
 

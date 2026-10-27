@@ -138,6 +138,19 @@ function assetField(parent, label, cuePath, name, kind) {
 function renderCue(parent, path) {
   const details = element('details'), summary = element('summary', '画面与声音绑定'); details.append(summary); parent.append(details);
   for (const [name, label, kind] of [['background', '背景', 'background'], ['portrait', '立绘', 'portrait'], ['cg', 'CG', 'cg'], ['music', '背景音乐', 'audio'], ['voice', '录音', 'audio'], ['sound', '动作音效', 'audio']]) assetField(details, label, path, name, kind);
+  const cue = valueAt(path) ?? {}, video = cue.video, assets = model.getView().project.assets;
+  const updateVideo = change => {
+    const next = { ...(valueAt(path) ?? {}) }; next.video = { ...(next.video ?? {}), ...change };
+    if (!next.video.asset) delete next.video; set(path, next, true);
+  };
+  field(details, '视频', video?.asset ?? '', value => updateVideo({ asset: value }), { choices: [['', '未设置'], ...assets.filter(a => a.kind === 'video').map(a => [a.id, a.id])] });
+  const fallbackChoices = [['', '无'], ...assets.filter(a => a.kind === 'cg' || a.kind === 'background').map(a => [JSON.stringify({ asset: a.id, kind: a.kind }), `${a.kind}: ${a.id}`])];
+  const fallback = field(details, '视频回退画面', video?.fallback ? JSON.stringify({ asset: video.fallback.asset, kind: video.fallback.kind }) : '', value => updateVideo({ fallback: value ? JSON.parse(value) : undefined }), { choices: fallbackChoices });
+  fallback.disabled = !video?.asset;
+  const muted = field(details, '视频静音', video?.muted === false ? 'false' : 'true', value => updateVideo({ muted: value === 'true' }), { choices: [['true', '静音'], ['false', '有声']] });
+  muted.disabled = !video?.asset;
+  const loop = field(details, '视频循环', video?.loop ? 'true' : 'false', value => updateVideo({ loop: value === 'true' }), { choices: [['false', '播放一次'], ['true', '循环']] });
+  loop.disabled = !video?.asset;
 }
 function renderInspector() {
   const root = $('inspector'), node = graphNode(); root.replaceChildren();
@@ -224,7 +237,7 @@ function renderAssets() {
     const card = element('article', undefined, { class: 'asset-card' }), path = ['assets', index]; root.append(card);
     card.append(element('h3', asset.id || '未命名资源'));
     for (const [name, label] of [['id', '资源 ID'], ['src', '相对路径'], ['alt', '资源说明']]) nodeField(card, label, [...path, name]);
-    nodeField(card, '资源类型', [...path, 'kind'], { choices: [['background', '背景'], ['portrait', '立绘'], ['cg', 'CG'], ['audio', '音频'], ['font', '字体']] });
+    nodeField(card, '资源类型', [...path, 'kind'], { choices: [['background', '背景'], ['portrait', '立绘'], ['cg', 'CG'], ['audio', '音频'], ['font', '字体'], ['video', '视频']] });
     field(card, '许可名称', asset.license?.name ?? '', value => set([...path, 'license'], { name: value, src: valueAt([...path, 'license'])?.src ?? '' }));
     field(card, '许可文件路径', asset.license?.src ?? '', value => set([...path, 'license'], { name: valueAt([...path, 'license'])?.name ?? '', src: value }));
     card.append(action('移除资源条目', () => { const assets = structuredClone(model.getView().project.assets); assets.splice(index, 1); set(['assets'], assets, true); }, 'small-button danger'));

@@ -19,6 +19,8 @@
 
 本轮没有搬入四作全部正文、美术、配音、BGM、API 凭证或成品。独立技术样例的文本仅用于展示接口，不扩充原作设定。音乐/配音类的生命周期测试使用替身；浏览器样例没有假装播放正式角色素材。
 
+视频测试使用本仓库以 `tools/generate-runtime-video.py` 和 FFmpeg/libvpx 合成的两秒无声纯色 WebM；它仅用于检验媒体生命周期，不是作品正式美术或发行素材。实际字节 SHA256 记录于来源清单。
+
 字体样例来自 Rain 的 SourceHanSansLite，按演示文字重新子集化并改名 VN Demo Sans，保留 OFL。重建脚本为 `tools/subset_demo_font.py`，需要可选的 fonttools/woff2 支持与源字体；日常构建直接使用已保存的子集文件。
 
 ## 结构验证的实际范围

@@ -15,7 +15,7 @@
 | 多槽、快速、自动存档（§36–41、111–112） | PARTIAL | `src/storage/contract.ts`、`src/render/mount.ts` 和 `src/render/dom.ts` 已接入六槽、覆盖确认、Quick 控件、自动存档提示与旧槽读取；本次 Windows 原生 CI 和可选缩略图需另列证据。 |
 | Meta、CG Gallery、Ending Collection、Replay（§42–44、103–104） | PARTIAL | 项目可声明图鉴、结局和回看数据；播放器提供锁定遮蔽、进度、查看和独立会话回看，普通存档 / Meta 隔离；`4a8a57e` 浏览器及 Windows CI 已通过，可视化作者控件仍待实现。 |
 | 演出时间线、层与关键视觉生命周期（§29–30、97、108、134） | PARTIAL | DOM 已消费五个视觉资源层、效果 / UI 轨道和镜头，处理暂停、跳过、读档及后续段落终态重建；本次 Windows CI、可视化作者控件和关键视觉使用范围约束仍待完成。 |
-| Video（§98） | PARTIAL | `src/stage/types.ts` 和 validator 有视频及 fallback 契约；DOM 视频播放、失败回退与生命周期未接入。 |
+| Video（§98） | PARTIAL | DOM 本地播放、结束清理、失败回退、暂停 / 跳过 / 减少动态及编辑器配置已实现；本次 Windows 和完整 CI 尚待结果，实际设备的编解码支持仍须验证。 |
 | 小游戏（§99–100） | PARTIAL | 不同玩法驱动存在，但缺统一 entry / exit / save / restore / skip / abort / result 协议。 |
 | 设置、输入、字号、安全区域、无障碍（§45–49、96） | PARTIAL | 有 DOM 设置、键盘交互、样式和现有浏览器检查；作品具体设备、安全区域、字体与可访问体验须逐项验收。 |
 | 作品打包、PWA、桌面与 CI（§62–71、80、115–117） | PARTIAL | `tools/package-game.mjs` 生成指纹、SHA256 与 build identity；基线 GitHub Engine checks / Windows 工作流成功。每个正式作品的发行、离线和各平台验收需单独证据；`gate:release` 不是完整 v0.2 Art Gate。 |

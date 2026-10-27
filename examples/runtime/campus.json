@@ -171,6 +171,11 @@
   "font": "ui-font",
   "assets": [
     {
+      "id": "test-video",
+      "kind": "video",
+      "src": "assets/test-video.webm"
+    },
+    {
       "id": "ui-font",
       "kind": "font",
       "src": "assets/ui.woff2",

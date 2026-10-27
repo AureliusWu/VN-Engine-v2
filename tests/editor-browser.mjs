@@ -53,6 +53,18 @@ try {
   await page.screenshot({ path: out + '/studio-campus.png', fullPage: true });
   passed('Existing independent engine samples load with their local resource manifest and own presentation');
 
+  await page.locator('#inspector summary').filter({ hasText: '画面与声音绑定' }).click();
+  await page.getByLabel('视频', { exact: true }).selectOption('test-video');
+  await page.locator('#inspector summary').filter({ hasText: '画面与声音绑定' }).click();
+  const fallback = page.getByLabel('视频回退画面', { exact: true });
+  const fallbackValue = await fallback.locator('option').nth(1).getAttribute('value'); await fallback.selectOption(fallbackValue);
+  await preview.locator('.vn-video').waitFor({ state: 'visible' });
+  await page.waitForFunction(() => document.getElementById('preview').contentDocument.querySelector('.vn-video')?.currentTime > .05);
+  const [videoExport] = await Promise.all([page.waitForEvent('download'), command('export')]);
+  const withVideo = JSON.parse(await readFile(await videoExport.path(), 'utf8'));
+  assert.equal(Object.values(withVideo.stage.scenes).some(cue => cue.video?.asset === 'test-video' && cue.video?.fallback?.asset), true);
+  passed('Editor authors a video and fallback and previews real playback before export');
+
   const folder = await mkdtemp(join(tmpdir(), 'vn-editor-assets-')); await mkdir(join(folder, 'assets'));
   await writeFile(join(folder, 'assets', 'picture.svg'), '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"><rect width="400" height="200" fill="#278"/></svg>');
   const custom = newProject('script'); custom.assets = [{ id: 'picture', kind: 'background', src: 'assets/picture.svg' }]; custom.defaults = { background: 'picture' };

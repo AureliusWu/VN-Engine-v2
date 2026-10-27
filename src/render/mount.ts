@@ -89,7 +89,7 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
     void media.unlock();
   };
   try { renderer = new DOMRenderer(root, session, assets, { title: project.title, font: project.font, storage, persistence, meta, collections,
-    beginReplay: (target, saved) => mountReplay(target, project, saved, baseURL, options), onUnlockAudio: unlockAudio }); }
+    beginReplay: (target, saved) => mountReplay(target, project, saved, baseURL, options), onUnlockAudio: unlockAudio, onCgPresented: id => { meta.unlockCg(id); } }); }
   catch (error) { disconnectProgress(); session.dispose(); throw error; }
   const view = root.ownerDocument.defaultView;
   const hostVisibility = (event: Event) => { const hidden = (event as CustomEvent<unknown>).detail; if (hidden && typeof hidden === 'object' && 'hidden' in hidden && typeof hidden.hidden === 'boolean') session.pause('native-host', hidden.hidden); };

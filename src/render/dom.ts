@@ -6,13 +6,13 @@ import type { RuntimeSession, RuntimeSettings, RuntimeView } from '../runtime/se
 import type { bindSessionPersistence, SaveEnvelope } from '../storage/contract.js';
 import type { LoadResult } from '../storage/store.js';
 import type { CollectionCg, CollectionEnding, ProjectCollections, createMetaStateStore } from '../meta/state.js';
-import type { PresentationTimeline, StageLayer, StageLayerAsset, StageVisualLayer } from '../stage/types.js';
+import type { PresentationTimeline, StageLayer, StageLayerAsset, StageVideo, StageVisualLayer } from '../stage/types.js';
 import { resolvePresentationTimeline } from '../stage/timeline.js';
 import { DOM_STYLE } from './dom-style.js';
 
 export type DOMRendererOptions = { title?: string; font?: string; storage?: StoragePort | null; persistence?: ReturnType<typeof bindSessionPersistence>;
   meta?: ReturnType<typeof createMetaStateStore>; collections?: ProjectCollections; replayOnly?: boolean;
-  beginReplay?: (root: HTMLElement, saved: unknown) => () => void; onUnlockAudio?: () => void };
+  beginReplay?: (root: HTMLElement, saved: unknown) => () => void; onUnlockAudio?: () => void; onCgPresented?: (id: string) => void };
 
 /** Framework-free renderer and input host for VN, chat/call and investigations. */
 export class DOMRenderer {
@@ -31,6 +31,9 @@ export class DOMRenderer {
   private characterBack: HTMLImageElement;
   private characterFront: HTMLImageElement;
   private cg: HTMLImageElement;
+  private video: HTMLVideoElement;
+  private videoFallback: HTMLImageElement;
+  private videoState?: { cue: StageVideo; attempt: number; finished: boolean };
   private effect: HTMLElement;
   private chat: HTMLElement;
   private currentBubble: HTMLElement;
@@ -58,6 +61,8 @@ export class DOMRenderer {
   private onKey: (event: KeyboardEvent) => void;
   private onPointer: () => void;
   private onChatScroll: () => void;
+  private motionQuery?: MediaQueryList;
+  private onMotion: () => void;
   private chatPinned = true;
   private scrollFrame?: number;
   private layerNodes!: Record<StageLayer, HTMLElement>;
@@ -72,6 +77,8 @@ export class DOMRenderer {
     host.append(style); this.stage = this.el('div', undefined, 'vn-stage'); this.camera = this.el('div', undefined, 'vn-camera');
     this.background = this.image('vn-image vn-background'); this.characterBack = this.image('vn-image vn-character-layer vn-character-back');
     this.portrait = this.image('vn-image vn-portrait'); this.characterFront = this.image('vn-image vn-character-layer vn-character-front'); this.cg = this.image('vn-image vn-cg');
+    this.video = this.el('video', undefined, 'vn-video'); this.video.hidden = true; this.video.playsInline = true; this.video.preload = 'auto';
+    this.videoFallback = this.image('vn-image vn-video-fallback');
     this.effect = this.el('div', undefined, 'vn-effect'); this.title = this.el('div', undefined, 'vn-scene-title'); this.mode = this.el('div', undefined, 'vn-mode');
     this.chat = this.el('div', undefined, 'vn-chat'); this.currentBubble = this.el('div', undefined, 'vn-bubble vn-current'); this.bubbleText = this.el('span');
     this.call = this.el('div', undefined, 'vn-call'); this.call.append(this.el('span', '◌', 'vn-call-icon'), this.el('p', '语音通话'), this.el('p', '当前为远程交流'));
@@ -80,7 +87,7 @@ export class DOMRenderer {
     this.actions = this.el('div', undefined, 'vn-actions'); this.reading.append(this.speaker, this.text, this.actions);
     this.layerNodes = { background: this.background, 'character-back': this.characterBack, character: this.portrait, 'character-front': this.characterFront, cg: this.cg, effect: this.effect, ui: this.reading };
     for (const [layer, node] of Object.entries(this.layerNodes)) node.dataset.layer = layer;
-    this.camera.append(this.background, this.characterBack, this.portrait, this.characterFront, this.cg);
+    this.camera.append(this.background, this.characterBack, this.portrait, this.characterFront, this.cg, this.videoFallback, this.video);
     this.restoreButton = this.button('恢复界面', () => session.hide(false)); this.restoreButton.className = 'vn-restore'; this.restoreButton.hidden = true;
     this.stage.append(this.camera, this.chat, this.call, this.documentView, this.hotspots, this.effect, this.title, this.mode, this.reading, this.restoreButton);
     this.toolbar = this.el('div', undefined, 'vn-toolbar');
@@ -107,8 +114,11 @@ export class DOMRenderer {
     this.onVisibility = () => session.pause('background', this.document.visibilityState === 'hidden');
     this.onKey = event => this.key(event); this.onPointer = () => options.onUnlockAudio?.();
     this.onChatScroll = () => { this.chatPinned = this.chat.scrollHeight - this.chat.scrollTop - this.chat.clientHeight < 24; };
+    this.motionQuery = this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)');
+    this.onMotion = () => { if (this.motionQuery?.matches && !this.disposed) { const view = this.session.getView(); this.updateTimeline(view, false); this.updateVideo(view, this.lastView, false); } };
     try {
       this.document.addEventListener('visibilitychange', this.onVisibility); host.addEventListener('keydown', this.onKey); host.addEventListener('pointerdown', this.onPointer);
+      this.motionQuery?.addEventListener?.('change', this.onMotion);
       this.chat.addEventListener('scroll', this.onChatScroll);
       this.disconnect = session.subscribe(() => this.render()); this.onVisibility(); this.render();
     } catch (error) { this.dispose(); throw error; }
@@ -189,6 +199,7 @@ export class DOMRenderer {
       }
     }
     this.updateTimeline(snapshot, entered);
+    this.updateVideo(snapshot, previous, entered);
     if (entered) this.speaker.textContent = frame.speaker;
     if (entered || snapshot.text !== previous?.text) {
       if (frame.mode === 'chat') { this.text.textContent = '聊天消息会按阅读节奏逐步显示。'; this.bubbleText.textContent = snapshot.text; if (this.chatPinned) this.queueScroll(); }
@@ -214,6 +225,56 @@ export class DOMRenderer {
     if (snapshot.skipping !== previous?.skipping) this.buttons.get('skip')!.setAttribute('aria-pressed', String(snapshot.skipping));
   }
   private animations(): Animation[] { return [...(this.effect.getAnimations?.() ?? []), ...(this.stage.getAnimations?.() ?? [])]; }
+  private clearVideo() {
+    if (this.videoState) this.videoState.attempt++;
+    this.videoState = undefined; this.video.onended = null; this.video.onerror = null;
+    this.video.pause(); this.video.hidden = true; this.video.removeAttribute('src'); this.video.load();
+    this.paint(this.videoFallback, null, 'cg');
+  }
+  private fallbackVideo(active: NonNullable<DOMRenderer['videoState']>, failed: boolean) {
+    if (this.videoState !== active || active.finished) return;
+    active.finished = true; active.attempt++; this.video.onended = null; this.video.onerror = null;
+    this.video.pause(); this.video.hidden = true; this.video.removeAttribute('src'); this.video.load();
+    const fallback = active.cue.fallback;
+    this.videoFallback.classList.toggle('vn-video-fallback-background', fallback?.kind === 'background');
+    if (fallback) { this.paint(this.videoFallback, fallback.asset, fallback.kind); if (fallback.kind === 'cg') this.options.onCgPresented?.(fallback.asset); }
+    if (failed) this.notify('视频暂时无法播放，剧情可以继续');
+  }
+  private playVideo(active: NonNullable<DOMRenderer['videoState']>) {
+    const attempt = ++active.attempt;
+    try {
+      const result = this.video.play();
+      void result?.catch(() => { if (this.videoState === active && active.attempt === attempt && !this.session.getView().paused) this.fallbackVideo(active, true); });
+    } catch { if (!this.session.getView().paused) this.fallbackVideo(active, true); }
+  }
+  private updateVideo(snapshot: RuntimeView, previous: RuntimeView | undefined, entered: boolean) {
+    if (entered) {
+      this.clearVideo();
+      const cue = snapshot.frame.stage.video; if (!cue) return;
+      const active: NonNullable<DOMRenderer['videoState']> = { cue, attempt: 0, finished: false }; this.videoState = active;
+      const reduce = snapshot.settings.reducedMotion || !!this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      if (reduce || snapshot.skipping || ['restore', 'reread'].includes(snapshot.reason)) { this.fallbackVideo(active, false); return; }
+      try {
+        this.video.src = this.assets.url(cue.asset, 'video'); this.video.muted = cue.muted !== false; this.video.volume = snapshot.settings.volume;
+        this.video.loop = cue.loop === true; this.video.hidden = false;
+        this.video.onerror = () => this.fallbackVideo(active, true);
+        this.video.onended = () => {
+          if (this.videoState !== active || active.finished) return;
+          active.finished = true; this.video.hidden = true; this.video.onended = null; this.video.onerror = null;
+          this.video.removeAttribute('src'); this.video.load();
+        };
+        if (!snapshot.paused) this.playVideo(active);
+      } catch { this.fallbackVideo(active, true); }
+      return;
+    }
+    const active = this.videoState; if (!active || active.finished) return;
+    if (snapshot.settings.reducedMotion || snapshot.skipping || this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { this.fallbackVideo(active, false); return; }
+    if (snapshot.settings.volume !== previous?.settings.volume) this.video.volume = snapshot.settings.volume;
+    if (snapshot.paused !== previous?.paused) {
+      if (snapshot.paused) { active.attempt++; this.video.pause(); }
+      else this.playVideo(active);
+    }
+  }
   private stopTimeline() {
     if (this.timeline?.frame !== undefined) this.document.defaultView?.cancelAnimationFrame(this.timeline.frame);
     if (this.timeline) { this.timeline.frame = undefined; this.timeline.previousTime = undefined; }
@@ -462,7 +523,8 @@ export class DOMRenderer {
   dispose() {
     if (this.disposed) return; this.disposed = true; this.panelCleanup?.(); this.panelCleanup = undefined; this.replayReturn = undefined; this.disconnect(); this.session.pause('panel', false);
     this.document.removeEventListener('visibilitychange', this.onVisibility); this.element.removeEventListener('keydown', this.onKey); this.element.removeEventListener('pointerdown', this.onPointer);
-    this.chat.removeEventListener('scroll', this.onChatScroll); this.cancelScroll(); this.stopTimeline(); this.timeline = undefined;
+    this.motionQuery?.removeEventListener?.('change', this.onMotion);
+    this.chat.removeEventListener('scroll', this.onChatScroll); this.cancelScroll(); this.stopTimeline(); this.timeline = undefined; this.clearVideo();
     for (const { probe } of this.probes.values()) { probe.onload = null; probe.onerror = null; probe.removeAttribute('src'); } this.probes.clear();
     for (const animation of this.animations()) animation.cancel(); this.element.remove();
   }

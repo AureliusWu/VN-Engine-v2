@@ -49,7 +49,7 @@ export async function createDemoServer() {
       // A demo server, never a directory listing or arbitrary workspace file server.
       if (!path.startsWith(root + sep) || !/^(examples|dist|editor)\//.test(mapped)) { response.writeHead(404); response.end(); return; }
       const bytes = await readFile(path);
-      const type = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.rpy': 'text/plain', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.wav': 'audio/wav' }[extname(path)] ?? 'application/octet-stream';
+      const type = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.css': 'text/css', '.json': 'application/json', '.rpy': 'text/plain', '.woff2': 'font/woff2', '.svg': 'image/svg+xml', '.wav': 'audio/wav', '.webm': 'video/webm', '.mp4': 'video/mp4', '.ogv': 'video/ogg' }[extname(path)] ?? 'application/octet-stream';
       response.writeHead(200, { 'Content-Type': type + '; charset=utf-8', 'Cache-Control': 'no-cache' }); response.end(bytes);
     } catch { response.writeHead(404); response.end('Not found'); }
   });

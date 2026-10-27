@@ -125,7 +125,7 @@ internal sealed class HostWindow : Form
     private static string Mime(string path) => Path.GetExtension(path).ToLowerInvariant() switch
     {
         ".svg" => "image/svg+xml", ".png" => "image/png", ".jpg" or ".jpeg" => "image/jpeg", ".webp" => "image/webp", ".gif" => "image/gif",
-        ".wav" => "audio/wav", ".ogg" => "audio/ogg", ".mp3" => "audio/mpeg", ".m4a" => "audio/mp4", ".woff2" => "font/woff2", ".woff" => "font/woff", ".ttf" => "font/ttf", ".txt" => "text/plain; charset=utf-8", _ => "application/octet-stream"
+        ".wav" => "audio/wav", ".ogg" => "audio/ogg", ".mp3" => "audio/mpeg", ".m4a" => "audio/mp4", ".webm" => "video/webm", ".mp4" => "video/mp4", ".ogv" => "video/ogg", ".woff2" => "font/woff2", ".woff" => "font/woff", ".ttf" => "font/ttf", ".txt" => "text/plain; charset=utf-8", _ => "application/octet-stream"
     };
     private void OnMessage(object? sender, CoreWebView2WebMessageReceivedEventArgs e)
     {

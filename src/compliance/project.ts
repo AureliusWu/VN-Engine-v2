@@ -45,8 +45,14 @@ function cueReferences(cue: StageCue | undefined, context: string): AssetReferen
   }
   if (cue.timeline) validatePresentationTimeline(cue.timeline);
   if (cue.video) {
+    if (typeof cue.video.asset !== 'string' || !cue.video.asset.trim()
+      || (cue.video.muted !== undefined && typeof cue.video.muted !== 'boolean')
+      || (cue.video.loop !== undefined && typeof cue.video.loop !== 'boolean')) throw new Error(`Invalid video cue: ${context}`);
     add(cue.video.asset, 'video', 'video.asset');
-    if (cue.video.fallback) add(cue.video.fallback.asset, cue.video.fallback.kind, 'video.fallback');
+    if (cue.video.fallback) {
+      if (!['background', 'cg'].includes(cue.video.fallback.kind) || typeof cue.video.fallback.asset !== 'string' || !cue.video.fallback.asset.trim()) throw new Error(`Invalid video fallback: ${context}`);
+      add(cue.video.fallback.asset, cue.video.fallback.kind, 'video.fallback');
+    }
   }
   return result;
 }

@@ -64,7 +64,7 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "a895b29d6c332c6eb3928d488b3a6df04e9cc565dd8c7515101176e9d44c7053"
+      "targetSha256": "848f86fe1d309e90be54133694f4e7874ff9fe18aee510604ead6063d57d28af"
     },
     {
       "target": "editor/index.html",
@@ -107,7 +107,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "ab1f467d8cdfb35521699d84e84aadcf9c726d53e5cdbb67c98e4c2ec2cb95d4"
+      "targetSha256": "b1749fe8ec1ca1319763d270bcc8e10def28b198a044eae46d27fc53e6b5e8a1"
     },
     {
       "target": "editor/style.css",
@@ -196,6 +196,12 @@
       "targetSha256": "fde972e6206aa75ec276623cab9975043b05072298847bef39fa84f0e9052b05"
     },
     {
+      "target": "examples/runtime/assets/test-video.webm",
+      "mode": "new",
+      "origins": [],
+      "targetSha256": "eeb6a5b8c5fc10aa779dee42b0c9960eec65b132660c74f9f1fe3f133b1826c3"
+    },
+    {
       "target": "examples/runtime/assets/ui.woff2",
       "mode": "adapted",
       "origins": [
@@ -206,7 +212,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "f34b5f7c84a67c813cedbe9f6824b60a2c86c53669468e5c56e35881d4ecd94e"
+      "targetSha256": "1f313be4b9b1c5a5c348f867e25b118746cda21ffc04ce3e4a5ea52d3abf534e"
     },
     {
       "target": "examples/runtime/assets/voice-test.wav",
@@ -218,7 +224,7 @@
       "target": "examples/runtime/campus.json",
       "mode": "new",
       "origins": [],
-      "targetSha256": "0e2c8b75ec80c8066a1212e428cc51f7618010ee2690b68c91b06f966e13271e"
+      "targetSha256": "8796bca9d4c405a29cdf5e9389b3137ee439bbeb7649cdf91a91c4d055380fa4"
     },
     {
       "target": "examples/runtime/circuit.json",
@@ -272,7 +278,7 @@
       "target": "hosts/windows/HostWindow.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "5343e21b51ba3b2e0e30eca1e5945790f33d535c595adaa7040e953852b2df15"
+      "targetSha256": "7c119a671c7d97907dfce2c977c0f260ff38f2eec55feb1d9bed467e950473c3"
     },
     {
       "target": "hosts/windows/Program.cs",
@@ -284,7 +290,7 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "aedfadf037e690b9592cda04a75f0bbf18ef7b7473064736c4dd85a6f2f60bac"
+      "targetSha256": "3d921f631c0488379e90b3d2119e508e9ea3de4ce9a92cffa9344381a5c7e1f7"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
@@ -486,7 +492,7 @@
     {
       "target": "src/compliance/project.ts",
       "mode": "new",
-      "targetSha256": "e42d41ac9a8984b79fe2eff2a1ea1f99e775875c801cdf1d68a84165ec734ba8",
+      "targetSha256": "3c97843faee4198dc121eb24271ee83767523847c0a1019f1d484d3a35fbad9c",
       "origins": []
     },
     {
@@ -499,7 +505,7 @@
       "target": "src/editor/model.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "8e9c4d790b2630a22061bbe73b02f226ed892712fcdb1a5716f7cf0af256635e"
+      "targetSha256": "5f329f50045d974155f75c8afeed39cb5f51070688e92de93f85fea0129c3cf8"
     },
     {
       "target": "src/history/search.ts",
@@ -643,19 +649,19 @@
       "target": "src/render/dom-style.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "90fafd8a7855fc3cc8b66b623ff991924b1385ce15f187a8e7231318d9473bd7"
+      "targetSha256": "928f84ecf129c83ccd472152556cca195f377f4af72dd0060d3cc7b4b5d8c2c4"
     },
     {
       "target": "src/render/dom.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "6dbab369c4319242f6191cfce79f16032b31828847adfa937ee9637a4180d8ae"
+      "targetSha256": "591737dedd89339ddec875d3439d27bab301fcf24df75eb30a494ab67edabdea"
     },
     {
       "target": "src/render/mount.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "5dedc9091dba27960856181213003e21d6af291423ac42f76dd96bd59245cc4a"
+      "targetSha256": "f8dde0ba2b90e914e897e6d2ef9d0632eb838a7a2a4a4bc9a6f9c9e8fea16b69"
     },
     {
       "target": "src/runtime/drivers.ts",
@@ -817,6 +823,12 @@
       "targetSha256": "0e19afdf5a818676748d238c813ca52e38569ccf0642f034ecdb08ed47ccb5aa"
     },
     {
+      "target": "tools/generate-runtime-video.py",
+      "mode": "new",
+      "targetSha256": "5a3b7137b2cc83206d07e1d564ec888af97ad0b13a1e404d0df87946fce30127",
+      "origins": []
+    },
+    {
       "target": "tools/package-game.mjs",
       "mode": "new",
       "origins": [],
@@ -850,7 +862,7 @@
     {
       "target": "tools/serve.mjs",
       "mode": "new",
-      "targetSha256": "a26d64487a7ebf836ca5470af56b958b794731bdf41afc9581e36d0605c2a1cf",
+      "targetSha256": "1aea27b265233f29cd0b95b130b001c2f49428c41df6d10092f531192be2802d",
       "origins": []
     },
     {

@@ -48,6 +48,10 @@ test('video is a first-class asset kind and compliance validates video fallback 
   assert.equal(validateProjectCompliance(project).references, 2);
   project.defaults.video.fallback.asset = 'missing';
   assert.throws(() => validateProjectCompliance(project), /Missing or mismatched asset reference/);
+  project.defaults.video.fallback.asset = 'opening-fallback'; project.defaults.video.asset = '';
+  assert.throws(() => validateProjectCompliance(project), /Invalid video cue/);
+  project.defaults.video.asset = 'opening'; project.defaults.video.fallback.kind = 'audio';
+  assert.throws(() => validateProjectCompliance(project), /Invalid video fallback/);
 });
 
 test('timeline, video and visual layers reach real driver frames without persisting one-shot cues', () => {

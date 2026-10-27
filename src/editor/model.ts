@@ -97,6 +97,11 @@ export function diagnoseProject(project: EngineProject, availableFiles?: Readonl
   const cue = (value: unknown, node?: string) => {
     if (!record(value)) return;
     for (const name of ['background', 'portrait', 'cg', 'music', 'ambience', 'sound', 'voice']) binding(value[name], ['background', 'portrait', 'cg'].includes(name) ? name : 'audio', name, node);
+    if (record(value.video)) {
+      binding(value.video.asset, 'video', '视频', node);
+      if (record(value.video.fallback)) binding(value.video.fallback.asset, String(value.video.fallback.kind), '视频回退', node);
+    }
+    if (record(value.layers)) for (const [layer, asset] of Object.entries(value.layers)) if (record(asset)) binding(asset.asset, String(asset.kind), `图层 ${layer}`, node);
   };
   binding(project.font, 'font', '字体');
   for (const asset of project.assets) {
