@@ -538,16 +538,22 @@
       "origins": []
     },
     {
+      "target": "src/editor/authoring.ts",
+      "mode": "new",
+      "targetSha256": "bf0f85e44c08f00709db22baa5437727a553b0effdddbfa9759af55bae24ef58",
+      "origins": []
+    },
+    {
       "target": "src/editor/index.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "6cc4a73de5a8aeacd6d628fe3082fe62190efe8c0f8f6d7fe4a871778606b370"
+      "targetSha256": "33f8d4090a8e5e61ae777925ec15d3b45f10e4e7ebbf61aafc8841e65af40e28"
     },
     {
       "target": "src/editor/model.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "d40a69dda85b87c1b7c6fbd5ee43c3b3634e6d9e24d842f92aaf556822df9fd6"
+      "targetSha256": "6ab260fab181b1754132f5cd45ab9c2addfe05ad792c67e1a7869e295ba2c4db"
     },
     {
       "target": "src/history/search.ts",

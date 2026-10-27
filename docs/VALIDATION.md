@@ -1,6 +1,12 @@
 # v0.3.0 编辑器与 Windows 宿主验证
 
+## 条件与证据作者工具
+
+模型阶段本地 `npm run check` 通过：146 项 Node、6 项 Python、127 项来源和四份独立样例校验。新增检查覆盖完整引用的原子重命名、同章隔离、路线断言歧义拒绝、删除保护、撤销重做、元数据保留及真实运行器回归；条件接口检查布尔 / 数值和组合运算。Studio 表单与本轮浏览器 / 原生结果尚待后续验证。
+
 ## 路线 QA 与作者工具
+
+路线门禁最终提交 `e383a1fd08ec416f52bed25ff5abe0a351eaf9f5` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40518708431) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40518708454) 均成功；上一轮闭环，不把旧结果用于本轮新代码。
 
 运行器提交 `a6c70cce47030ab4f8c7830963be51d99811ec2e` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40514905388) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40514905405) 均成功。本地 133 项 Node、6 项 Python、123 个来源检查与真实 Chromium 专项通过，覆盖 VN / 聊天 / Script / Rain / 调查、变量与证据、小游戏结果、命名检查点、逐步存读档、预算 / 覆盖缺失、失败 CLI 报告。浏览器对比玩家存储字节保持不变。
 

@@ -5,6 +5,7 @@ import { localAssetPath } from '../assets/catalog.js';
 import { validatePresentationTimeline } from '../stage/timeline.js';
 import { validateKeyVisual } from '../stage/key-visual.js';
 import { freezeData, type DeepReadonly } from '../runtime/readonly.js';
+import { assertAuthorID, evidenceReferences } from './authoring.js';
 
 type Mutable<T> = { -readonly [P in keyof T]: T[P] extends object ? Mutable<T[P]> : T[P] };
 export type AuthorProject = Mutable<EngineProject>;
@@ -138,6 +139,25 @@ export function diagnoseProject(project: EngineProject, availableFiles?: Readonl
       const key = keyFor(scene.id); binding(scene.background, 'background', '背景', key); binding(scene.cg, 'cg', 'CG', key); binding(scene.music, 'audio', '音乐', key);
     }
   }
+  if (project.type === 'investigation') for (const chapter of project.chapters) {
+    const check = (ids: unknown, label: string, key: string) => {
+      if (ids === undefined) return;
+      if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string')) { add('error', 'evidence-reference', `${label}必须是证据 ID 列表`, key); return; }
+      if (new Set(ids).size !== ids.length) add('error', 'evidence-reference', `${label}包含重复证据`, key);
+      for (const id of ids) if (!Object.hasOwn(chapter.evidence, id)) add('error', 'evidence-reference', `${label}引用不存在的证据：${id}`, key);
+    };
+    check(chapter.requiredEvidence, '本章完成所需证据', keyFor(chapter.entryNode, chapter.id));
+    for (const [id, node] of Object.entries(chapter.nodes)) {
+      const key = keyFor(id, chapter.id);
+      check(node.requiresEvidence, '节点所需证据', key); check(node.excludesEvidence, '节点排除证据', key);
+      if (Array.isArray(node.requiresEvidence) && Array.isArray(node.excludesEvidence)
+        && node.requiresEvidence.some(id => node.excludesEvidence!.includes(id))) add('error', 'evidence-conflict', '节点同时要求和排除同一证据', key);
+      for (const action of node.actions ?? []) {
+        check(action.requiresEvidence, `动作 ${action.id} 所需证据`, key);
+        for (const name of ['collect', 'hidesWhenCollected'] as const) if (action[name] !== undefined) check([action[name]], `动作 ${action.id} ${name}`, key);
+      }
+    }
+  }
   try { const instance = createProject(project, 'https://preview.invalid/'); instance.session.dispose(); }
   catch (error) { add('error', 'runtime', '运行校验：' + (error instanceof Error ? error.message : String(error))); }
   for (const entry of [...(Array.isArray(project.collections?.cgs) ? project.collections.cgs : []), ...(Array.isArray(project.collections?.endings) ? project.collections.endings : [])]) {
@@ -255,6 +275,41 @@ export class EditorModel {
       if (project.type === 'investigation') delete project.chapters.find(c => c.id === node.chapter)!.nodes[node.id];
       delete positions[key];
     });
+  }
+  addEvidence(chapterId: string) {
+    const project = this.document.project;
+    if (project.type !== 'investigation') throw new Error('当前工程不是调查类型');
+    const index = project.chapters.findIndex(c => c.id === chapterId), chapter = project.chapters[index];
+    if (!chapter) throw new Error('章节不存在');
+    let id = 'evidence-1'; for (let i = 2; Object.hasOwn(chapter.evidence, id); i++) id = 'evidence-' + i;
+    this.set(['chapters', index, 'evidence', id], { title: '新证据', detail: '请填写证据内容。' });
+    return id;
+  }
+  renameEvidence(chapterId: string, oldId: string, id: string) {
+    assertAuthorID(id);
+    const project = this.document.project;
+    if (project.type !== 'investigation') throw new Error('当前工程不是调查类型');
+    const chapter = project.chapters.find(c => c.id === chapterId);
+    if (!chapter || !Object.hasOwn(chapter.evidence, oldId)) throw new Error('证据不存在');
+    if (id === oldId) return false;
+    if (Object.hasOwn(chapter.evidence, id)) throw new Error('证据 ID 已使用');
+    const references = evidenceReferences(project, chapterId, oldId);
+    if (references.some(ref => ref.ambiguous)) throw new Error('路线证据断言无法确定章节；请先填写准确的 lineId 或 sceneId 再重命名');
+    return this.transact(p => {
+      if (p.type !== 'investigation') return;
+      const target = p.chapters.find(c => c.id === chapterId)!;
+      target.evidence = Object.fromEntries(Object.entries(target.evidence).map(([key, value]) => [key === oldId ? id : key, value]));
+      for (const ref of references) locate(p, ref.path.slice(0, -1))[ref.path.at(-1)!] = id;
+    });
+  }
+  removeEvidence(chapterId: string, id: string) {
+    const project = this.document.project;
+    if (project.type !== 'investigation') throw new Error('当前工程不是调查类型');
+    const chapter = project.chapters.find(c => c.id === chapterId);
+    if (!chapter || !Object.hasOwn(chapter.evidence, id)) throw new Error('证据不存在');
+    const references = evidenceReferences(project, chapterId, id);
+    if (references.length) throw new Error(`证据仍有 ${references.length} 处引用，请先修改引用再删除`);
+    return this.transact(p => { if (p.type === 'investigation') delete p.chapters.find(c => c.id === chapterId)!.evidence[id]; });
   }
 }
 
