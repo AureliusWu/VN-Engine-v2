@@ -17,12 +17,13 @@ try {
     const project = { schema: 1, game: 'collection-fixture', version: 'v1', title: 'Collection fixture', type: 'narrative', settings: { textDelayMs: 0 },
       assets: [{ id: 'secret-cg', kind: 'cg', src: 'assets/letter.svg' }], stage: { lines: { finish: { layers: { cg: { asset: 'secret-cg', kind: 'cg' } } } } }, scenes: [
         { id: 'start', lines: [{ id: 'begin', speaker: '旁白', text: '回看起点' }], next: 'final' },
-        { id: 'final', lines: [{ id: 'finish', speaker: '旁白', text: '回看终点' }], ending: 'complete' }
+        { id: 'final', lines: [{ id: 'finish', speaker: '旁白', text: '回看终点' }], ending: 'complete' },
+        { id: 'unused-bad', lines: [{ id: 'unused', speaker: '旁白', text: '失效回看测试的独立结局' }], ending: 'bad' }
       ] };
     const scratch = createProject(project, baseURL); const replay = scratch.session.save(); scratch.session.dispose();
     project.collections = { cgs: [{ id: 'secret-cg', title: '不应泄露的图片标题', replay }], endings: [
       { id: 'complete', title: '真实结局', trueEnding: true, replay }, { id: 'bad', title: '失效回看', replay: { invalid: true } }
-    ] };
+    ], trueRoute: { endings: ['complete'], cgs: ['secret-cg'], minPlaythroughs: 1 } };
     globalThis.collectionGame = mountGame(root, project, { baseURL, audio: false });
   });
   const host = page.locator('#game > .vn-engine'), modal = host.locator(':scope > .vn-modal');
@@ -35,6 +36,7 @@ try {
   await modal.getByRole('button', { name: '关闭', exact: true }).click();
   await host.locator(':scope > .vn-stage [data-control=next]').click();
   assert.equal(await page.evaluate(() => collectionGame.session.getSnapshot().frame.ending), 'complete');
+  assert.equal(await page.evaluate(() => collectionGame.meta.read().value.true_route_unlocked), true);
   await page.evaluate(() => { collectionGame.persistence.saveManual(1); collectionGame.persistence.quickSave(); });
   const before = await page.evaluate(() => ({ state: collectionGame.session.save().state, records: Object.fromEntries(Object.keys(localStorage).filter(key => key.startsWith('vn-engine:collection-fixture:')).sort().map(key => [key, localStorage.getItem(key)])) }));
   await host.locator('[data-control=gallery]').click(); assert.match(await modal.innerText(), /已解锁 1 \/ 1/);

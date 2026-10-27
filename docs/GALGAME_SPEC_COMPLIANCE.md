@@ -73,8 +73,8 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Hide UI | PASS | DOM runtime |
 | Settings persistence | PASS | 阅读与声音设置持久化 |
 | Persistent Meta State | PASS | 独立 MetaState API 与 mount runtime 更新 |
-| CG Gallery | PARTIAL | 配置、锁定遮蔽、查看与独立回看已通过 `4a8a57e` 浏览器和 Windows CI；专用可视化作者控件仍未提供 |
-| Ending Collection | PARTIAL | 标题、True Ending、解锁进度与回看已通过 `4a8a57e` 浏览器和 Windows CI；专用可视化作者控件仍未提供 |
+| CG Gallery | PARTIAL | 配置、锁定遮蔽、查看与独立回看已通过 `4a8a57e` 浏览器和 Windows CI；Studio 作者控件、真实预览回看起点和规则已接入，本轮 Windows CI 待确认 |
+| Ending Collection | PARTIAL | 标题、True Ending、解锁进度与回看已通过 `4a8a57e` 浏览器和 Windows CI；Studio 作者控件、真实预览回看起点和规则已接入，本轮 Windows CI 待确认 |
 | BGM | PASS | Runtime media |
 | SE | PASS | Runtime media |
 | Ambience | PASS | Runtime media |
@@ -109,8 +109,8 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 
 ### P0 — Meta / Collection UI
 
-- CG Gallery 与 Ending Collection 已接入播放器；专用可视化作者控件仍待实现
-- True Route unlock policy 数据化
+- CG Gallery 与 Ending Collection 已接入播放器；Studio 作者控件与真路线规则已接入，本轮 Windows CI 待确认
+- True Route unlock policy 已数据化，组合条件只更新独立 Meta
 - Replay 结束后安全返回 Collection
 
 ### P1 — Presentation runtime closure

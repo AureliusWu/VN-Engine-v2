@@ -49,7 +49,8 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
   if (storage === undefined) try { storage = root.ownerDocument.defaultView?.localStorage; } catch { storage = null; }
   const persistence = bindSessionPersistence(session, createSaveContract({ game: project.game, gameVersion: project.version, storage }));
   const collections = project.collections ? structuredClone(project.collections) : undefined;
-  const meta = createMetaStateStore(project.game, storage, { cgs: collections?.cgs?.map(item => item.id), endings: collections?.endings?.map(item => item.id) });
+  const meta = createMetaStateStore(project.game, storage, { cgs: collections?.cgs?.map(item => item.id), endings: collections?.endings?.map(item => item.id), trueRoute: collections?.trueRoute });
+  if (collections?.trueRoute) meta.evaluateTrueRoute();
   let renderer: DOMRenderer | undefined;
   let progressVisit = -1, countedEnding = false;
   const persistProgress = () => {

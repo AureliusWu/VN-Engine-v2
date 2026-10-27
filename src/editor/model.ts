@@ -133,6 +133,13 @@ export function diagnoseProject(project: EngineProject, availableFiles?: Readonl
   }
   try { const instance = createProject(project, 'https://preview.invalid/'); instance.session.dispose(); }
   catch (error) { add('error', 'runtime', '运行校验：' + (error instanceof Error ? error.message : String(error))); }
+  for (const entry of [...(Array.isArray(project.collections?.cgs) ? project.collections.cgs : []), ...(Array.isArray(project.collections?.endings) ? project.collections.endings : [])]) {
+    if (!record(entry) || entry.replay === undefined) continue;
+    let instance: ReturnType<typeof createProject> | undefined;
+    try { instance = createProject({ ...project, collections: undefined }, 'https://preview.invalid/'); instance.session.restore(entry.replay); }
+    catch { add('error', 'collection-replay', '回看起点不属于当前作品或版本：' + String(entry.id)); }
+    finally { instance?.session.dispose(); }
+  }
   return result;
 }
 

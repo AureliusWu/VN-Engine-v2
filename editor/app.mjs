@@ -1,5 +1,6 @@
 import { EditorModel, newProject } from '../lib/editor/index.js';
 import { renderPresentationEditor } from './presentation.mjs';
+import { renderCollectionsEditor } from './collections.mjs';
 import { ENGINE_VERSION } from '../lib/index.js';
 import { nativeHost, nativeRequest } from './native.mjs';
 
@@ -8,6 +9,7 @@ const DRAFT_KEY = 'vn-engine-studio:draft:v1';
 let model = new EditorModel(newProject('script')), selected, tab = 'story', draft, draftTimer, previewTimer;
 let baseURL = new URL('../samples/', location.href).href, resourceURLs = new Map(), resourceFiles, previewReady = false, revision = 0, savedSource = '';
 let nativeHidden = false;
+let replayRequest;
 const openInspectorSections = new Set();
 const status = (text, error = false) => { $('status').textContent = text; $('status').classList.toggle('error', error); };
 function element(tag, text, attrs = {}) {
@@ -72,6 +74,7 @@ function update(inspector = false) {
     renderInspector(); panel.scrollTop = scrollTop;
   }
   if (tab === 'assets' && inspector) renderAssets();
+  if (tab === 'collections' && inspector) renderCollections();
   if (tab === 'source' && savedSource === $('source').value) { $('source').value = model.serialize(true); savedSource = $('source').value; }
   if (model.dirty) scheduleDraft();
   if ($('auto-preview').checked) { clearTimeout(previewTimer); previewTimer = setTimeout(preview, 300); } else $('preview-state').textContent = '更改后点击“从头试玩”';
@@ -259,8 +262,21 @@ function renderAssets() {
 }
 function switchTab(next) {
   if (tab === 'source' && next !== 'source' && $('source').value !== savedSource && !confirm('JSON 面板有尚未应用的文本，仍要切换吗？')) return;
-  tab = next; for (const name of ['story', 'assets', 'source']) { $(name + '-panel').hidden = name !== tab; document.querySelector(`[data-tab=${name}]`).setAttribute('aria-pressed', String(name === tab)); }
+  tab = next; for (const name of ['story', 'assets', 'collections', 'source']) { $(name + '-panel').hidden = name !== tab; document.querySelector(`[data-tab=${name}]`).setAttribute('aria-pressed', String(name === tab)); }
   if (tab === 'assets') renderAssets(); if (tab === 'source') { $('source').value = model.serialize(true); savedSource = $('source').value; }
+  if (tab === 'collections') renderCollections();
+}
+function renderCollections() {
+  renderCollectionsEditor($('collection-list'), { project: model.getView().project, element, field, action, set, captureReplay: () => {
+    if (!previewReady || Number(document.body.dataset.previewRevision) !== revision) throw new Error('预览尚未就绪');
+    if (replayRequest) throw new Error('正在获取回看起点');
+    const source = model.serialize(true), current = revision;
+    return new Promise((resolve, reject) => {
+      replayRequest = { revision: current, resolve: value => { if (source !== model.serialize(true)) reject(new Error('工程已改变，请重新选择回看起点')); else resolve(value); }, reject,
+        timer: setTimeout(() => { replayRequest = undefined; reject(new Error('预览未响应，请重新试玩')); }, 5000) };
+      $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'capture-replay', revision: current }, location.origin);
+    });
+  } });
 }
 function preview() {
   clearTimeout(previewTimer); if (!previewReady) return;
@@ -273,6 +289,10 @@ window.addEventListener('message', event => {
   if (event.source !== $('preview').contentWindow || event.origin !== location.origin || event.data?.source !== 'vn-engine-preview') return;
   if (event.data.type === 'resize' && Number.isFinite(event.data.height)) { $('preview').style.height = Math.max(400, Math.min(1200, event.data.height)) + 'px'; return; }
   if (event.data.type === 'ready') { previewReady = true; preview(); }
+  if (event.data.type === 'captured-replay' && replayRequest?.revision === event.data.revision) {
+    const request = replayRequest; replayRequest = undefined; clearTimeout(request.timer);
+    if (event.data.error) request.reject(new Error(event.data.error)); else request.resolve(event.data.saved); return;
+  }
   if (event.data.revision !== revision) return;
   if (event.data.type === 'rendered') { $('preview-state').textContent = '当前工程 · 从头试玩'; document.body.dataset.previewRevision = String(revision); $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'visibility', hidden: nativeHidden }, location.origin); }
   if (event.data.type === 'failed') $('preview-state').textContent = '预览失败：' + event.data.message;

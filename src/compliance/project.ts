@@ -168,6 +168,12 @@ export function validateProjectCompliance(
     catch { throw new Error(`Missing or mismatched asset reference: ${reference.context} -> ${reference.id} (${reference.kind ?? 'asset'})`); }
   }
 
+  for (const entry of [...(project.collections?.cgs ?? []), ...(project.collections?.endings ?? [])]) if (entry.replay !== undefined) {
+    const replay = createProject({ ...project, collections: undefined }, 'https://vn-engine.invalid/');
+    try { replay.session.restore(entry.replay); }
+    catch { throw new Error(`Invalid collection replay for current game/version: ${entry.id}`); }
+    finally { replay.session.dispose(); }
+  }
   const artGate = mode === 'release' ? assessProductionArt(project, references.map(reference => reference.id), { requiresPwa: options.requiresPwa }) : undefined;
   if (artGate?.release === 'BLOCKED') throw new ReleaseArtGateError(artGate);
 

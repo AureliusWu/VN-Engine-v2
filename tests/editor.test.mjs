@@ -4,7 +4,7 @@ import { readFile, mkdtemp, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { EditorModel, newProject, readDocument, diagnoseProject } from '../dist/editor/index.js';
-import { createProject, AssetCatalog } from '../dist/index.js';
+import { createProject, AssetCatalog, validateProjectCompliance } from '../dist/index.js';
 import { packageStudio } from '../tools/package-studio.mjs';
 import { packageGame } from '../tools/package-game.mjs';
 
@@ -79,6 +79,19 @@ test('editor import rejects dangerous keys and unsupported workspace schemas wit
   assert.throws(() => model.set(['__proto__', 'polluted'], true), /路径/); assert.equal({}.polluted, undefined);
   assert.throws(() => readDocument('{"__proto__":{"polluted":true}}'), /不安全/);
   assert.throws(() => readDocument(' '.repeat(8_000_001)), /8 MB/);
+});
+
+test('collection replay diagnostics validate the real driver save and allow undoable repair', () => {
+  const project = newProject('script'); project.collections = { endings: [{ id: 'complete', replay: { invalid: true } }] };
+  const ending = project.program.blocks.find(block => block.exit.type === 'end').exit.ending;
+  project.collections.endings[0].id = ending;
+  const model = new EditorModel(project); assert.ok(model.diagnostics().some(item => item.code === 'collection-replay'));
+  assert.throws(() => validateProjectCompliance(project), /Invalid collection replay/);
+  const { session } = createProject(project, 'https://example.invalid/');
+  model.set(['collections', 'endings', 0, 'replay'], session.save()); session.dispose();
+  assert.equal(model.diagnostics().some(item => item.code === 'collection-replay'), false);
+  assert.doesNotThrow(() => validateProjectCompliance(JSON.parse(model.serialize(true))));
+  model.undo(); assert.equal(model.diagnostics().some(item => item.code === 'collection-replay'), true);
 });
 test('history is bounded, command inputs cannot escape, and same-value changes keep redo', () => {
   const model = new EditorModel(newProject('script'), 2); let escaped;

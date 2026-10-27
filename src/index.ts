@@ -16,6 +16,7 @@ export * from './storage/store.js';
 export * from './storage/contract.js';
 export * from './storage/preferences.js';
 export * from './meta/state.js';
+export * from './meta/project.js';
 export * from './stage/types.js';
 export * from './stage/cues.js';
 export * from './stage/timeline.js';

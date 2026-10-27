@@ -14,6 +14,7 @@ import { RuntimeSession, type RuntimeSettings, type Clock } from './session.js';
 import type { ProjectCollections } from '../meta/state.js';
 import { isRecord } from '../storage/save.js';
 import type { ReleaseEvidence } from '../compliance/art.js';
+import { projectEndings, validateTrueRoutePolicy } from '../meta/project.js';
 
 type ProjectBase = { schema: 1; game: string; version: string; title: string; assets: readonly Asset[]; font?: string; settings?: Partial<RuntimeSettings>; collections?: ProjectCollections; releaseEvidence?: ReleaseEvidence };
 export type EngineProject = ProjectBase & (
@@ -27,6 +28,7 @@ export function createProject(project: EngineProject, baseURL: string | URL, opt
   const assets = new AssetCatalog(project.assets, baseURL, options.assetURL);
   if (project.collections !== undefined) {
     if (!isRecord(project.collections)) throw new Error('Invalid collection metadata');
+    const endings = new Set(projectEndings(project));
     for (const [kind, entries] of [['cg', project.collections.cgs], ['ending', project.collections.endings]] as const) {
       if (entries === undefined) continue;
       if (!Array.isArray(entries)) throw new Error('Invalid collection entries');
@@ -37,7 +39,14 @@ export function createProject(project: EngineProject, baseURL: string | URL, opt
           || ('trueEnding' in entry && typeof entry.trueEnding !== 'boolean')) throw new Error('Invalid or duplicate collection entry');
         ids.add(entry.id);
         if (kind === 'cg') assets.get(entry.id, 'cg');
+        else if (!endings.has(entry.id)) throw new Error(`Unknown collection ending: ${entry.id}`);
       }
+    }
+    const policy = project.collections.trueRoute;
+    if (policy !== undefined) {
+      validateTrueRoutePolicy(policy);
+      for (const id of policy.endings ?? []) if (!endings.has(id)) throw new Error(`Unknown true-route ending: ${id}`);
+      for (const id of policy.cgs ?? []) assets.get(id, 'cg');
     }
   }
   let driver: NarrativeDriver | ScriptDriver | InvestigationDriver;

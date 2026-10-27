@@ -1,5 +1,6 @@
 import { isRecord } from '../storage/save.js';
 import { writeBatch, type LoadResult, type StoragePort, type WriteResult } from '../storage/store.js';
+import { validateTrueRoutePolicy } from './project.js';
 
 export type MetaState = {
   schema: 1;
@@ -16,7 +17,9 @@ export type ReplayContext = { mode: 'replay'; game: string; kind: 'ending' | 'cg
 /** Authored collection metadata; replay is a normal driver save, restored in an isolated session. */
 export type CollectionCg = { id: string; title?: string; replay?: unknown };
 export type CollectionEnding = { id: string; title?: string; trueEnding?: boolean; replay?: unknown };
-export type ProjectCollections = { cgs?: readonly CollectionCg[]; endings?: readonly CollectionEnding[] };
+/** All declared conditions must hold; unlocking is monotonic and belongs only to Meta. */
+export type TrueRoutePolicy = { endings?: readonly string[]; cgs?: readonly string[]; minPlaythroughs?: number };
+export type ProjectCollections = { cgs?: readonly CollectionCg[]; endings?: readonly CollectionEnding[]; trueRoute?: TrueRoutePolicy };
 export type MetaMutationResult = WriteResult | { status: 'invalid'; reason: string };
 
 function iso(value: unknown): value is string { return typeof value === 'string' && Number.isFinite(Date.parse(value)); }
@@ -43,9 +46,11 @@ function progress(ids: readonly string[], unlocked: readonly string[]): Collecti
   return Object.freeze({ unlocked: entries.filter(entry => entry.unlocked).length, total: entries.length, entries: Object.freeze(entries) });
 }
 
-export function createMetaStateStore(gameId: string, storage?: StoragePort | null, options: { namespace?: string; endings?: readonly string[]; cgs?: readonly string[] } = {}) {
+export function createMetaStateStore(gameId: string, storage?: StoragePort | null, options: { namespace?: string; endings?: readonly string[]; cgs?: readonly string[]; trueRoute?: TrueRoutePolicy } = {}) {
   const game = gameId.trim();
   if (!game) throw new Error('Meta state requires a game ID');
+  const policy = options.trueRoute ? structuredClone(options.trueRoute) : undefined;
+  if (policy) validateTrueRoutePolicy(policy);
   const key = `${options.namespace?.trim() || `vn-engine:${game}:v2`}:meta`;
   const read = (): LoadResult<MetaState> => {
     let raw: string | null;
@@ -64,7 +69,10 @@ export function createMetaStateStore(gameId: string, storage?: StoragePort | nul
     if (loaded.status === 'invalid') return loaded;
     if (loaded.status === 'unavailable') return { status: 'unavailable', reason: loaded.reason, rollbackFailed: false };
     const base = loaded.status === 'valid' ? loaded.value : initialMeta(game);
-    return write(change(base));
+    let next = change(base);
+    if (policy && !next.true_route_unlocked && (policy.endings ?? []).every(id => next.ending_seen.includes(id))
+      && (policy.cgs ?? []).every(id => next.cg_unlocked.includes(id)) && next.playthrough_count >= (policy.minPlaythroughs ?? 0)) next = { ...next, true_route_unlocked: true };
+    return write(next);
   };
   const next = (state: MetaState, patch: Partial<Pick<MetaState, 'ending_seen' | 'cg_unlocked' | 'playthrough_count' | 'true_route_unlocked'>>): MetaState => decodeMeta(JSON.stringify({
     ...state, ...patch, schema: 1, game, updatedAt: new Date().toISOString()
@@ -83,6 +91,7 @@ export function createMetaStateStore(gameId: string, storage?: StoragePort | nul
     },
     recordPlaythrough(): MetaMutationResult { return mutate(state => next(state, { playthrough_count: state.playthrough_count + 1 })); },
     unlockTrueRoute(): MetaMutationResult { return mutate(state => next(state, { true_route_unlocked: true })); },
+    evaluateTrueRoute(): MetaMutationResult { return mutate(state => state); },
     collections(state?: MetaState) {
       const current = state ?? (read().status === 'valid' ? (read() as { status: 'valid'; value: MetaState }).value : initialMeta(game));
       return Object.freeze({ endings: progress(options.endings ?? [], current.ending_seen), cgs: progress(options.cgs ?? [], current.cg_unlocked) });

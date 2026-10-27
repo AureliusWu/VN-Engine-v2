@@ -1,0 +1,43 @@
+import { chromium } from 'playwright';
+import assert from 'node:assert/strict';
+import { readFile, mkdir } from 'node:fs/promises';
+import { createDemoServer } from '../tools/serve.mjs';
+
+const server = await createDemoServer(); await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+let browser;
+try {
+  browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, args: ['--no-sandbox'] });
+  const page = await browser.newPage({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
+  const errors = []; page.on('pageerror', error => errors.push(error.message)); page.on('dialog', dialog => dialog.accept());
+  await page.goto(`http://127.0.0.1:${server.address().port}/editor/`); await page.waitForSelector('body[data-editor-ready=true]');
+  await page.locator('#sample').selectOption('campus'); await page.locator('[data-command=sample]').click();
+  const preview = page.frameLocator('#preview'); await preview.locator('.vn-portrait').waitFor({ state: 'visible' });
+  await page.locator('[data-tab=collections]').click(); const panel = page.locator('#collection-list');
+  await panel.getByRole('button', { name: '添加CG', exact: true }).click();
+  await panel.getByLabel('CG 1 标题', { exact: true }).fill('测试回忆'); await panel.getByLabel('CG 1 标题', { exact: true }).blur();
+  await preview.locator('[data-control=gallery]').waitFor({ state: 'visible' });
+  await page.waitForFunction(() => document.getElementById('preview-state').textContent.includes('当前工程'));
+  await preview.locator('.vn-engine[data-ready=true]').waitFor({ state: 'visible' });
+  await preview.locator('[data-control=next]').click();
+  await panel.getByRole('button', { name: '使用当前预览作为回看起点', exact: true }).click();
+  await page.waitForFunction(() => document.querySelector('[aria-label="CG 1 回看数据"]').value.includes('storyVersion'));
+  const captured = JSON.parse(await panel.getByLabel('CG 1 回看数据', { exact: true }).inputValue());
+  assert.equal(captured.state.line, 1);
+  await panel.getByRole('button', { name: '添加结局', exact: true }).click();
+  await panel.getByLabel('结局 1 真结局', { exact: true }).selectOption('true');
+  await panel.getByRole('button', { name: '启用真路线规则', exact: true }).click();
+  const ending = await panel.getByLabel('结局 1 ID', { exact: true }).inputValue();
+  await panel.getByLabel('需要看过的结局 ID', { exact: true }).fill(ending); await panel.getByLabel('需要看过的结局 ID', { exact: true }).blur();
+  await panel.getByLabel('CG 1 回看数据', { exact: true }).fill('{"invalid":true}'); await panel.getByLabel('CG 1 回看数据', { exact: true }).blur();
+  assert.equal(await page.locator('[data-command=export]').isDisabled(), true);
+  assert.match(await page.locator('#diagnostics').innerText(), /回看起点/);
+  await page.locator('[data-command=undo]').click(); assert.equal(await page.locator('[data-command=export]').isEnabled(), true);
+  const [download] = await Promise.all([page.waitForEvent('download'), page.locator('[data-command=export]').click()]);
+  const project = JSON.parse(await readFile(await download.path(), 'utf8'));
+  assert.equal(project.collections.cgs[0].title, '测试回忆'); assert.equal(project.collections.cgs[0].replay.state.line, 1);
+  assert.equal(project.collections.endings[0].trueEnding, true); assert.deepEqual(project.collections.trueRoute.endings, [ending]);
+  await page.setViewportSize({ width: 390, height: 844 }); assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  const out = process.env.VN_ENGINE_TEST_OUTPUT ?? 'test-results'; await mkdir(out, { recursive: true });
+  await page.screenshot({ path: out + '/studio-collections.png' }); assert.deepEqual(errors, []);
+  console.log('PASS Studio configures collections, captures actual preview replay, diagnoses invalid saves, exports policy and supports undo');
+} finally { await browser?.close(); await new Promise(resolve => server.close(resolve)); }

@@ -42,4 +42,8 @@ test('collection metadata validates unique IDs and requires CG assets', () => {
   assert.throws(() => validateProjectCompliance(draft), /mismatched asset/);
   draft.collections.cgs = []; draft.collections.endings = [{ id: 'END', trueEnding: 'yes' }];
   assert.throws(() => validateProjectCompliance(draft), /Invalid or duplicate collection entry/);
+  draft.collections.endings = [{ id: 'missing' }];
+  assert.throws(() => validateProjectCompliance(draft), /Unknown collection ending/);
+  draft.collections.endings = [{ id: 'END' }]; draft.collections.trueRoute = { endings: ['missing'] };
+  assert.throws(() => validateProjectCompliance(draft), /Unknown true-route ending/);
 });

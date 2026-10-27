@@ -80,3 +80,18 @@ test('corrupt meta state is retained and never overwritten by unlock operations'
   assert.equal(meta.unlockCg('cg-1').status, 'invalid');
   assert.equal(storage.getItem(meta.key), '{broken');
 });
+
+test('true-route policy requires all authored conditions and remains separate from save data', () => {
+  const storage = memoryStorage();
+  const policy = { endings: ['normal', 'other'], cgs: ['memory'], minPlaythroughs: 2 };
+  const meta = createMetaStateStore('policy', storage, { trueRoute: policy });
+  policy.endings.length = 0; // Caller mutation cannot weaken a running policy.
+  meta.markEndingSeen('normal'); meta.unlockCg('memory'); meta.recordPlaythrough(); meta.recordPlaythrough();
+  assert.equal(meta.read().value.true_route_unlocked, false);
+  meta.markEndingSeen('other'); assert.equal(meta.read().value.true_route_unlocked, true);
+  assert.equal(storage.getItem('vn-engine:policy:v2:save:manual-1'), null);
+  assert.throws(() => createMetaStateStore('policy', storage, { trueRoute: {} }), /at least one/);
+  const old = createMetaStateStore('old-policy', storage); old.markEndingSeen('normal');
+  const updated = createMetaStateStore('old-policy', storage, { trueRoute: { endings: ['normal'] } });
+  updated.evaluateTrueRoute(); assert.equal(updated.read().value.true_route_unlocked, true);
+});

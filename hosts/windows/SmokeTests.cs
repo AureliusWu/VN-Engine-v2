@@ -46,6 +46,11 @@ internal static class SmokeTests
             if (await JS("window.nativePresentationAuthor === 'ready'") != "true") throw new InvalidDataException("Native timeline authoring: " + await JS("window.nativePresentationAuthor"));
             await Wait("document.querySelector('#preview').contentDocument?.querySelector('.vn-character-front')?.naturalWidth > 0 && document.querySelector('#preview').contentDocument.querySelector('.vn-character-front').style.transform.includes('70px')");
             checks.Add("Native Studio authors a formal layer and timeline through visual controls and renders its final pose in WebView2");
+            await JS("document.querySelector('[data-tab=collections]').click(); [...document.querySelectorAll('#collection-list button')].find(button=>button.textContent==='添加CG').click()");
+            await Wait("Number(document.body.dataset.previewRevision)>0 && !!document.querySelector('#preview').contentDocument?.querySelector('[data-control=gallery]')");
+            await JS("[...document.querySelectorAll('#collection-list button')].find(button=>button.textContent==='使用当前预览作为回看起点').click()");
+            await Wait("document.querySelector('#collection-list [aria-label=\"CG 1 回看数据\"]')?.value.includes('storyVersion')");
+            checks.Add("Native Studio configures a CG collection and captures a real driver replay save from WebView2 preview");
             await JS("(()=>{const input=document.querySelector('[aria-label=\"作品名称\"]'); input.value='Windows native smoke'; input.dispatchEvent(new Event('change'));})()");
             await Wait("document.body.dataset.dirty === 'true'");
             await JS("document.querySelector('[data-command=save]').click()");
@@ -57,7 +62,7 @@ internal static class SmokeTests
             await JS("document.querySelector('[data-command=export]').click()");
             var export = Path.Combine(window.SmokeFolder, "project.json");
             var exportUntil = DateTime.UtcNow.AddSeconds(10); while (!File.Exists(export) && DateTime.UtcNow < exportUntil) await Task.Delay(100);
-            using (var document = JsonDocument.Parse(HostFiles.ReadJson(export))) if (document.RootElement.GetProperty("type").GetString() != "narrative" || document.RootElement.TryGetProperty("format", out _)) throw new InvalidDataException("运行数据导出不是原始引擎工程");
+            using (var document = JsonDocument.Parse(HostFiles.ReadJson(export))) if (document.RootElement.GetProperty("type").GetString() != "narrative" || document.RootElement.TryGetProperty("format", out _) || !document.RootElement.GetProperty("collections").GetProperty("cgs")[0].TryGetProperty("replay", out _)) throw new InvalidDataException("运行数据导出不是含回看起点的原始引擎工程");
             checks.Add("Native export produces engine project JSON without editor metadata");
             var previousRevision = await JS("Number(document.body.dataset.previewRevision)");
             await JS("document.querySelector('[data-command=open]').click()");

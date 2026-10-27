@@ -77,6 +77,8 @@ DOM 宿主包括阅读层、聊天气泡、通话视图、调查文书/热点、
 
 作品可以声明 `collections: { cgs: [{ id, title?, replay? }], endings: [{ id, title?, trueEnding?, replay? }] }`。CG 的 `id` 必须指向 CG 资源，结局 `id` 与实际结局 ID 一致；没有声明时不显示对应入口。`replay` 可填写由同一作品、版本和引擎驱动生成的 `session.save()` 数据；缺少回看数据时只展示已解锁项目。锁定条目不显示标题或图像，也不创建图片元素，但作品包中的资源本身并非加密保护。回看创建独立引擎会话，不订阅普通自动存档或 Meta 更新；返回、Escape 和销毁都会清理该会话并回到收藏页或原剧情。无效回看数据会报错且保留原进度。回看数据仍应由作品维护并在故事或版本变化时重新验证。
 
+Studio 的“收藏与解锁”面板可配置条目、标记真结局，并将当前真实预览位置保存为回看起点。可声明 `collections.trueRoute: { endings?: string[], cgs?: string[], minPlaythroughs?: number }`；全部条件满足才把独立 Meta 的 `true_route_unlocked` 设为 true，普通读档不会撤销该解锁。规则不修改剧情变量，作品需显式消费这一跨周目状态；隔离回看不累计解锁条件或完成周目。无效或其他作品 / 版本的回看起点会阻止作者导出与项目校验。
+
 演出 cue 可用 `layers` 为 `background / character-back / character / character-front / cg` 声明 `{ asset, kind }`，对应层可设为 `null` 清除；旧 `background / portrait / cg` 仍映射到对应图层。`timeline` 使用 `animations` 与 `camera` 数据：位移单位为 CSS 像素，支持延时、时长、缩放和透明度；`target` 如填写，必须匹配该视觉层实际资源 ID，effect / ui 轨道作用于整层。镜头只作用于视觉画布，不移动对白和选项。画面暂停、隐藏和后台会暂停轨道；跳过、减少动态或读档时收敛到终态，并可在后续段落重建此前终态。Studio 提供图层、轨道和镜头关键帧控件，实际构图仍需人工验收。
 
 `video: { asset, muted?, loop?, fallback?: { asset, kind } }` 使用本地视频资源；回退资源为 CG 或背景。默认静音，显式设置 `muted: false` 时跟随音量设置并受浏览器自动播放策略限制。播放失败、格式不支持或自动播放被拒绝时显示回退并允许剧情继续；减少动态、跳过及从该段读档时使用回退画面。隐藏、后台和原生宿主暂停会暂停视频，退出场景或销毁会清理播放器。视频与剧情并行，不等待视频结束才允许继续。支持格式取决于实际浏览器 / WebView2 和设备，作品需用目标设备验证。

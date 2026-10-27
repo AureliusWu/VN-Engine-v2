@@ -64,13 +64,19 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "d7ee76c636fdf328af726a58dc7a777a20ab177880023c6da593e6e220342572"
+      "targetSha256": "6086f9f28962c53777a45f5c199e6995cfb112e2304a5651991ec2b2541d165c"
+    },
+    {
+      "target": "editor/collections.mjs",
+      "mode": "new",
+      "targetSha256": "fde26a1f7003d53cfa1dee64ca3821aff345226ea12d7291409a5aad529ce205",
+      "origins": []
     },
     {
       "target": "editor/index.html",
       "mode": "new",
       "origins": [],
-      "targetSha256": "413bebc9e23c4595a18d39f6a9bee2d0d08816b2eac14a2cb7abae059061f021"
+      "targetSha256": "5d510d9c2ba7223ce91d2487525c9a4b515fdb14dc2900b453aaf5e40affe1c4"
     },
     {
       "target": "editor/native.mjs",
@@ -100,7 +106,7 @@
       "target": "editor/preview.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "91b96a346f92950d3f281a13071f2df2274c54d1017d71787eb21a44d9dde5c8"
+      "targetSha256": "3382f7a659dbed6566273e842b37e2a04be38851b65ebd66ce46d5bd8ebd2041"
     },
     {
       "target": "editor/studio-font.woff2",
@@ -113,13 +119,13 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "8730459df5ee75b1d1da9be5c9ef868990d294c162cc047af05c65c8b2a7f18b"
+      "targetSha256": "097f0fb5a5f548a49dc715a43be8d865c40c5bccbe920543b79b64d504d01363"
     },
     {
       "target": "editor/style.css",
       "mode": "new",
       "origins": [],
-      "targetSha256": "0aca8d80146ee59370d2b82a60ab637a3f78c9f55d48e169cf78e5b4d6e446d1"
+      "targetSha256": "1ddf98cd3bb194c26ff61693404cc408e03c726e64e46ace011f285ae39a5be5"
     },
     {
       "target": "examples/demo/demo-font.woff2",
@@ -296,7 +302,7 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "55f326885f2112f064159f6a86a03e8488ffbaeb792396de51e1f4e2a1d93f4e"
+      "targetSha256": "391443ade8ed0cc2e3665a64e5ad5438b6758b3b0da77d138c180c7abcc76709"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
@@ -504,7 +510,7 @@
     {
       "target": "src/compliance/project.ts",
       "mode": "new",
-      "targetSha256": "23a7cfdfcc11fa12a48a8cc50a49f03c447b665f7f211f7bf61a8a9421ab3c63",
+      "targetSha256": "06a315dcbe875235eae2e979bc2d25ab5ed86155cc05124f401879debd89f1ac",
       "origins": []
     },
     {
@@ -517,7 +523,7 @@
       "target": "src/editor/model.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "896d34546982a9298faaa4a70b2ee45ade2da75df6d8686c6e357c34bd4c7a47"
+      "targetSha256": "f73440b2dd4a6e8b9b70e51f0c819ae15b44239b12ecd739b1e7f8707f8dd2f9"
     },
     {
       "target": "src/history/search.ts",
@@ -535,7 +541,7 @@
     {
       "target": "src/index.ts",
       "mode": "new",
-      "targetSha256": "9952d08901125d9d0257f8fb7d1581c02f1fb3de75475fc06af0906004235725",
+      "targetSha256": "646d279f1550aca706059b0cb5b8dc071af22faa7d37a68f41492ca8fd7809b3",
       "origins": []
     },
     {
@@ -577,9 +583,15 @@
       "origins": []
     },
     {
+      "target": "src/meta/project.ts",
+      "mode": "new",
+      "targetSha256": "d786f0c01ddfeef60a9849e98b411449f67c03443e11f0539b0db8c68c16964e",
+      "origins": []
+    },
+    {
       "target": "src/meta/state.ts",
       "mode": "new",
-      "targetSha256": "a9978423c878603b87d2f61efef2ec7c995f130c2ba1b567720704bb8fb535b8",
+      "targetSha256": "38c146762be94c8b0e012f1f57abd3f4f122443e86479cdb90c6ce76c350f1dd",
       "origins": []
     },
     {
@@ -673,7 +685,7 @@
       "target": "src/render/mount.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "f8dde0ba2b90e914e897e6d2ef9d0632eb838a7a2a4a4bc9a6f9c9e8fea16b69"
+      "targetSha256": "fbde04558c153a8e00c15c41aca499ee070a21c793aaf3f9270e247b821aa37d"
     },
     {
       "target": "src/runtime/drivers.ts",
@@ -691,7 +703,7 @@
       "target": "src/runtime/project.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "04d1fe7455e5b53a77e1c2da1d4a2c1e66f966968e7461009e9a988cb3a9b577"
+      "targetSha256": "87dd0db51b369e987aa7f0d2dc986044d8e9a830951c432c41e044d19e0423eb"
     },
     {
       "target": "src/runtime/readonly.ts",
