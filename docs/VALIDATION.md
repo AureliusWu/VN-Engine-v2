@@ -2,6 +2,8 @@
 
 ## 条件与证据作者工具
 
+本轮实现 `160b4c9bfbbfddb312e60d4669ffe8eac308e74f` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40539525514) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40539525544) 均成功，条件与证据作者工具闭环完成。CI 的新增 Chromium 专项和四份独立样例 QA 均通过；`alpha-qa-reports` artifact 为 `12750081600`，`engine-browser-evidence` 为 `12749119342`。下文保留分阶段实际记录；本次收尾只修改文档，不把实现提交的结果冒充文档提交的新一次 CI。
+
 模型阶段本地 `npm run check` 通过：146 项 Node、6 项 Python、127 项来源和四份独立样例校验。新增检查覆盖完整引用的原子重命名、同章隔离、路线断言歧义拒绝、删除保护、撤销重做、元数据保留及真实运行器回归；条件接口检查布尔 / 数值和组合运算。Studio 表单与本轮浏览器 / 原生结果尚待后续验证。
 
 模型提交 `c14598c5a79e396f9ef9845bc828063ba8759a56` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40537666476) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40537666750) 均成功。
@@ -11,6 +13,10 @@
 首次本地并行启动两个包含 TypeScript 构建的检查时，它们争用 `dist`，一次 Node 导入读到尚未写完的导出。随后改为顺序检查；本轮最终结果单独记录，不据该临时目录竞争更改运行逻辑。Windows smoke 新增真实条件表单与证据重命名 / 调查完成流程，其执行结果仍以界面提交对应的 Windows 工作流为准。
 
 界面阶段最终顺序 `npm run check`（146 项 Node、6 项 Python、128 项来源与四样例）及完整 `npm run test:editor` 均通过。机器记录包含本轮源文件实际 SHA256 和检查范围，见 [authoring-validation.json](authoring-validation.json)。
+
+界面实现 `160b4c9bfbbfddb312e60d4669ffe8eac308e74f` 的 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40539525544) 已成功。原生日志明确包含两次条件表单实际命中分支和两次证据重命名 / 删除保护 / 调查完成，分别对应首次启动和完整进程重启；证据 artifact 为 `12751110512`。系统文件对话框仍使用 CI 预设路径，不冒充人工操作。
+
+以同一实现提交锁重建的四份独立样例，10 个用例、11 个声明结局、73 次逐步存读档及实际文件 / 解码 / 构建包复核全部通过。未提供提交锁的首次本地包被身份检查拒绝，设置准确 `VN_ENGINE_COMMIT` 后重建通过；没有降低门禁。样例正式美术、人工与实体设备验收继续保持 BLOCKED。
 
 ## 路线 QA 与作者工具
 
