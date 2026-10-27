@@ -18,6 +18,16 @@ export function renderPresentationEditor(parent, path, { element, field, action,
       if (!Object.keys(next.layers).length) delete next.layers;
     }), { choices });
   }
+  const keyVisual = cue.keyVisual;
+  field(details, '装饰视觉资源', keyVisual?.asset ?? '', value => changeCue(next => {
+    if (!value) delete next.keyVisual; else next.keyVisual = { scope: 'banner', sceneType: 'story', durationMs: 1500, ...next.keyVisual, asset: value };
+  }), { choices: [['', '未设置'], ...assets.filter(asset => asset.kind === 'ui').map(asset => [asset.id, asset.id])] });
+  if (keyVisual) {
+    const edit = change => changeCue(next => change(next.keyVisual));
+    field(details, '装饰视觉范围', keyVisual.scope, value => edit(next => { next.scope = value; }), { choices: [['banner', '独立横幅'], ['fullscreen', '全屏演出']] });
+    field(details, '装饰视觉场景类型', keyVisual.sceneType, value => edit(next => { next.sceneType = value; }), { choices: ['story', 'title', 'cg', 'transition', 'interstitial', 'special_presentation'] });
+    field(details, '装饰视觉时长 ms', keyVisual.durationMs, value => edit(next => { next.durationMs = Number(value); }));
+  }
   const editTimeline = change => changeCue(next => {
     const timeline = next.timeline && typeof next.timeline === 'object' ? next.timeline : { durationMs: 1000, animations: [], camera: [] };
     change(timeline); next.timeline = timeline;

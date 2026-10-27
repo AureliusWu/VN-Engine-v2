@@ -4,6 +4,7 @@ import { settlePresentationTimeline } from './timeline.js';
 /** Durable scene state can be reconstructed; one-shot effects never persist. */
 export function persistentCue(base: StageCue, cue?: StageCue): StageCue {
   const next = { ...base };
+  delete next.keyVisual;
   let state: StagePresentationState | undefined = base.presentationState ? {
     ...base.presentationState, layers: { ...base.presentationState.layers }
   } : undefined;
@@ -42,5 +43,5 @@ export function currentCue(base: StageCue, cue?: StageCue): StageCue {
   const durable = cue ? { ...cue, timeline: undefined, video: undefined } : undefined;
   return { ...persistentCue(base, durable), ...(cue?.sound ? { sound: cue.sound } : {}), ...(cue?.voice ? { voice: cue.voice } : {}),
     ...(cue?.effect ? { effect: cue.effect } : {}), ...(cue?.timeline ? { timeline: cue.timeline } : {}),
-    ...(cue?.video ? { video: cue.video } : {}), ...(cue?.pauseMs !== undefined ? { pauseMs: cue.pauseMs } : {}) };
+    ...(cue?.video ? { video: cue.video } : {}), ...(cue?.keyVisual ? { keyVisual: cue.keyVisual } : {}), ...(cue?.pauseMs !== undefined ? { pauseMs: cue.pauseMs } : {}) };
 }

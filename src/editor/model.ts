@@ -3,6 +3,7 @@ import { createProject } from '../runtime/project.js';
 import { isRecord } from '../storage/save.js';
 import { localAssetPath } from '../assets/catalog.js';
 import { validatePresentationTimeline } from '../stage/timeline.js';
+import { validateKeyVisual } from '../stage/key-visual.js';
 import { freezeData, type DeepReadonly } from '../runtime/readonly.js';
 
 type Mutable<T> = { -readonly [P in keyof T]: T[P] extends object ? Mutable<T[P]> : T[P] };
@@ -102,6 +103,10 @@ export function diagnoseProject(project: EngineProject, availableFiles?: Readonl
       binding(value.video.asset, 'video', '视频', node);
       if (record(value.video.fallback)) binding(value.video.fallback.asset, String(value.video.fallback.kind), '视频回退', node);
     }
+    if (value.keyVisual !== undefined) {
+      try { validateKeyVisual(value.keyVisual); binding(value.keyVisual.asset, 'ui', 'Key Visual', node); }
+      catch (error) { add('error', 'key-visual', '装饰视觉无效：' + String(error), node); }
+    }
     if (record(value.layers)) for (const [layer, asset] of Object.entries(value.layers)) if (record(asset)) binding(asset.asset, String(asset.kind), `图层 ${layer}`, node);
     if (value.timeline !== undefined) {
       try { validatePresentationTimeline(value.timeline); }
@@ -115,6 +120,8 @@ export function diagnoseProject(project: EngineProject, availableFiles?: Readonl
     }
   };
   binding(project.font, 'font', '字体');
+  const defaults = project.type === 'narrative' || project.type === 'investigation' ? project.stage?.defaults : project.defaults;
+  if (defaults?.keyVisual) add('error', 'key-visual', '装饰视觉必须绑定到明确的场景或台词，不能放在全局默认值中');
   for (const asset of project.assets) {
     if (!record(asset)) { add('error', 'asset', '资源条目必须是对象'); continue; }
     if (!localAssetPath(asset.src)) add('error', 'asset-path', '资源路径不安全：' + String(asset.src));

@@ -97,9 +97,10 @@ internal static class SmokeTests
                     const baseURL = new URL('./', location.href), game = 'native-collection-fixture';
                     for (const key of Object.keys(localStorage)) if (key.startsWith('vn-engine:' + game + ':')) localStorage.removeItem(key);
                     const project = {schema:1, game, version:'v1', title:'Native collections', type:'narrative', settings:{textDelayMs:0},
-                      assets:[{id:'memory', kind:'cg', src:'assets/letter.svg'}, {id:'hero', kind:'portrait', src:'assets/student.svg'}, {id:'clip', kind:'video', src:'assets/test-video.webm'}],
+                      assets:[{id:'memory', kind:'cg', src:'assets/letter.svg'}, {id:'brand', kind:'ui', src:'assets/letter.svg'}, {id:'hero', kind:'portrait', src:'assets/student.svg'}, {id:'clip', kind:'video', src:'assets/test-video.webm'}],
                       stage:{lines:{one:{layers:{'character-front':{asset:'hero', kind:'portrait'}}, timeline:{durationMs:1000,
                         animations:[{id:'move', layer:'character-front', target:'hero', to:{x:55, opacity:1}, durationMs:1000}]},
+                        keyVisual:{asset:'brand', scope:'banner', sceneType:'story', durationMs:30000},
                         video:{asset:'clip', muted:true, fallback:{asset:'memory', kind:'cg'}}}}},
                       scenes:[{id:'start', lines:[{id:'one', speaker:'Narrator', text:'replay start'}, {id:'two', speaker:'Narrator', text:'replay end'}], cg:'memory', cgFrom:1, ending:'complete'}]};
                     const scratch = createProject(project, baseURL), replay = scratch.session.save(); scratch.session.dispose();
@@ -113,9 +114,11 @@ internal static class SmokeTests
                       throw Error('Native video did not play: ' + JSON.stringify({hidden:v.hidden, error:v.error?.code, ready:v.readyState, network:v.networkState,
                         src:v.currentSrc, reduced:matchMedia('(prefers-reduced-motion: reduce)').matches, fallback:query('.vn-video-fallback').dataset.asset, status:query('.vn-status').textContent}));
                     }
+                    if (query('.vn-key-visual').hidden || query('.vn-key-visual').dataset.scope !== 'banner') throw Error('Native Key Visual banner did not start');
                     query('[data-control=gallery]').click();
                     if (query('.vn-modal img') || query('.vn-modal').textContent.includes('Hidden title')) throw Error('Locked CG was exposed');
                     clickText('关闭'); instance.session.configure({reducedMotion:true});
+                    if (!query('.vn-key-visual').hidden || query('.vn-key-visual img').hasAttribute('src')) throw Error('Native Key Visual did not clean up under reduced motion');
                     if (!query('[data-layer="character-front"]').style.transform.includes('55px')) throw Error('Reduced motion did not settle the native timeline');
                     if (query('.vn-video-fallback').dataset.asset !== 'memory') throw Error('Native video fallback was not selected');
                     instance.session.next();
@@ -134,7 +137,7 @@ internal static class SmokeTests
                 var collectionResult = await JS("window.nativeCollectionSmoke");
                 if (collectionResult != "\"passed\"") throw new InvalidDataException("Native collection/video check: " + collectionResult);
                 await window.Browser.CoreWebView2.CallDevToolsProtocolMethodAsync("Emulation.setEmulatedMedia", "{\"features\":[]}");
-                checks.Add("Native WebView2 plays local video under emulated normal motion; explicit reduced motion falls back, preserving timeline, gallery and replay state");
+                checks.Add("Native WebView2 plays local video and scoped Key Visual; reduced motion cleans decoration and falls back, preserving timeline, gallery and replay state");
             }
             else
             {

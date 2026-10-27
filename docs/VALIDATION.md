@@ -2,6 +2,10 @@
 
 ## 2026-10-27 顺序优化
 
+收藏提交 `36d492a` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40455664728) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40455664704) 均成功，原生 Studio 实际配置 CG 收藏、抓取预览 driver 存档，并保存和导出。
+
+Key Visual 新增范围 / 场景 / 时长校验和 Studio 控件；Chromium 实际覆盖横幅容器、隐藏与宿主暂停、到时清理、离场、读档、跳过、减少动态和全屏演出下的可交互对白。Windows smoke 新增横幅开始和减少动态清理，本地 98 项 Node、6 项 Python、106 项来源检查、完整浏览器与编辑器专项通过；实际 Windows 结果以本次工作流为准。
+
 收藏作者控件支持新增 CG / 结局、真结局标记、当前预览回看起点及真路线规则。新增单元测试覆盖组合条件、规则输入不可变、无效回看诊断和撤销修复；Chromium 专项覆盖真实预览位置抓取、导出、失效数据阻断与 390px 页面。Windows smoke 新增相同作者控件与真实回看起点的原生检查；该提交结果以工作流为准，尚未提前标 PASS。本地 96 项 Node、6 项 Python、104 项来源检查与完整浏览器 / 编辑器检查通过。
 
 ## 2026-10-27 存档界面验证（0.3.0 alpha）

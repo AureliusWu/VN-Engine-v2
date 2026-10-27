@@ -62,6 +62,17 @@ try {
   await host.locator('[data-control=endings]').click();
   await modal.locator('.vn-collection-entry').filter({ hasText: '失效回看' }).getByRole('button', { name: '回看结局', exact: true }).click();
   assert.match(await modal.innerText(), /回看数据无效，当前进度未改变/);
+  const investigation = await page.evaluate(async () => {
+    const { mountGame } = await import('./lib/index.js'); collectionGame.dispose();
+    const project = await (await fetch('./circuit.json')).json(); project.game = 'collection-investigation-fixture'; project.settings = { textDelayMs: 0 };
+    project.collections = { endings: [{ id: 'chapter-one:complete', title: '第一章完成' }], trueRoute: { endings: ['chapter-one:complete'] } };
+    for (const key of Object.keys(localStorage)) if (key.startsWith('vn-engine:' + project.game + ':')) localStorage.removeItem(key);
+    const mounted = mountGame(document.getElementById('game'), project, { baseURL: new URL('./', location.href), audio: false });
+    for (const id of ['inspect-a', 'return', 'inspect-b', 'return', 'reason', 'right']) if (!mounted.session.act(id)) throw Error('Invalid investigation fixture action: ' + id);
+    const state = mounted.meta.read(); mounted.dispose(); return state.value;
+  });
+  assert.ok(investigation.ending_seen.includes('chapter-one:complete')); assert.equal(investigation.true_route_unlocked, true);
+  assert.equal(investigation.playthrough_count, 0);
   assert.deepEqual(errors, []);
   console.log('PASS Locked CG and endings hide content; unlocked gallery, isolated replay, return and invalid replay handling work');
 } finally { await browser?.close(); await new Promise(resolve => server.close(resolve)); }

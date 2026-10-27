@@ -23,6 +23,8 @@ export type StageVideo = {
   loop?: boolean;
   muted?: boolean;
 };
+export type KeyVisualScene = 'story' | 'title' | 'cg' | 'transition' | 'interstitial' | 'special_presentation';
+export type StageKeyVisual = { asset: string; scope: 'banner' | 'fullscreen'; sceneType: KeyVisualScene; durationMs: number };
 export type PresentationTimeline = {
   durationMs: number;
   animations?: readonly StageAnimation[];
@@ -36,6 +38,7 @@ export type StageCue = {
   effect?: { type: 'fade' | 'flash' | 'shake'; durationMs?: number };
   timeline?: PresentationTimeline;
   video?: StageVideo;
+  keyVisual?: StageKeyVisual;
   pauseMs?: number;
   document?: { title: string; lines: readonly string[] };
 };

@@ -65,8 +65,10 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
     for (const asset of Object.values(stage.layers ?? {})) if (asset?.kind === 'cg') cgIds.add(asset.asset);
     for (const id of cgIds) meta.unlockCg(id);
     if (snapshot.frame.ending) {
-      meta.markEndingSeen(snapshot.frame.ending);
-      if (!countedEnding && snapshot.reason !== 'restore' && snapshot.reason !== 'reread') { meta.recordPlaythrough(); countedEnding = true; }
+      const frame = snapshot.frame, chapter = project.type === 'investigation' ? frame.lineId.slice(0, -frame.sceneId.length - 1) : undefined;
+      meta.markEndingSeen(chapter ? `${chapter}:${frame.ending}` : frame.ending!);
+      const completed = project.type !== 'investigation' || (frame.ending === 'complete' && chapter === [...project.chapters].sort((a, b) => a.order - b.order).at(-1)?.id);
+      if (completed && !countedEnding && snapshot.reason !== 'restore' && snapshot.reason !== 'reread') { meta.recordPlaythrough(); countedEnding = true; }
     }
   };
   persistProgress();

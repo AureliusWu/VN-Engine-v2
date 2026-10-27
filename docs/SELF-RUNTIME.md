@@ -90,3 +90,5 @@ Studio 的“收藏与解锁”面板可配置条目、标记真结局，并将�
 ## 0.3 作者与桌面入口
 
 Studio 直接维护 EngineProject，预览共用 createProject/mountGame，见 [EDITOR.md](EDITOR.md)。mountGame 可注入 assetURL 将已授权本地文件映射到临时 blob 或本地来源；默认目录 URL 和清单验证保持不变。宿主的 `vn-engine-host-visibility` 事件以布尔 hidden 状态门控同一会话，销毁会移除监听。Windows 原生窗口与受限文件桥见 [WINDOWS.md](WINDOWS.md)。游戏独立构建不带作者模块。
+
+装饰视觉使用台词 / 场景 cue 的 `keyVisual: { asset, scope: "banner" | "fullscreen", sceneType, durationMs }`，资源类型须为 `ui`，时长 100–30000ms，不允许放在全局 defaults。普通 `story` 仅允许独立横幅；全屏必须显式声明 `title / cg / transition / interstitial / special_presentation`，置于交互内容下方，不接收指针。离开当前 visit、读档、跳过或减少动态会清理；隐藏、后台和宿主暂停期间暂停剩余时间。布局安全与实际构图仍需作品级视觉验收；运行时声明了 Key Visual 时，发布证据不能声明未使用。

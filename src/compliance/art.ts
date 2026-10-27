@@ -37,7 +37,7 @@ const dated = (value: unknown) => typeof value === 'string' && Number.isFinite(D
 const digest = (value: unknown) => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 
 /** Checks human-declared evidence, never infers artistic quality from technical success. */
-export function assessProductionArt(project: EngineProject, referencedIds: readonly string[], options: { requiresPwa?: boolean } = {}): ArtGateResult {
+export function assessProductionArt(project: EngineProject, referencedIds: readonly string[], options: { requiresPwa?: boolean; keyVisualUsed?: boolean } = {}): ArtGateResult {
   const evidence: unknown = project.releaseEvidence, root = isRecord(evidence) ? evidence : {};
   const targets = isRecord(root.targets) ? root.targets : {};
   const targetKnown = ['mobile', 'pwa', 'desktop'].every(key => typeof targets[key] === 'boolean');
@@ -56,6 +56,7 @@ export function assessProductionArt(project: EngineProject, referencedIds: reado
   else if (keyVisual.used === true && keyVisual.status === 'FAIL') keyVisualStatus = 'FAIL';
   else if (keyVisual.used === true && keyVisual.status === 'PASS' && known(keyVisual.reviewer) && dated(keyVisual.reviewedAt) && known(keyVisual.evidence)) keyVisualStatus = 'PASS';
   if (keyVisualStatus === 'UNVERIFIED' || keyVisualStatus === 'FAIL') issues.push('Key Visual use and lifecycle require an explicit declaration and, when used, human evidence.');
+  if (options.keyVisualUsed && keyVisual.used !== true) { keyVisualStatus = 'FAIL'; issues.push('Key Visual is authored in runtime cues but declared unused.'); }
   let mobile: ArtGateResult['MOBILE_PHYSICAL_DEVICE'] = targetKnown && !needsMobile ? 'N/A' : 'UNVERIFIED';
   if (targetKnown && needsMobile) {
     const device = isRecord(root.mobilePhysicalDevice) ? root.mobilePhysicalDevice : {};

@@ -87,7 +87,7 @@
     {
       "target": "editor/presentation.mjs",
       "mode": "new",
-      "targetSha256": "d94b5ae57a59467f1d1678808d90e143fcc0d6bea2f6285dc765ebe2d458595b",
+      "targetSha256": "f5568dfc8dab1e26913c72665451d58346b0b3b46de80b227ada08cdef0f79de",
       "origins": []
     },
     {
@@ -119,7 +119,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "097f0fb5a5f548a49dc715a43be8d865c40c5bccbe920543b79b64d504d01363"
+      "targetSha256": "b6cf2f011fa2f0e2812b51e451ac9bd001bbe577b9c0b30de75ca5162367afdc"
     },
     {
       "target": "editor/style.css",
@@ -302,7 +302,7 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "391443ade8ed0cc2e3665a64e5ad5438b6758b3b0da77d138c180c7abcc76709"
+      "targetSha256": "649b0bc952086620f13d5504b4f461ab263fdaba5914dc36f2ca0bb292378159"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
@@ -504,13 +504,13 @@
     {
       "target": "src/compliance/art.ts",
       "mode": "new",
-      "targetSha256": "99dc2d332ee03a8e622158fae7e4f790ecee49497d6b468b4ed99d9e6dce057d",
+      "targetSha256": "f50974788859080e6173ecd3cdf21d0f4b22bd93dfad694603af1ac427cdc368",
       "origins": []
     },
     {
       "target": "src/compliance/project.ts",
       "mode": "new",
-      "targetSha256": "06a315dcbe875235eae2e979bc2d25ab5ed86155cc05124f401879debd89f1ac",
+      "targetSha256": "45d6359ba59f7fe6edb74d00d62963ea01cd4e241d74a38fb47c6c860ecbef15",
       "origins": []
     },
     {
@@ -523,7 +523,7 @@
       "target": "src/editor/model.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "f73440b2dd4a6e8b9b70e51f0c819ae15b44239b12ecd739b1e7f8707f8dd2f9"
+      "targetSha256": "d40a69dda85b87c1b7c6fbd5ee43c3b3634e6d9e24d842f92aaf556822df9fd6"
     },
     {
       "target": "src/history/search.ts",
@@ -541,7 +541,7 @@
     {
       "target": "src/index.ts",
       "mode": "new",
-      "targetSha256": "646d279f1550aca706059b0cb5b8dc071af22faa7d37a68f41492ca8fd7809b3",
+      "targetSha256": "63012e64956155cd6106468dbbdb0036a442dd52c990ff3909daea27056dd142",
       "origins": []
     },
     {
@@ -673,19 +673,25 @@
       "target": "src/render/dom-style.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "928f84ecf129c83ccd472152556cca195f377f4af72dd0060d3cc7b4b5d8c2c4"
+      "targetSha256": "bb3a0c2f792e31a1eb8c28be365d669e9d951b6499fc23f69a8e7ee79013b09e"
     },
     {
       "target": "src/render/dom.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "591737dedd89339ddec875d3439d27bab301fcf24df75eb30a494ab67edabdea"
+      "targetSha256": "7ab157a45483758730c1909c97c20074ace63e036d4936a7e8df8c6a582c7b04"
+    },
+    {
+      "target": "src/render/key-visual.ts",
+      "mode": "new",
+      "targetSha256": "f996b03de0a2320ab58fd2ca55d8fe83bff18ce1e024836bfe275253cf00e08d",
+      "origins": []
     },
     {
       "target": "src/render/mount.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "fbde04558c153a8e00c15c41aca499ee070a21c793aaf3f9270e247b821aa37d"
+      "targetSha256": "a772e0ca81af30727e518c45689616aa1e7fdb15f7471538f277c7b78083a558"
     },
     {
       "target": "src/runtime/drivers.ts",
@@ -733,7 +739,13 @@
       "target": "src/stage/cues.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "f15b26fe3ba3d663d26eb1943b2d114b45237c7782dd04c23752bb9d734467ed"
+      "targetSha256": "6a09faafd4ae28711f705437838a47dc841bb46d103a61202a2fac6b0b7782d3"
+    },
+    {
+      "target": "src/stage/key-visual.ts",
+      "mode": "new",
+      "targetSha256": "d9bf1ed1cedf29fa0a3c275ed644ec0013c1691ca20e29068fdc342477a4e28c",
+      "origins": []
     },
     {
       "target": "src/stage/timeline.ts",
@@ -745,7 +757,7 @@
       "target": "src/stage/types.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "2b7ba87529121a85fed2bc8ef712aff5d3cd63ebb1122849a43ac0ec3aae0cd8"
+      "targetSha256": "f0612e42890fd9d9bee25f96afd4d3c392ea49d0f918c02c710719044e94c0a1"
     },
     {
       "target": "src/storage/contract.ts",

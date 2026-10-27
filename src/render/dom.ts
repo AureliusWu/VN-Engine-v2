@@ -9,6 +9,7 @@ import type { CollectionCg, CollectionEnding, ProjectCollections, createMetaStat
 import type { PresentationTimeline, StageLayer, StageLayerAsset, StageVideo, StageVisualLayer } from '../stage/types.js';
 import { resolvePresentationTimeline } from '../stage/timeline.js';
 import { DOM_STYLE } from './dom-style.js';
+import { KeyVisualLayer } from './key-visual.js';
 
 export type DOMRendererOptions = { title?: string; font?: string; storage?: StoragePort | null; persistence?: ReturnType<typeof bindSessionPersistence>;
   meta?: ReturnType<typeof createMetaStateStore>; collections?: ProjectCollections; replayOnly?: boolean;
@@ -67,6 +68,7 @@ export class DOMRenderer {
   private scrollFrame?: number;
   private layerNodes!: Record<StageLayer, HTMLElement>;
   private timeline?: { value: PresentationTimeline; elapsed: number; previousTime?: number; frame?: number; finished: boolean };
+  private keyVisualLayer!: KeyVisualLayer;
   constructor(readonly root: HTMLElement, readonly session: RuntimeSession, readonly assets: AssetCatalog, readonly options: DOMRendererOptions = {}) {
     this.document = root.ownerDocument;
     this.saveKey = `vn-engine:${session.driver.game}:save:1`; this.settingsKey = `vn-engine:${session.driver.game}:settings`;
@@ -111,11 +113,12 @@ export class DOMRenderer {
     this.status = this.el('span', '', 'vn-status'); this.status.setAttribute('role', 'status'); this.toolbar.append(this.status);
     this.modal = this.el('div', undefined, 'vn-modal'); this.modal.hidden = true; this.modal.setAttribute('role', 'dialog'); this.modal.setAttribute('aria-modal', 'true');
     host.append(this.stage, this.toolbar, this.modal); root.append(host);
+    this.keyVisualLayer = new KeyVisualLayer(host, this.stage, (image, id) => this.paint(image, id, 'ui'), message => this.notify(message));
     this.onVisibility = () => session.pause('background', this.document.visibilityState === 'hidden');
     this.onKey = event => this.key(event); this.onPointer = () => options.onUnlockAudio?.();
     this.onChatScroll = () => { this.chatPinned = this.chat.scrollHeight - this.chat.scrollTop - this.chat.clientHeight < 24; };
     this.motionQuery = this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)');
-    this.onMotion = () => { if (this.motionQuery?.matches && !this.disposed) { const view = this.session.getView(); this.updateTimeline(view, false); this.updateVideo(view, this.lastView, false); } };
+    this.onMotion = () => { if (this.motionQuery?.matches && !this.disposed) { const view = this.session.getView(); this.updateTimeline(view, false); this.updateVideo(view, this.lastView, false); this.keyVisualLayer.update(view, false); } };
     try {
       this.document.addEventListener('visibilitychange', this.onVisibility); host.addEventListener('keydown', this.onKey); host.addEventListener('pointerdown', this.onPointer);
       this.motionQuery?.addEventListener?.('change', this.onMotion);
@@ -200,6 +203,7 @@ export class DOMRenderer {
     }
     this.updateTimeline(snapshot, entered);
     this.updateVideo(snapshot, previous, entered);
+    this.keyVisualLayer.update(snapshot, entered);
     if (entered) this.speaker.textContent = frame.speaker;
     if (entered || snapshot.text !== previous?.text) {
       if (frame.mode === 'chat') { this.text.textContent = '聊天消息会按阅读节奏逐步显示。'; this.bubbleText.textContent = snapshot.text; if (this.chatPinned) this.queueScroll(); }
@@ -525,6 +529,7 @@ export class DOMRenderer {
     this.document.removeEventListener('visibilitychange', this.onVisibility); this.element.removeEventListener('keydown', this.onKey); this.element.removeEventListener('pointerdown', this.onPointer);
     this.motionQuery?.removeEventListener?.('change', this.onMotion);
     this.chat.removeEventListener('scroll', this.onChatScroll); this.cancelScroll(); this.stopTimeline(); this.timeline = undefined; this.clearVideo();
+    this.keyVisualLayer?.dispose();
     for (const { probe } of this.probes.values()) { probe.onload = null; probe.onerror = null; probe.removeAttribute('src'); } this.probes.clear();
     for (const animation of this.animations()) animation.cancel(); this.element.remove();
   }

@@ -20,6 +20,7 @@ export * from './meta/project.js';
 export * from './stage/types.js';
 export * from './stage/cues.js';
 export * from './stage/timeline.js';
+export * from './stage/key-visual.js';
 export * from './assets/catalog.js';
 export * from './script/types.js';
 export * from './script/engine.js';

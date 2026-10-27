@@ -3,6 +3,7 @@ import type { RainLine } from '../adapters/rain-runtime.js';
 import { createProject, type EngineProject } from '../runtime/project.js';
 import type { StageCue } from '../stage/types.js';
 import { validatePresentationTimeline } from '../stage/timeline.js';
+import { validateKeyVisual } from '../stage/key-visual.js';
 import { assessProductionArt, ReleaseArtGateError, type ArtGateResult } from './art.js';
 
 export const GALGAME_SPEC_CONTRACT = 'GALGAME_SPEC-v0.1';
@@ -59,6 +60,10 @@ function cueReferences(cue: StageCue | undefined, context: string): AssetReferen
       add(cue.video.fallback.asset, cue.video.fallback.kind, 'video.fallback');
     }
   }
+  if (cue.keyVisual) {
+    if (context === 'defaults' || context.endsWith('.defaults')) throw new Error('Key Visual must be attached to an explicit scene or line, not global defaults');
+    validateKeyVisual(cue.keyVisual); add(cue.keyVisual.asset, 'ui', 'keyVisual');
+  }
   return result;
 }
 
@@ -81,6 +86,7 @@ export function validateProjectCompliance(
   const warnings: string[] = [];
   const endings = new Set<string>();
   let lines = 0;
+  let usesKeyVisual = false;
 
   const inspectText = (text: string, context: string) => {
     if (!text.trim()) throw new Error(`Empty formal text: ${context}`);
@@ -89,7 +95,7 @@ export function validateProjectCompliance(
     if (mode === 'release') throw new Error(message);
     warnings.push(message);
   };
-  const inspectCue = (cue: StageCue | undefined, context: string) => references.push(...cueReferences(cue, context));
+  const inspectCue = (cue: StageCue | undefined, context: string) => { usesKeyVisual ||= !!cue?.keyVisual; references.push(...cueReferences(cue, context)); };
 
   for (const asset of project.assets) {
     const status = (asset as typeof asset & { status?: unknown }).status;
@@ -174,7 +180,7 @@ export function validateProjectCompliance(
     catch { throw new Error(`Invalid collection replay for current game/version: ${entry.id}`); }
     finally { replay.session.dispose(); }
   }
-  const artGate = mode === 'release' ? assessProductionArt(project, references.map(reference => reference.id), { requiresPwa: options.requiresPwa }) : undefined;
+  const artGate = mode === 'release' ? assessProductionArt(project, references.map(reference => reference.id), { requiresPwa: options.requiresPwa, keyVisualUsed: usesKeyVisual }) : undefined;
   if (artGate?.release === 'BLOCKED') throw new ReleaseArtGateError(artGate);
 
   return Object.freeze({
