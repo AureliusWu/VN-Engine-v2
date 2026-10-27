@@ -1,0 +1,31 @@
+import {chromium} from 'playwright';
+import assert from 'node:assert/strict';
+import {mkdir,readFile} from 'node:fs/promises';
+import {createHash} from 'node:crypto';
+import {createDemoServer} from '../tools/serve.mjs';
+const server=await createDemoServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));let browser;
+try{
+  browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1350,height:1000},acceptDownloads:true}),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
+  await page.goto(`http://127.0.0.1:${server.address().port}/editor/`);await page.waitForSelector('body[data-editor-ready=true]');
+  await page.evaluate(()=>localStorage.setItem('vn-engine:my-script:v2:save:manual-1','sentinel'));
+  await page.locator('[data-tab=routes]').click();await page.locator('[data-route-command=record]').click();await page.waitForSelector('body[data-route-recording=true]');
+  const preview=page.frameLocator('#preview');await preview.locator('[data-action=yes]').click();await page.locator('[data-route-command=capture]').click();await page.getByLabel('用例 1 ID',{exact:true}).waitFor();
+  await page.locator('[data-route-command=run]').click();await page.waitForSelector('body[data-route-status=PASS]');assert.equal(await page.locator('[data-route-case=route-1]').getAttribute('data-result'),'PASS');
+  const [reportDownload]=await Promise.all([page.waitForEvent('download'),page.locator('[data-route-command=download]').click()]);const report=JSON.parse(await readFile(await reportDownload.path(),'utf8'));
+  const [projectDownload]=await Promise.all([page.waitForEvent('download'),page.locator('[data-command=export]').click()]);const bytes=await readFile(await projectDownload.path());const project=JSON.parse(bytes);
+  assert.equal(report.sourceSha256,createHash('sha256').update(bytes).digest('hex'));assert.deepEqual(project.routeTests.cases[0].steps,[{type:'action',id:'yes'}]);assert.equal(project.routeTests.cases[0].expect.variables.trust,1);
+  const expected=page.getByLabel('用例 1 期望状态',{exact:true});const bad={...project.routeTests.cases[0].expect,variables:{trust:9}};await expected.fill(JSON.stringify(bad));await expected.blur();
+  assert.equal(await page.locator('[data-route-command=download]').isDisabled(),true);await page.locator('[data-route-command=run]').click();await page.waitForSelector('body[data-route-status=FAIL]');assert.match(await page.locator('.route-result').innerText(),/trust.*9.*1/);
+  await page.locator('.route-result').getByRole('button',{name:'定位节点',exact:true}).click();assert.equal(await page.getByLabel('节点 ID',{exact:true}).inputValue(),'end');
+  await page.locator('[data-command=undo]').click();await page.locator('[data-tab=routes]').click();
+  await page.route('**/editor/route-worker.mjs',route=>route.fulfill({contentType:'text/javascript',body:"import {runRouteSuite} from '../lib/index.js';self.onmessage=e=>setTimeout(()=>self.postMessage({requestId:e.data.requestId,report:runRouteSuite(JSON.parse(e.data.source))}),500);"}));
+  await page.locator('[data-route-command=run]').click();await page.waitForSelector('body[data-route-status=RUNNING]');await page.locator('[data-route-command=cancel]').click();assert.equal(await page.locator('body').getAttribute('data-route-status'),'CANCELLED');
+  await page.locator('[data-route-command=run]').click();await page.waitForSelector('body[data-route-status=RUNNING]');await page.getByLabel('用例 1 名称',{exact:true}).fill('changed while running');await page.getByLabel('用例 1 名称',{exact:true}).blur();
+  await page.waitForTimeout(650);assert.equal(await page.locator('body').getAttribute('data-route-status'),'STALE');await page.unroute('**/editor/route-worker.mjs');
+  await page.locator('[data-route-command=run]').click();await page.waitForSelector('body[data-route-status=PASS]');
+  await page.locator('#auto-preview').uncheck();await page.locator('[data-route-command=record]').click();await page.waitForSelector('body[data-route-recording=true]');
+  await page.getByLabel('作品名称',{exact:true}).fill('Recording invalidated');await page.getByLabel('作品名称',{exact:true}).blur();assert.equal(await page.locator('[data-route-command=capture]').isDisabled(),true);
+  const out=process.env.VN_ENGINE_TEST_OUTPUT??'test-results';await mkdir(out,{recursive:true});await page.screenshot({path:out+'/studio-routes.png',fullPage:true});await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
+  assert.equal(await page.evaluate(()=>localStorage.getItem('vn-engine:my-script:v2:save:manual-1')),'sentinel');assert.deepEqual(errors,[]);
+  console.log('PASS Studio records actual choices, exports source-bound route reports, diagnoses failures, navigates nodes, undoes changes and cancels/stales isolated workers');
+}finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}

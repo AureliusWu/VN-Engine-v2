@@ -10,7 +10,7 @@ export function validateRouteSuite(value: unknown): asserts value is RouteSuite 
   for (const test of value.cases) {
     if (!isRecord(test) || !only(test, ['id','label','steps','expect']) || !id(test.id) || ids.has(test.id as string)
       || (test.label !== undefined && !id(test.label)) || !Array.isArray(test.steps) || test.steps.length > MAX_ROUTE_STEPS
-      || !isRecord(test.expect) || !Object.keys(test.expect).length || !only(test.expect,['sceneId','lineId','ending','text','variables','evidence'])) throw Error('Invalid or duplicate route case');
+      || !isRecord(test.expect) || !Object.keys(test.expect).length || !only(test.expect,['sceneId','lineId','ending','text','variables','evidence','miniGame'])) throw Error('Invalid or duplicate route case');
     ids.add(test.id as string);
     const expected = test.expect;
     for (const key of ['sceneId','lineId','ending'] as const) if (expected[key] !== undefined && !id(expected[key])) throw Error(`Invalid route expectation: ${key}`);
@@ -19,6 +19,11 @@ export function validateRouteSuite(value: unknown): asserts value is RouteSuite 
       || Object.entries(expected.variables).some(([key,v]) => !id(key) || !(typeof v === 'boolean' || (typeof v === 'number' && Number.isFinite(v)))))) throw Error('Invalid expected variables');
     if (expected.evidence !== undefined && (!Array.isArray(expected.evidence) || expected.evidence.length > 1000
       || !expected.evidence.every(id) || new Set(expected.evidence).size !== expected.evidence.length)) throw Error('Invalid expected evidence');
+    if (expected.miniGame !== undefined && expected.miniGame !== null) {
+      const mini=expected.miniGame;
+      if(!isRecord(mini)||!only(mini,['phase','board','result'])||!['idle','active','complete'].includes(String(mini.phase))||!Array.isArray(mini.board)
+        ||mini.board.length<1||mini.board.length>9||mini.board.some(v=>typeof v!=='boolean')||(mini.result!==undefined&&!['success','failure','skip','abort'].includes(String(mini.result)))) throw Error('Invalid expected mini-game state');
+    }
     for (const step of test.steps) {
       if (!isRecord(step)) throw Error('Invalid route step');
       if (['next','mini-start','mini-skip','mini-abort','mini-finish'].includes(String(step.type))) {

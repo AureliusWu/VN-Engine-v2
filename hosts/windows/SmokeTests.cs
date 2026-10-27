@@ -51,6 +51,16 @@ internal static class SmokeTests
             await JS("[...document.querySelectorAll('#collection-list button')].find(button=>button.textContent==='使用当前预览作为回看起点').click()");
             await Wait("document.querySelector('#collection-list [aria-label=\"CG 1 回看数据\"]')?.value.includes('storyVersion')");
             checks.Add("Native Studio configures a CG collection and captures a real driver replay save from WebView2 preview");
+            await JS("document.querySelector('[data-tab=routes]').click();document.querySelector('[data-route-command=record]').click()");
+            await Wait("document.body.dataset.routeRecording === 'true'");
+            await JS("document.querySelector('#preview').contentDocument.querySelector('[data-control=next]').click()");
+            await Wait("!!document.querySelector('#preview').contentDocument.querySelector('[data-action=together]')");
+            await JS("document.querySelector('#preview').contentDocument.querySelector('[data-action=together]').click();document.querySelector('#preview').contentDocument.querySelector('[data-control=next]').click();document.querySelector('[data-route-command=capture]').click()");
+            await Wait("!!document.querySelector('[aria-label=\"用例 1 ID\"]')");
+            await JS("document.querySelector('[data-route-command=run]').click()");
+            await Wait("['PASS','FAIL','UNVERIFIED'].includes(document.body.dataset.routeStatus)");
+            if(await JS("document.body.dataset.routeStatus === 'UNVERIFIED' && document.querySelector('[data-route-case=\"route-1\"]')?.dataset.result === 'PASS'")!="true") throw new InvalidDataException("原生路线录制 / Worker 验证未得到真实的部分结局覆盖结果");
+            checks.Add("Native Studio records actual preview actions, stores an authored case and runs isolated Worker restore checks without claiming full ending coverage");
             await JS("(()=>{const input=document.querySelector('[aria-label=\"作品名称\"]'); input.value='Windows native smoke'; input.dispatchEvent(new Event('change'));})()");
             await Wait("document.body.dataset.dirty === 'true'");
             await JS("document.querySelector('[data-command=save]').click()");
@@ -62,7 +72,7 @@ internal static class SmokeTests
             await JS("document.querySelector('[data-command=export]').click()");
             var export = Path.Combine(window.SmokeFolder, "project.json");
             var exportUntil = DateTime.UtcNow.AddSeconds(10); while (!File.Exists(export) && DateTime.UtcNow < exportUntil) await Task.Delay(100);
-            using (var document = JsonDocument.Parse(HostFiles.ReadJson(export))) if (document.RootElement.GetProperty("type").GetString() != "narrative" || document.RootElement.TryGetProperty("format", out _) || !document.RootElement.GetProperty("collections").GetProperty("cgs")[0].TryGetProperty("replay", out _)) throw new InvalidDataException("运行数据导出不是含回看起点的原始引擎工程");
+            using (var document = JsonDocument.Parse(HostFiles.ReadJson(export))) if (document.RootElement.GetProperty("type").GetString() != "narrative" || document.RootElement.TryGetProperty("format", out _) || !document.RootElement.GetProperty("collections").GetProperty("cgs")[0].TryGetProperty("replay", out _) || document.RootElement.GetProperty("routeTests").GetProperty("cases").GetArrayLength()!=1) throw new InvalidDataException("运行数据导出不是含回看起点和路线用例的原始引擎工程");
             checks.Add("Native export produces engine project JSON without editor metadata");
             var previousRevision = await JS("Number(document.body.dataset.previewRevision)");
             await JS("document.querySelector('[data-command=open]').click()");

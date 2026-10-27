@@ -21,6 +21,7 @@ export * from './runtime/read.js';
 export * from './regression/types.js';
 export * from './regression/schema.js';
 export * from './regression/suite.js';
+export * from './regression/recorder.js';
 export * from './storage/preferences.js';
 export * from './meta/state.js';
 export * from './meta/project.js';

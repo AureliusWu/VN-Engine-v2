@@ -36,6 +36,10 @@ function assertions(actual: Observation, expected: RouteExpectation) {
   for (const key of ['sceneId','lineId','ending','text'] as const) if (expected[key] !== undefined && actual[key] !== expected[key]) throw Error(`${key}: expected ${JSON.stringify(expected[key])}, got ${JSON.stringify(actual[key])}`);
   for (const [key,value] of Object.entries(expected.variables ?? {})) if (!Object.hasOwn(actual.variables,key) || actual.variables[key] !== value) throw Error(`variable ${key}: expected ${JSON.stringify(value)}, got ${JSON.stringify(actual.variables[key])}`);
   if (expected.evidence !== undefined && canonical([...expected.evidence].sort()) !== canonical(actual.evidence)) throw Error(`evidence: expected ${JSON.stringify(expected.evidence)}, got ${JSON.stringify(actual.evidence)}`);
+  if (expected.miniGame !== undefined) {
+    const value=actual.mini?{phase:actual.mini.phase,board:actual.mini.board,...(actual.mini.result?{result:actual.mini.result}:{})}:null;
+    if(canonical(value)!==canonical(expected.miniGame))throw Error(`miniGame: expected ${JSON.stringify(expected.miniGame)}, got ${JSON.stringify(value)}`);
+  }
 }
 
 /** Actual sessions, virtual hold time, no DOM/media/persistence. Cases start independently at the real entry. */

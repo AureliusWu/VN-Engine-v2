@@ -2,7 +2,9 @@
 
 ## 路线 QA 与作者工具
 
-运行器阶段：133 项 Node、6 项 Python、123 个来源检查与真实 Chromium 专项通过，覆盖 VN / 聊天 / Script / Rain / 调查、变量与证据、小游戏结果、命名检查点、逐步存读档、预算 / 覆盖缺失、失败 CLI 报告。浏览器对比玩家存储字节保持不变。Windows WebView2 已加入相同 runner 的实际执行，原生结果以本提交 CI 为准。
+运行器提交 `a6c70cce47030ab4f8c7830963be51d99811ec2e` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40514905388) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40514905405) 均成功。本地 133 项 Node、6 项 Python、123 个来源检查与真实 Chromium 专项通过，覆盖 VN / 聊天 / Script / Rain / 调查、变量与证据、小游戏结果、命名检查点、逐步存读档、预算 / 覆盖缺失、失败 CLI 报告。浏览器对比玩家存储字节保持不变。
+
+Studio 阶段：136 项 Node、6 项 Python、126 个来源检查与完整浏览器回归通过；实际操作从头录制、表单修改、失败定位、撤销、取消 / 过期 Worker，下载工程与报告并验证源字节 SHA256，检查 390px 无页面横向溢出。Windows 增加真实 WebView2 录制、Worker 执行与原生工程导出用例；其结果以本提交 CI 为准。新界面使用重新生成的改名 OFL 子集字体。
 
 ## 启动 / 标题 / 已读记录
 

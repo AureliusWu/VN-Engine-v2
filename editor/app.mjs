@@ -1,6 +1,7 @@
 import { EditorModel, newProject } from '../lib/editor/index.js';
 import { renderPresentationEditor } from './presentation.mjs';
 import { renderCollectionsEditor } from './collections.mjs';
+import { createRoutesPanel } from './routes.mjs';
 import { ENGINE_VERSION } from '../lib/index.js';
 import { nativeHost, nativeRequest } from './native.mjs';
 
@@ -10,6 +11,7 @@ let model = new EditorModel(newProject('script')), selected, tab = 'story', draf
 let baseURL = new URL('../samples/', location.href).href, resourceURLs = new Map(), resourceFiles, previewReady = false, revision = 0, savedSource = '';
 let nativeHidden = false;
 let replayRequest;
+let routeRequest;
 const openInspectorSections = new Set();
 const status = (text, error = false) => { $('status').textContent = text; $('status').classList.toggle('error', error); };
 function element(tag, text, attrs = {}) {
@@ -35,6 +37,16 @@ function field(parent, label, value, callback, options = {}) {
 const valueAt = path => path.reduce((v, key) => v?.[key], model.getView().project);
 const graphNode = () => model.graph().nodes.find(n => n.key === selected);
 const unappliedSource = () => tab === 'source' && $('source').value !== savedSource;
+const routes = createRoutesPanel($('route-list'), {element,action,field,project:()=>model.getView().project,set:value=>set(['routeTests'],value,true),
+  record:()=>preview({recordRoute:true}),capture:id=>{
+    if(!routes.active)throw Error('录制已中断或工程已更改，请从头录制');
+    if(!previewReady||Number(document.body.dataset.previewRevision)!==revision)throw Error('预览尚未就绪');if(routeRequest)throw Error('正在获取录制结果');
+    const current=revision,documentSource=model.serialize(true);return new Promise((resolve,reject)=>{
+      routeRequest={revision:current,resolve:test=>{if(documentSource!==model.serialize(true))reject(Error('工程已改变，请重新录制'));else resolve(test);},reject,
+        timer:setTimeout(()=>{routeRequest=undefined;reject(Error('录制预览未响应，请重新录制'));},5000)};
+      $('preview').contentWindow.postMessage({source:'vn-engine-studio',type:'capture-route',revision:current,id},location.origin);
+    });
+  },download,navigate:state=>{const node=model.graph().nodes.find(n=>n.id===state.sceneId&&(!n.chapter||state.lineId.startsWith(n.chapter+'/')));if(!node)throw Error('此运行节点没有对应的可编辑节点');selected=node.key;switchTab('story');renderGraph(model.graph());renderInspector();}});
 function mutate(fn, inspector = false) { fn(); update(inspector); status('更改已记录，可撤销'); }
 function set(path, value, inspector = false) { mutate(() => model.set(path, value), inspector); }
 function scheduleDraft() {
@@ -65,6 +77,7 @@ function renderProject() {
   field(root, '回退保留步数', project.rollback?.limit ?? 80, value => set(['rollback'], { ...model.getView().project.rollback, limit: Number(value) }, true));
 }
 function update(inspector = false) {
+  routes.changed();
   const startup = document.querySelector('#project-fields [aria-label="启动界面"]'); if (startup) startup.value = model.getView().project.titleScreen ? 'title' : 'story';
   const graph = model.graph(); if (!graph.nodes.some(n => n.key === selected)) selected = graph.nodes[0]?.key;
   $('project-name').textContent = model.getView().project.title || '未命名作品'; $('save-state').textContent = model.dirty ? '● 未保存' : '已保存';
@@ -79,6 +92,7 @@ function update(inspector = false) {
   }
   if (tab === 'assets' && inspector) renderAssets();
   if (tab === 'collections' && inspector) renderCollections();
+  if (tab === 'routes') routes.render();
   if (tab === 'source' && savedSource === $('source').value) { $('source').value = model.serialize(true); savedSource = $('source').value; }
   if (model.dirty) scheduleDraft();
   if ($('auto-preview').checked) { clearTimeout(previewTimer); previewTimer = setTimeout(preview, 300); } else $('preview-state').textContent = '更改后点击“从头试玩”';
@@ -273,9 +287,10 @@ function renderAssets() {
 }
 function switchTab(next) {
   if (tab === 'source' && next !== 'source' && $('source').value !== savedSource && !confirm('JSON 面板有尚未应用的文本，仍要切换吗？')) return;
-  tab = next; for (const name of ['story', 'assets', 'collections', 'source']) { $(name + '-panel').hidden = name !== tab; document.querySelector(`[data-tab=${name}]`).setAttribute('aria-pressed', String(name === tab)); }
+  tab = next; for (const name of ['story', 'assets', 'collections', 'routes', 'source']) { $(name + '-panel').hidden = name !== tab; document.querySelector(`[data-tab=${name}]`).setAttribute('aria-pressed', String(name === tab)); }
   if (tab === 'assets') renderAssets(); if (tab === 'source') { $('source').value = model.serialize(true); savedSource = $('source').value; }
   if (tab === 'collections') renderCollections();
+  if (tab === 'routes') routes.render();
 }
 function renderCollections() {
   renderCollectionsEditor($('collection-list'), { project: model.getView().project, element, field, action, set, captureReplay: () => {
@@ -289,12 +304,13 @@ function renderCollections() {
     });
   } });
 }
-function preview() {
+function preview(options={}) {
   clearTimeout(previewTimer); if (!previewReady) return;
   const errors = model.diagnostics(resourceFiles).filter(d => d.severity === 'error');
   if (errors.length) { $('preview-state').textContent = '先修复工程错误；当前保留上次有效预览'; return; }
   const current = ++revision; $('preview-state').textContent = '正在刷新…';
-  $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'render', project: JSON.parse(model.serialize(true)), baseURL, urls: resourceURLs.size ? Object.fromEntries(resourceURLs) : undefined, revision: current }, location.origin);
+  routes.recording(false);if(routeRequest){clearTimeout(routeRequest.timer);routeRequest.reject(Error('预览已刷新，请重新录制'));routeRequest=undefined;}
+  $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'render', project: JSON.parse(model.serialize(true)), baseURL, urls: resourceURLs.size ? Object.fromEntries(resourceURLs) : undefined, revision: current, recordRoute:options.recordRoute===true }, location.origin);
 }
 window.addEventListener('message', event => {
   if (event.source !== $('preview').contentWindow || event.origin !== location.origin || event.data?.source !== 'vn-engine-preview') return;
@@ -305,7 +321,9 @@ window.addEventListener('message', event => {
     if (event.data.error) request.reject(new Error(event.data.error)); else request.resolve(event.data.saved); return;
   }
   if (event.data.revision !== revision) return;
-  if (event.data.type === 'rendered') { $('preview-state').textContent = '当前工程 · 从头试玩'; document.body.dataset.previewRevision = String(revision); $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'visibility', hidden: nativeHidden }, location.origin); }
+  if(event.data.type==='recording-invalidated'){routes.recording(false);status(event.data.message,true);}
+  if(event.data.type==='captured-route'&&routeRequest?.revision===revision){const request=routeRequest;routeRequest=undefined;clearTimeout(request.timer);routes.recording(false);if(event.data.error)request.reject(Error(event.data.error));else request.resolve(event.data.test);return;}
+  if (event.data.type === 'rendered') { routes.recording(event.data.recording===true);$('preview-state').textContent = event.data.recording?'路线录制中 · 请手动推进':'当前工程 · 从头试玩'; document.body.dataset.previewRevision = String(revision); $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'visibility', hidden: nativeHidden }, location.origin); }
   if (event.data.type === 'failed') $('preview-state').textContent = '预览失败：' + event.data.message;
 });
 function download(content, filename) {
@@ -370,3 +388,4 @@ try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { const value = JSON
 selected = model.graph().nodes[0]?.key; renderProject(); update(true); status('编辑器已就绪'); document.body.dataset.editorReady = 'true';
 const connectPreview = () => $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'connect' }, location.origin);
 $('preview').addEventListener('load', connectPreview); connectPreview();
+window.addEventListener('pagehide',()=>routes.dispose());

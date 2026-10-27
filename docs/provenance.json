@@ -64,7 +64,7 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "fd6537fe1fd8015c4496e448b94d8ca7d41c2dca35e6cfaf03ed9aced984ac23"
+      "targetSha256": "3a2496bdd1d5674651aee624011602324c1ee6248437f7f8cb6cb111edf385b7"
     },
     {
       "target": "editor/collections.mjs",
@@ -76,7 +76,7 @@
       "target": "editor/index.html",
       "mode": "new",
       "origins": [],
-      "targetSha256": "5d510d9c2ba7223ce91d2487525c9a4b515fdb14dc2900b453aaf5e40affe1c4"
+      "targetSha256": "62662aa9b1ae2f3c011c713bf63c8756ad88bbd9dfed6ec272348ef81f4b1f03"
     },
     {
       "target": "editor/minigame.mjs",
@@ -112,7 +112,19 @@
       "target": "editor/preview.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "3382f7a659dbed6566273e842b37e2a04be38851b65ebd66ce46d5bd8ebd2041"
+      "targetSha256": "cef8495a1d542bb71e4ac436413c70f2d3e605ed3eab3d930b0f2a2b9a60370f"
+    },
+    {
+      "target": "editor/route-worker.mjs",
+      "mode": "new",
+      "targetSha256": "ece437dcaf170451006c7f53bfca371d4680cf240f07c56084360060c57fdec4",
+      "origins": []
+    },
+    {
+      "target": "editor/routes.mjs",
+      "mode": "new",
+      "targetSha256": "1bbe4684b054f46aefc549da54f5a1e243331433b06a633ef65aa8327d43d735",
+      "origins": []
     },
     {
       "target": "editor/studio-font.woff2",
@@ -125,13 +137,13 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "9008eac197e5cf46b05c5c673515166c4f8b51ad8d55323874825f01b21043a2"
+      "targetSha256": "967ba9d66dbd32c1fee0dcf80f26b8c4a9a80fa2dc488809a9dd8a29893d9b01"
     },
     {
       "target": "editor/style.css",
       "mode": "new",
       "origins": [],
-      "targetSha256": "1ddf98cd3bb194c26ff61693404cc408e03c726e64e46ace011f285ae39a5be5"
+      "targetSha256": "408f06116ccd497fba9c20cd8e605011ca979ec568eda1412bf8f97ddf114dcd"
     },
     {
       "target": "examples/demo/demo-font.woff2",
@@ -230,7 +242,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "32d302c403853830b651fde013dfd7f0b3860b1ea477b40679f3746f3d94785c"
+      "targetSha256": "8a644fac98e6925a08cd7ea90beb24a49ca55ee6692fdbd885f45101ba37f342"
     },
     {
       "target": "examples/runtime/assets/voice-test.wav",
@@ -308,7 +320,7 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "bd4d4fc18ae5da2ae90a6910ee7c927a6bedced67f8ec4d0e47a74c27111a73b"
+      "targetSha256": "34d722a7a4d4c186bd207ddd141c065d79196da957e52b3f6cdf579a299af87f"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
@@ -553,7 +565,7 @@
     {
       "target": "src/index.ts",
       "mode": "new",
-      "targetSha256": "b85c15c0f596da134cf8c6621339763c9137f5e960a2ac4da9cb5b1cdef3f9ea",
+      "targetSha256": "1539617ee303f0e5674eb92ebf9a94da4662de2bea7c3929a2cd1e4b0e769289",
       "origins": []
     },
     {
@@ -694,21 +706,27 @@
       ]
     },
     {
+      "target": "src/regression/recorder.ts",
+      "mode": "new",
+      "targetSha256": "529e9df65378e5e40275a8f208fa7a6da78cae801b06b2c1f441ce7b27773ec3",
+      "origins": []
+    },
+    {
       "target": "src/regression/schema.ts",
       "mode": "new",
-      "targetSha256": "4b8073a3302d33ea3eaf6288142ffc3bd695bfb38fba1306c9dc721db5645a8f",
+      "targetSha256": "78dec071337126230cf6e3e7f6cf7df116a948ffa5effbc6b37e7cb7925a20dc",
       "origins": []
     },
     {
       "target": "src/regression/suite.ts",
       "mode": "new",
-      "targetSha256": "3f9fcf04826396c2b01b750b6edfe479c1162f75a9cfd9aa4e9c7c59124b8f7e",
+      "targetSha256": "e7dbcdc4dcc323809f08264495ba5a6bf1b9955e4dcd188bbe16d813420dc8ad",
       "origins": []
     },
     {
       "target": "src/regression/types.ts",
       "mode": "new",
-      "targetSha256": "7d2dfe950203d19018a00e3e59770e4077ad2fc70a7673e5bd99753b19afc224",
+      "targetSha256": "f1560924def0d172ac516363297023b734a8ea103fad1f053ca98fc393a6bfb6",
       "origins": []
     },
     {

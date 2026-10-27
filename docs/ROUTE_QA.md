@@ -13,7 +13,7 @@
 }
 ```
 
-步骤支持 `next`、`action`（id）、`mini-start`、`mini-input`（index）、`mini-skip`、`mini-abort`、`mini-finish`、`checkpoint` / `restore`（命名 id）。`expect` 可检查 sceneId、lineId、准确 text、ending、variables 的指定变量及准确 evidence 集合。调查结局使用 `chapter-id:complete/failure`。
+步骤支持 `next`、`action`（id）、`mini-start`、`mini-input`（index）、`mini-skip`、`mini-abort`、`mini-finish`、`checkpoint` / `restore`（命名 id）。`expect` 可检查 sceneId、lineId、准确 text、ending、variables 的指定变量、准确 evidence 集合及小游戏阶段 / 棋盘 / 结果。调查结局使用 `chapter-id:complete/failure`。
 
 `runRouteSuite(project)` 使用真实 RuntimeSession、玩法 driver 与 codec。作者停顿使用注入的虚拟时钟，文字直接完整显示；每一步保存并恢复，再比较真实帧、变量、证据、小游戏状态与历史。命名检查点另外验证回到选择之前或分支中间。它不创建 DOM、媒体、Save / Meta / 已读存储，不验证真实画面和听感。
 
@@ -26,3 +26,7 @@ npm run test:routes -- project.json --output=ROUTE_REPORT.json
 ```
 
 CLI 无论失败或未验证都会保留可解析报告，并使用非零退出码；报告记录实际源文件 SHA256 和引擎版本。源码不执行任意脚本步骤。
+
+Studio 的“路线测试”面板可从开场录制实际手动操作，再把当前真实状态作为期望添加到工程；纯文字揭示点击与失败操作不记录。录制期间关闭 Auto / Skip，预览不写玩家存储；读档、回退、重开或修改工程会使录制失效。用例字段、删除和录制添加均可撤销，工程 JSON 保留全部用例。
+
+执行在独立 Worker 中进行，可取消，30 秒超时标 UNVERIFIED。修改工程会取消运行并将旧报告标为过期，过期报告不可作为当前结果导出；失败可定位最后节点。报告 SHA256 对应 Studio 导出的实际工程 JSON 字节，桌面和窄屏界面均有浏览器检查。
