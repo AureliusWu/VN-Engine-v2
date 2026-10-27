@@ -2,6 +2,10 @@
 
 ## 下一轮：声音 / 阅读 / 备份
 
+阅读阶段完整本地核心与浏览器回归通过：字号 100–160%、高对比、长对白滚动、聊天与文书避让、设置持久化、Tab 绕过隐藏文件输入、关闭后恢复焦点、回看里的设置 Esc 不退出外层。实际检查 390px 高对比设置截图，补齐运行样例和 Studio OFL 子集字体；实体移动设备和完整无障碍人工评估仍未验证。
+
+声音提交 `d0f6e36fbd5c7a909b2c900833837cccb3e983e4` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40486346521) 和 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40486346529) 均成功。
+
 声音分轨阶段：本地 `npm run check`（112 项 Node、6 项 Python、115 个来源）和完整 `npm run test:browser` 通过。新用例检查旧设置迁入、独立分轨、Master 与 Voice / SE / Video 乘积、实时调音不重播、环境音独立开关与持久化；Windows smoke 已加入实际设置控件和视频音量检查，原生执行结果以本提交工作流为准。合成音频的音量数值不作为正式听感验收。
 
 ## 2026-10-27 顺序优化

@@ -147,4 +147,6 @@ test('runtime setting imports clamp finite values and keep voice preferences ind
   assert.equal(value.masterVolume, 1); assert.equal(value.bgmVolume, .1); assert.equal(value.ambienceVolume, .1); assert.equal(value.seVolume, .1); assert.equal(value.videoVolume, .1);
   const mixer = runtimeSettings({ masterVolume: Infinity, volume: .2, seVolume: 5, bgmVolume: -.5 });
   assert.equal(mixer.masterVolume, 1); assert.equal(mixer.seVolume, 1); assert.equal(mixer.bgmVolume, 0); assert.equal(mixer.videoVolume, .2);
+  assert.equal(runtimeSettings({ fontScale: 99 }).fontScale, 1.6); assert.equal(runtimeSettings({ fontScale: 0 }).fontScale, 1);
+  assert.equal(runtimeSettings({ highContrast: 'true' }).highContrast, false);
 });

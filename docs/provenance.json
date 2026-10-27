@@ -125,7 +125,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "e9f2fe29a8c0956331f2e7b3fe3bc787b7b4ade540b1986b89612abeacba5e97"
+      "targetSha256": "626b95a9ef37a3af02a9dee1cd0a367835479ef8cb5520738bfa3d9f9080128a"
     },
     {
       "target": "editor/style.css",
@@ -230,7 +230,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "1f313be4b9b1c5a5c348f867e25b118746cda21ffc04ce3e4a5ea52d3abf534e"
+      "targetSha256": "a857126f7dacf77bb8d530c06e6aa22be9d507d6190f07874df9975e3c2325f2"
     },
     {
       "target": "examples/runtime/assets/voice-test.wav",
@@ -308,7 +308,7 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "81975a638900205b800d7ce622e50245c808a61654559e2c780f431e2b114532"
+      "targetSha256": "4ffbd94648dad176bc681a44e083cd310341ffe2eaf82303c37222d191f4d3d0"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
@@ -697,13 +697,13 @@
       "target": "src/render/dom-style.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "9d302aa244cb9fb72930698981544b6644ae39809c435a4b713eb6416f498a6f"
+      "targetSha256": "86ab3df0fd5eb68d3db5fe71378cea899d0ded242703d1e9e56672a168948c70"
     },
     {
       "target": "src/render/dom.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "49929492345fae46c19cddd31ddc65e2cae01737754f9659e1721d468e38af68"
+      "targetSha256": "143338e02a51ba70794ab77b1c62d97aa12280d8098bb1d048fbc540f5f6ed7d"
     },
     {
       "target": "src/render/key-visual.ts",
@@ -751,7 +751,7 @@
       "target": "src/runtime/session.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "3da605dd7aae2f3fbdac813fd2f222cae7ca28bf2ac5f25430531d4dfa300394"
+      "targetSha256": "384b7c950aa6c2441f06bcc89b23efbae669b5db77aaee39656bd2f98963c481"
     },
     {
       "target": "src/script/engine.ts",

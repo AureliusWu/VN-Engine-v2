@@ -64,6 +64,7 @@ export class DOMRenderer {
   private onChatScroll: () => void;
   private motionQuery?: MediaQueryList;
   private onMotion: () => void;
+  private readingSize?: ResizeObserver;
   private chatPinned = true;
   private scrollFrame?: number;
   private layerNodes!: Record<StageLayer, HTMLElement>;
@@ -128,6 +129,11 @@ export class DOMRenderer {
       this.document.addEventListener('visibilitychange', this.onVisibility); host.addEventListener('keydown', this.onKey); host.addEventListener('pointerdown', this.onPointer);
       this.motionQuery?.addEventListener?.('change', this.onMotion);
       this.chat.addEventListener('scroll', this.onChatScroll);
+      const Observer = this.document.defaultView?.ResizeObserver;
+      if (Observer) {
+        this.readingSize = new Observer(() => { if (!this.disposed && !this.reading.hidden) this.element.style.setProperty('--vn-reading-height', `${this.reading.getBoundingClientRect().height}px`); });
+        this.readingSize.observe(this.reading);
+      }
       this.disconnect = session.subscribe(() => this.render()); this.onVisibility(); this.render();
     } catch (error) { this.dispose(); throw error; }
   }
@@ -158,11 +164,14 @@ export class DOMRenderer {
     if (snapshot === previous) return;
     this.lastView = snapshot;
     if (snapshot.settings.opacity !== previous?.settings.opacity) this.element.style.setProperty('--vn-opacity', String(snapshot.settings.opacity));
+    if (snapshot.settings.fontScale !== previous?.settings.fontScale) this.element.style.setProperty('--vn-font-scale', String(snapshot.settings.fontScale));
+    if (snapshot.settings.highContrast !== previous?.settings.highContrast) this.element.dataset.contrast = snapshot.settings.highContrast ? 'high' : 'normal';
     if (snapshot.ready !== previous?.ready) this.element.dataset.ready = String(snapshot.ready);
     if (snapshot.paused !== previous?.paused) this.element.dataset.paused = String(snapshot.paused);
     const entered = snapshot.visit !== this.visit;
     if (entered) {
       this.cancelScroll();
+      this.reading.scrollTop = 0;
       this.element.dataset.mode = frame.mode; this.element.dataset.scene = frame.sceneId; this.element.dataset.line = frame.lineId; this.element.dataset.visit = String(snapshot.visit);
       this.visit = snapshot.visit; this.title.textContent = frame.title; this.mode.textContent = { vn: 'STORY', chat: 'CHAT', call: 'CALL', investigation: 'INVESTIGATION', document: 'EVIDENCE' }[frame.mode];
       const layers = frame.stage.layers;
@@ -368,7 +377,7 @@ export class DOMRenderer {
     });
   }
   private cancelScroll() { if (this.scrollFrame !== undefined) { this.document.defaultView?.cancelAnimationFrame(this.scrollFrame); this.scrollFrame = undefined; } }
-  notify(message: string) { if (!this.disposed) this.status.textContent = message; }
+  notify(message: string) { if (!this.disposed) { this.status.textContent = message; const panelStatus = this.modal?.querySelector<HTMLElement>(':scope > .vn-panel > .vn-panel-status'); if (panelStatus) panelStatus.textContent = message; } }
   private saveManager(mode: 'save' | 'load') {
     const persistence = this.options.persistence;
     if (!persistence) { this.notify('存档功能暂不可用'); return; }
@@ -448,12 +457,15 @@ export class DOMRenderer {
     if (!this.modal.hidden) this.closePanel();
     this.lastFocus = this.document.activeElement instanceof this.document.defaultView!.HTMLElement ? this.document.activeElement as HTMLElement : undefined;
     this.session.pause('panel', true); this.modal.hidden = false; this.modal.replaceChildren(); this.modal.setAttribute('aria-label', title);
+    this.stage.inert = true; this.toolbar.inert = true;
     const panel = this.el('div', undefined, 'vn-panel'), head = this.el('div', undefined, 'vn-panel-head');
-    const close = this.button('关闭', onClose); head.append(this.el('h2', title), close); panel.append(head); this.modal.append(panel); close.focus(); return panel;
+    const close = this.button('关闭', onClose), status = this.el('p', '', 'vn-panel-status'); status.setAttribute('role', 'status');
+    head.append(this.el('h2', title), close); panel.append(head, status); this.modal.append(panel); close.focus(); return panel;
   }
   private closePanel() {
     this.panelCleanup?.(); this.panelCleanup = undefined; this.replayReturn = undefined;
-    this.modal.hidden = true; this.modal.replaceChildren(); this.session.pause('panel', false); if (this.lastFocus?.isConnected) this.lastFocus.focus(); else this.element.focus();
+    this.modal.hidden = true; this.modal.replaceChildren(); this.stage.inert = false; this.toolbar.inert = false;
+    this.session.pause('panel', false); if (this.lastFocus?.isConnected) this.lastFocus.focus(); else this.element.focus();
   }
   private collection(kind: 'cg' | 'ending') {
     const meta = this.options.meta, entries = kind === 'cg' ? this.options.collections?.cgs : this.options.collections?.endings;
@@ -513,12 +525,12 @@ export class DOMRenderer {
     const configure = (value: Partial<RuntimeSettings>) => {
       this.session.configure(value); try { this.options.storage?.setItem(this.settingsKey, JSON.stringify(this.session.getView().settings)); } catch { this.notify('设置已生效，本次无法保存设置'); }
     };
-    for (const [key, label, min, max, step] of [['textDelayMs', '文字间隔', 0, 100, 1], ['autoDelayMs', '自动阅读间隔', 200, 5000, 100], ['opacity', '阅读区透明度', .25, 1, .05],
+    for (const [key, label, min, max, step] of [['textDelayMs', '文字间隔', 0, 100, 1], ['autoDelayMs', '自动阅读间隔', 200, 5000, 100], ['fontScale', '阅读字号', 1, 1.6, .1], ['opacity', '阅读区透明度', .25, 1, .05],
       ['masterVolume', '总音量', 0, 1, .05], ['bgmVolume', '背景音乐音量', 0, 1, .05], ['ambienceVolume', '环境音量', 0, 1, .05], ['seVolume', '音效音量', 0, 1, .05], ['voiceVolume', '语音音量', 0, 1, .05], ['videoVolume', '视频音量', 0, 1, .05]] as const) {
       const row = this.el('label', undefined, 'vn-setting'), input = this.el('input'); input.type = 'range'; input.min = String(min); input.max = String(max); input.step = String(step); input.value = String(snapshot.settings[key]); input.setAttribute('aria-label', label);
       input.addEventListener('input', () => configure({ [key]: Number(input.value) })); row.append(this.el('span', label), input); panel.append(row);
     }
-    for (const [key, label] of [['music', '背景音乐'], ['ambience', '环境音播放'], ['voiceEnabled', '语音播放'], ['soundEffects', '动作音效'], ['reducedMotion', '减少动态效果']] as const) {
+    for (const [key, label] of [['music', '背景音乐'], ['ambience', '环境音播放'], ['voiceEnabled', '语音播放'], ['soundEffects', '动作音效'], ['reducedMotion', '减少动态效果'], ['highContrast', '高对比模式']] as const) {
       const row = this.el('label', undefined, 'vn-setting'), input = this.el('input'); input.type = 'checkbox'; input.checked = snapshot.settings[key]; input.addEventListener('change', () => configure({ [key]: input.checked })); row.append(this.el('span', label), input); panel.append(row);
     }
     const backup = this.el('div', undefined, 'vn-backup'); backup.append(this.button('导出存档', () => this.exportSave()));
@@ -526,6 +538,8 @@ export class DOMRenderer {
     input.addEventListener('change', () => { const file = input.files?.[0]; if (!file) return; if (file.size > 2_000_000) { this.notify('存档文件过大'); return; }
       void file.text().then(raw => { if (this.disposed) return; try { this.session.restore(JSON.parse(raw)); this.closePanel(); this.notify('已导入存档'); } catch { this.notify('导入失败，当前进度保留'); } }).catch(() => this.notify('无法读取文件')); });
     backup.append(this.button('导入存档', () => input.click()), input); panel.append(backup);
+    const help = this.el('details'), summary = this.el('summary', '键盘操作');
+    help.append(summary, this.el('p', '阅读区：空格 / Enter 显示全文或下一段；1–9 选择；A 自动；H 隐藏 / 恢复；Backspace 回退。F5 快速存档；F9 快速读档。Tab 切换控件，Enter / 空格操作焦点按钮；Esc 关闭面板或返回回看列表。')); panel.append(help);
   }
   private exportSave() {
     const view = this.document.defaultView!; const url = view.URL.createObjectURL(new Blob([JSON.stringify(this.session.save(), null, 2)], { type: 'application/json' }));
@@ -533,11 +547,13 @@ export class DOMRenderer {
   }
   private fullscreen() { try { const promise = this.document.fullscreenElement ? this.document.exitFullscreen() : this.element.requestFullscreen?.(); void promise?.catch(() => this.notify('当前浏览器未能进入全屏')); } catch { this.notify('当前浏览器未能进入全屏'); } }
   private key(event: KeyboardEvent) {
-    if (event.repeat || event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
+    if (event.defaultPrevented || event.repeat || event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
     if (!this.modal.hidden) {
       if (event.key === 'Escape') { event.preventDefault(); if (this.replayReturn) this.replayReturn(); else this.closePanel(); }
       if (event.key === 'Tab') {
-        const items = [...this.modal.querySelectorAll<HTMLElement>('button:not(:disabled),input:not([hidden]),select')]; const index = items.indexOf(this.document.activeElement as HTMLElement);
+        const items = [...this.modal.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),summary,a[href],[tabindex]:not([tabindex="-1"])')]
+          .filter(node => !node.closest('[hidden],[inert]') && node.getClientRects().length > 0);
+        const index = items.indexOf(this.document.activeElement as HTMLElement);
         if (items.length && ((event.shiftKey && index <= 0) || (!event.shiftKey && index === items.length - 1))) { event.preventDefault(); items[event.shiftKey ? items.length - 1 : 0].focus(); }
       }
       return;
@@ -558,6 +574,7 @@ export class DOMRenderer {
     this.document.removeEventListener('visibilitychange', this.onVisibility); this.element.removeEventListener('keydown', this.onKey); this.element.removeEventListener('pointerdown', this.onPointer);
     this.motionQuery?.removeEventListener?.('change', this.onMotion);
     this.chat.removeEventListener('scroll', this.onChatScroll); this.cancelScroll(); this.stopTimeline(); this.timeline = undefined; this.clearVideo();
+    this.readingSize?.disconnect(); this.readingSize = undefined;
     this.keyVisualLayer?.dispose();
     for (const { probe } of this.probes.values()) { probe.onload = null; probe.onerror = null; probe.removeAttribute('src'); } this.probes.clear();
     for (const animation of this.animations()) animation.cancel(); this.element.remove();

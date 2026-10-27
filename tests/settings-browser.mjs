@@ -1,5 +1,6 @@
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
+import { mkdir } from 'node:fs/promises';
 import { createDemoServer } from '../tools/serve.mjs';
 
 const server = await createDemoServer(); await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
@@ -36,5 +37,37 @@ try {
   }), [.5, .2, .3, .7, .6, .8, false, true]);
   await page.evaluate(() => settingsGame.session.configure({ masterVolume: 0 }));
   assert.equal(await host.locator('.vn-video').evaluate(node => node.volume), 0);
-  assert.deepEqual(errors, []); console.log('PASS Legacy sound settings migrate, independent channels persist, master and video gains compose');
+  await host.locator('[data-control=settings]').click();
+  const font = host.getByLabel('阅读字号', { exact: true }); await font.focus(); await page.keyboard.press('End');
+  await host.getByLabel('高对比模式', { exact: true }).check();
+  assert.equal(await host.evaluate(node => node.dataset.contrast), 'high');
+  assert.equal(await host.locator(':scope > .vn-stage').evaluate(node => node.inert), true);
+  const summary = host.locator('.vn-panel summary'); await summary.focus(); await page.keyboard.press('Tab');
+  assert.equal(await host.getByRole('button', { name: '关闭', exact: true }).evaluate(node => node === document.activeElement), true);
+  await page.keyboard.press('Shift+Tab'); assert.equal(await summary.evaluate(node => node === document.activeElement), true);
+  const before = await page.evaluate(() => settingsGame.session.getView().visit);
+  await page.keyboard.press('Enter'); await page.keyboard.press('1'); assert.equal(await page.evaluate(() => settingsGame.session.getView().visit), before);
+  await page.keyboard.press('Escape');
+  assert.equal(await host.locator('[data-control=settings]').evaluate(node => node === document.activeElement), true);
+  await page.evaluate(() => remountSettings());
+  assert.equal(await page.evaluate(() => settingsGame.session.getView().settings.fontScale), 1.6);
+  assert.equal(await page.evaluate(() => settingsGame.session.getView().settings.highContrast), true);
+  await page.setViewportSize({ width: 390, height: 844 });
+  for (const mode of ['vn', 'chat', 'document']) {
+    await page.evaluate(mode => {
+      const line = settingsProject.scenes[0].lines[0]; line.text = '大字号阅读与键盘操作测试。'.repeat(50);
+      if (mode === 'chat') line.medium = 'chat'; else delete line.medium;
+      settingsProject.stage.lines.one = mode === 'document' ? { document: { title: '调查文书', lines: [line.text] } } : {};
+      remountSettings();
+    }, mode);
+    const text = host.locator(mode === 'chat' ? '.vn-current' : mode === 'document' ? '.vn-document p' : '.vn-text');
+    assert.ok(await text.evaluate(node => parseFloat(getComputedStyle(node).fontSize)) >= 22);
+    const bounds = await host.locator('.vn-reading').evaluate(node => ({ height: node.clientHeight, scroll: node.scrollHeight, background: getComputedStyle(node).backgroundColor, within: node.scrollWidth <= node.clientWidth }));
+    assert.equal(bounds.background, 'rgb(0, 0, 0)'); assert.equal(bounds.within, true);
+    if (mode === 'vn') assert.ok(bounds.scroll > bounds.height);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  }
+  const out = process.env.VN_ENGINE_TEST_OUTPUT ?? 'test-results'; await mkdir(out, { recursive: true });
+  await host.locator('[data-control=settings]').click(); await font.scrollIntoViewIfNeeded(); await page.screenshot({ path: out + '/settings-accessibility-mobile.png' });
+  assert.deepEqual(errors, []); console.log('PASS Legacy sound settings migrate; independent channels, readable scale and contrast persist; modal focus traps exclude hidden controls');
 } finally { await browser?.close(); await new Promise(resolve => server.close(resolve)); }

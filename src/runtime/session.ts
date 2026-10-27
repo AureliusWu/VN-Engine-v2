@@ -10,10 +10,11 @@ export type RuntimeSettings = {
   volume: number;
   masterVolume: number; bgmVolume: number; ambienceVolume: number; seVolume: number; videoVolume: number;
   music: boolean; ambience: boolean; voiceEnabled: boolean; voiceVolume: number; soundEffects: boolean; opacity: number;
+  fontScale: number; highContrast: boolean;
 };
 export const DEFAULT_RUNTIME_SETTINGS: RuntimeSettings = { textDelayMs: 28, autoDelayMs: 1800, skipDelayMs: 80,
   reducedMotion: false, music: true, ambience: true, volume: .25, masterVolume: 1, bgmVolume: .25, ambienceVolume: .25, seVolume: .25, videoVolume: .25,
-  voiceEnabled: true, voiceVolume: .8, soundEffects: true, opacity: .85 };
+  voiceEnabled: true, voiceVolume: .8, soundEffects: true, opacity: .85, fontScale: 1, highContrast: false };
 export interface Clock { now(): number; set(callback: () => void, delay: number): unknown; clear(handle: unknown): void }
 const systemClock: Clock = { now: () => Date.now(), set: (callback, delay) => globalThis.setTimeout(callback, delay), clear: handle => globalThis.clearTimeout(handle as number) };
 export type VisitReason = 'start' | 'advance' | 'action' | 'restore' | 'reread' | 'rollback';
@@ -28,14 +29,14 @@ export type RuntimeView = DeepReadonly<RuntimeSnapshot>;
 
 export function runtimeSettings(value: Partial<RuntimeSettings>): RuntimeSettings {
   const result = { ...DEFAULT_RUNTIME_SETTINGS };
-  for (const [key, min, max] of [['textDelayMs', 0, 200], ['autoDelayMs', 20, 60000], ['skipDelayMs', 10, 1000], ['volume', 0, 1], ['voiceVolume', 0, 1], ['opacity', .25, 1]] as const) {
+  for (const [key, min, max] of [['textDelayMs', 0, 200], ['autoDelayMs', 20, 60000], ['skipDelayMs', 10, 1000], ['volume', 0, 1], ['voiceVolume', 0, 1], ['opacity', .25, 1], ['fontScale', 1, 1.6]] as const) {
     const number = value[key]; if (typeof number === 'number' && Number.isFinite(number)) result[key] = Math.max(min, Math.min(max, number));
   }
   for (const key of ['masterVolume', 'bgmVolume', 'ambienceVolume', 'seVolume', 'videoVolume'] as const) {
     const number = value[key] ?? (key === 'masterVolume' ? undefined : value.volume);
     if (typeof number === 'number' && Number.isFinite(number)) result[key] = Math.max(0, Math.min(1, number));
   }
-  for (const key of ['reducedMotion', 'music', 'ambience', 'voiceEnabled', 'soundEffects'] as const) if (typeof value[key] === 'boolean') result[key] = value[key];
+  for (const key of ['reducedMotion', 'music', 'ambience', 'voiceEnabled', 'soundEffects', 'highContrast'] as const) if (typeof value[key] === 'boolean') result[key] = value[key];
   return result;
 }
 

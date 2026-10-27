@@ -108,10 +108,12 @@ internal static class SmokeTests
                     const instance = mountGame(root, project, {baseURL, audio:false});
                     const query = selector => root.querySelector(selector), clickText = text => [...query('.vn-modal').querySelectorAll('button')].find(b => b.textContent === text)?.click();
                     query('[data-control=settings]').click();
-                    for (const [label, value] of [['总音量','.5'],['背景音乐音量','.2'],['音效音量','.7'],['视频音量','.6']]) {
+                    for (const [label, value] of [['总音量','.5'],['背景音乐音量','.2'],['音效音量','.7'],['视频音量','.6'],['阅读字号','1.6']]) {
                       const input=query('[aria-label="'+label+'"]'); input.value=value; input.dispatchEvent(new Event('input',{bubbles:true}));
                     }
+                    const high=[...query('.vn-modal').querySelectorAll('label')].find(node=>node.textContent==='高对比模式').querySelector('input'); high.checked=true;high.dispatchEvent(new Event('change',{bubbles:true}));
                     clickText('关闭');
+                    if(query('.vn-engine').dataset.contrast!=='high' || instance.session.getView().settings.fontScale!==1.6) throw Error('Native reading accessibility settings did not apply');
                     if (query('.vn-video').volume !== .3 || instance.session.getView().settings.bgmVolume !== .2 || instance.session.getView().settings.seVolume !== .7) throw Error('Native sound channels did not compose independently');
                     if (JSON.parse(localStorage.getItem('vn-engine:'+game+':settings')).masterVolume !== .5) throw Error('Native sound settings were not persisted');
                     const deadline = Date.now() + 7000;

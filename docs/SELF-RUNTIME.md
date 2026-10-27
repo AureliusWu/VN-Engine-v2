@@ -2,6 +2,8 @@
 
 ## 0.3.0 alpha：声音设置
 
+阅读设置另有 `fontScale`（1–1.6）及 `highContrast`，与其他设置一样按游戏持久化。对白、聊天、调查文书和历史字号同步变化；长对白在阅读区内滚动，ResizeObserver 将实际高度同步到聊天 / 文书边界。高对比模式使用不透明深色阅读底色。键盘说明见设置页；弹层使阅读舞台和工具栏 inert，Tab 只经过实际可见的可用控件，Esc 由最内层面板先处理。此处为有限的可读性 / 键盘能力，不代表完整屏幕阅读器或实体设备无障碍认证。
+
 `RuntimeSettings` 提供 `masterVolume`、`bgmVolume`、`ambienceVolume`、`seVolume`、`voiceVolume`、`videoVolume`（0–1），最终各轨音量为总音量乘该轨音量。BGM 与环境音分别通过独立 GainNode；语音、SE 和视频实时更新已有播放器，调音不重新触发剧情事件。`music`、`ambience`、`soundEffects`、`voiceEnabled` 分别控制对应轨道。
 
 默认维持原响度：总音量 1，BGM / 环境音 / SE / 视频 .25，语音 .8。旧 `volume` 仍兼容，初次加载或显式 `configure({volume})` 调整四条旧非语音轨道，传入的独立音量优先；不改变语音或总音量。旧持久设置 `music:false` 在首次读取时同时保留环境音关闭。设置不进入普通剧情存档；具体音源响度和听感仍需作品验收。

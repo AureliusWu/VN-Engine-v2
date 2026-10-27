@@ -44,6 +44,13 @@ try {
   await modal.getByRole('button', { name: '回看剧情', exact: true }).click();
   assert.match(await modal.locator('.vn-replay .vn-text').innerText(), /回看起点/);
   assert.equal(await modal.locator('.vn-replay [data-control=save]').isHidden(), true);
+  await modal.locator('.vn-replay [data-control=settings]').click();
+  await page.keyboard.press('Escape');
+  assert.equal(await modal.locator('.vn-replay .vn-engine').count(), 1);
+  assert.equal(await modal.locator('.vn-replay .vn-modal').isHidden(), true);
+  await modal.locator('.vn-replay .vn-engine').focus(); await page.keyboard.press('h');
+  assert.equal(await page.evaluate(() => collectionGame.session.getView().hidden), false);
+  await page.keyboard.press('h');
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('vn-engine-host-visibility', { detail: { hidden: true } })));
   assert.equal(await modal.locator('.vn-replay .vn-engine').getAttribute('data-paused'), 'true');
   await page.evaluate(() => window.dispatchEvent(new CustomEvent('vn-engine-host-visibility', { detail: { hidden: false } })));
