@@ -107,6 +107,13 @@ internal static class SmokeTests
                     project.collections = {cgs:[{id:'memory', title:'Hidden title', replay}], endings:[{id:'complete', title:'Ending', replay}]};
                     const instance = mountGame(root, project, {baseURL, audio:false});
                     const query = selector => root.querySelector(selector), clickText = text => [...query('.vn-modal').querySelectorAll('button')].find(b => b.textContent === text)?.click();
+                    query('[data-control=settings]').click();
+                    for (const [label, value] of [['总音量','.5'],['背景音乐音量','.2'],['音效音量','.7'],['视频音量','.6']]) {
+                      const input=query('[aria-label="'+label+'"]'); input.value=value; input.dispatchEvent(new Event('input',{bubbles:true}));
+                    }
+                    clickText('关闭');
+                    if (query('.vn-video').volume !== .3 || instance.session.getView().settings.bgmVolume !== .2 || instance.session.getView().settings.seVolume !== .7) throw Error('Native sound channels did not compose independently');
+                    if (JSON.parse(localStorage.getItem('vn-engine:'+game+':settings')).masterVolume !== .5) throw Error('Native sound settings were not persisted');
                     const deadline = Date.now() + 7000;
                     while (query('.vn-video').currentTime < .05 && Date.now() < deadline) await new Promise(resolve => setTimeout(resolve, 50));
                     if (query('.vn-video').currentTime < .05) {
@@ -154,7 +161,7 @@ internal static class SmokeTests
                 var collectionResult = await JS("window.nativeCollectionSmoke");
                 if (collectionResult != "\"passed\"") throw new InvalidDataException("Native collection/video check: " + collectionResult);
                 await window.Browser.CoreWebView2.CallDevToolsProtocolMethodAsync("Emulation.setEmulatedMedia", "{\"features\":[]}");
-                checks.Add("Native WebView2 validates video, scoped Key Visual, isolated replay, state rollback and mini-game play/save/restore/result/rollback");
+                checks.Add("Native WebView2 validates independent sound settings, video, scoped Key Visual, isolated replay, state rollback and mini-game play/save/restore/result/rollback");
             }
             else
             {

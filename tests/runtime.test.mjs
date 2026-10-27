@@ -144,4 +144,7 @@ test('asset catalog resolves per-game bases and rejects external, encoded and es
 test('runtime setting imports clamp finite values and keep voice preferences independent', () => {
   const value = runtimeSettings({ textDelayMs: -1, autoDelayMs: Infinity, voiceVolume: 3, volume: .1, opacity: 0 });
   assert.equal(value.textDelayMs, 0); assert.equal(value.autoDelayMs, 1800); assert.equal(value.voiceVolume, 1); assert.equal(value.volume, .1); assert.equal(value.opacity, .25);
+  assert.equal(value.masterVolume, 1); assert.equal(value.bgmVolume, .1); assert.equal(value.ambienceVolume, .1); assert.equal(value.seVolume, .1); assert.equal(value.videoVolume, .1);
+  const mixer = runtimeSettings({ masterVolume: Infinity, volume: .2, seVolume: 5, bgmVolume: -.5 });
+  assert.equal(mixer.masterVolume, 1); assert.equal(mixer.seVolume, 1); assert.equal(mixer.bgmVolume, 0); assert.equal(mixer.videoVolume, .2);
 });

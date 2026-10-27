@@ -1,5 +1,11 @@
 # 自研运行时 0.2.1
 
+## 0.3.0 alpha：声音设置
+
+`RuntimeSettings` 提供 `masterVolume`、`bgmVolume`、`ambienceVolume`、`seVolume`、`voiceVolume`、`videoVolume`（0–1），最终各轨音量为总音量乘该轨音量。BGM 与环境音分别通过独立 GainNode；语音、SE 和视频实时更新已有播放器，调音不重新触发剧情事件。`music`、`ambience`、`soundEffects`、`voiceEnabled` 分别控制对应轨道。
+
+默认维持原响度：总音量 1，BGM / 环境音 / SE / 视频 .25，语音 .8。旧 `volume` 仍兼容，初次加载或显式 `configure({volume})` 调整四条旧非语音轨道，传入的独立音量优先；不改变语音或总音量。旧持久设置 `music:false` 在首次读取时同时保留环境音关闭。设置不进入普通剧情存档；具体音源响度和听感仍需作品验收。
+
 主运行链为本仓库自己的 TypeScript 解释器/状态机、调度器、DOM 渲染器、输入控制、媒体调度和打包器。它直接在浏览器中执行本地项目数据，不加载 Ren’Py、Unity、Godot、外部 VN 框架或在线服务。React/Electron/Tauri 均不是主链依赖。
 
 ## 运行与打包

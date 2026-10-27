@@ -6,10 +6,14 @@ import { isRecord } from '../storage/save.js';
 
 export type RuntimeSettings = {
   textDelayMs: number; autoDelayMs: number; skipDelayMs: number; reducedMotion: boolean;
-  music: boolean; volume: number; voiceEnabled: boolean; voiceVolume: number; soundEffects: boolean; opacity: number;
+  /** Legacy shared level; configure({volume}) still adjusts the four original non-voice channels. */
+  volume: number;
+  masterVolume: number; bgmVolume: number; ambienceVolume: number; seVolume: number; videoVolume: number;
+  music: boolean; ambience: boolean; voiceEnabled: boolean; voiceVolume: number; soundEffects: boolean; opacity: number;
 };
 export const DEFAULT_RUNTIME_SETTINGS: RuntimeSettings = { textDelayMs: 28, autoDelayMs: 1800, skipDelayMs: 80,
-  reducedMotion: false, music: true, volume: .25, voiceEnabled: true, voiceVolume: .8, soundEffects: true, opacity: .85 };
+  reducedMotion: false, music: true, ambience: true, volume: .25, masterVolume: 1, bgmVolume: .25, ambienceVolume: .25, seVolume: .25, videoVolume: .25,
+  voiceEnabled: true, voiceVolume: .8, soundEffects: true, opacity: .85 };
 export interface Clock { now(): number; set(callback: () => void, delay: number): unknown; clear(handle: unknown): void }
 const systemClock: Clock = { now: () => Date.now(), set: (callback, delay) => globalThis.setTimeout(callback, delay), clear: handle => globalThis.clearTimeout(handle as number) };
 export type VisitReason = 'start' | 'advance' | 'action' | 'restore' | 'reread' | 'rollback';
@@ -27,7 +31,11 @@ export function runtimeSettings(value: Partial<RuntimeSettings>): RuntimeSetting
   for (const [key, min, max] of [['textDelayMs', 0, 200], ['autoDelayMs', 20, 60000], ['skipDelayMs', 10, 1000], ['volume', 0, 1], ['voiceVolume', 0, 1], ['opacity', .25, 1]] as const) {
     const number = value[key]; if (typeof number === 'number' && Number.isFinite(number)) result[key] = Math.max(min, Math.min(max, number));
   }
-  for (const key of ['reducedMotion', 'music', 'voiceEnabled', 'soundEffects'] as const) if (typeof value[key] === 'boolean') result[key] = value[key];
+  for (const key of ['masterVolume', 'bgmVolume', 'ambienceVolume', 'seVolume', 'videoVolume'] as const) {
+    const number = value[key] ?? (key === 'masterVolume' ? undefined : value.volume);
+    if (typeof number === 'number' && Number.isFinite(number)) result[key] = Math.max(0, Math.min(1, number));
+  }
+  for (const key of ['reducedMotion', 'music', 'ambience', 'voiceEnabled', 'soundEffects'] as const) if (typeof value[key] === 'boolean') result[key] = value[key];
   return result;
 }
 
@@ -167,7 +175,11 @@ export class RuntimeSession {
   }
   configure(value: Partial<RuntimeSettings>) {
     if (this.disposed) return;
-    const next = runtimeSettings({ ...this.settings, ...value });
+    const patch = { ...value };
+    if (typeof value.volume === 'number' && Number.isFinite(value.volume)) for (const key of ['bgmVolume', 'ambienceVolume', 'seVolume', 'videoVolume'] as const) {
+      if (value[key] === undefined) patch[key] = value.volume;
+    }
+    const next = runtimeSettings({ ...this.settings, ...patch });
     if ((Object.keys(next) as (keyof RuntimeSettings)[]).every(key => next[key] === this.settings[key])) return;
     this.cancel(); this.settings = Object.freeze(next);
     if (this.settings.textDelayMs === 0 || this.settings.reducedMotion) { this.count = this.glyphs.length; this.displayed = this.current.text; this.read.add(this.readKey()); }

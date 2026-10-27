@@ -11,6 +11,8 @@ export class MediaDirector {
   private music: SceneLoop;
   private ambience: SceneLoop;
   private bus: GainNode;
+  private musicBus: GainNode;
+  private ambienceBus: GainNode;
   private effect?: HTMLAudioElement;
   private visit = -1;
   private handling = false;
@@ -31,7 +33,9 @@ export class MediaDirector {
     this.unlocked = options.context.state === 'running';
     this.voice = new RecordedVoice(this.createAudio);
     this.bus = options.context.createGain(); this.bus.connect(options.context.destination);
-    this.music = new SceneLoop(options.context, this.bus); this.ambience = new SceneLoop(options.context, this.bus);
+    this.musicBus = options.context.createGain(); this.musicBus.connect(this.bus);
+    this.ambienceBus = options.context.createGain(); this.ambienceBus.connect(this.bus);
+    this.music = new SceneLoop(options.context, this.musicBus); this.ambience = new SceneLoop(options.context, this.ambienceBus);
     this.unvoice = this.voice.subscribe(() => session.setVoiceBlocked(voiceBlocksAuto(this.voice.getState())));
     this.disconnect = session.subscribe(() => this.update(session.getView()));
     this.update(session.getView());
@@ -44,7 +48,9 @@ export class MediaDirector {
   }
   private sameMedia(a: RuntimeView | undefined, b: RuntimeView): boolean {
     return !!a && a.visit === b.visit && a.paused === b.paused
-      && a.settings.music === b.settings.music && a.settings.volume === b.settings.volume
+      && a.settings.music === b.settings.music && a.settings.ambience === b.settings.ambience
+      && a.settings.masterVolume === b.settings.masterVolume && a.settings.bgmVolume === b.settings.bgmVolume
+      && a.settings.ambienceVolume === b.settings.ambienceVolume && a.settings.seVolume === b.settings.seVolume
       && a.settings.voiceEnabled === b.settings.voiceEnabled && a.settings.voiceVolume === b.settings.voiceVolume
       && a.settings.soundEffects === b.settings.soundEffects;
   }
@@ -65,12 +71,14 @@ export class MediaDirector {
     const { settings, frame } = snapshot;
     const changedPlayback = this.playable !== !snapshot.paused;
     this.playable = !snapshot.paused;
-    this.bus.gain.value = settings.music ? settings.volume : 0;
+    this.bus.gain.value = settings.masterVolume;
+    this.musicBus.gain.value = settings.music ? settings.bgmVolume : 0;
+    this.ambienceBus.gain.value = settings.ambience ? settings.ambienceVolume : 0;
     this.music.select(settings.music ? this.audioURL(frame.stage.music) : undefined);
-    this.ambience.select(settings.music ? this.audioURL(frame.stage.ambience) : undefined);
+    this.ambience.select(settings.ambience ? this.audioURL(frame.stage.ambience) : undefined);
     if (changedPlayback) void this.reconcileGraph();
     try {
-      this.voice.configure(settings.voiceEnabled, settings.voiceVolume, this.playable, this.playable, false);
+      this.voice.configure(settings.voiceEnabled, settings.masterVolume * settings.voiceVolume, this.playable, this.playable, false);
       if (settings.voiceEnabled) {
         const source = this.audioURL(frame.stage.voice);
         const clip: VoiceClip | undefined = source ? { id: frame.stage.voice!, lineId: frame.lineId, speaker: frame.speaker, text: frame.text, src: source } : undefined;
@@ -84,14 +92,14 @@ export class MediaDirector {
       const source = settings.soundEffects ? this.audioURL(frame.stage.sound) : undefined;
       if (source && ['start', 'advance', 'action'].includes(snapshot.reason) && this.playable) {
         try {
-          const player = this.createAudio(source); this.effect = player; player.volume = settings.volume;
+          const player = this.createAudio(source); this.effect = player; player.volume = settings.masterVolume * settings.seVolume;
           player.onended = () => { if (this.effect === player) this.stopEffect(); };
           player.onerror = () => { if (this.effect === player) { this.stopEffect(); this.options.onError?.('动作音效暂时无法播放'); } };
           void player.play().catch(() => { if (this.effect === player) { this.stopEffect(); this.options.onError?.('动作音效暂时无法播放'); } });
         } catch { this.stopEffect(); this.options.onError?.('动作音效暂时不可用，可以继续阅读'); }
       }
     } else if (!settings.soundEffects) this.stopEffect();
-    if (this.effect) { this.effect.volume = settings.volume; if (!this.playable) this.effect.pause(); }
+    if (this.effect) { this.effect.volume = settings.masterVolume * settings.seVolume; if (!this.playable) this.effect.pause(); }
   }
 
   private reconcileGraph(): Promise<void> {
@@ -137,6 +145,6 @@ export class MediaDirector {
   }
   dispose() {
     if (this.disposed) return; this.disposed = true; this.pending = undefined; this.disconnect(); this.unvoice();
-    this.voice.stop(); this.music.dispose(); this.ambience.dispose(); this.stopEffect(); this.bus.disconnect(); this.session.setVoiceBlocked(false);
+    this.voice.stop(); this.music.dispose(); this.ambience.dispose(); this.stopEffect(); this.musicBus.disconnect(); this.ambienceBus.disconnect(); this.bus.disconnect(); this.session.setVoiceBlocked(false);
   }
 }

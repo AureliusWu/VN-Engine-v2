@@ -1,5 +1,9 @@
 # v0.3.0 编辑器与 Windows 宿主验证
 
+## 下一轮：声音 / 阅读 / 备份
+
+声音分轨阶段：本地 `npm run check`（112 项 Node、6 项 Python、115 个来源）和完整 `npm run test:browser` 通过。新用例检查旧设置迁入、独立分轨、Master 与 Voice / SE / Video 乘积、实时调音不重播、环境音独立开关与持久化；Windows smoke 已加入实际设置控件和视频音量检查，原生执行结果以本提交工作流为准。合成音频的音量数值不作为正式听感验收。
+
 ## 2026-10-27 顺序优化
 
 收藏提交 `36d492a` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40455664728) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40455664704) 均成功，原生 Studio 实际配置 CG 收藏、抓取预览 driver 存档，并保存和导出。

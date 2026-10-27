@@ -72,7 +72,11 @@ export class DOMRenderer {
   constructor(readonly root: HTMLElement, readonly session: RuntimeSession, readonly assets: AssetCatalog, readonly options: DOMRendererOptions = {}) {
     this.document = root.ownerDocument;
     this.saveKey = `vn-engine:${session.driver.game}:save:1`; this.settingsKey = `vn-engine:${session.driver.game}:settings`;
-    try { const value = JSON.parse(options.storage?.getItem(this.settingsKey) ?? 'null'); if (isRecord(value)) session.configure(value); } catch { /* Keep playable defaults. */ }
+    try { const value = JSON.parse(options.storage?.getItem(this.settingsKey) ?? 'null'); if (isRecord(value)) {
+      // Old music=false also disabled ambience. Preserve it once when loading pre-mixer settings.
+      if (value.masterVolume === undefined && value.ambience === undefined && typeof value.music === 'boolean') value.ambience = value.music;
+      session.configure(value);
+    } } catch { /* Keep playable defaults. */ }
     const host = this.el('section', undefined, 'vn-engine'); this.element = host; host.tabIndex = 0; host.setAttribute('aria-label', options.title ?? '自研叙事引擎');
     const style = this.el('style'); style.textContent = DOM_STYLE;
     if (options.font) style.textContent += `\n@font-face{font-family:VNRuntime;src:url(${JSON.stringify(assets.url(options.font, 'font'))}) format('woff2');font-display:swap}.vn-engine{font-family:VNRuntime,system-ui,sans-serif}`;
@@ -282,7 +286,7 @@ export class DOMRenderer {
       const reduce = snapshot.settings.reducedMotion || !!this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
       if (reduce || snapshot.skipping || ['restore', 'reread', 'rollback'].includes(snapshot.reason)) { this.fallbackVideo(active, false); return; }
       try {
-        this.video.src = this.assets.url(cue.asset, 'video'); this.video.muted = cue.muted !== false; this.video.volume = snapshot.settings.volume;
+        this.video.src = this.assets.url(cue.asset, 'video'); this.video.muted = cue.muted !== false; this.video.volume = snapshot.settings.masterVolume * snapshot.settings.videoVolume;
         this.video.loop = cue.loop === true; this.video.hidden = false;
         this.video.onerror = () => this.fallbackVideo(active, true);
         this.video.onended = () => {
@@ -296,7 +300,7 @@ export class DOMRenderer {
     }
     const active = this.videoState; if (!active || active.finished) return;
     if (snapshot.settings.reducedMotion || snapshot.skipping || this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { this.fallbackVideo(active, false); return; }
-    if (snapshot.settings.volume !== previous?.settings.volume) this.video.volume = snapshot.settings.volume;
+    if (snapshot.settings.masterVolume !== previous?.settings.masterVolume || snapshot.settings.videoVolume !== previous?.settings.videoVolume) this.video.volume = snapshot.settings.masterVolume * snapshot.settings.videoVolume;
     if (snapshot.paused !== previous?.paused) {
       if (snapshot.paused) { active.attempt++; this.video.pause(); }
       else this.playVideo(active);
@@ -509,11 +513,12 @@ export class DOMRenderer {
     const configure = (value: Partial<RuntimeSettings>) => {
       this.session.configure(value); try { this.options.storage?.setItem(this.settingsKey, JSON.stringify(this.session.getView().settings)); } catch { this.notify('设置已生效，本次无法保存设置'); }
     };
-    for (const [key, label, min, max, step] of [['textDelayMs', '文字间隔', 0, 100, 1], ['autoDelayMs', '自动阅读间隔', 200, 5000, 100], ['opacity', '阅读区透明度', .25, 1, .05], ['volume', '音乐与音效音量', 0, 1, .05], ['voiceVolume', '语音音量', 0, 1, .05]] as const) {
+    for (const [key, label, min, max, step] of [['textDelayMs', '文字间隔', 0, 100, 1], ['autoDelayMs', '自动阅读间隔', 200, 5000, 100], ['opacity', '阅读区透明度', .25, 1, .05],
+      ['masterVolume', '总音量', 0, 1, .05], ['bgmVolume', '背景音乐音量', 0, 1, .05], ['ambienceVolume', '环境音量', 0, 1, .05], ['seVolume', '音效音量', 0, 1, .05], ['voiceVolume', '语音音量', 0, 1, .05], ['videoVolume', '视频音量', 0, 1, .05]] as const) {
       const row = this.el('label', undefined, 'vn-setting'), input = this.el('input'); input.type = 'range'; input.min = String(min); input.max = String(max); input.step = String(step); input.value = String(snapshot.settings[key]); input.setAttribute('aria-label', label);
       input.addEventListener('input', () => configure({ [key]: Number(input.value) })); row.append(this.el('span', label), input); panel.append(row);
     }
-    for (const [key, label] of [['music', '背景音乐'], ['voiceEnabled', '语音播放'], ['soundEffects', '动作音效'], ['reducedMotion', '减少动态效果']] as const) {
+    for (const [key, label] of [['music', '背景音乐'], ['ambience', '环境音播放'], ['voiceEnabled', '语音播放'], ['soundEffects', '动作音效'], ['reducedMotion', '减少动态效果']] as const) {
       const row = this.el('label', undefined, 'vn-setting'), input = this.el('input'); input.type = 'checkbox'; input.checked = snapshot.settings[key]; input.addEventListener('change', () => configure({ [key]: input.checked })); row.append(this.el('span', label), input); panel.append(row);
     }
     const backup = this.el('div', undefined, 'vn-backup'); backup.append(this.button('导出存档', () => this.exportSave()));
