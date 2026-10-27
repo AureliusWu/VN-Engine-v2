@@ -40,7 +40,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Auto Save runtime binding | PASS | `mountGame()` 每次进入新的 visit 写独立 Auto Slot，不覆盖手动/Quick |
 | Persistent Meta State | PASS | 独立 Meta key，记录 `ending_seen / cg_unlocked / playthrough_count / true_route_unlocked` |
 | Replay Context isolation | PASS | Replay Context 独立生成，不写普通 Save / Route 状态 |
-| Collection data API | PASS | 可计算 CG / Ending 的 unlock progress；当前仍缺正式 Gallery / Collection UI |
+| Collection data API | PASS | 可计算 CG / Ending 的 unlock progress，已接入正式 Gallery / Collection UI |
 | Formal Stage Layer vocabulary | PASS | 固定 Layer：background / character-back / character / character-front / cg / effect / ui |
 | Presentation Timeline contract | PASS | Move / Scale / Opacity / Camera keyframe 有正式数据契约与 authoring validation |
 | Timeline final-state settlement | PASS | Skip / Reduced Motion 可确定性收敛到 timeline 最终状态 |
@@ -65,7 +65,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Quick Save | PASS | 独立 Quick Slot + Session binding |
 | Quick Load | PASS | 独立 Quick Slot + Session restore |
 | Auto Save | PASS | mount runtime 自动写独立 Auto Slot |
-| Save Manager UI | PARTIAL | 已接入六槽、覆盖确认、快速存读档、旧单槽读取及自动存档提示；截图缩略图未实现，Windows 本次提交的原生验收以 CI 为准 |
+| Save Manager UI | PASS | 六槽、覆盖确认、快速存读档、旧单槽读取和自动提示已通过浏览器及 Windows 原生验收；可选截图缩略图未实现 |
 | Rollback | ENGINE_GAP | History reread 可回读，但不等同完整状态 Rollback |
 | History | PASS | 有 history + search + reread |
 | Auto | PASS | 自研 scheduler |
@@ -83,8 +83,8 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Fade | PASS | DOM effect |
 | Flash | PASS | DOM effect |
 | Shake | PASS | DOM effect |
-| Move / Scale / Camera | PARTIAL | DOM 已执行轨道并覆盖暂停、终态与恢复；本次 Windows CI 和可视化作者控件仍需验证 |
-| Formal Layer API | PARTIAL | DOM 已接入五个视觉资源层与 effect / ui 轨道；本次 Windows CI 和可视化作者控件仍需验证 |
+| Move / Scale / Camera | PARTIAL | DOM 已执行轨道并覆盖暂停、终态与恢复；Studio 图层 / 轨道 / 镜头控件和预览已实现，本次原生作者控件 CI 待确认 |
+| Formal Layer API | PARTIAL | 五个视觉资源层、effect / ui 轨道与 Studio 控件已接入；本次原生作者控件 CI 待确认 |
 | Video | PARTIAL | 本地播放、失败回退、暂停 / 跳过 / 减少动态和编辑器配置已接入；`9894454` 浏览器及 Windows CI 通过，有声视频听感、实际设备及编码支持仍需作品验证 |
 | Investigation / nontraditional play | PASS | Investigation runtime |
 | Mini game contract | PARTIAL | 可通过自定义 runtime 承载，但未提供统一 entry/exit/save/skip contract |
@@ -105,7 +105,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 
 ### P0 — Persistence UI closure
 
-- 多槽、快速存读档与自动存档提示已接入；本次 Windows 原生 CI 和可选截图缩略图仍需单独记录
+- 多槽、快速存读档与自动存档提示已通过浏览器和 Windows；可选截图缩略图未实现
 
 ### P0 — Meta / Collection UI
 
@@ -115,7 +115,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 
 ### P1 — Presentation runtime closure
 
-- DOM 已消费 Formal Layer 与时间线；继续确认 Windows 原生 CI，并补可视化作者控件
+- DOM 与 Studio 图层 / 时间线 / 镜头控件已接入；本次 Windows 原生作者控件 CI 待确认
 - Video 已接入 DOM 和编辑器，浏览器与 Windows 无声 WebM 通过；有声听感和实际设备编码支持需作品验证
 
 ### P1 — Release Evidence

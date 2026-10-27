@@ -62,6 +62,17 @@ test('asset diagnostics distinguish missing IDs, roles, files and font licences'
   const codes = new Set(diagnoseProject(project, new Set()).map(d => d.code));
   for (const code of ['asset-binding', 'font-license', 'asset-file']) assert.ok(codes.has(code));
 });
+test('editor diagnoses invalid timelines in unvisited lines and keeps undoable repairs', () => {
+  const project = newProject('script');
+  project.program.blocks[1].lines[0].cue = { timeline: { durationMs: 100, animations: [{ id: 'enter', layer: 'character', to: { x: 10 }, durationMs: 200 }] } };
+  const model = new EditorModel(project);
+  assert.ok(model.diagnostics().some(item => item.code === 'timeline' && item.severity === 'error'));
+  model.set(['program', 'blocks', 1, 'lines', 0, 'cue', 'timeline', 'animations', 0, 'durationMs'], 100);
+  assert.equal(model.diagnostics().some(item => item.code === 'timeline'), false);
+  model.undo(); assert.equal(model.diagnostics().some(item => item.code === 'timeline'), true);
+  model.redo(); model.set(['program', 'blocks', 1, 'lines', 0, 'cue', 'timeline', 'animations', 0, 'target'], 'missing');
+  assert.equal(model.diagnostics().some(item => item.code === 'timeline-target'), true);
+});
 test('editor import rejects dangerous keys and unsupported workspace schemas without executing source', () => {
   const model = new EditorModel(newProject('script')), json = model.serialize();
   assert.throws(() => readDocument(json.replace('"schema": 1', '"schema": 99')), /版本/);
@@ -83,7 +94,7 @@ test('injected preview asset URLs support blob files but never script or data ex
 test('Studio builds are complete local bundles and exported editor projects build into real games', async () => {
   const root = await mkdtemp(join(tmpdir(), 'vn-studio-')); const result = await packageStudio(join(root, 'studio'));
   const manifest = JSON.parse(await readFile(join(result.output, 'studio-manifest.json'), 'utf8'));
-  for (const name of ['editor/index.html', 'editor/preview.mjs', 'editor/studio-font.woff2', 'editor/OFL.txt', 'lib/editor/index.js', 'lib/script/engine.js', 'samples/campus.json']) assert.ok(manifest.files.some(f => f.name === name));
+  for (const name of ['editor/index.html', 'editor/presentation.mjs', 'editor/preview.mjs', 'editor/studio-font.woff2', 'editor/OFL.txt', 'lib/editor/index.js', 'lib/script/engine.js', 'samples/campus.json']) assert.ok(manifest.files.some(f => f.name === name));
   await assert.rejects(packageStudio(result.output), /preserved/);
   const { writeFile } = await import('node:fs/promises');
   for (const kind of ['vn', 'chat', 'script', 'investigation']) { const model = new EditorModel(newProject(kind)); const source = join(root, kind + '.json'); await writeFile(source, model.serialize(true)); const build = await packageGame(source, join(root, kind)); assert.ok((await readdir(build.output)).includes('project.json')); }

@@ -46,19 +46,30 @@ function cameraAt(frames: readonly CameraKeyframe[] | undefined, timeMs: number)
 
 export function validatePresentationTimeline(timeline: PresentationTimeline): void {
   if (!Number.isFinite(timeline.durationMs) || timeline.durationMs < 0 || timeline.durationMs > 300_000) throw new Error('Invalid timeline duration');
+  if ((timeline.animations !== undefined && !Array.isArray(timeline.animations)) || (timeline.camera !== undefined && !Array.isArray(timeline.camera))) throw new Error('Timeline tracks must be arrays');
   const ids = new Set<string>();
   for (const animation of timeline.animations ?? []) {
-    if (!animation.id.trim() || ids.has(animation.id) || !STAGE_LAYERS.includes(animation.layer)) throw new Error('Invalid or duplicate timeline animation');
+    if (!animation || typeof animation.id !== 'string' || !animation.id.trim() || ids.has(animation.id) || !STAGE_LAYERS.includes(animation.layer)) throw new Error('Invalid or duplicate timeline animation');
     ids.add(animation.id);
+    if ((animation.target !== undefined && (typeof animation.target !== 'string' || !animation.target.trim()))
+      || (animation.easing !== undefined && !['linear', 'ease-in', 'ease-out', 'ease-in-out'].includes(animation.easing))) throw new Error(`Invalid timeline target or easing: ${animation.id}`);
+    if (animation.target && (animation.layer === 'effect' || animation.layer === 'ui')) throw new Error(`Only visual asset layers support a target: ${animation.id}`);
     const start = animation.startMs ?? 0;
     if (!Number.isFinite(start) || start < 0 || !Number.isFinite(animation.durationMs) || animation.durationMs < 0 || start + animation.durationMs > timeline.durationMs)
       throw new Error(`Animation outside timeline: ${animation.id}`);
+    for (const [name, value] of [['from', animation.from], ['to', animation.to]] as const) {
+      if (value === undefined && name === 'from') continue;
+      if (!value || typeof value !== 'object' || Array.isArray(value)) throw new Error(`Invalid timeline ${name}: ${animation.id}`);
+      for (const key of ['x', 'y', 'scale', 'opacity'] as const) if (value[key] !== undefined && !Number.isFinite(value[key])) throw new Error(`Non-finite timeline ${key}: ${animation.id}`);
+      if (value.opacity !== undefined && (value.opacity < 0 || value.opacity > 1)) throw new Error(`Timeline opacity must be between 0 and 1: ${animation.id}`);
+    }
     const to = transform(animation.to), from = transform(animation.from);
     if (to.scale <= 0 || from.scale <= 0) throw new Error(`Animation scale must be positive: ${animation.id}`);
   }
   let previous = -1;
   for (const frame of timeline.camera ?? []) {
-    if (!Number.isFinite(frame.atMs) || frame.atMs < 0 || frame.atMs > timeline.durationMs || frame.atMs < previous) throw new Error('Camera keyframes must be ordered within timeline');
+    if (!frame || !Number.isFinite(frame.atMs) || frame.atMs < 0 || frame.atMs > timeline.durationMs || frame.atMs < previous) throw new Error('Camera keyframes must be ordered within timeline');
+    if ((frame.x !== undefined && !Number.isFinite(frame.x)) || (frame.y !== undefined && !Number.isFinite(frame.y))) throw new Error('Camera coordinates must be finite');
     if (frame.scale !== undefined && (!Number.isFinite(frame.scale) || frame.scale <= 0)) throw new Error('Camera scale must be positive');
     previous = frame.atMs;
   }

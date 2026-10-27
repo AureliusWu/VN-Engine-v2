@@ -53,10 +53,11 @@ try {
   await page.screenshot({ path: out + '/studio-campus.png', fullPage: true });
   passed('Existing independent engine samples load with their local resource manifest and own presentation');
 
-  await page.locator('#inspector summary').filter({ hasText: '画面与声音绑定' }).click();
-  await page.getByLabel('视频', { exact: true }).selectOption('test-video');
-  await page.locator('#inspector summary').filter({ hasText: '画面与声音绑定' }).click();
-  const fallback = page.getByLabel('视频回退画面', { exact: true });
+  const sceneMedia = page.locator('#inspector > details').filter({ hasText: '画面与声音绑定' });
+  await sceneMedia.evaluate(node => { node.open = true; });
+  await sceneMedia.getByLabel('视频', { exact: true }).selectOption('test-video');
+  await sceneMedia.evaluate(node => { node.open = true; });
+  const fallback = sceneMedia.getByLabel('视频回退画面', { exact: true });
   const fallbackValue = await fallback.locator('option').nth(1).getAttribute('value'); await fallback.selectOption(fallbackValue);
   await preview.locator('.vn-video').waitFor({ state: 'visible' });
   await page.waitForFunction(() => document.getElementById('preview').contentDocument.querySelector('.vn-video')?.currentTime > .05);

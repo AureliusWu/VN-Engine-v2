@@ -64,7 +64,7 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "af6d23a374222c633236dcc07c0a248c62b725acc5e45fba1bbc779d9c89e629"
+      "targetSha256": "d7ee76c636fdf328af726a58dc7a777a20ab177880023c6da593e6e220342572"
     },
     {
       "target": "editor/index.html",
@@ -77,6 +77,12 @@
       "mode": "new",
       "origins": [],
       "targetSha256": "1325d8e348a36f612758cc73d7ed2afd1134f552fb18b725f0260fc671260317"
+    },
+    {
+      "target": "editor/presentation.mjs",
+      "mode": "new",
+      "targetSha256": "d94b5ae57a59467f1d1678808d90e143fcc0d6bea2f6285dc765ebe2d458595b",
+      "origins": []
     },
     {
       "target": "editor/preview.css",
@@ -107,7 +113,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "39e445247421b429524212df69fd3499c19ede80b273526e0816474d6431d992"
+      "targetSha256": "8730459df5ee75b1d1da9be5c9ef868990d294c162cc047af05c65c8b2a7f18b"
     },
     {
       "target": "editor/style.css",
@@ -290,7 +296,7 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "f39ab29cf124fde24a97ce70111005ff6b28bca90ba1d014d16850575156573c"
+      "targetSha256": "55f326885f2112f064159f6a86a03e8488ffbaeb792396de51e1f4e2a1d93f4e"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
@@ -498,7 +504,7 @@
     {
       "target": "src/compliance/project.ts",
       "mode": "new",
-      "targetSha256": "9dc6b6e935222335928a4c9487e811332d621e654a40f163d7ff8a7f3cd074cb",
+      "targetSha256": "23a7cfdfcc11fa12a48a8cc50a49f03c447b665f7f211f7bf61a8a9421ab3c63",
       "origins": []
     },
     {
@@ -511,7 +517,7 @@
       "target": "src/editor/model.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "5f329f50045d974155f75c8afeed39cb5f51070688e92de93f85fea0129c3cf8"
+      "targetSha256": "896d34546982a9298faaa4a70b2ee45ade2da75df6d8686c6e357c34bd4c7a47"
     },
     {
       "target": "src/history/search.ts",
@@ -720,7 +726,7 @@
     {
       "target": "src/stage/timeline.ts",
       "mode": "new",
-      "targetSha256": "27232f6b32d02a67f1720f616a0c076a1fd726bcba5eaa603e5c750196dd2876",
+      "targetSha256": "c6b77ce38250d1ef772f8d0021ca23dd7ccf4675cb7c78d56d164d5180bd689e",
       "origins": []
     },
     {

@@ -1,4 +1,5 @@
 import { EditorModel, newProject } from '../lib/editor/index.js';
+import { renderPresentationEditor } from './presentation.mjs';
 import { ENGINE_VERSION } from '../lib/index.js';
 import { nativeHost, nativeRequest } from './native.mjs';
 
@@ -7,6 +8,7 @@ const DRAFT_KEY = 'vn-engine-studio:draft:v1';
 let model = new EditorModel(newProject('script')), selected, tab = 'story', draft, draftTimer, previewTimer;
 let baseURL = new URL('../samples/', location.href).href, resourceURLs = new Map(), resourceFiles, previewReady = false, revision = 0, savedSource = '';
 let nativeHidden = false;
+const openInspectorSections = new Set();
 const status = (text, error = false) => { $('status').textContent = text; $('status').classList.toggle('error', error); };
 function element(tag, text, attrs = {}) {
   const node = document.createElement(tag); if (text !== undefined) node.textContent = text;
@@ -65,7 +67,11 @@ function update(inspector = false) {
   document.querySelector('[data-command=add-node]').disabled = model.getView().project.type === 'rain';
   $('graph-count').textContent = `${graph.nodes.length} 节点 · ${graph.edges.length} 连线`;
   renderGraph(graph); renderDiagnostics();
-  if (inspector) renderInspector(); if (tab === 'assets' && inspector) renderAssets();
+  if (inspector) {
+    const panel = $('inspector').parentElement, scrollTop = panel.scrollTop;
+    renderInspector(); panel.scrollTop = scrollTop;
+  }
+  if (tab === 'assets' && inspector) renderAssets();
   if (tab === 'source' && savedSource === $('source').value) { $('source').value = model.serialize(true); savedSource = $('source').value; }
   if (model.dirty) scheduleDraft();
   if ($('auto-preview').checked) { clearTimeout(previewTimer); previewTimer = setTimeout(preview, 300); } else $('preview-state').textContent = '更改后点击“从头试玩”';
@@ -126,6 +132,12 @@ function renderDiagnostics() {
 }
 function nodeField(parent, label, path, options) { field(parent, label, valueAt(path), value => set(path, value), options); }
 function jsonField(parent, label, path, fallback) { field(parent, label, JSON.stringify(valueAt(path) ?? fallback, null, 2), value => set(path, JSON.parse(value)), { multiline: true }); }
+function inspectorSection(parent, key, title) {
+  const details = element('details', undefined, { 'data-inspector-section': key }); details.open = openInspectorSections.has(key);
+  details.append(element('summary', title)); details.addEventListener('toggle', () => {
+    if (!details.isConnected) return; if (details.open) openInspectorSections.add(key); else openInspectorSections.delete(key);
+  }); parent.append(details); return details;
+}
 function assetField(parent, label, cuePath, name, kind) {
   const assets = model.getView().project.assets.filter(a => a.kind === kind), cue = valueAt(cuePath) ?? {}, current = cue[name];
   const choices = [['', '未设置'], ['@clear', '清除当前图层'], ...assets.map(a => [a.id, a.id])];
@@ -136,11 +148,12 @@ function assetField(parent, label, cuePath, name, kind) {
   }, { choices: kind === 'audio' ? choices.filter(c => c[0] !== '@clear' || ['music', 'ambience'].includes(name)) : choices });
 }
 function renderCue(parent, path) {
-  const details = element('details'), summary = element('summary', '画面与声音绑定'); details.append(summary); parent.append(details);
+  const details = inspectorSection(parent, JSON.stringify(path) + ':media', '画面与声音绑定');
   for (const [name, label, kind] of [['background', '背景', 'background'], ['portrait', '立绘', 'portrait'], ['cg', 'CG', 'cg'], ['music', '背景音乐', 'audio'], ['voice', '录音', 'audio'], ['sound', '动作音效', 'audio']]) assetField(details, label, path, name, kind);
   const cue = valueAt(path) ?? {}, video = cue.video, assets = model.getView().project.assets;
   const updateVideo = change => {
-    const next = { ...(valueAt(path) ?? {}) }; next.video = { ...(next.video ?? {}), ...change };
+    const next = { ...(valueAt(path) ?? {}) }; next.video = { ...(next.video ?? {}) };
+    for (const [key, value] of Object.entries(change)) { if (value === undefined) delete next.video[key]; else next.video[key] = value; }
     if (!next.video.asset) delete next.video; set(path, next, true);
   };
   field(details, '视频', video?.asset ?? '', value => updateVideo({ asset: value }), { choices: [['', '未设置'], ...assets.filter(a => a.kind === 'video').map(a => [a.id, a.id])] });
@@ -151,6 +164,7 @@ function renderCue(parent, path) {
   muted.disabled = !video?.asset;
   const loop = field(details, '视频循环', video?.loop ? 'true' : 'false', value => updateVideo({ loop: value === 'true' }), { choices: [['false', '播放一次'], ['true', '循环']] });
   loop.disabled = !video?.asset;
+  renderPresentationEditor(parent, path, { element, field, action, valueAt, set, assets, section: inspectorSection });
 }
 function renderInspector() {
   const root = $('inspector'), node = graphNode(); root.replaceChildren();

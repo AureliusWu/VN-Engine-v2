@@ -29,6 +29,23 @@ internal static class SmokeTests
             await JS("document.querySelector('[data-command=open]').click()");
             await Wait("document.body.dataset.projectType === 'narrative' && document.querySelector('#preview').contentDocument?.querySelector('.vn-portrait')?.naturalWidth > 0");
             checks.Add("Trusted editor RPC opens JSON through native file IO and loads manifest-only local assets");
+            await JS("""
+              window.nativePresentationAuthor = 'pending';
+              try {
+                const section = () => [...document.querySelectorAll('#inspector > details')].find(node => node.querySelector('summary')?.textContent === '正式图层与时间线');
+                const change = (name, value) => { const input = section().querySelector('[aria-label="' + name + '"]'); input.value = value; input.dispatchEvent(new Event('change')); };
+                const click = name => [...section().querySelectorAll('button')].find(button => button.textContent === name).click();
+                section().open = true;
+                change('图层 character-front', JSON.stringify({asset:'lin/neutral', kind:'portrait'}));
+                click('启用时间线'); click('添加动画轨道');
+                change('轨道 1 图层', 'character-front'); change('轨道 1 目标资源', 'lin/neutral');
+                change('轨道 1 终点 X', '70'); change('轨道 1 终点 缩放', '1.1');
+                window.nativePresentationAuthor = 'ready';
+              } catch (error) { window.nativePresentationAuthor = 'failed: ' + error.message; }
+              """);
+            if (await JS("window.nativePresentationAuthor === 'ready'") != "true") throw new InvalidDataException("Native timeline authoring: " + await JS("window.nativePresentationAuthor"));
+            await Wait("document.querySelector('#preview').contentDocument?.querySelector('.vn-character-front')?.naturalWidth > 0 && document.querySelector('#preview').contentDocument.querySelector('.vn-character-front').style.transform.includes('70px')");
+            checks.Add("Native Studio authors a formal layer and timeline through visual controls and renders its final pose in WebView2");
             await JS("(()=>{const input=document.querySelector('[aria-label=\"作品名称\"]'); input.value='Windows native smoke'; input.dispatchEvent(new Event('change'));})()");
             await Wait("document.body.dataset.dirty === 'true'");
             await JS("document.querySelector('[data-command=save]').click()");

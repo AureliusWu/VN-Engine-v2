@@ -24,12 +24,12 @@ export type ProjectComplianceReport = {
 const PLACEHOLDER_TEXT = /\b(?:TODO|FIXME|PLACEHOLDER|lorem ipsum)\b/i;
 const ASSET_STATUSES = new Set(['PLACEHOLDER', 'DRAFT', 'REVIEW', 'READY', 'DEPRECATED']);
 
-type AssetReference = { id: string; kind: AssetKind; context: string };
+type AssetReference = { id: string; kind?: AssetKind; context: string };
 
 function cueReferences(cue: StageCue | undefined, context: string): AssetReference[] {
   if (!cue) return [];
   const result: AssetReference[] = [];
-  const add = (id: string | null | undefined, kind: AssetKind, field: string) => {
+  const add = (id: string | null | undefined, kind: AssetKind | undefined, field: string) => {
     if (id) result.push({ id, kind, context: `${context}.${field}` });
   };
   add(cue.background, 'background', 'background');
@@ -45,7 +45,10 @@ function cueReferences(cue: StageCue | undefined, context: string): AssetReferen
     if (!value || typeof value.asset !== 'string' || !value.asset || !['background', 'portrait', 'cg'].includes(value.kind)) throw new Error(`Invalid layer asset: ${context}.${layer}`);
     add(value.asset, value.kind, `layers.${layer}`);
   }
-  if (cue.timeline) validatePresentationTimeline(cue.timeline);
+  if (cue.timeline) {
+    validatePresentationTimeline(cue.timeline);
+    for (const track of cue.timeline.animations ?? []) if (track.target) add(track.target, undefined, `timeline.${track.id}.target`);
+  }
   if (cue.video) {
     if (typeof cue.video.asset !== 'string' || !cue.video.asset.trim()
       || (cue.video.muted !== undefined && typeof cue.video.muted !== 'boolean')
@@ -162,7 +165,7 @@ export function validateProjectCompliance(
 
   for (const reference of references) {
     try { catalog.get(reference.id, reference.kind); }
-    catch { throw new Error(`Missing or mismatched asset reference: ${reference.context} -> ${reference.id} (${reference.kind})`); }
+    catch { throw new Error(`Missing or mismatched asset reference: ${reference.context} -> ${reference.id} (${reference.kind ?? 'asset'})`); }
   }
 
   const artGate = mode === 'release' ? assessProductionArt(project, references.map(reference => reference.id), { requiresPwa: options.requiresPwa }) : undefined;

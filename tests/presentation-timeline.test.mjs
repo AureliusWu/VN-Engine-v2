@@ -31,6 +31,10 @@ test('timeline authoring rejects duplicate IDs, invalid scale and out-of-range t
   ] }));
   assert.throws(() => validatePresentationTimeline({ durationMs: 100, animations: [{ id: 'a', layer: 'character', to: { scale: 0 }, durationMs: 50 }] }));
   assert.throws(() => validatePresentationTimeline({ durationMs: 100, animations: [{ id: 'a', layer: 'character', to: { x: 1 }, startMs: 80, durationMs: 30 }] }));
+  assert.throws(() => validatePresentationTimeline({ durationMs: 100, animations: [{ id: 'a', layer: 'character', to: { opacity: 2 }, durationMs: 100 }] }));
+  assert.throws(() => validatePresentationTimeline({ durationMs: 100, animations: [{ id: 'a', layer: 'character', to: { x: NaN }, durationMs: 100 }] }));
+  assert.throws(() => validatePresentationTimeline({ durationMs: 100, camera: [{ atMs: 0, x: Infinity }] }));
+  assert.throws(() => validatePresentationTimeline({ durationMs: 100, animations: [{ id: 'a', layer: 'ui', target: 'hero', to: { x: 1 }, durationMs: 100 }] }), /Only visual asset layers/);
 });
 
 test('video is a first-class asset kind and compliance validates video fallback references', () => {
@@ -55,7 +59,7 @@ test('video is a first-class asset kind and compliance validates video fallback 
 });
 
 test('timeline, video and visual layers reach real driver frames without persisting one-shot cues', () => {
-  const timeline = { durationMs: 100, animations: [{ id: 'move', layer: 'character-front', to: { x: 20 }, durationMs: 100 }] };
+  const timeline = { durationMs: 100, animations: [{ id: 'move', layer: 'character-front', target: 'hero', to: { x: 20 }, durationMs: 100 }] };
   const project = { schema: 1, game: 'cue-test', version: 'v1', title: 'Cue test', type: 'narrative', settings: { textDelayMs: 0 },
     assets: [{ id: 'hero', kind: 'portrait', src: 'hero.svg' }, { id: 'clip', kind: 'video', src: 'clip.webm' }],
     stage: { lines: { first: { layers: { 'character-front': { asset: 'hero', kind: 'portrait' } }, timeline, video: { asset: 'clip' } } } },
@@ -69,7 +73,10 @@ test('timeline, video and visual layers reach real driver frames without persist
   assert.equal(cue.presentationState.layers['character-front'].transform.x, 20);
   const saved = session.save(); session.restart(); session.restore(saved);
   assert.equal(session.getSnapshot().frame.stage.presentationState.layers['character-front'].transform.x, 20);
-  assert.equal(validateProjectCompliance(project).references, 2);
+  assert.equal(validateProjectCompliance(project).references, 3);
+  project.stage.lines.first.timeline.animations[0].target = 'missing';
+  assert.throws(() => validateProjectCompliance(project), /Missing or mismatched asset reference/);
+  project.stage.lines.first.timeline.animations[0].target = 'hero';
   project.stage.lines.first.layers['character-front'].asset = 'missing';
   assert.throws(() => validateProjectCompliance(project), /Missing or mismatched asset reference/);
   session.dispose();

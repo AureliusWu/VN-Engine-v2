@@ -2,6 +2,7 @@ import type { EngineProject } from '../runtime/project.js';
 import { createProject } from '../runtime/project.js';
 import { isRecord } from '../storage/save.js';
 import { localAssetPath } from '../assets/catalog.js';
+import { validatePresentationTimeline } from '../stage/timeline.js';
 import { freezeData, type DeepReadonly } from '../runtime/readonly.js';
 
 type Mutable<T> = { -readonly [P in keyof T]: T[P] extends object ? Mutable<T[P]> : T[P] };
@@ -102,6 +103,16 @@ export function diagnoseProject(project: EngineProject, availableFiles?: Readonl
       if (record(value.video.fallback)) binding(value.video.fallback.asset, String(value.video.fallback.kind), '视频回退', node);
     }
     if (record(value.layers)) for (const [layer, asset] of Object.entries(value.layers)) if (record(asset)) binding(asset.asset, String(asset.kind), `图层 ${layer}`, node);
+    if (value.timeline !== undefined) {
+      try { validatePresentationTimeline(value.timeline); }
+      catch (error) { add('error', 'timeline', '时间线无效：' + (error instanceof Error ? error.message : String(error)), node); }
+      if (Array.isArray(value.timeline?.animations)) for (const track of value.timeline.animations) {
+        if (!track?.target) continue;
+        if (typeof track.target !== 'string' || !assets.has(track.target)) add('error', 'timeline-target', '轨道目标资源不存在：' + String(track.target), node);
+        const layer = value.layers?.[track.layer];
+        if (record(layer) && layer.asset !== track.target) add('error', 'timeline-target', '轨道目标与该层绑定不一致：' + String(track.id), node);
+      }
+    }
   };
   binding(project.font, 'font', '字体');
   for (const asset of project.assets) {
