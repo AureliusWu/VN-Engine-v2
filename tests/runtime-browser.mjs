@@ -53,6 +53,12 @@ try {
   await page.getByRole('button', { name: '确认覆盖槽位 1', exact: true }).click();
   assert.notEqual(await page.evaluate(() => localStorage.getItem('vn-engine:vn-self-campus:v2:save:manual-1')), savedBefore);
   await click('存档');
+  await page.evaluate(() => vnDemo.persistence.contract.saveManual(3, vnDemo.session.save()));
+  const changedElsewhere = await page.evaluate(() => localStorage.getItem('vn-engine:vn-self-campus:v2:save:manual-3'));
+  await page.getByRole('button', { name: '保存到槽位 3', exact: true }).click();
+  assert.equal(await page.getByRole('button', { name: '确认覆盖槽位 3', exact: true }).isVisible(), true);
+  assert.equal(await page.evaluate(() => localStorage.getItem('vn-engine:vn-self-campus:v2:save:manual-3')), changedElsewhere);
+  await page.getByRole('button', { name: '取消覆盖', exact: true }).click();
   await page.getByRole('button', { name: '关闭', exact: true }).click();
   await page.evaluate(() => localStorage.setItem('vn-engine:vn-self-campus:v2:save:manual-2', '{broken'));
   await click('读档'); assert.match(await page.locator('.vn-save-slot').nth(1).innerText(), /损坏/);

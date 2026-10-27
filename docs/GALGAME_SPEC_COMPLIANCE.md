@@ -71,8 +71,8 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Hide UI | PASS | DOM runtime |
 | Settings persistence | PASS | 阅读与声音设置持久化 |
 | Persistent Meta State | PASS | 独立 MetaState API 与 mount runtime 更新 |
-| CG Gallery | PARTIAL | unlock / progress / replay context 已有；正式 Gallery UI 未接入 |
-| Ending Collection | PARTIAL | seen / progress / replay context 已有；正式 Collection UI 未接入 |
+| CG Gallery | PARTIAL | 可配置项目数据、锁定遮蔽、查看图片和独立回看；本次提交的 Windows 原生及完整 CI 证据待确认 |
+| Ending Collection | PARTIAL | 可配置标题、True Ending、解锁进度和独立回看；本次提交的 Windows 原生及完整 CI 证据待确认 |
 | BGM | PASS | Runtime media |
 | SE | PASS | Runtime media |
 | Ambience | PASS | Runtime media |
@@ -107,8 +107,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 
 ### P0 — Meta / Collection UI
 
-- CG Gallery 正式界面
-- Ending Collection 正式界面
+- CG Gallery 与 Ending Collection 已接入播放器；本次 Windows 原生及完整 CI 证据待确认
 - True Route unlock policy 数据化
 - Replay 结束后安全返回 Collection
 

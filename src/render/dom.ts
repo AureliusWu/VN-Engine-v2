@@ -5,9 +5,12 @@ import type { AssetCatalog, AssetKind } from '../assets/catalog.js';
 import type { RuntimeSession, RuntimeSettings, RuntimeView } from '../runtime/session.js';
 import type { bindSessionPersistence, SaveEnvelope } from '../storage/contract.js';
 import type { LoadResult } from '../storage/store.js';
+import type { CollectionCg, CollectionEnding, ProjectCollections, createMetaStateStore } from '../meta/state.js';
 import { DOM_STYLE } from './dom-style.js';
 
-export type DOMRendererOptions = { title?: string; font?: string; storage?: StoragePort | null; persistence?: ReturnType<typeof bindSessionPersistence>; onUnlockAudio?: () => void };
+export type DOMRendererOptions = { title?: string; font?: string; storage?: StoragePort | null; persistence?: ReturnType<typeof bindSessionPersistence>;
+  meta?: ReturnType<typeof createMetaStateStore>; collections?: ProjectCollections; replayOnly?: boolean;
+  beginReplay?: (root: HTMLElement, saved: unknown) => () => void; onUnlockAudio?: () => void };
 
 /** Framework-free renderer and input host for VN, chat/call and investigations. */
 export class DOMRenderer {
@@ -42,6 +45,8 @@ export class DOMRenderer {
   private disposed = false;
   private probes = new Map<HTMLImageElement, { id: string; probe: HTMLImageElement }>();
   private lastFocus?: HTMLElement;
+  private panelCleanup?: () => void;
+  private replayReturn?: () => void;
   private saveKey: string;
   private settingsKey: string;
   private onVisibility: () => void;
@@ -74,10 +79,17 @@ export class DOMRenderer {
       ['save', '存档', () => options.persistence ? this.saveManager('save') : this.saveLegacy()],
       ['load', '读档', () => options.persistence ? this.saveManager('load') : this.loadLegacy()],
       ['quick-save', '快速存档', () => this.quickSave()], ['quick-load', '快速读档', () => this.quickLoad()], ['history', '历史', () => this.history()],
+      ['gallery', 'CG 图鉴', () => this.collection('cg')], ['endings', '结局收藏', () => this.collection('ending')],
       ['evidence', '证据簿', () => this.evidence()], ['settings', '设置', () => this.settings()],
       ['hide', '隐藏界面', () => session.hide(true)], ['fullscreen', '全屏', () => this.fullscreen()],
       ['sound', '启用声音', () => options.onUnlockAudio?.()], ['restart', '新游戏', () => { session.restart(); this.notify('已开始新游戏'); }]
-    ] as const) { const button = this.button(label, handler); button.dataset.control = id; if (!options.persistence && (id === 'quick-save' || id === 'quick-load')) button.hidden = true; this.buttons.set(id, button); this.toolbar.append(button); }
+    ] as const) {
+      const button = this.button(label, handler); button.dataset.control = id;
+      if ((!options.persistence && (id === 'quick-save' || id === 'quick-load'))
+        || (id === 'gallery' && !options.collections?.cgs?.length) || (id === 'endings' && !options.collections?.endings?.length)
+        || (options.replayOnly && ['save', 'load', 'quick-save', 'quick-load', 'restart'].includes(id))) button.hidden = true;
+      this.buttons.set(id, button); this.toolbar.append(button);
+    }
     this.status = this.el('span', '', 'vn-status'); this.status.setAttribute('role', 'status'); this.toolbar.append(this.status);
     this.modal = this.el('div', undefined, 'vn-modal'); this.modal.hidden = true; this.modal.setAttribute('role', 'dialog'); this.modal.setAttribute('aria-modal', 'true');
     host.append(this.stage, this.toolbar, this.modal); root.append(host);
@@ -174,7 +186,7 @@ export class DOMRenderer {
       if (snapshot.ready && frame.ending) this.actions.append(this.el('span', frame.ending === 'failure' ? '调查需要重新核对' : '已到达结局'));
     }
     if (entered || snapshot.paused !== previous?.paused) {
-      for (const id of ['auto', 'skip', 'save', 'load', 'quick-save', 'quick-load', 'history', 'evidence', 'settings', 'hide', 'restart']) this.buttons.get(id)!.disabled = snapshot.paused;
+      for (const id of ['auto', 'skip', 'save', 'load', 'quick-save', 'quick-load', 'gallery', 'endings', 'history', 'evidence', 'settings', 'hide', 'restart']) this.buttons.get(id)!.disabled = snapshot.paused;
       this.buttons.get('skip')!.disabled ||= !snapshot.supportsSkip;
     }
     if (entered) this.buttons.get('evidence')!.hidden = !frame.evidence;
@@ -215,7 +227,10 @@ export class DOMRenderer {
             try { const saved = persistence.saveManual(index); if (saved.status === 'saved') { this.closePanel(); this.notify(`已保存到槽位 ${index}`); } else this.notify('存储暂不可用，可以继续游玩或导出存档'); }
             catch { this.notify('存储暂不可用，可以继续游玩或导出存档'); }
           };
-          if (result.status === 'empty') { write(); return; }
+          // The slot can change in another tab while this panel is open.
+          const current = persistence.contract.loadManual(index);
+          if (current.status === 'unavailable') { this.notify('存储暂不可用，未覆盖存档'); return; }
+          if (current.status === 'empty') { write(); return; }
           const confirmation = this.el('div', undefined, 'vn-save-confirm');
           confirmation.append(this.el('span', `确定覆盖槽位 ${index}？`), this.button(`确认覆盖槽位 ${index}`, write), this.button('取消覆盖', show));
           button.disabled = true; row.append(confirmation);
@@ -265,14 +280,56 @@ export class DOMRenderer {
     try { if (raw.length > 2_000_000) throw new Error(); this.session.restore(JSON.parse(raw)); if (!this.modal.hidden) this.closePanel(); this.notify('已恢复旧单槽存档'); }
     catch { this.notify('存档无法使用，原文件已保留'); }
   }
-  private panel(title: string): HTMLElement {
+  private panel(title: string, onClose: () => void = () => this.closePanel()): HTMLElement {
     if (!this.modal.hidden) this.closePanel();
     this.lastFocus = this.document.activeElement instanceof this.document.defaultView!.HTMLElement ? this.document.activeElement as HTMLElement : undefined;
     this.session.pause('panel', true); this.modal.hidden = false; this.modal.replaceChildren(); this.modal.setAttribute('aria-label', title);
     const panel = this.el('div', undefined, 'vn-panel'), head = this.el('div', undefined, 'vn-panel-head');
-    const close = this.button('关闭', () => this.closePanel()); head.append(this.el('h2', title), close); panel.append(head); this.modal.append(panel); close.focus(); return panel;
+    const close = this.button('关闭', onClose); head.append(this.el('h2', title), close); panel.append(head); this.modal.append(panel); close.focus(); return panel;
   }
-  private closePanel() { this.modal.hidden = true; this.modal.replaceChildren(); this.session.pause('panel', false); if (this.lastFocus?.isConnected) this.lastFocus.focus(); else this.element.focus(); }
+  private closePanel() {
+    this.panelCleanup?.(); this.panelCleanup = undefined; this.replayReturn = undefined;
+    this.modal.hidden = true; this.modal.replaceChildren(); this.session.pause('panel', false); if (this.lastFocus?.isConnected) this.lastFocus.focus(); else this.element.focus();
+  }
+  private collection(kind: 'cg' | 'ending') {
+    const meta = this.options.meta, entries = kind === 'cg' ? this.options.collections?.cgs : this.options.collections?.endings;
+    if (!meta || !entries) return;
+    const panel = this.panel(kind === 'cg' ? 'CG 图鉴' : '结局收藏'), loaded = meta.read();
+    if (loaded.status === 'invalid' || loaded.status === 'unavailable') { panel.append(this.el('p', '收藏进度暂不可读取，原数据已保留')); return; }
+    const unlocked = new Set(loaded.status === 'valid' ? (kind === 'cg' ? loaded.value.cg_unlocked : loaded.value.ending_seen) : []);
+    panel.append(this.el('p', `已解锁 ${entries.filter(item => unlocked.has(item.id)).length} / ${entries.length}`));
+    const list = this.el('div', undefined, 'vn-collection-list');
+    entries.forEach((item, index) => {
+      const available = unlocked.has(item.id), row = this.el('div', undefined, 'vn-collection-entry');
+      if (!available) { row.append(this.el('span', `未解锁 ${kind === 'cg' ? 'CG' : '结局'} ${index + 1}`)); }
+      else if (kind === 'cg') {
+        const cg = item as CollectionCg;
+        row.append(this.el('strong', cg.title ?? cg.id), this.button('查看 CG', () => this.showCg(cg)));
+      } else {
+        const ending = item as CollectionEnding;
+        row.append(this.el('strong', ending.title ?? ending.id));
+        if (ending.trueEnding) row.append(this.el('span', 'True Ending'));
+        if (ending.replay !== undefined && this.options.beginReplay) row.append(this.button('回看结局', () => this.startReplay('ending', ending)));
+      }
+      list.append(row);
+    });
+    panel.append(list);
+  }
+  private showCg(cg: CollectionCg) {
+    const panel = this.panel(cg.title ?? 'CG 查看', () => this.collection('cg'));
+    const image = this.el('img', undefined, 'vn-gallery-image'); image.alt = cg.title ?? '已解锁 CG'; image.src = this.assets.url(cg.id, 'cg');
+    image.onerror = () => { image.hidden = true; panel.append(this.el('p', '图片暂时无法载入')); };
+    panel.append(image, this.button('返回图鉴', () => this.collection('cg')));
+    if (cg.replay !== undefined && this.options.beginReplay) panel.append(this.button('回看剧情', () => this.startReplay('cg', cg)));
+  }
+  private startReplay(kind: 'cg' | 'ending', entry: CollectionCg | CollectionEnding) {
+    if (!this.options.meta || !this.options.beginReplay || entry.replay === undefined) return;
+    try { this.options.meta.replay(kind, entry.id); } catch { this.modal.querySelector('.vn-panel')?.append(this.el('p', '收藏进度不可用，无法回看')); return; }
+    const back = () => this.collection(kind), panel = this.panel('剧情回看', back), container = this.el('div', undefined, 'vn-replay');
+    panel.append(this.button(kind === 'cg' ? '返回图鉴' : '返回结局收藏', back), container);
+    try { this.panelCleanup = this.options.beginReplay(container, entry.replay); this.replayReturn = back; }
+    catch { panel.append(this.el('p', '回看数据无效，当前进度未改变')); }
+  }
   private history() {
     const records = this.session.history(), panel = this.panel('历史记录'), input = this.el('input'); input.type = 'search'; input.placeholder = '搜索已读内容'; input.setAttribute('aria-label', '搜索已读记录');
     const list = this.el('div');
@@ -313,7 +370,7 @@ export class DOMRenderer {
   private key(event: KeyboardEvent) {
     if (event.repeat || event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
     if (!this.modal.hidden) {
-      if (event.key === 'Escape') { event.preventDefault(); this.closePanel(); }
+      if (event.key === 'Escape') { event.preventDefault(); if (this.replayReturn) this.replayReturn(); else this.closePanel(); }
       if (event.key === 'Tab') {
         const items = [...this.modal.querySelectorAll<HTMLElement>('button:not(:disabled),input:not([hidden]),select')]; const index = items.indexOf(this.document.activeElement as HTMLElement);
         if (items.length && ((event.shiftKey && index <= 0) || (!event.shiftKey && index === items.length - 1))) { event.preventDefault(); items[event.shiftKey ? items.length - 1 : 0].focus(); }
@@ -331,7 +388,7 @@ export class DOMRenderer {
     else if (event.key.toLowerCase() === 'a') { event.preventDefault(); this.session.setAuto(!this.session.getView().auto); }
   }
   dispose() {
-    if (this.disposed) return; this.disposed = true; this.disconnect(); this.session.pause('panel', false);
+    if (this.disposed) return; this.disposed = true; this.panelCleanup?.(); this.panelCleanup = undefined; this.replayReturn = undefined; this.disconnect(); this.session.pause('panel', false);
     this.document.removeEventListener('visibilitychange', this.onVisibility); this.element.removeEventListener('keydown', this.onKey); this.element.removeEventListener('pointerdown', this.onPointer);
     this.chat.removeEventListener('scroll', this.onChatScroll); this.cancelScroll();
     for (const { probe } of this.probes.values()) { probe.onload = null; probe.onerror = null; probe.removeAttribute('src'); } this.probes.clear();

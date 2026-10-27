@@ -80,6 +80,7 @@ export function validateProjectCompliance(
     if (mode === 'release' && status === 'PLACEHOLDER') throw new Error(`Release references PLACEHOLDER asset: ${asset.id}`);
   }
   if (project.font) references.push({ id: project.font, kind: 'font', context: 'project.font' });
+  for (const item of project.collections?.cgs ?? []) references.push({ id: item.id, kind: 'cg', context: 'collections.cgs' });
 
   if (project.type === 'narrative') {
     for (const scene of project.scenes) {

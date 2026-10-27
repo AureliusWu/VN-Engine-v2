@@ -11,8 +11,10 @@ import { createRainRuntime, type RainStory } from '../adapters/rain-runtime.js';
 import type { StageCue } from '../stage/types.js';
 import { NarrativeDriver, ScriptDriver, InvestigationDriver, type NarrativeStage, type InvestigationStage } from './drivers.js';
 import { RuntimeSession, type RuntimeSettings, type Clock } from './session.js';
+import type { ProjectCollections } from '../meta/state.js';
+import { isRecord } from '../storage/save.js';
 
-type ProjectBase = { schema: 1; game: string; version: string; title: string; assets: readonly Asset[]; font?: string; settings?: Partial<RuntimeSettings> };
+type ProjectBase = { schema: 1; game: string; version: string; title: string; assets: readonly Asset[]; font?: string; settings?: Partial<RuntimeSettings>; collections?: ProjectCollections };
 export type EngineProject = ProjectBase & (
   { type: 'narrative'; adapter?: 'healing' | 'netlove'; entry?: string; stats?: Record<string, number>; scenes: readonly Scene[]; stage?: NarrativeStage }
   | { type: 'script'; program: ScriptProgram; defaults?: StageCue }
@@ -22,6 +24,21 @@ export type EngineProject = ProjectBase & (
 export function createProject(project: EngineProject, baseURL: string | URL, options: { clock?: Clock; settings?: Partial<RuntimeSettings>; assetURL?: (path: string) => string } = {}) {
   if (project.schema !== 1 || !project.game || !project.version || !project.title || !Array.isArray(project.assets)) throw new Error('Invalid engine project');
   const assets = new AssetCatalog(project.assets, baseURL, options.assetURL);
+  if (project.collections !== undefined) {
+    if (!isRecord(project.collections)) throw new Error('Invalid collection metadata');
+    for (const [kind, entries] of [['cg', project.collections.cgs], ['ending', project.collections.endings]] as const) {
+      if (entries === undefined) continue;
+      if (!Array.isArray(entries)) throw new Error('Invalid collection entries');
+      const ids = new Set<string>();
+      for (const entry of entries) {
+        if (!isRecord(entry) || typeof entry.id !== 'string' || !entry.id.trim() || ids.has(entry.id)
+          || (entry.title !== undefined && typeof entry.title !== 'string')
+          || ('trueEnding' in entry && typeof entry.trueEnding !== 'boolean')) throw new Error('Invalid or duplicate collection entry');
+        ids.add(entry.id);
+        if (kind === 'cg') assets.get(entry.id, 'cg');
+      }
+    }
+  }
   let driver: NarrativeDriver | ScriptDriver | InvestigationDriver;
   if (project.type === 'narrative') {
     let config: NarrativeConfig, presentation = project.stage?.presentation;

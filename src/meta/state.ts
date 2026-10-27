@@ -13,6 +13,10 @@ export type MetaState = {
 export type CollectionEntry = { id: string; unlocked: boolean };
 export type CollectionProgress = { unlocked: number; total: number; entries: readonly CollectionEntry[] };
 export type ReplayContext = { mode: 'replay'; game: string; kind: 'ending' | 'cg'; id: string; startedAt: string };
+/** Authored collection metadata; replay is a normal driver save, restored in an isolated session. */
+export type CollectionCg = { id: string; title?: string; replay?: unknown };
+export type CollectionEnding = { id: string; title?: string; trueEnding?: boolean; replay?: unknown };
+export type ProjectCollections = { cgs?: readonly CollectionCg[]; endings?: readonly CollectionEnding[] };
 export type MetaMutationResult = WriteResult | { status: 'invalid'; reason: string };
 
 function iso(value: unknown): value is string { return typeof value === 'string' && Number.isFinite(Date.parse(value)); }

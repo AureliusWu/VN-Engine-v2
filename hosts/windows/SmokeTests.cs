@@ -66,6 +66,35 @@ internal static class SmokeTests
                 await JS("document.querySelector('[data-control=save]').click();document.querySelector('[data-slot=\"1\"] button').click();localStorage.setItem('vn-native-smoke:expected',document.querySelector('.vn-text').textContent)");
                 if (await JS("!!localStorage.getItem('vn-engine:" + window.GameKey + ":v2:save:manual-1')") != "true") throw new InvalidDataException("作品存档未写入原生配置目录");
                 checks.Add("Real choices and engine saves execute in the Windows player");
+                await JS("""
+                  window.nativeCollectionSmoke = 'pending';
+                  import('./lib/index.js').then(({createProject, mountGame}) => {
+                    const root = document.createElement('div'); document.body.append(root);
+                    const baseURL = new URL('./', location.href), game = 'native-collection-fixture';
+                    for (const key of Object.keys(localStorage)) if (key.startsWith('vn-engine:' + game + ':')) localStorage.removeItem(key);
+                    const project = {schema:1, game, version:'v1', title:'Native collections', type:'narrative', settings:{textDelayMs:0},
+                      assets:[{id:'memory', kind:'cg', src:'assets/letter.svg'}], scenes:[
+                        {id:'start', lines:[{id:'one', speaker:'Narrator', text:'replay start'}], next:'final'},
+                        {id:'final', lines:[{id:'two', speaker:'Narrator', text:'replay end'}], cg:'memory', ending:'complete'}]};
+                    const scratch = createProject(project, baseURL), replay = scratch.session.save(); scratch.session.dispose();
+                    project.collections = {cgs:[{id:'memory', title:'Hidden title', replay}], endings:[{id:'complete', title:'Ending', replay}]};
+                    const instance = mountGame(root, project, {baseURL, audio:false});
+                    const query = selector => root.querySelector(selector), clickText = text => [...query('.vn-modal').querySelectorAll('button')].find(b => b.textContent === text)?.click();
+                    query('[data-control=gallery]').click();
+                    if (query('.vn-modal img') || query('.vn-modal').textContent.includes('Hidden title')) throw Error('Locked CG was exposed');
+                    clickText('关闭'); instance.session.next();
+                    const state = JSON.stringify(instance.session.save().state), meta = localStorage.getItem(instance.meta.key), auto = localStorage.getItem(instance.persistence.contract.keyFor('auto'));
+                    query('[data-control=gallery]').click(); clickText('查看 CG'); clickText('回看剧情');
+                    if (!query('.vn-replay .vn-text')?.textContent.includes('replay start')) throw Error('Replay did not start');
+                    query('.vn-replay [data-control=next]').click();
+                    if (!query('.vn-replay .vn-text')?.textContent.includes('replay end')) throw Error('Replay did not advance');
+                    clickText('返回图鉴');
+                    if (JSON.stringify(instance.session.save().state) !== state || localStorage.getItem(instance.meta.key) !== meta || localStorage.getItem(instance.persistence.contract.keyFor('auto')) !== auto) throw Error('Replay changed normal state');
+                    instance.dispose(); root.remove(); window.nativeCollectionSmoke = 'passed';
+                  }).catch(error => { window.nativeCollectionSmoke = 'failed: ' + error.message; });
+                  """);
+                await Wait("window.nativeCollectionSmoke === 'passed'");
+                checks.Add("Native WebView2 gallery keeps locked art hidden and isolates replay from normal saves and meta");
             }
             else
             {

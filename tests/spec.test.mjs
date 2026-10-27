@@ -31,3 +31,15 @@ test('release compliance rejects placeholder text while development reports it',
   assert.equal(validateProjectCompliance(draft).warnings.length, 1);
   assert.throws(() => validateProjectCompliance(draft, { mode: 'release' }), /Placeholder text/);
 });
+
+test('collection metadata validates unique IDs and requires CG assets', () => {
+  const draft = project(); draft.assets.push({ id: 'memory', kind: 'cg', src: 'assets/memory.webp' });
+  draft.collections = { cgs: [{ id: 'memory', title: 'Memory' }], endings: [{ id: 'END', trueEnding: true }] };
+  assert.equal(validateProjectCompliance(draft).references, 2);
+  draft.collections.cgs.push({ id: 'memory' });
+  assert.throws(() => validateProjectCompliance(draft), /Invalid or duplicate collection entry/);
+  draft.collections.cgs = [{ id: 'room' }];
+  assert.throws(() => validateProjectCompliance(draft), /mismatched asset/);
+  draft.collections.cgs = []; draft.collections.endings = [{ id: 'END', trueEnding: 'yes' }];
+  assert.throws(() => validateProjectCompliance(draft), /Invalid or duplicate collection entry/);
+});
