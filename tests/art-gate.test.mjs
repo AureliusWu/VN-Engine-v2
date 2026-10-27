@@ -18,7 +18,7 @@ function fixture() {
   return { schema: 1, game: 'art-gate-test', version: 'v1', title: 'Art gate fixture', type: 'narrative',
     assets: [{ id: 'room', kind: 'background', src: 'assets/room.svg', sha256: hash, status: 'READY' }],
     scenes: [{ id: 'start', background: 'room', lines: [{ id: 'line', speaker: 'Narrator', text: 'sample' }], ending: 'done' }],
-    releaseEvidence: { targets: { mobile: true, pwa: true, desktop: true }, mobilePhysicalDevice: { status: 'PASS', kind: 'physical', device: 'test device', reviewer: 'test reviewer', reviewedAt: '2026-10-27', evidence: 'test://physical' }, art: { room: review } } };
+    releaseEvidence: { targets: { mobile: true, pwa: true, desktop: true }, keyVisual: { used: false }, mobilePhysicalDevice: { status: 'PASS', kind: 'physical', device: 'test device', reviewer: 'test reviewer', reviewedAt: '2026-10-27', evidence: 'test://physical' }, art: { room: review } } };
 }
 function blocked(project, predicate) {
   assert.throws(() => validateProjectCompliance(project, { mode: 'release' }), error => error instanceof ReleaseArtGateError && predicate(error.report));
@@ -42,6 +42,13 @@ test('release blocks placeholders, unverified provenance and incomplete manual v
   blocked(composition, report => report.ART_READY === 'FAIL' && report.assets[0].issues.some(issue => issue.includes('COMPOSITION')));
   const digest = fixture(); digest.releaseEvidence.art.room.runtimeSha256 = 'b'.repeat(64);
   blocked(digest, report => report.TECH_READY === 'FAIL' && report.ART_READY === 'PASS');
+});
+
+test('decorative Key Visual use requires human lifecycle evidence', () => {
+  const project = fixture(); project.releaseEvidence.keyVisual = { used: true, status: 'UNVERIFIED' };
+  blocked(project, report => report.KEY_VISUAL_LIFECYCLE === 'UNVERIFIED' && report.release === 'BLOCKED');
+  project.releaseEvidence.keyVisual = { used: true, status: 'PASS', reviewer: 'test reviewer', reviewedAt: '2026-10-27', evidence: 'test://scene-overlay-review' };
+  assert.equal(validateProjectCompliance(project, { mode: 'release' }).artGate.KEY_VISUAL_LIFECYCLE, 'PASS');
 });
 
 test('dynamic portraits and UI key visuals cannot be omitted from the art review', () => {
@@ -98,4 +105,7 @@ test('CLI prints a machine-readable blocked art report', async () => {
   const pwa = spawnSync(process.execPath, ['tools/validate-project.mjs', '--release', '--pwa-package', file], { encoding: 'utf8' });
   assert.notEqual(pwa.status, 0); assert.match(pwa.stderr, /includes a PWA/);
   assert.match(pwa.stderr, /"MOBILE_PHYSICAL_DEVICE":"UNVERIFIED"/);
+  await writeFile(join(root, 'assets/room.svg'), 'changed bytes');
+  const badFile = spawnSync(process.execPath, ['tools/validate-project.mjs', '--release', file], { encoding: 'utf8' });
+  assert.notEqual(badFile.status, 0); assert.match(badFile.stderr, /SPEC_FILE_GATE_BLOCKED.*SHA256 mismatch/);
 });

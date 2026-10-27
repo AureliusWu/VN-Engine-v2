@@ -492,7 +492,7 @@
     {
       "target": "src/compliance/art.ts",
       "mode": "new",
-      "targetSha256": "280f97b01e1c82227957af387e44caa9d11461c6b7404c0b4cc7c395371dc5ac",
+      "targetSha256": "99dc2d332ee03a8e622158fae7e4f790ecee49497d6b468b4ed99d9e6dce057d",
       "origins": []
     },
     {
@@ -911,7 +911,7 @@
     {
       "target": "tools/validate-project.mjs",
       "mode": "new",
-      "targetSha256": "f9d1ac2a2c3c4aab58e715bbf04a340415cbc33e2ead999658afe52ac9ed7483",
+      "targetSha256": "f021cac047244bc93aacd90315e1e4d280f0281795203421d583f80f2522992e",
       "origins": []
     }
   ]

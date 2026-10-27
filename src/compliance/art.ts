@@ -14,12 +14,14 @@ export type ReleaseEvidence = {
   targets: { mobile: boolean; pwa: boolean; desktop: boolean };
   mobilePhysicalDevice?: { status: EvidenceStatus; kind: 'physical'; device: string; reviewer: string; reviewedAt: string; evidence: string };
   dynamicPresentation?: { status: EvidenceStatus; reviewer: string; reviewedAt: string; evidence: string };
+  keyVisual: { used: boolean; status?: EvidenceStatus; reviewer?: string; reviewedAt?: string; evidence?: string };
   art: Record<string, VisualReview>;
 };
 export type ArtGateResult = {
   contract: 'GALGAME_SPEC-v0.2-art-draft';
   TECH_READY: 'PASS' | 'FAIL' | 'N/A'; ART_READY: 'PASS' | 'FAIL' | 'N/A';
   MOBILE_PHYSICAL_DEVICE: 'PASS' | 'FAIL' | 'UNVERIFIED' | 'N/A';
+  KEY_VISUAL_LIFECYCLE: 'PASS' | 'FAIL' | 'UNVERIFIED' | 'N/A';
   PLACEHOLDER_SCAN: 'PASS' | 'FAIL';
   release: 'PASS' | 'BLOCKED';
   assets: readonly { id: string; TECH_READY: 'PASS' | 'FAIL'; ART_READY: 'PASS' | 'FAIL'; issues: readonly string[] }[];
@@ -48,6 +50,12 @@ export function assessProductionArt(project: EngineProject, referencedIds: reado
   const placeholders = project.assets.filter(asset => asset.status === 'PLACEHOLDER');
   for (const asset of placeholders) issues.push(`PLACEHOLDER asset is included in the release manifest: ${asset.id}`);
   for (const asset of project.assets) if (/placeholder|占位/i.test(`${asset.id} ${asset.src} ${asset.alt ?? ''}`)) warnings.push(`Potential placeholder requires human review: ${asset.id}`);
+  const keyVisual = isRecord(root.keyVisual) ? root.keyVisual : {};
+  let keyVisualStatus: ArtGateResult['KEY_VISUAL_LIFECYCLE'] = 'UNVERIFIED';
+  if (keyVisual.used === false) keyVisualStatus = 'N/A';
+  else if (keyVisual.used === true && keyVisual.status === 'FAIL') keyVisualStatus = 'FAIL';
+  else if (keyVisual.used === true && keyVisual.status === 'PASS' && known(keyVisual.reviewer) && dated(keyVisual.reviewedAt) && known(keyVisual.evidence)) keyVisualStatus = 'PASS';
+  if (keyVisualStatus === 'UNVERIFIED' || keyVisualStatus === 'FAIL') issues.push('Key Visual use and lifecycle require an explicit declaration and, when used, human evidence.');
   let mobile: ArtGateResult['MOBILE_PHYSICAL_DEVICE'] = targetKnown && !needsMobile ? 'N/A' : 'UNVERIFIED';
   if (targetKnown && needsMobile) {
     const device = isRecord(root.mobilePhysicalDevice) ? root.mobilePhysicalDevice : {};
@@ -94,8 +102,8 @@ export function assessProductionArt(project: EngineProject, referencedIds: reado
   if (techReady === 'FAIL') issues.push('One or more production art assets are not TECH_READY.');
   if (artReady === 'FAIL') issues.push('One or more production art assets are not ART_READY.');
   return Object.freeze({ contract: 'GALGAME_SPEC-v0.2-art-draft', TECH_READY: techReady, ART_READY: artReady,
-    MOBILE_PHYSICAL_DEVICE: mobile, PLACEHOLDER_SCAN: placeholders.length ? 'FAIL' : 'PASS', release: issues.length ? 'BLOCKED' : 'PASS', assets: Object.freeze(assets), issues: Object.freeze(issues), warnings: Object.freeze(warnings),
-    limitations: Object.freeze(['Human declarations and evidence links are not automatically authenticated.', 'Validator checks declared hashes; the packager separately checks actual asset bytes and does not judge visual quality.']) });
+    MOBILE_PHYSICAL_DEVICE: mobile, KEY_VISUAL_LIFECYCLE: keyVisualStatus, PLACEHOLDER_SCAN: placeholders.length ? 'FAIL' : 'PASS', release: issues.length ? 'BLOCKED' : 'PASS', assets: Object.freeze(assets), issues: Object.freeze(issues), warnings: Object.freeze(warnings),
+    limitations: Object.freeze(['Human declarations and evidence links are not automatically authenticated.', 'The in-memory validator checks declared hashes; the release CLI and packager separately check actual bytes, not decoding or visual quality.']) });
 }
 
 export class ReleaseArtGateError extends Error {
