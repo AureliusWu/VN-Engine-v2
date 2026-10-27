@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile, readdir, stat, realpath } from 'node:fs/pro
 import { resolve, dirname, relative, sep } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { createProject, localAssetPath, ENGINE_VERSION, validateProjectCompliance, ReleaseArtGateError, ReleaseQaGateError } from '../dist/index.js';
+import { createProject, localAssetPath, ENGINE_VERSION, validateProjectCompliance, ReleaseArtGateError, ReleaseQaGateError, ReleaseRouteGateError } from '../dist/index.js';
 import { fingerprintFiles, renderWorker } from './pwa.mjs';
 
 const repository = resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -79,7 +79,8 @@ catch(failure){error.textContent='启动未完成：'+failure.message;}
     version: project.version,
     engine: 'VN Engine v2 self runtime ' + ENGINE_VERSION,
     buildIdentity: { gameVersion: project.version, engineVersion: ENGINE_VERSION, commitSha, buildTime: buildTimestamp() },
-    compliance: { contract: compliance.contract, mode: compliance.mode, warnings: [...compliance.warnings], ...(compliance.artGate ? { artGate: compliance.artGate } : {}), ...(compliance.qaGate ? { qaGate: compliance.qaGate } : {}) },
+    compliance: { contract: compliance.contract, mode: compliance.mode, warnings: [...compliance.warnings], ...(compliance.artGate ? { artGate: compliance.artGate } : {}), ...(compliance.qaGate ? { qaGate: compliance.qaGate } : {}),
+      ...(compliance.routeGate ? { routes: { contract: compliance.routeGate.contract, status: compliance.routeGate.status, cases: compliance.routeGate.cases.length, restoreChecks: compliance.routeGate.restoreChecks, coverage: compliance.routeGate.coverage } } : {}) },
     contentFingerprint: version,
     files: [...files].map(([name, bytes]) => ({ name, size: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') }))
   };
@@ -92,5 +93,5 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
   const source = process.argv[2], output = process.argv[3];
   if (!source || !output) throw new Error('Usage: node tools/package-game.mjs project.json output-directory');
   try { console.log(JSON.stringify(await packageGame(source, output))); }
-  catch (error) { if (error instanceof ReleaseArtGateError) console.error('SPEC_ART_GATE_BLOCKED', JSON.stringify(error.report)); if (error instanceof ReleaseQaGateError) console.error('SPEC_QA_GATE_BLOCKED', JSON.stringify(error.report)); throw error; }
+  catch (error) { if (error instanceof ReleaseArtGateError) console.error('SPEC_ART_GATE_BLOCKED', JSON.stringify(error.report)); if (error instanceof ReleaseQaGateError) console.error('SPEC_QA_GATE_BLOCKED', JSON.stringify(error.report)); if (error instanceof ReleaseRouteGateError) console.error('SPEC_ROUTE_GATE_BLOCKED', JSON.stringify(error.report)); throw error; }
 }

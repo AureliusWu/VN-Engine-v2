@@ -6,6 +6,7 @@ import { validatePresentationTimeline } from '../stage/timeline.js';
 import { validateKeyVisual } from '../stage/key-visual.js';
 import { assessProductionArt, ReleaseArtGateError, type ArtGateResult } from './art.js';
 import { assessQaEvidence, ReleaseQaGateError, type QaGateReport } from './qa.js';
+import { runRouteSuite, ReleaseRouteGateError, type RouteReport } from '../regression/suite.js';
 
 export const GALGAME_SPEC_CONTRACT = 'GALGAME_SPEC-v0.1';
 export type ComplianceMode = 'development' | 'release';
@@ -23,6 +24,7 @@ export type ProjectComplianceReport = {
   keyVisualUsed: boolean;
   artGate?: ArtGateResult;
   qaGate?: QaGateReport;
+  routeGate?: RouteReport;
 };
 
 const PLACEHOLDER_TEXT = /\b(?:TODO|FIXME|PLACEHOLDER|lorem ipsum)\b/i;
@@ -187,6 +189,8 @@ export function validateProjectCompliance(
   if (artGate?.release === 'BLOCKED') throw new ReleaseArtGateError(artGate);
   const qaGate = mode === 'release' ? assessQaEvidence(project, { requiresPwa: options.requiresPwa }) : undefined;
   if (qaGate?.release === 'BLOCKED') throw new ReleaseQaGateError(qaGate);
+  const routeGate = mode === 'release' ? runRouteSuite(project) : undefined;
+  if (routeGate && routeGate.status !== 'PASS') throw new ReleaseRouteGateError(routeGate);
 
   return Object.freeze({
     contract: GALGAME_SPEC_CONTRACT,
@@ -202,5 +206,6 @@ export function validateProjectCompliance(
     keyVisualUsed: usesKeyVisual,
     ...(artGate ? { artGate } : {}),
     ...(qaGate ? { qaGate } : {}),
+    ...(routeGate ? { routeGate } : {}),
   });
 }

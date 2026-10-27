@@ -60,3 +60,13 @@ test('CLI writes a source-bound failed report and exits unsuccessfully instead o
   const result=spawnSync(process.execPath,['tools/test-routes.mjs',source,'--output='+output],{encoding:'utf8'});assert.equal(result.status,1);
   const report=JSON.parse(await readFile(output,'utf8'));assert.equal(report.status,'FAIL');assert.match(report.sourceSha256,/^[a-f0-9]{64}$/);assert.equal(report.cases[0].failure.step,1);
 });
+
+test('independent runtime samples execute every declared ending and retain their source data',()=>{
+  let cases=0,checks=0,endings=0;
+  for(const name of ['campus','netlove','circuit','rain']){
+    const project=readJSON('examples/runtime/'+name+'.json'),before=JSON.stringify(project),report=runRouteSuite(project);
+    assert.equal(report.status,'PASS',JSON.stringify(report));assert.deepEqual(report.coverage.missing,[]);
+    assert.equal(JSON.stringify(project),before);cases+=report.cases.length;checks+=report.restoreChecks;endings+=report.coverage.required.length;
+  }
+  assert.equal(cases,10);assert.equal(endings,11);assert.ok(checks>=70);
+});

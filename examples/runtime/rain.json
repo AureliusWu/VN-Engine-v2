@@ -433,5 +433,53 @@
     "autoDelayMs": 1600,
     "volume": 0.2,
     "voiceVolume": 0.45
+  },
+  "routeTests": {
+    "schema": 1,
+    "cases": [
+      {
+        "id": "rain-trust",
+        "steps": [
+          {
+            "type": "action",
+            "id": "trust_choice"
+          },
+          {
+            "type": "next"
+          },
+          {
+            "type": "next"
+          }
+        ],
+        "expect": {
+          "ending": "trust",
+          "variables": {
+            "trust": 1,
+            "affection": 0,
+            "truth_known": false
+          }
+        }
+      },
+      {
+        "id": "rain-affection",
+        "steps": [
+          {
+            "type": "action",
+            "id": "affection_choice"
+          },
+          {
+            "type": "next"
+          }
+        ],
+        "expect": {
+          "ending": "other",
+          "variables": {
+            "trust": 0,
+            "affection": 1,
+            "truth_known": false
+          }
+        }
+      }
+    ]
   }
 }

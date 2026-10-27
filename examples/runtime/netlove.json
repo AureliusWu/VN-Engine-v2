@@ -364,5 +364,58 @@
     "autoDelayMs": 1600,
     "volume": 0.2,
     "voiceVolume": 0.45
+  },
+  "routeTests": {
+    "schema": 1,
+    "cases": [
+      {
+        "id": "chat-honest",
+        "steps": [
+          {
+            "type": "next"
+          },
+          {
+            "type": "action",
+            "id": "honest"
+          },
+          {
+            "type": "next"
+          },
+          {
+            "type": "next"
+          }
+        ],
+        "expect": {
+          "ending": "complete",
+          "variables": {
+            "honesty": 1
+          }
+        }
+      },
+      {
+        "id": "chat-reserve",
+        "steps": [
+          {
+            "type": "next"
+          },
+          {
+            "type": "action",
+            "id": "reserve"
+          },
+          {
+            "type": "next"
+          },
+          {
+            "type": "next"
+          }
+        ],
+        "expect": {
+          "ending": "complete",
+          "variables": {
+            "honesty": 0
+          }
+        }
+      }
+    ]
   }
 }

@@ -11,7 +11,8 @@ for (const name of ['campus', 'netlove', 'circuit', 'rain']) {
   await packageGame(source, output);
   const report = await buildQaReport(source, { decode: true, buildDirectory: output });
   await writeFile(join(reports, name + '-QA_REPORT.json'), JSON.stringify(report, null, 2) + '\n');
+  await writeFile(join(reports, name + '-ROUTE_REPORT.json'), JSON.stringify({ ...report.routes, sourceSha256: report.project.sourceSha256, engine: report.engine, buildIdentity: report.build.identity }, null, 2) + '\n');
   await copyFile(join(output, 'build-manifest.json'), join(reports, name + '-build-manifest.json'));
-  console.log(JSON.stringify({ sample: name, status: report.status, files: report.files.status, decoding: report.decoding.status, build: report.build.status, humanQa: report.humanQa.release }));
-  if (report.structure.status !== 'PASS' || report.files.status !== 'PASS' || !['PASS', 'N/A'].includes(report.decoding.status) || report.build.status !== 'PASS') process.exitCode = 1;
+  console.log(JSON.stringify({ sample: name, status: report.status, routes: report.routes.status, endingCoverage: report.routes.coverage, files: report.files.status, decoding: report.decoding.status, build: report.build.status, humanQa: report.humanQa.release }));
+  if (report.structure.status !== 'PASS' || report.routes.status !== 'PASS' || report.files.status !== 'PASS' || !['PASS', 'N/A'].includes(report.decoding.status) || report.build.status !== 'PASS') process.exitCode = 1;
 }

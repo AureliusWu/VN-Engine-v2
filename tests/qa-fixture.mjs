@@ -12,6 +12,7 @@ export function qaFixture() {
   const project = { schema: 1, game: 'qa-fixture', version: 'v1', title: 'Synthetic QA fixture', type: 'narrative',
     assets: [{ id: 'room', kind: 'background', src: 'assets/room.svg', sha256, status: 'READY' }],
     scenes: [{ id: 'start', background: 'room', lines: [{ id: 'line', speaker: 'N', text: 'Synthetic test story' }], ending: 'done' }],
+    routeTests: { schema: 1, cases: [{ id: 'fixture-ending', steps: [], expect: { ending: 'done', sceneId: 'start' } }] },
     releaseEvidence: { targets: { mobile: true, pwa: true, desktop: true }, keyVisual: { used: false }, art: { room: review },
       mobilePhysicalDevice: { status: 'PASS', kind: 'physical', device: 'synthetic test fixture', reviewer: 'synthetic test reviewer', reviewedAt: '2026-10-27', evidence: 'test://synthetic-device' },
       qa: Object.fromEntries(['story', 'text', 'visualIntegration', 'audio', 'accessibility', 'web', 'pwa', 'windows'].map(category => [category, { status: 'PASS', reviewer: 'synthetic test reviewer', reviewedAt: '2026-10-27', evidence: 'test://synthetic-qa' }])) } };

@@ -436,5 +436,112 @@
     "autoDelayMs": 1600,
     "volume": 0.2,
     "voiceVolume": 0.45
+  },
+  "routeTests": {
+    "schema": 1,
+    "cases": [
+      {
+        "id": "campus-together",
+        "steps": [
+          {
+            "type": "next"
+          },
+          {
+            "type": "action",
+            "id": "together"
+          },
+          {
+            "type": "next"
+          },
+          {
+            "type": "next"
+          },
+          {
+            "type": "action",
+            "id": "@continue"
+          },
+          {
+            "type": "action",
+            "id": "@continue"
+          }
+        ],
+        "expect": {
+          "ending": "complete",
+          "variables": {
+            "honesty": 3,
+            "lin": 2,
+            "chen": 2
+          }
+        }
+      },
+      {
+        "id": "campus-letter",
+        "steps": [
+          {
+            "type": "next"
+          },
+          {
+            "type": "action",
+            "id": "letter"
+          },
+          {
+            "type": "next"
+          },
+          {
+            "type": "next"
+          },
+          {
+            "type": "action",
+            "id": "@continue"
+          },
+          {
+            "type": "action",
+            "id": "@continue"
+          }
+        ],
+        "expect": {
+          "ending": "complete",
+          "variables": {
+            "honesty": 2,
+            "lin": 0,
+            "chen": 0
+          }
+        }
+      },
+      {
+        "id": "campus-quiet",
+        "steps": [
+          {
+            "type": "next"
+          },
+          {
+            "type": "action",
+            "id": "quiet"
+          },
+          {
+            "type": "next"
+          },
+          {
+            "type": "next"
+          },
+          {
+            "type": "action",
+            "id": "@continue"
+          },
+          {
+            "type": "action",
+            "id": "@continue"
+          }
+        ],
+        "expect": {
+          "ending": "complete",
+          "variables": {
+            "honesty": 0,
+            "lin": 0,
+            "chen": 0
+          }
+        }
+      }
+    ]
   }
 }

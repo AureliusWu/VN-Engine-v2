@@ -3,7 +3,7 @@ import { createHash } from 'node:crypto';
 import { dirname, resolve, sep, extname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
-import { validateProjectCompliance, assessProductionArt, assessQaEvidence, ReleaseArtGateError, ReleaseQaGateError, localAssetPath, isRecord, ENGINE_VERSION } from '../dist/index.js';
+import { validateProjectCompliance, assessProductionArt, assessQaEvidence, ReleaseArtGateError, ReleaseQaGateError, runRouteSuite, ReleaseRouteGateError, localAssetPath, isRecord, ENGINE_VERSION } from '../dist/index.js';
 import { probeAssets } from './probe-assets.mjs';
 
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -57,10 +57,15 @@ export async function buildQaReport(filename, options = {}) {
   const source = resolve(filename), sourceBytes = await readFile(source), project = JSON.parse(sourceBytes), root = await realpath(dirname(source));
   if (!isRecord(project)) throw Error('QA report requires a JSON project object');
   const requiresPwa = options.requiresPwa === true || !!options.buildDirectory;
-  let structure, formalStructure;
+  let structure, formalStructure, routes;
   try { structure = { status: 'PASS', report: validateProjectCompliance(project) }; } catch (error) { structure = { status: 'FAIL', reason: errorText(error) }; }
-  try { validateProjectCompliance(project, { mode: 'release', requiresPwa }); formalStructure = { status: 'PASS' }; }
-  catch (error) { formalStructure = error instanceof ReleaseArtGateError || error instanceof ReleaseQaGateError ? { status: 'PASS' } : { status: 'FAIL', reason: errorText(error) }; }
+  try { routes = validateProjectCompliance(project, { mode: 'release', requiresPwa }).routeGate; formalStructure = { status: 'PASS' }; }
+  catch (error) {
+    if (error instanceof ReleaseRouteGateError) routes = error.report;
+    formalStructure = error instanceof ReleaseArtGateError || error instanceof ReleaseQaGateError || error instanceof ReleaseRouteGateError ? { status: 'PASS' } : { status: 'FAIL', reason: errorText(error) };
+  }
+  try { routes ??= runRouteSuite(project); }
+  catch (error) { routes = { status: 'FAIL', error: errorText(error), cases: [], coverage: { required: [], covered: [], missing: [] } }; }
   let art, humanQa;
   try { art = assessProductionArt(project, project.assets.map(asset => asset.id), { requiresPwa, keyVisualUsed: structure.report?.keyVisualUsed }); }
   catch (error) { art = { release: 'BLOCKED', issues: [errorText(error)] }; }
@@ -69,13 +74,14 @@ export async function buildQaReport(filename, options = {}) {
   const decoding = options.decode ? await probeAssets(inputs) : { status: 'UNVERIFIED', reason: 'Run with --decode to probe local asset bytes in Chromium.', checks: [] };
   const build = await inspectBuild(options.buildDirectory, project);
   const blocked = structure.status === 'FAIL' || formalStructure.status === 'FAIL' || art.release !== 'PASS' || humanQa.release !== 'PASS'
-    || files.status === 'FAIL' || decoding.status === 'FAIL' || (build.requested && build.status === 'FAIL');
+    || routes.status !== 'PASS' || files.status === 'FAIL' || decoding.status === 'FAIL' || (build.requested && build.status === 'FAIL');
   const status = blocked ? 'BLOCKED' : decoding.status === 'UNVERIFIED' ? 'UNVERIFIED' : 'PASS';
   return { schema: 1, contract: 'GALGAME_SPEC-v0.2-qa-draft', checkedAt: new Date().toISOString(), status,
-    scope: { source: true, declaredHumanEvidence: true, localBytes: true, decodingRequested: !!options.decode, buildRequested: !!options.buildDirectory, fullSpecCertification: false },
+    scope: { source: true, routeExecution: true, declaredHumanEvidence: true, localBytes: true, decodingRequested: !!options.decode, buildRequested: !!options.buildDirectory, fullSpecCertification: false },
     project: { game: project.game, version: project.version, title: project.title, sourceSha256: digest(sourceBytes) }, engine: ENGINE_VERSION,
-    structure, formalStructure, art, humanQa, files, decoding, build,
+    structure, formalStructure, routes, art, humanQa, files, decoding, build,
     limitations: ['Human evidence, provenance and physical-device claims are not authenticated automatically.', 'File/decode success does not establish art quality or listening experience.',
+      'Route execution covers authored cases and declared endings, not all branch combinations or narrative quality.',
       'Video probing covers the first decoded frame only. Full playback and target-platform acceptance need separate evidence.', 'This report covers the declared scope and is not full GALGAME SPEC v0.2 certification.'] };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

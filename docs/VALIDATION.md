@@ -6,6 +6,12 @@
 
 Studio 阶段：136 项 Node、6 项 Python、126 个来源检查与完整浏览器回归通过；实际操作从头录制、表单修改、失败定位、撤销、取消 / 过期 Worker，下载工程与报告并验证源字节 SHA256，检查 390px 无页面横向溢出。Windows 增加真实 WebView2 录制、Worker 执行与原生工程导出用例；其结果以本提交 CI 为准。新界面使用重新生成的改名 OFL 子集字体。
 
+Studio 提交 `9ba1404df5f9f0845ff836a9c5a5b16fc1c70ff3` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40517514868) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40517514804) 均成功；Windows 真实执行录制、部分结局覆盖 UNVERIFIED / 用例 PASS 和原生工程保留用例导出。本地完整 `npm run test:editor` 也通过。
+
+门禁阶段本地核心 140 项 Node、6 项 Python、126 个来源检查通过。四份独立引擎样例执行 10 个用例、覆盖 11 个声明结局，并完成 73 次逐步存读档一致性检查；正式校验 / 打包、统一 QA 聚合与真实 Chromium 候选 API / CLI 均检查路线缺项、断言失败与未覆盖的阻断，并保留报告且不创建候选。最初完整检查发现四份修改后的独立样例来源哈希未手动更新，已核对它们均为 new 并刷新，随后检查通过；没有更改固定原作快照。完整浏览器 / 编辑器及 Windows 结果单独按本提交确认。
+
+门禁阶段本地完整 `npm run test:browser` 与 `npm run test:editor` 均通过；Windows 增加当前校园样例 3 个完整结局用例及实际录制的第 4 个用例在同一 Worker 执行的检查，原生结果仍以本提交工作流为准。
+
 ## 启动 / 标题 / 已读记录
 
 最终实现 `2d185bd478cb5315fd3b3929ea8cb6d13b406c37` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40493930513) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40493930378) 均成功。Windows 实际执行保留 Auto / Continue、标题设置与确认 / 取消、新游戏、重挂载已读快进及完整进程重启后的持久标记；浏览器 / 编辑器及四样例锁定提交 QA 复核通过。正式美术 / 听感 / 实体设备仍未验收，见 [本轮机器记录](player-lifecycle-validation.json)。

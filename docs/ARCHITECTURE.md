@@ -7,6 +7,7 @@ v0.3.0 主链由本仓库自研模块承担。解释器/状态机 → 玩法驱�
 | 作者工具 | EditorModel / Studio | 原子作者命令、图、诊断、草稿、同一运行时预览与数据导出 |
 | Windows 宿主 | hosts/windows | 原生窗口与受限文件桥、本地内容、作品校验、配置持久化和生命周期 |
 | 作者数据 | EngineProject / ScriptProgram | 显式身份、版本、玩法、变量、剧本与资源 |
+| 路线回归 | runRouteSuite / createRouteRecorder | 真实开场操作、受限步骤、状态断言、存读档与声明结局覆盖；Studio Worker 隔离，正式 QA 门禁阻断缺项 |
 | 自研解释器 | ScriptEngine | 数据指令、条件、赋值/累加、回应、隐藏逻辑块、结局与重放 |
 | 自研状态机 | NarrativeEngine / InvestigationEngine | 段落与路线；调查循环、证据与章节 |
 | 玩法驱动 | NarrativeDriver / ScriptDriver / InvestigationDriver | 统一 frame/action/history 接口，分别保留不同机制 |

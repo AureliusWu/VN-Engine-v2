@@ -18,6 +18,7 @@ function fixture() {
   return { schema: 1, game: 'art-gate-test', version: 'v1', title: 'Art gate fixture', type: 'narrative',
     assets: [{ id: 'room', kind: 'background', src: 'assets/room.svg', sha256: hash, status: 'READY' }],
     scenes: [{ id: 'start', background: 'room', lines: [{ id: 'line', speaker: 'Narrator', text: 'sample' }], ending: 'done' }],
+    routeTests: { schema: 1, cases: [{ id: 'fixture-ending', steps: [], expect: { ending: 'done', sceneId: 'start' } }] },
     releaseEvidence: { targets: { mobile: true, pwa: true, desktop: true }, keyVisual: { used: false }, mobilePhysicalDevice: { status: 'PASS', kind: 'physical', device: 'test device', reviewer: 'test reviewer', reviewedAt: '2026-10-27', evidence: 'test://physical' }, art: { room: review },
       qa: Object.fromEntries(['story', 'text', 'visualIntegration', 'audio', 'accessibility', 'web', 'pwa', 'windows'].map(category => [category, { status: 'PASS', reviewer: 'synthetic test reviewer', reviewedAt: '2026-10-27', evidence: 'test://synthetic-qa' }])) } };
 }

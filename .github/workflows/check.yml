@@ -45,7 +45,7 @@ jobs:
       - run: npm ci
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
-      - name: Generate alpha QA reports with actual asset decoding and standalone checks
+      - name: Require authored routes and generate source-bound alpha QA reports with decode and standalone checks
         run: node tools/qa-samples.mjs
       - uses: actions/upload-artifact@v4
         with:

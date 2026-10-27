@@ -670,5 +670,174 @@
     "autoDelayMs": 1600,
     "volume": 0.2,
     "voiceVolume": 0.45
+  },
+  "routeTests": {
+    "schema": 1,
+    "cases": [
+      {
+        "id": "circuit-complete",
+        "steps": [
+          {
+            "type": "action",
+            "id": "inspect-a"
+          },
+          {
+            "type": "action",
+            "id": "return"
+          },
+          {
+            "type": "action",
+            "id": "inspect-b"
+          },
+          {
+            "type": "action",
+            "id": "return"
+          },
+          {
+            "type": "action",
+            "id": "reason"
+          },
+          {
+            "type": "action",
+            "id": "right"
+          },
+          {
+            "type": "action",
+            "id": "@chapter:chapter-two"
+          },
+          {
+            "type": "action",
+            "id": "inspect-a"
+          },
+          {
+            "type": "action",
+            "id": "return"
+          },
+          {
+            "type": "action",
+            "id": "inspect-b"
+          },
+          {
+            "type": "action",
+            "id": "return"
+          },
+          {
+            "type": "action",
+            "id": "reason"
+          },
+          {
+            "type": "action",
+            "id": "right"
+          }
+        ],
+        "expect": {
+          "ending": "chapter-two:complete",
+          "evidence": [
+            "photo",
+            "record"
+          ]
+        }
+      },
+      {
+        "id": "circuit-first-failure",
+        "steps": [
+          {
+            "type": "action",
+            "id": "inspect-a"
+          },
+          {
+            "type": "action",
+            "id": "return"
+          },
+          {
+            "type": "action",
+            "id": "inspect-b"
+          },
+          {
+            "type": "action",
+            "id": "return"
+          },
+          {
+            "type": "action",
+            "id": "reason"
+          },
+          {
+            "type": "action",
+            "id": "wrong"
+          }
+        ],
+        "expect": {
+          "ending": "chapter-one:failure",
+          "evidence": [
+            "photo",
+            "record"
+          ]
+        }
+      },
+      {
+        "id": "circuit-second-failure",
+        "steps": [
+          {
+            "type": "action",
+            "id": "inspect-a"
+          },
+          {
+            "type": "action",
+            "id": "return"
+          },
+          {
+            "type": "action",
+            "id": "inspect-b"
+          },
+          {
+            "type": "action",
+            "id": "return"
+          },
+          {
+            "type": "action",
+            "id": "reason"
+          },
+          {
+            "type": "action",
+            "id": "right"
+          },
+          {
+            "type": "action",
+            "id": "@chapter:chapter-two"
+          },
+          {
+            "type": "action",
+            "id": "inspect-a"
+          },
+          {
+            "type": "action",
+            "id": "return"
+          },
+          {
+            "type": "action",
+            "id": "inspect-b"
+          },
+          {
+            "type": "action",
+            "id": "return"
+          },
+          {
+            "type": "action",
+            "id": "reason"
+          },
+          {
+            "type": "action",
+            "id": "wrong"
+          }
+        ],
+        "expect": {
+          "ending": "chapter-two:failure",
+          "evidence": [
+            "photo",
+            "record"
+          ]
+        }
+      }
+    ]
   }
 }

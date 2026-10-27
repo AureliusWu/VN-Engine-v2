@@ -93,3 +93,11 @@ export function runRouteSuite(project: EngineProject, suite: RouteSuite | undefi
     ...(inputError?{error:inputError}:{}),cases:results,coverage:{required,covered,missing},restoreChecks:results.reduce((sum,r)=>sum+r.restoreChecks,0),
     scope:{authoredCases:true,declaredEndings:true,exhaustiveBranches:false,rendering:false,persistenceWrites:false},operationsUsed:(options.maxOperations??20_000)-Math.max(0,remaining)};
 }
+
+export type RouteReport = ReturnType<typeof runRouteSuite>;
+export class ReleaseRouteGateError extends Error {
+  constructor(readonly report: RouteReport) {
+    super(`Release route checks blocked: ${report.status}; missing endings: ${report.coverage.missing.join(', ') || 'none'}`);
+    this.name = 'ReleaseRouteGateError';
+  }
+}
