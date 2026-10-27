@@ -15,6 +15,7 @@ export * from './storage/save.js';
 export * from './storage/store.js';
 export * from './storage/contract.js';
 export * from './storage/backup.js';
+export * from './storage/continue.js';
 export * from './storage/preferences.js';
 export * from './meta/state.js';
 export * from './meta/project.js';

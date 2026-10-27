@@ -6,6 +6,7 @@ import type { RuntimeSession, RuntimeSettings, RuntimeView } from '../runtime/se
 import type { bindSessionPersistence, SaveEnvelope } from '../storage/contract.js';
 import type { LoadResult } from '../storage/store.js';
 import { MAX_SAVE_BACKUP_SIZE, type createSaveBackup, type SaveBackupPreview } from '../storage/backup.js';
+import type { createContinuation } from '../storage/continue.js';
 import type { CollectionCg, CollectionEnding, ProjectCollections, createMetaStateStore } from '../meta/state.js';
 import type { PresentationTimeline, StageLayer, StageLayerAsset, StageVideo, StageVisualLayer } from '../stage/types.js';
 import { resolvePresentationTimeline } from '../stage/timeline.js';
@@ -14,6 +15,7 @@ import { KeyVisualLayer } from './key-visual.js';
 
 export type DOMRendererOptions = { title?: string; font?: string; storage?: StoragePort | null; persistence?: ReturnType<typeof bindSessionPersistence>;
   backup?: ReturnType<typeof createSaveBackup>;
+  continuation?: ReturnType<typeof createContinuation>;
   meta?: ReturnType<typeof createMetaStateStore>; collections?: ProjectCollections; replayOnly?: boolean;
   beginReplay?: (root: HTMLElement, saved: unknown) => () => void; onUnlockAudio?: () => void; onCgPresented?: (id: string) => void };
 
@@ -104,6 +106,7 @@ export class DOMRenderer {
       ['auto', '自动', () => session.setAuto(!session.getView().auto)],
       ['rollback', '回退', () => { try { if (!session.rollback()) this.notify('当前没有可回退的位置'); } catch { this.notify('回退失败，当前进度已保留'); } }],
       ['skip', '已读快进', () => { if (!session.setSkip(!session.getView().skipping)) this.notify('只能快进已经读过的段落'); }],
+      ['continue', '继续上次进度', () => this.continueGame()],
       ['save', '存档', () => options.persistence ? this.saveManager('save') : this.saveLegacy()],
       ['load', '读档', () => options.persistence ? this.saveManager('load') : this.loadLegacy()],
       ['quick-save', '快速存档', () => this.quickSave()], ['quick-load', '快速读档', () => this.quickLoad()], ['history', '历史', () => this.history()],
@@ -114,6 +117,7 @@ export class DOMRenderer {
     ] as const) {
       const button = this.button(label, handler); button.dataset.control = id;
       if ((!options.persistence && (id === 'quick-save' || id === 'quick-load'))
+        || (id === 'continue' && (!options.continuation || options.replayOnly))
         || (id === 'gallery' && !options.collections?.cgs?.length) || (id === 'endings' && !options.collections?.endings?.length)
         || (options.replayOnly && ['save', 'load', 'quick-save', 'quick-load', 'restart'].includes(id))) button.hidden = true;
       this.buttons.set(id, button); this.toolbar.append(button);
@@ -239,7 +243,7 @@ export class DOMRenderer {
       if (snapshot.ready && frame.ending) this.actions.append(this.el('span', frame.ending === 'failure' ? '调查需要重新核对' : '已到达结局'));
     }
     if (entered || snapshot.paused !== previous?.paused) {
-      for (const id of ['auto', 'skip', 'save', 'load', 'quick-save', 'quick-load', 'gallery', 'endings', 'history', 'evidence', 'settings', 'hide', 'restart']) this.buttons.get(id)!.disabled = snapshot.paused;
+      for (const id of ['auto', 'skip', 'continue', 'save', 'load', 'quick-save', 'quick-load', 'gallery', 'endings', 'history', 'evidence', 'settings', 'hide', 'restart']) this.buttons.get(id)!.disabled = snapshot.paused;
       this.buttons.get('skip')!.disabled ||= !snapshot.supportsSkip;
     }
     if (entered) this.buttons.get('evidence')!.hidden = !frame.evidence;
@@ -425,6 +429,12 @@ export class DOMRenderer {
       panel.append(this.el('p', `自动存档：${this.saveDescription(auto)}`), autoButton);
       try { if (this.options.storage?.getItem(this.saveKey) !== null && this.options.storage) panel.append(this.button('读取旧单槽存档', () => this.loadLegacy())); } catch { /* Storage unavailable. */ }
     }
+  }
+  private continueGame() {
+    try {
+      const result = this.options.continuation?.resume();
+      this.notify(result?.status === 'valid' ? '已继续最近的有效存档' : result?.status === 'empty' ? '还没有可以继续的存档' : result?.status === 'unavailable' ? '存储暂不可用，可以重新尝试或开始新游戏' : '没有可恢复的存档，原数据已保留');
+    } catch { this.notify('存档暂时无法恢复，当前进度已保留'); }
   }
   private saveDescription(result: LoadResult<SaveEnvelope>): string {
     if (result.status === 'empty') return '空槽';

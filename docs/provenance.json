@@ -308,7 +308,7 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "3188d2feed89ed70e552f408d1fb3e8dfc4f6e90af4e9e859113d2a7ce43a59d"
+      "targetSha256": "cade2ac658894c5bc8393e48890e21c2e0e65d35354ef843b92b6eb8f2e9fcc7"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
@@ -553,7 +553,7 @@
     {
       "target": "src/index.ts",
       "mode": "new",
-      "targetSha256": "d947eea67ccb40561b285d78dc648fd98d0aae9be43cb67be4069fba4b0459bf",
+      "targetSha256": "9b0d4dc54a67b5d46f52681fd26395585a54a6b92685111f0b712ba331ced64d",
       "origins": []
     },
     {
@@ -703,7 +703,7 @@
       "target": "src/render/dom.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "bac4883fbff59e50af0d3a5c09fe7371ee5dcc7211e55ed8c701bc499d193bb6"
+      "targetSha256": "79416db68f19fd66a357d7254835d45305552064492d0b3cdef60b0b7296248d"
     },
     {
       "target": "src/render/key-visual.ts",
@@ -715,7 +715,7 @@
       "target": "src/render/mount.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "8478781e77de3ade18bc85d3029dce8701d842244e17a8931d2de3c163ae2409"
+      "targetSha256": "b09714dce0207edb33eb84bf792d6e7f517b61bacc4748197d9c29645a25947b"
     },
     {
       "target": "src/runtime/drivers.ts",
@@ -793,6 +793,12 @@
       "target": "src/storage/backup.ts",
       "mode": "new",
       "targetSha256": "fac5df8e61e72e4ea4ad225ee89f341279a65b03506c4e9074ed75524ec1d715",
+      "origins": []
+    },
+    {
+      "target": "src/storage/continue.ts",
+      "mode": "new",
+      "targetSha256": "7b5c863333c2d7bb21bc34261377bc152e03024fae32711d043b26fbf8e4bf09",
       "origins": []
     },
     {

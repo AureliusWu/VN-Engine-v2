@@ -1,5 +1,9 @@
 # v0.3.0 编辑器与 Windows 宿主验证
 
+## 启动 / 标题 / 已读记录
+
+启动修复本地通过 121 项 Node、6 项 Python、117 个来源检查及完整浏览器回归；Chromium 实际页面重载后旧 Auto 字节不变，Continue 能跳过损坏候选并恢复真实位置。核心覆盖四种驱动、同时间优先级、错槽、空槽与不可用存储；原生 WebView2 smoke 已加入重挂载与 Continue，Windows 结果以本提交工作流为准。
+
 ## 下一轮：声音 / 阅读 / 备份
 
 最终实现 `9f7e4221de638ab44e945dfdb96a05a350b73ddb` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40488332833) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40488332817) 均成功；原生实际执行设置、回看继承、备份文件输入 / 预览 / 确认 / 读取恢复槽位及进程重启。按相同提交锁重建的四样例，文件 / 解码 / 包复核均 PASS，正式人工验收仍 BLOCKED。来源与逐项结果见 [本轮验证记录](optimization-next-validation.json)。

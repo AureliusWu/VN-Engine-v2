@@ -3,6 +3,7 @@ import { createProject } from '../runtime/project.js';
 import { MediaDirector } from '../runtime/media.js';
 import { bindSessionPersistence, createSaveContract } from '../storage/contract.js';
 import { createSaveBackup } from '../storage/backup.js';
+import { createContinuation } from '../storage/continue.js';
 import type { RuntimeSettings } from '../runtime/session.js';
 import { createMetaStateStore } from '../meta/state.js';
 import type { StoragePort } from '../storage/store.js';
@@ -54,11 +55,13 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
   let storage = options.storage;
   if (storage === undefined) try { storage = root.ownerDocument.defaultView?.localStorage; } catch { storage = null; }
   const persistence = bindSessionPersistence(session, createSaveContract({ game: project.game, gameVersion: project.version, storage }));
-  const backup = createSaveBackup(persistence.contract, storage, value => {
+  const validatePayload = (value: unknown) => {
     const isolated = createProject(project, baseURL, { assetURL: options.assetURL, settings: { textDelayMs: 0 } });
     try { isolated.session.restore(value); return isolated.session.save(); }
     finally { isolated.session.dispose(); }
-  });
+  };
+  const backup = createSaveBackup(persistence.contract, storage, validatePayload);
+  const continuation = createContinuation(session, persistence.contract, validatePayload);
   const collections = project.collections ? structuredClone(project.collections) : undefined;
   const meta = createMetaStateStore(project.game, storage, { cgs: collections?.cgs?.map(item => item.id), endings: collections?.endings?.map(item => item.id), trueRoute: collections?.trueRoute });
   if (collections?.trueRoute) meta.evaluateTrueRoute();
@@ -75,8 +78,10 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
     progressMiniGame = snapshot.miniGame?.revision ?? -1;
     if (snapshot.reason === 'rollback') return;
     if (snapshot.reason === 'start') countedEnding = false;
-    const saved = persistence.autoSave();
-    if (renderer && saved.status === 'saved' && snapshot.reason !== 'start') renderer.notify('已自动存档');
+    // A remount must preserve even corrupt or temporarily unreadable Auto bytes until a real visit begins.
+    const saved = progressVisit === 1 && snapshot.reason === 'start' && persistence.contract.loadAuto().status !== 'empty'
+      ? undefined : persistence.autoSave();
+    if (renderer && saved?.status === 'saved' && snapshot.reason !== 'start') renderer.notify('已自动存档');
     const stage = snapshot.frame.stage, cgIds = new Set<string>();
     if ((!stage.layers || !Object.hasOwn(stage.layers, 'cg')) && stage.cg) cgIds.add(stage.cg);
     for (const asset of Object.values(stage.layers ?? {})) if (asset?.kind === 'cg') cgIds.add(asset.asset);
@@ -108,13 +113,13 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
     }
     void media.unlock();
   };
-  try { renderer = new DOMRenderer(root, session, assets, { title: project.title, font: project.font, storage, persistence, backup, meta, collections,
+  try { renderer = new DOMRenderer(root, session, assets, { title: project.title, font: project.font, storage, persistence, backup, continuation, meta, collections,
     beginReplay: (target, saved) => mountReplay(target, project, saved, baseURL, options, session.getView().settings), onUnlockAudio: unlockAudio, onCgPresented: id => { if (session.getView().reason !== 'rollback') meta.unlockCg(id); } }); }
   catch (error) { disconnectProgress(); session.dispose(); throw error; }
   const view = root.ownerDocument.defaultView;
   const hostVisibility = (event: Event) => { const hidden = (event as CustomEvent<unknown>).detail; if (hidden && typeof hidden === 'object' && 'hidden' in hidden && typeof hidden.hidden === 'boolean') session.pause('native-host', hidden.hidden); };
   view?.addEventListener('vn-engine-host-visibility', hostVisibility);
-  return { session, renderer, assets, persistence, backup, meta, unlockAudio, dispose() {
+  return { session, renderer, assets, persistence, backup, continuation, meta, unlockAudio, dispose() {
     if (disposed) return; disposed = true; disconnectProgress(); view?.removeEventListener('vn-engine-host-visibility', hostVisibility); media?.dispose(); session.dispose(); renderer?.dispose(); if (context) void context.close().catch(() => {});
   } };
 }

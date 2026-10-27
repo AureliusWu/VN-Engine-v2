@@ -168,7 +168,15 @@ internal static class SmokeTests
                     query('[data-input="1"]').click(); query('[data-control=mini-game-continue]').click();
                     if (puzzle.session.save().state.decisions[0].choiceId!=='yes') throw Error('Native mini-game result did not enter the story route');
                     query('[data-control=rollback]').click(); if (puzzle.session.getView().miniGame?.result!=='success') throw Error('Native mini-game rollback lost its result');
-                    puzzle.dispose(); root.remove(); window.nativeCollectionSmoke = 'passed';
+                    puzzle.dispose();
+                    const resumeProject={schema:1,game:'native-continue-fixture',version:'v1',title:'Native continue',type:'narrative',assets:[],settings:{textDelayMs:0},
+                      scenes:[{id:'start',lines:[{id:'one',speaker:'N',text:'First'},{id:'two',speaker:'N',text:'Saved'}],ending:'done'}]};
+                    let resumed=mountGame(root,resumeProject,{baseURL,audio:false});resumed.session.next();
+                    const previousAuto=localStorage.getItem(resumed.persistence.contract.keyFor('auto'));resumed.dispose();
+                    resumed=mountGame(root,resumeProject,{baseURL,audio:false});
+                    if(localStorage.getItem(resumed.persistence.contract.keyFor('auto'))!==previousAuto) throw Error('Native remount overwrote previous Auto');
+                    query('[data-control=continue]').click();if(resumed.session.getView().frame.lineId!=='two') throw Error('Native Continue did not restore previous Auto');
+                    resumed.dispose();root.remove(); window.nativeCollectionSmoke = 'passed';
                   }).catch(error => { window.nativeCollectionSmoke = 'failed: ' + error.message; });
                   """);
                 await Wait("!!window.nativeCollectionSmoke && window.nativeCollectionSmoke !== 'pending'");
