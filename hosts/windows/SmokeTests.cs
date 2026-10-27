@@ -92,7 +92,7 @@ internal static class SmokeTests
                 await window.Browser.CoreWebView2.CallDevToolsProtocolMethodAsync("Emulation.setEmulatedMedia", "{\"features\":[{\"name\":\"prefers-reduced-motion\",\"value\":\"no-preference\"}]}");
                 await JS("""
                   window.nativeCollectionSmoke = 'pending';
-                  import('./lib/index.js').then(async ({createProject, mountGame}) => {
+                  import('./lib/index.js').then(async ({createProject, mountGame, runRouteSuite}) => {
                     const root = document.createElement('div'); document.body.append(root);
                     const baseURL = new URL('./', location.href), game = 'native-collection-fixture';
                     for (const key of Object.keys(localStorage)) if (key.startsWith('vn-engine:' + game + ':')) localStorage.removeItem(key);
@@ -189,6 +189,8 @@ internal static class SmokeTests
                     resumed.dispose();resumed=mountGame(root,resumeProject,{baseURL,audio:false});query('[data-control=title-new]').click();clickText('确认开始新游戏');
                     if(!resumed.session.setSkip(true)) throw Error('Native remount lost completed read markers');resumed.session.setSkip(false);resumed.readProgress.flush();
                     localStorage.setItem('vn-native-smoke:read-key',readKey);
+                    const routeReport=runRouteSuite(resumeProject,{schema:1,cases:[{id:'native-route',steps:[{type:'next'}],expect:{ending:'done'}}]});
+                    if(routeReport.status!=='PASS'||routeReport.restoreChecks!==2) throw Error('Native route matrix did not execute save/restore regression');
                     resumed.dispose();root.remove(); window.nativeCollectionSmoke = 'passed';
                   }).catch(error => { window.nativeCollectionSmoke = 'failed: ' + error.message; });
                   """);

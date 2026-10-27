@@ -308,7 +308,7 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "5d57a0ab9152afb06062b79640fc432b976d86af81cbd78d4accf326e93386d6"
+      "targetSha256": "bd4d4fc18ae5da2ae90a6910ee7c927a6bedced67f8ec4d0e47a74c27111a73b"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
@@ -553,7 +553,7 @@
     {
       "target": "src/index.ts",
       "mode": "new",
-      "targetSha256": "56386f8ad813ac644b837f75b96eafcff7cd7bdd35ec22552b183005559aa643",
+      "targetSha256": "b85c15c0f596da134cf8c6621339763c9137f5e960a2ac4da9cb5b1cdef3f9ea",
       "origins": []
     },
     {
@@ -694,6 +694,24 @@
       ]
     },
     {
+      "target": "src/regression/schema.ts",
+      "mode": "new",
+      "targetSha256": "4b8073a3302d33ea3eaf6288142ffc3bd695bfb38fba1306c9dc721db5645a8f",
+      "origins": []
+    },
+    {
+      "target": "src/regression/suite.ts",
+      "mode": "new",
+      "targetSha256": "3f9fcf04826396c2b01b750b6edfe479c1162f75a9cfd9aa4e9c7c59124b8f7e",
+      "origins": []
+    },
+    {
+      "target": "src/regression/types.ts",
+      "mode": "new",
+      "targetSha256": "7d2dfe950203d19018a00e3e59770e4077ad2fc70a7673e5bd99753b19afc224",
+      "origins": []
+    },
+    {
       "target": "src/render/dom-style.ts",
       "mode": "new",
       "origins": [],
@@ -733,7 +751,7 @@
       "target": "src/runtime/project.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "51e77e795688d281f20e39596bea06d2c434a407f350384aff5db256301b3006"
+      "targetSha256": "a92488e71a1bd40f643311c9f1f2455cd27eb05b371434f0181ce54469c9cbba"
     },
     {
       "target": "src/runtime/read.ts",
@@ -996,6 +1014,12 @@
       "mode": "new",
       "origins": [],
       "targetSha256": "f257d283325eccf5c84813ba306d007821050356e6bfe73864dbfe18e385b7dc"
+    },
+    {
+      "target": "tools/test-routes.mjs",
+      "mode": "new",
+      "targetSha256": "ce4322bfacd7381476c956e1680bca4c5504f88dd38f566636432b09e8fdc089",
+      "origins": []
     },
     {
       "target": "tools/test-windows.ps1",

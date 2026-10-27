@@ -1,5 +1,9 @@
 # v0.3.0 编辑器与 Windows 宿主验证
 
+## 路线 QA 与作者工具
+
+运行器阶段：133 项 Node、6 项 Python、123 个来源检查与真实 Chromium 专项通过，覆盖 VN / 聊天 / Script / Rain / 调查、变量与证据、小游戏结果、命名检查点、逐步存读档、预算 / 覆盖缺失、失败 CLI 报告。浏览器对比玩家存储字节保持不变。Windows WebView2 已加入相同 runner 的实际执行，原生结果以本提交 CI 为准。
+
 ## 启动 / 标题 / 已读记录
 
 最终实现 `2d185bd478cb5315fd3b3929ea8cb6d13b406c37` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40493930513) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40493930378) 均成功。Windows 实际执行保留 Auto / Continue、标题设置与确认 / 取消、新游戏、重挂载已读快进及完整进程重启后的持久标记；浏览器 / 编辑器及四样例锁定提交 QA 复核通过。正式美术 / 听感 / 实体设备仍未验收，见 [本轮机器记录](player-lifecycle-validation.json)。

@@ -18,8 +18,10 @@ import { projectEndings, validateTrueRoutePolicy } from '../meta/project.js';
 import type { RollbackOptions } from './rollback.js';
 import { validateProjectMiniGames } from '../minigame/project.js';
 import type { ReadProgressPort } from './read.js';
+import type { RouteSuite } from '../regression/types.js';
+import { validateRouteSuite } from '../regression/schema.js';
 
-type ProjectBase = { schema: 1; game: string; version: string; title: string; titleScreen?: boolean; assets: readonly Asset[]; font?: string; settings?: Partial<RuntimeSettings>; rollback?: RollbackOptions; collections?: ProjectCollections; releaseEvidence?: ReleaseEvidence };
+type ProjectBase = { schema: 1; game: string; version: string; title: string; titleScreen?: boolean; routeTests?: RouteSuite; assets: readonly Asset[]; font?: string; settings?: Partial<RuntimeSettings>; rollback?: RollbackOptions; collections?: ProjectCollections; releaseEvidence?: ReleaseEvidence };
 export type EngineProject = ProjectBase & (
   { type: 'narrative'; adapter?: 'healing' | 'netlove'; entry?: string; stats?: Record<string, number>; scenes: readonly Scene[]; stage?: NarrativeStage }
   | { type: 'script'; program: ScriptProgram; defaults?: StageCue }
@@ -29,6 +31,7 @@ export type EngineProject = ProjectBase & (
 export function createProject(project: EngineProject, baseURL: string | URL, options: { clock?: Clock; settings?: Partial<RuntimeSettings>; assetURL?: (path: string) => string; initialPause?: string; readProgress?: ReadProgressPort } = {}) {
   if (project.schema !== 1 || !project.game || !project.version || !project.title || !Array.isArray(project.assets)) throw new Error('Invalid engine project');
   if (project.titleScreen !== undefined && typeof project.titleScreen !== 'boolean') throw new Error('titleScreen must be boolean');
+  if (project.routeTests !== undefined) validateRouteSuite(project.routeTests);
   const assets = new AssetCatalog(project.assets, baseURL, options.assetURL);
   if (project.collections !== undefined) {
     if (!isRecord(project.collections)) throw new Error('Invalid collection metadata');
