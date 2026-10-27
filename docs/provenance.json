@@ -125,7 +125,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "626b95a9ef37a3af02a9dee1cd0a367835479ef8cb5520738bfa3d9f9080128a"
+      "targetSha256": "f9fc907a61eea4d86a737b74f92b7da20eff8813fa89593b1257c94595d56f3c"
     },
     {
       "target": "editor/style.css",
@@ -230,7 +230,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "a857126f7dacf77bb8d530c06e6aa22be9d507d6190f07874df9975e3c2325f2"
+      "targetSha256": "086ed9a9cd93b250bc2ae3f70fba116773d9ff29a3d8edc8d0e21534206b59ce"
     },
     {
       "target": "examples/runtime/assets/voice-test.wav",
@@ -308,7 +308,7 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "4ffbd94648dad176bc681a44e083cd310341ffe2eaf82303c37222d191f4d3d0"
+      "targetSha256": "3188d2feed89ed70e552f408d1fb3e8dfc4f6e90af4e9e859113d2a7ce43a59d"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
@@ -553,7 +553,7 @@
     {
       "target": "src/index.ts",
       "mode": "new",
-      "targetSha256": "f7c6a69507727732b5652188da44b51f3c5479e38358ee1652ea4f904fd9d2b5",
+      "targetSha256": "d947eea67ccb40561b285d78dc648fd98d0aae9be43cb67be4069fba4b0459bf",
       "origins": []
     },
     {
@@ -697,13 +697,13 @@
       "target": "src/render/dom-style.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "86ab3df0fd5eb68d3db5fe71378cea899d0ded242703d1e9e56672a168948c70"
+      "targetSha256": "51d9b57d95ce88297eccdca9ae3bb6c6a2ad845eb0ba4d000a259c918b53882e"
     },
     {
       "target": "src/render/dom.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "143338e02a51ba70794ab77b1c62d97aa12280d8098bb1d048fbc540f5f6ed7d"
+      "targetSha256": "bac4883fbff59e50af0d3a5c09fe7371ee5dcc7211e55ed8c701bc499d193bb6"
     },
     {
       "target": "src/render/key-visual.ts",
@@ -715,7 +715,7 @@
       "target": "src/render/mount.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "ddca9c60c9dd87ffc54404f4e655cfac4eddc3248686a3ea345217c60f974edd"
+      "targetSha256": "8478781e77de3ade18bc85d3029dce8701d842244e17a8931d2de3c163ae2409"
     },
     {
       "target": "src/runtime/drivers.ts",
@@ -751,7 +751,7 @@
       "target": "src/runtime/session.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "384b7c950aa6c2441f06bcc89b23efbae669b5db77aaee39656bd2f98963c481"
+      "targetSha256": "b466d1ed8eeb60b13ea0159252d12f27c79e52bd08111c914eb60be0e8050c27"
     },
     {
       "target": "src/script/engine.ts",
@@ -788,6 +788,12 @@
       "mode": "new",
       "origins": [],
       "targetSha256": "9f049d912064ceafe9d854db019a87cb3556cf2a414e63bfc6e0e8376541eb8b"
+    },
+    {
+      "target": "src/storage/backup.ts",
+      "mode": "new",
+      "targetSha256": "fac5df8e61e72e4ea4ad225ee89f341279a65b03506c4e9074ed75524ec1d715",
+      "origins": []
     },
     {
       "target": "src/storage/contract.ts",

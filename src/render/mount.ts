@@ -2,6 +2,8 @@ import type { EngineProject } from '../runtime/project.js';
 import { createProject } from '../runtime/project.js';
 import { MediaDirector } from '../runtime/media.js';
 import { bindSessionPersistence, createSaveContract } from '../storage/contract.js';
+import { createSaveBackup } from '../storage/backup.js';
+import type { RuntimeSettings } from '../runtime/session.js';
 import { createMetaStateStore } from '../meta/state.js';
 import type { StoragePort } from '../storage/store.js';
 import { DOMRenderer } from './dom.js';
@@ -9,8 +11,8 @@ import { DOMRenderer } from './dom.js';
 export type MountOptions = { baseURL?: string | URL; storage?: StoragePort | null; audio?: boolean; assetURL?: (path: string) => string };
 
 /** Replay is a separate driver/session with no persistence or meta subscriptions. */
-function mountReplay(root: HTMLElement, project: EngineProject, saved: unknown, baseURL: string | URL, options: MountOptions) {
-  const { session, assets } = createProject(project, baseURL, { assetURL: options.assetURL });
+function mountReplay(root: HTMLElement, project: EngineProject, saved: unknown, baseURL: string | URL, options: MountOptions, settings: Partial<RuntimeSettings>) {
+  const { session, assets } = createProject(project, baseURL, { assetURL: options.assetURL, settings });
   let renderer: DOMRenderer | undefined, media: MediaDirector | undefined, context: AudioContext | undefined, disposed = false;
   const view = root.ownerDocument.defaultView;
   const hostVisibility = (event: Event) => { const hidden = (event as CustomEvent<unknown>).detail; if (hidden && typeof hidden === 'object' && 'hidden' in hidden && typeof hidden.hidden === 'boolean') session.pause('native-host', hidden.hidden); };
@@ -43,11 +45,20 @@ function mountReplay(root: HTMLElement, project: EngineProject, saved: unknown, 
 
 /** One entry point: own interpreter/state machine + scheduler + DOM + media. */
 export function mountGame(root: HTMLElement, project: EngineProject, options: MountOptions = {}) {
+  // Backup validation and replay must use the same mounted data, even if an author later edits the input object.
+  const presentation = project.type === 'narrative' ? project.stage?.presentation : undefined;
+  project = structuredClone(project.type === 'narrative' && presentation ? { ...project, stage: { ...project.stage, presentation: undefined } } : project);
+  if (project.type === 'narrative' && presentation) project.stage = { ...project.stage, presentation };
   const baseURL = options.baseURL ?? new URL('./', root.ownerDocument.baseURI);
   const { session, assets } = createProject(project, baseURL, { assetURL: options.assetURL });
   let storage = options.storage;
   if (storage === undefined) try { storage = root.ownerDocument.defaultView?.localStorage; } catch { storage = null; }
   const persistence = bindSessionPersistence(session, createSaveContract({ game: project.game, gameVersion: project.version, storage }));
+  const backup = createSaveBackup(persistence.contract, storage, value => {
+    const isolated = createProject(project, baseURL, { assetURL: options.assetURL, settings: { textDelayMs: 0 } });
+    try { isolated.session.restore(value); return isolated.session.save(); }
+    finally { isolated.session.dispose(); }
+  });
   const collections = project.collections ? structuredClone(project.collections) : undefined;
   const meta = createMetaStateStore(project.game, storage, { cgs: collections?.cgs?.map(item => item.id), endings: collections?.endings?.map(item => item.id), trueRoute: collections?.trueRoute });
   if (collections?.trueRoute) meta.evaluateTrueRoute();
@@ -97,13 +108,13 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
     }
     void media.unlock();
   };
-  try { renderer = new DOMRenderer(root, session, assets, { title: project.title, font: project.font, storage, persistence, meta, collections,
-    beginReplay: (target, saved) => mountReplay(target, project, saved, baseURL, options), onUnlockAudio: unlockAudio, onCgPresented: id => { if (session.getView().reason !== 'rollback') meta.unlockCg(id); } }); }
+  try { renderer = new DOMRenderer(root, session, assets, { title: project.title, font: project.font, storage, persistence, backup, meta, collections,
+    beginReplay: (target, saved) => mountReplay(target, project, saved, baseURL, options, session.getView().settings), onUnlockAudio: unlockAudio, onCgPresented: id => { if (session.getView().reason !== 'rollback') meta.unlockCg(id); } }); }
   catch (error) { disconnectProgress(); session.dispose(); throw error; }
   const view = root.ownerDocument.defaultView;
   const hostVisibility = (event: Event) => { const hidden = (event as CustomEvent<unknown>).detail; if (hidden && typeof hidden === 'object' && 'hidden' in hidden && typeof hidden.hidden === 'boolean') session.pause('native-host', hidden.hidden); };
   view?.addEventListener('vn-engine-host-visibility', hostVisibility);
-  return { session, renderer, assets, persistence, meta, unlockAudio, dispose() {
+  return { session, renderer, assets, persistence, backup, meta, unlockAudio, dispose() {
     if (disposed) return; disposed = true; disconnectProgress(); view?.removeEventListener('vn-engine-host-visibility', hostVisibility); media?.dispose(); session.dispose(); renderer?.dispose(); if (context) void context.close().catch(() => {});
   } };
 }

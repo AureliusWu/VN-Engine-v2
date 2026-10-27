@@ -140,10 +140,22 @@ internal static class SmokeTests
                     const state = JSON.stringify(instance.session.save().state), meta = localStorage.getItem(instance.meta.key), auto = localStorage.getItem(instance.persistence.contract.keyFor('auto'));
                     query('[data-control=gallery]').click(); clickText('查看 CG'); clickText('回看剧情');
                     if (!query('.vn-replay .vn-text')?.textContent.includes('replay start')) throw Error('Replay did not start');
+                    if (query('.vn-replay .vn-engine').dataset.contrast!=='high' || query('.vn-replay .vn-engine').style.getPropertyValue('--vn-font-scale')!=='1.6') throw Error('Native replay did not inherit reading preferences');
                     query('.vn-replay [data-control=next]').click();
                     if (!query('.vn-replay .vn-text')?.textContent.includes('replay end')) throw Error('Replay did not advance');
                     clickText('返回图鉴');
                     if (JSON.stringify(instance.session.save().state) !== state || localStorage.getItem(instance.meta.key) !== meta || localStorage.getItem(instance.persistence.contract.keyFor('auto')) !== auto) throw Error('Replay changed normal state');
+                    clickText('关闭'); instance.persistence.saveManual(1); instance.persistence.quickSave();
+                    const archive=instance.backup.export(); instance.session.restart(); instance.persistence.saveManual(1);
+                    const backupState=JSON.stringify(instance.session.save().state), backupMeta=localStorage.getItem(instance.meta.key), beforeSlot=localStorage.getItem(instance.persistence.contract.keyFor('manual-1'));
+                    query('[data-control=settings]').click();
+                    const file=query('[data-import=backup]'), transfer=new DataTransfer(); transfer.items.add(new File([archive],'backup.json',{type:'application/json'}));file.files=transfer.files;file.dispatchEvent(new Event('change',{bubbles:true}));
+                    const previewDeadline=Date.now()+5000;
+                    while(![...query('.vn-modal').querySelectorAll('button')].some(button=>button.textContent==='确认恢复这些槽位')&&Date.now()<previewDeadline) await new Promise(resolve=>setTimeout(resolve,50));
+                    if(localStorage.getItem(instance.persistence.contract.keyFor('manual-1'))!==beforeSlot) throw Error('Native backup preview modified a stored slot');
+                    clickText('确认恢复这些槽位');
+                    if(!query('.vn-status').textContent.includes('已恢复') || JSON.stringify(instance.session.save().state)!==backupState || localStorage.getItem(instance.meta.key)!==backupMeta) throw Error('Native backup restore changed the current route or Meta');
+                    instance.persistence.loadManual(1); if(instance.session.getView().frame.lineId!=='two') throw Error('Native archived slot did not restore its saved route');
                     instance.dispose();
                     const puzzleProject = {schema:1, game:'native-mini-game-fixture', version:'v1', title:'Native puzzle', type:'narrative', settings:{textDelayMs:0}, assets:[],
                       stage:{lines:{puzzle:{miniGame:{id:'switches',kind:'switches',initial:[false,false],target:[true,true],maxMoves:3,results:{success:'yes',failure:'no',abort:'no',skip:'yes'}}}}},
@@ -163,7 +175,7 @@ internal static class SmokeTests
                 var collectionResult = await JS("window.nativeCollectionSmoke");
                 if (collectionResult != "\"passed\"") throw new InvalidDataException("Native collection/video check: " + collectionResult);
                 await window.Browser.CoreWebView2.CallDevToolsProtocolMethodAsync("Emulation.setEmulatedMedia", "{\"features\":[]}");
-                checks.Add("Native WebView2 validates independent sound settings, video, scoped Key Visual, isolated replay, state rollback and mini-game play/save/restore/result/rollback");
+                checks.Add("Native WebView2 validates sound/readability settings, multi-slot backup preview/restore, video, scoped Key Visual, isolated replay, state rollback and mini-game lifecycle");
             }
             else
             {

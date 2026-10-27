@@ -149,4 +149,6 @@ test('runtime setting imports clamp finite values and keep voice preferences ind
   assert.equal(mixer.masterVolume, 1); assert.equal(mixer.seVolume, 1); assert.equal(mixer.bgmVolume, 0); assert.equal(mixer.videoVolume, .2);
   assert.equal(runtimeSettings({ fontScale: 99 }).fontScale, 1.6); assert.equal(runtimeSettings({ fontScale: 0 }).fontScale, 1);
   assert.equal(runtimeSettings({ highContrast: 'true' }).highContrast, false);
+  assert.equal(runtimeSettings({ music: false }).ambience, false); // Legacy project defaults gated both loops.
+  assert.equal(runtimeSettings({ music: false, ambience: true }).ambience, true);
 });

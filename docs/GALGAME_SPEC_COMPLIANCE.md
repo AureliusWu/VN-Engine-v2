@@ -71,7 +71,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Auto | PASS | 自研 scheduler |
 | Skip Read | PASS | 仅已读文本，Choice 处停止 |
 | Hide UI | PASS | DOM runtime |
-| Settings persistence | PASS | 阅读与声音设置持久化 |
+| Settings persistence | PASS | 独立总音量 / BGM / Ambience / SE / Voice / Video、阅读字号与高对比持久化，旧设置保留；`d0f6e36` / `0ff9841` 浏览器与 Windows 已通过 |
 | Persistent Meta State | PASS | 独立 MetaState API 与 mount runtime 更新 |
 | CG Gallery | PASS | 配置、锁定遮蔽、查看与独立回看已通过 `4a8a57e` 浏览器和 Windows CI；Studio 作者控件、真实预览回看起点和规则已通过 `36d492a` 浏览器与 Windows CI |
 | Ending Collection | PASS | 标题、True Ending、解锁进度与回看已通过 `4a8a57e` 浏览器和 Windows CI；Studio 作者控件、真实预览回看起点和规则已通过 `36d492a` 浏览器与 Windows CI |

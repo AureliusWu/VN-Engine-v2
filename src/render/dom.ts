@@ -5,6 +5,7 @@ import type { AssetCatalog, AssetKind } from '../assets/catalog.js';
 import type { RuntimeSession, RuntimeSettings, RuntimeView } from '../runtime/session.js';
 import type { bindSessionPersistence, SaveEnvelope } from '../storage/contract.js';
 import type { LoadResult } from '../storage/store.js';
+import { MAX_SAVE_BACKUP_SIZE, type createSaveBackup, type SaveBackupPreview } from '../storage/backup.js';
 import type { CollectionCg, CollectionEnding, ProjectCollections, createMetaStateStore } from '../meta/state.js';
 import type { PresentationTimeline, StageLayer, StageLayerAsset, StageVideo, StageVisualLayer } from '../stage/types.js';
 import { resolvePresentationTimeline } from '../stage/timeline.js';
@@ -12,6 +13,7 @@ import { DOM_STYLE } from './dom-style.js';
 import { KeyVisualLayer } from './key-visual.js';
 
 export type DOMRendererOptions = { title?: string; font?: string; storage?: StoragePort | null; persistence?: ReturnType<typeof bindSessionPersistence>;
+  backup?: ReturnType<typeof createSaveBackup>;
   meta?: ReturnType<typeof createMetaStateStore>; collections?: ProjectCollections; replayOnly?: boolean;
   beginReplay?: (root: HTMLElement, saved: unknown) => () => void; onUnlockAudio?: () => void; onCgPresented?: (id: string) => void };
 
@@ -522,6 +524,7 @@ export class DOMRenderer {
   private evidence() { const panel = this.panel('证据簿'); const evidence = this.session.getView().frame.evidence ?? []; if (!evidence.length) panel.append(this.el('p', '尚未取得证据')); for (const item of evidence) panel.append(this.el('h3', item.title), this.el('p', item.detail)); }
   private settings() {
     const panel = this.panel('阅读设置'), snapshot = this.session.getView();
+    let importRequest = 0;
     const configure = (value: Partial<RuntimeSettings>) => {
       this.session.configure(value); try { this.options.storage?.setItem(this.settingsKey, JSON.stringify(this.session.getView().settings)); } catch { this.notify('设置已生效，本次无法保存设置'); }
     };
@@ -535,15 +538,57 @@ export class DOMRenderer {
     }
     const backup = this.el('div', undefined, 'vn-backup'); backup.append(this.button('导出存档', () => this.exportSave()));
     const input = this.el('input'); input.type = 'file'; input.accept = '.json,application/json'; input.hidden = true;
-    input.addEventListener('change', () => { const file = input.files?.[0]; if (!file) return; if (file.size > 2_000_000) { this.notify('存档文件过大'); return; }
-      void file.text().then(raw => { if (this.disposed) return; try { this.session.restore(JSON.parse(raw)); this.closePanel(); this.notify('已导入存档'); } catch { this.notify('导入失败，当前进度保留'); } }).catch(() => this.notify('无法读取文件')); });
+    input.addEventListener('change', () => { const request = ++importRequest, file = input.files?.[0]; if (!file) return; if (file.size > 2_000_000) { this.notify('存档文件过大'); return; }
+      void file.text().then(raw => { if (this.disposed || !panel.isConnected || request !== importRequest) return; try { this.session.restore(JSON.parse(raw)); this.closePanel(); this.notify('已导入存档'); } catch { this.notify('导入失败，当前进度保留'); } }).catch(() => { if (panel.isConnected && request === importRequest) this.notify('无法读取文件'); }); });
     backup.append(this.button('导入存档', () => input.click()), input); panel.append(backup);
+    if (this.options.backup) {
+      const all = this.el('div', undefined, 'vn-backup'), file = this.el('input'); file.type = 'file'; file.accept = '.json,application/json'; file.hidden = true; file.dataset.import = 'backup';
+      all.append(this.el('p', '整体备份包含手动、快速和自动存档。恢复前可预览；收藏进度与设置单独保留。'));
+      all.append(this.button('备份所有存档', () => {
+        try { this.download(this.options.backup!.export(), '-slots.json'); this.notify('存档备份已导出'); }
+        catch { this.notify('备份未导出：存储不可用、槽位损坏或没有存档，原数据已保留'); }
+      }), this.button('恢复存档备份', () => file.click()), file);
+      file.addEventListener('change', () => {
+        const request = ++importRequest, selected = file.files?.[0]; if (!selected) return;
+        if (selected.size > MAX_SAVE_BACKUP_SIZE) { this.notify('存档备份文件过大'); file.value = ''; return; }
+        void selected.text().then(raw => {
+          if (this.disposed || !panel.isConnected || request !== importRequest) return;
+          try { this.backupPreview(this.options.backup!.preview(raw)); }
+          catch { this.notify('备份无法恢复：游戏、版本或剧情位置不兼容，原数据已保留'); }
+        }).catch(() => { if (panel.isConnected && request === importRequest) this.notify('无法读取备份文件'); }).finally(() => { if (request === importRequest) file.value = ''; });
+      }); panel.append(all);
+    }
     const help = this.el('details'), summary = this.el('summary', '键盘操作');
     help.append(summary, this.el('p', '阅读区：空格 / Enter 显示全文或下一段；1–9 选择；A 自动；H 隐藏 / 恢复；Backspace 回退。F5 快速存档；F9 快速读档。Tab 切换控件，Enter / 空格操作焦点按钮；Esc 关闭面板或返回回看列表。')); panel.append(help);
   }
   private exportSave() {
-    const view = this.document.defaultView!; const url = view.URL.createObjectURL(new Blob([JSON.stringify(this.session.save(), null, 2)], { type: 'application/json' }));
-    const link = this.el('a'); link.href = url; link.download = this.session.driver.game.replace(/[^a-z0-9_-]/gi, '_') + '-save.json'; link.click(); view.setTimeout(() => view.URL.revokeObjectURL(url), 0); this.notify('存档已导出');
+    try { this.download(JSON.stringify(this.session.save(), null, 2), '-save.json'); this.notify('存档已导出'); }
+    catch { this.notify('存档暂时无法导出，可以继续游玩'); }
+  }
+  private download(raw: string, suffix: string) {
+    const view = this.document.defaultView!; const url = view.URL.createObjectURL(new Blob([raw], { type: 'application/json' }));
+    const link = this.el('a'); link.href = url; link.download = this.session.driver.game.replace(/[^a-z0-9_-]/gi, '_') + suffix;
+    try { link.click(); } finally { view.setTimeout(() => view.URL.revokeObjectURL(url), 0); }
+  }
+  private backupPreview(preview: SaveBackupPreview) {
+    const backup = this.options.backup; if (!backup) return;
+    const panel = this.panel('恢复存档备份');
+    panel.append(this.el('p', `备份时间：${preview.createdAt}。将写入 ${preview.slots.length} 个槽位；仅覆盖下列槽位，当前阅读位置保持不变。`));
+    for (const item of preview.slots) {
+      const label = item.slot === 'auto' ? '自动存档' : item.slot === 'quick' ? '快速存档' : `手动存档 ${item.slot.slice(7)}`;
+      panel.append(this.el('p', [label, item.savedAt, item.summary?.title,
+        item.replaces === 'empty' ? '写入空槽' : item.replaces === 'invalid' ? '覆盖损坏或不兼容的槽位' : '覆盖已有存档'].filter(Boolean).join(' · ')));
+    }
+    const confirm = this.button('确认恢复这些槽位', () => {
+      confirm.disabled = true;
+      try {
+        const result = backup.commit(preview);
+        if (result.status === 'saved') { this.closePanel(); this.notify(`已恢复 ${preview.slots.length} 个存档，请在读档面板选择继续`); }
+        else if (result.status === 'conflict') this.notify('槽位在预览后发生变化，请重新选择备份并预览');
+        else this.notify(result.rollbackFailed ? '恢复未完成，部分槽位无法还原，请保留备份并检查存档' : '恢复失败，原有槽位已保留');
+      } catch { this.notify('恢复未完成，请重新选择备份并预览'); }
+    });
+    panel.append(confirm, this.button('取消恢复', () => this.settings()));
   }
   private fullscreen() { try { const promise = this.document.fullscreenElement ? this.document.exitFullscreen() : this.element.requestFullscreen?.(); void promise?.catch(() => this.notify('当前浏览器未能进入全屏')); } catch { this.notify('当前浏览器未能进入全屏'); } }
   private key(event: KeyboardEvent) {

@@ -2,6 +2,12 @@
 
 ## 下一轮：声音 / 阅读 / 备份
 
+备份阶段本地最终 `npm run check`（119 项 Node、6 项 Python、116 个来源）、完整 `npm run test:browser` 与 `npm run test:editor` 均通过；实际检查 390px 备份预览截图，未宣称实体设备验收。未配置提交锁的本地 QA 样例包被身份检查拒绝；推送后按该确切提交重建复核，不使用前一个提交号标记新代码。
+
+备份阶段新增 7 项核心测试：四种叙事驱动、跨游戏 / 重复槽 / 不可能路线拒绝、迁移、预览不可变与一次提交、确认前冲突、配额与回滚失败、小游戏中途状态。Chromium 实际下载 / 上传文件并走预览、取消、确认、读档，检查当前位置 / Meta 不改、预览后并发写入拒绝、关闭面板的迟到文件与连续选文件竞争。Windows smoke 新增真实 WebView2 文件输入、预览确认与读取已恢复槽位；原生结果以本提交工作流为准。
+
+阅读提交 `0ff984155290a1de3cfa265e080511a954635358` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40486930321) 和 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40486930277) 均成功。
+
 阅读阶段完整本地核心与浏览器回归通过：字号 100–160%、高对比、长对白滚动、聊天与文书避让、设置持久化、Tab 绕过隐藏文件输入、关闭后恢复焦点、回看里的设置 Esc 不退出外层。实际检查 390px 高对比设置截图，补齐运行样例和 Studio OFL 子集字体；实体移动设备和完整无障碍人工评估仍未验证。
 
 声音提交 `d0f6e36fbd5c7a909b2c900833837cccb3e983e4` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40486346521) 和 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40486346529) 均成功。

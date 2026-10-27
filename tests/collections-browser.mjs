@@ -37,12 +37,14 @@ try {
   await host.locator(':scope > .vn-stage [data-control=next]').click();
   assert.equal(await page.evaluate(() => collectionGame.session.getSnapshot().frame.ending), 'complete');
   assert.equal(await page.evaluate(() => collectionGame.meta.read().value.true_route_unlocked), true);
-  await page.evaluate(() => { collectionGame.persistence.saveManual(1); collectionGame.persistence.quickSave(); });
+  await page.evaluate(() => { collectionGame.session.configure({fontScale:1.4,highContrast:true}); collectionGame.persistence.saveManual(1); collectionGame.persistence.quickSave(); });
   const before = await page.evaluate(() => ({ state: collectionGame.session.save().state, records: Object.fromEntries(Object.keys(localStorage).filter(key => key.startsWith('vn-engine:collection-fixture:')).sort().map(key => [key, localStorage.getItem(key)])) }));
   await host.locator('[data-control=gallery]').click(); assert.match(await modal.innerText(), /已解锁 1 \/ 1/);
   await modal.getByRole('button', { name: '查看 CG', exact: true }).click(); await modal.locator('.vn-gallery-image').waitFor({ state: 'visible' });
   await modal.getByRole('button', { name: '回看剧情', exact: true }).click();
   assert.match(await modal.locator('.vn-replay .vn-text').innerText(), /回看起点/);
+  assert.equal(await modal.locator('.vn-replay .vn-engine').getAttribute('data-contrast'), 'high');
+  assert.equal(await modal.locator('.vn-replay .vn-engine').evaluate(node => node.style.getPropertyValue('--vn-font-scale')), '1.4');
   assert.equal(await modal.locator('.vn-replay [data-control=save]').isHidden(), true);
   await modal.locator('.vn-replay [data-control=settings]').click();
   await page.keyboard.press('Escape');

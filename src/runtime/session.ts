@@ -37,6 +37,7 @@ export function runtimeSettings(value: Partial<RuntimeSettings>): RuntimeSetting
     if (typeof number === 'number' && Number.isFinite(number)) result[key] = Math.max(0, Math.min(1, number));
   }
   for (const key of ['reducedMotion', 'music', 'ambience', 'voiceEnabled', 'soundEffects', 'highContrast'] as const) if (typeof value[key] === 'boolean') result[key] = value[key];
+  if (value.masterVolume === undefined && value.ambience === undefined && typeof value.music === 'boolean') result.ambience = value.music;
   return result;
 }
 
