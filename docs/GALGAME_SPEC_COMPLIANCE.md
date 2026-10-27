@@ -34,7 +34,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Build checksum | PASS | 独立构建继续为每个 runtime 文件写入 SHA256 |
 | Release commit lock | PASS | `VN_RELEASE_BUILD=1` 时缺少 `VN_ENGINE_COMMIT` / `GITHUB_SHA` 直接失败 |
 | Release validation mode | PASS | `--release` 与 `VN_RELEASE_BUILD=1` 提升规范约束 |
-| Machine-readable evidence | PASS | validator 返回 contract、mode、assets、references、lines、endings、warnings |
+| Machine-readable evidence | PASS | validator 返回结构结果；新增 QA_REPORT 聚合实际字节 / 解码 / 人工证据 / 构建包，最新完整 CI 另列 |
 | Save Contract v2 | PASS | 独立 `save_version / game_version`、默认 6 手动槽、Quick、Auto、Migration Registry、损坏存档隔离 |
 | Session persistence binding | PASS | `bindSessionPersistence()` 直接通过 `RuntimeSession.save()/restore()` 工作 |
 | Auto Save runtime binding | PASS | `mountGame()` 每次进入新的 visit 写独立 Auto Slot，不覆盖手动/Quick |
@@ -87,7 +87,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Formal Layer API | PASS | 五个视觉资源层、effect / ui 整层轨道与 Studio 控件已接入；`cb03e9c` 浏览器和 Windows 原生验收通过；Key Visual 范围 / 时限另有约束，不能替代作品美术验收 |
 | Video | PARTIAL | 本地播放、失败回退、暂停 / 跳过 / 减少动态和编辑器配置已接入；`9894454` 浏览器及 Windows CI 通过，有声视频听感、实际设备及编码支持仍需作品验证 |
 | Investigation / nontraditional play | PASS | Investigation runtime |
-| Mini game contract | PARTIAL | 小游戏 v1 已接入 runtime / Studio，当前有开关谜题适配器，覆盖 entry / exit / save / restore / skip / abort / result；本轮 Windows 待确认，其他玩法适配器仍需实现 |
+| Mini game contract | PARTIAL | 小游戏 v1 已接入 runtime / Studio，当前有开关谜题适配器，覆盖 entry / exit / save / restore / skip / abort / result；`c0cca95` 浏览器及 Windows 已通过，其他玩法适配器仍需实现 |
 | Web Build | PASS | Standalone + PWA |
 | PWA offline | PASS | Service Worker / fingerprint |
 | Windows Build | PASS | 独立 Windows host workflow 与验收记录 |
@@ -121,8 +121,8 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 ### P1 — Release Evidence
 
 - 作品专用的 `gate:release -- project.json` 输出结构化检查结果；按作品发行流程保存为 CI artifact
-- 统一 `QA_REPORT`
-- Windows / Web / PWA 的 build identity 与 checksum 汇总
+- `QA_REPORT`、实际资产解码、候选包复核与人工 QA Gate 已接入，最新 CI 待确认
+- Windows / Web / PWA 的 build identity 与 checksum 可在报告中汇总；平台体验仍需人工证据
 - RC / RELEASE 时强制 `VN_RELEASE_BUILD=1`
 
 ## Definition of Done
@@ -142,3 +142,5 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 ```
 
 才可从 `ENGINE_GAP / PARTIAL` 改为 `PASS`。
+
+统一 QA 和角色母版继承的使用与边界见 [QA_REPORT](QA_REPORT.md) 和 [Release Art Gate](RELEASE_ART_GATE.md)。开发样例不因自动化成功升级成 ART_READY 或正式作品。

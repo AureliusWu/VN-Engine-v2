@@ -1,6 +1,7 @@
 import type { Asset } from '../assets/catalog.js';
 import type { EngineProject } from '../runtime/project.js';
 import { isRecord } from '../storage/save.js';
+import type { QaEvidence } from './qa.js';
 
 export type EvidenceStatus = 'PASS' | 'FAIL' | 'UNVERIFIED';
 export type VisualReview = {
@@ -8,23 +9,29 @@ export type VisualReview = {
   VISUAL_IDENTITY_PASS: EvidenceStatus; COMPOSITION_PASS: EvidenceStatus; STYLE_PASS: EvidenceStatus;
   SCENE_INTEGRATION_PASS: EvidenceStatus; MOBILE_PASS: EvidenceStatus; DESKTOP_PASS: EvidenceStatus; PROVENANCE_PASS: EvidenceStatus;
   reviewer: string; reviewedAt: string; source: string; runtimeSha256: string; masterSha256?: string;
+  characterMaster?: { id: string; role: 'neutral' | 'variant' };
   evidence: { desktop: string; mobile: string; provenance: string };
 };
+export type CharacterMasterReview = Pick<VisualReview, 'ART_READY' | 'VISUAL_IDENTITY_PASS' | 'COMPOSITION_PASS' | 'STYLE_PASS' | 'SCENE_INTEGRATION_PASS' | 'MOBILE_PASS' | 'DESKTOP_PASS' | 'PROVENANCE_PASS' | 'reviewer' | 'reviewedAt'>
+  & { masterSha256: string; evidence: string; neutralAsset?: string };
 export type ReleaseEvidence = {
   targets: { mobile: boolean; pwa: boolean; desktop: boolean };
   mobilePhysicalDevice?: { status: EvidenceStatus; kind: 'physical'; device: string; reviewer: string; reviewedAt: string; evidence: string };
   dynamicPresentation?: { status: EvidenceStatus; reviewer: string; reviewedAt: string; evidence: string };
   keyVisual: { used: boolean; status?: EvidenceStatus; reviewer?: string; reviewedAt?: string; evidence?: string };
   art: Record<string, VisualReview>;
+  characterMasters?: Record<string, CharacterMasterReview>;
+  qa?: QaEvidence;
 };
 export type ArtGateResult = {
   contract: 'GALGAME_SPEC-v0.2-art-draft';
   TECH_READY: 'PASS' | 'FAIL' | 'N/A'; ART_READY: 'PASS' | 'FAIL' | 'N/A';
   MOBILE_PHYSICAL_DEVICE: 'PASS' | 'FAIL' | 'UNVERIFIED' | 'N/A';
   KEY_VISUAL_LIFECYCLE: 'PASS' | 'FAIL' | 'UNVERIFIED' | 'N/A';
+  CHARACTER_MASTER_INHERITANCE: 'PASS' | 'FAIL' | 'N/A';
   PLACEHOLDER_SCAN: 'PASS' | 'FAIL';
   release: 'PASS' | 'BLOCKED';
-  assets: readonly { id: string; TECH_READY: 'PASS' | 'FAIL'; ART_READY: 'PASS' | 'FAIL'; issues: readonly string[] }[];
+  assets: readonly { id: string; TECH_READY: 'PASS' | 'FAIL'; ART_READY: 'PASS' | 'FAIL'; CHARACTER_MASTER?: 'PASS' | 'FAIL'; issues: readonly string[] }[];
   issues: readonly string[];
   warnings: readonly string[];
   limitations: readonly string[];
@@ -78,6 +85,23 @@ export function assessProductionArt(project: EngineProject, referencedIds: reado
   }
   for (const asset of project.assets) if (asset.kind === 'ui' || (dynamicVisuals && visualKinds.has(asset.kind))) required.add(asset.id);
   const records = isRecord(root.art) ? root.art : {};
+  const masters = isRecord(root.characterMasters) ? root.characterMasters : {};
+  const masterPassed = (value: Record<string, unknown>): boolean => {
+    const link = isRecord(value.characterMaster) ? value.characterMaster : {}, masterValue = known(link.id) ? masters[link.id] : undefined;
+    const master: Record<string, unknown> = isRecord(masterValue) ? masterValue : {};
+    if (!known(link.id) || !['neutral', 'variant'].includes(String(link.role)) || !digest(value.masterSha256) || value.masterSha256 !== master.masterSha256
+      || master.ART_READY !== 'PASS' || !gates.every(gate => master[gate] === 'PASS') || !known(master.reviewer) || !dated(master.reviewedAt) || !known(master.evidence)) return false;
+    if (master.neutralAsset !== undefined) {
+      const neutralValue = typeof master.neutralAsset === 'string' ? records[master.neutralAsset] : undefined;
+      const neutral: Record<string, unknown> = isRecord(neutralValue) ? neutralValue : {};
+      const origin = isRecord(neutral.characterMaster) ? neutral.characterMaster : {};
+      const links = isRecord(neutral.evidence) ? neutral.evidence : {};
+      if (byId.get(String(master.neutralAsset))?.kind !== 'portrait' || neutral.ART_READY !== 'PASS' || !gates.every(gate => neutral[gate] === 'PASS')
+        || !known(neutral.reviewer) || !dated(neutral.reviewedAt) || !known(neutral.source) || !known(links.desktop) || !known(links.mobile) || !known(links.provenance)
+        || origin.id !== link.id || origin.role !== 'neutral' || neutral.masterSha256 !== master.masterSha256) return false;
+    }
+    return true;
+  };
   const assets = [...required].sort().map(id => {
     const asset = byId.get(id) as Asset, value = isRecord(records[id]) ? records[id] : {};
     const itemIssues: string[] = [];
@@ -95,15 +119,19 @@ export function assessProductionArt(project: EngineProject, referencedIds: reado
     const links = isRecord(value.evidence) ? value.evidence : {};
     if (!known(links.desktop) || !known(links.mobile) || !known(links.provenance)) itemIssues.push('Desktop, mobile or provenance evidence is missing.');
     if (value.masterSha256 !== undefined && !digest(value.masterSha256)) itemIssues.push('Master SHA256 is malformed.');
+    const masterStatus: 'PASS' | 'FAIL' | undefined = asset.kind === 'portrait' ? (masterPassed(value) ? 'PASS' : 'FAIL') : undefined;
+    if (masterStatus === 'FAIL') itemIssues.push('Character Master link/hash is missing, unverified, or inherits a failed Neutral Master review.');
     const art = itemIssues.length === artStart ? 'PASS' : 'FAIL';
-    return { id, TECH_READY: tech, ART_READY: art, issues: Object.freeze(itemIssues) } as const;
+    return { id, TECH_READY: tech, ART_READY: art, ...(masterStatus ? { CHARACTER_MASTER: masterStatus } : {}), issues: Object.freeze(itemIssues) } as const;
   });
   const techReady = assets.length ? (assets.every(asset => asset.TECH_READY === 'PASS') ? 'PASS' : 'FAIL') : 'N/A';
   const artReady = assets.length ? (assets.every(asset => asset.ART_READY === 'PASS') ? 'PASS' : 'FAIL') : 'N/A';
+  const portraits = assets.filter(asset => asset.CHARACTER_MASTER !== undefined);
+  const masterInheritance = portraits.length ? (portraits.every(asset => asset.CHARACTER_MASTER === 'PASS') ? 'PASS' : 'FAIL') : 'N/A';
   if (techReady === 'FAIL') issues.push('One or more production art assets are not TECH_READY.');
   if (artReady === 'FAIL') issues.push('One or more production art assets are not ART_READY.');
   return Object.freeze({ contract: 'GALGAME_SPEC-v0.2-art-draft', TECH_READY: techReady, ART_READY: artReady,
-    MOBILE_PHYSICAL_DEVICE: mobile, KEY_VISUAL_LIFECYCLE: keyVisualStatus, PLACEHOLDER_SCAN: placeholders.length ? 'FAIL' : 'PASS', release: issues.length ? 'BLOCKED' : 'PASS', assets: Object.freeze(assets), issues: Object.freeze(issues), warnings: Object.freeze(warnings),
+    MOBILE_PHYSICAL_DEVICE: mobile, KEY_VISUAL_LIFECYCLE: keyVisualStatus, CHARACTER_MASTER_INHERITANCE: masterInheritance, PLACEHOLDER_SCAN: placeholders.length ? 'FAIL' : 'PASS', release: issues.length ? 'BLOCKED' : 'PASS', assets: Object.freeze(assets), issues: Object.freeze(issues), warnings: Object.freeze(warnings),
     limitations: Object.freeze(['Human declarations and evidence links are not automatically authenticated.', 'The in-memory validator checks declared hashes; the release CLI and packager separately check actual bytes, not decoding or visual quality.']) });
 }
 

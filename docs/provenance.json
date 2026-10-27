@@ -510,13 +510,19 @@
     {
       "target": "src/compliance/art.ts",
       "mode": "new",
-      "targetSha256": "f50974788859080e6173ecd3cdf21d0f4b22bd93dfad694603af1ac427cdc368",
+      "targetSha256": "d848a612ed08480d6c3edafbd73433e54d8deb932bba9c714e8e6d846c59056b",
       "origins": []
     },
     {
       "target": "src/compliance/project.ts",
       "mode": "new",
-      "targetSha256": "45d6359ba59f7fe6edb74d00d62963ea01cd4e241d74a38fb47c6c860ecbef15",
+      "targetSha256": "22ff42780c5de020a69be34b342100366c4eb70360985bacf5c4f2d642d50a7a",
+      "origins": []
+    },
+    {
+      "target": "src/compliance/qa.ts",
+      "mode": "new",
+      "targetSha256": "1354646040cff79a8730d43333183fed42eb1855bbd925639ccac582ababdf98",
       "origins": []
     },
     {
@@ -547,7 +553,7 @@
     {
       "target": "src/index.ts",
       "mode": "new",
-      "targetSha256": "832e867b00cd625b8fc3a83d3c3116fe0797b4ab86b240b645aac225cee71893",
+      "targetSha256": "f7c6a69507727732b5652188da44b51f3c5479e38358ee1652ea4f904fd9d2b5",
       "origins": []
     },
     {
@@ -892,13 +898,19 @@
       "target": "tools/package-game.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "0f5e898d2986da431280f43c616966d2a5341f68cfe0a13e3e01d689fe2ba001"
+      "targetSha256": "ee9d6106f15cc6214aea35d78da0c30846634d786047707c267bde6593cd0e3f"
     },
     {
       "target": "tools/package-studio.mjs",
       "mode": "new",
       "origins": [],
       "targetSha256": "b7e36c093bd42c9b41f72be8fca816c2d9c3bda309f9f1afe464d2d34f5d4c3c"
+    },
+    {
+      "target": "tools/probe-assets.mjs",
+      "mode": "new",
+      "targetSha256": "d4c817bbe6e3617dbb88a48f514222a0bb4651124621d9751c95a0356bb31e19",
+      "origins": []
     },
     {
       "target": "tools/pwa.mjs",
@@ -914,9 +926,27 @@
       ]
     },
     {
+      "target": "tools/qa-report.mjs",
+      "mode": "new",
+      "targetSha256": "2b2adf92c4076946600c458b6a97712ef2268d8aacbbc1e3ae2c11105b1617e6",
+      "origins": []
+    },
+    {
+      "target": "tools/qa-samples.mjs",
+      "mode": "new",
+      "targetSha256": "b5985afe805c43fe1d24919b72db124cfc3304cb42abd178f4d8778c8419e564",
+      "origins": []
+    },
+    {
       "target": "tools/refresh-provenance.mjs",
       "mode": "new",
       "targetSha256": "213907e0ccb8717326c402a5b6ec31e2425fccd82ec5db813c2b78b4488cd84d",
+      "origins": []
+    },
+    {
+      "target": "tools/release-gate.mjs",
+      "mode": "new",
+      "targetSha256": "781da6132998d440758028d31c9e9db594b8fd7b43c46e5cbbcd529a230e239d",
       "origins": []
     },
     {
@@ -965,7 +995,7 @@
     {
       "target": "tools/validate-project.mjs",
       "mode": "new",
-      "targetSha256": "f021cac047244bc93aacd90315e1e4d280f0281795203421d583f80f2522992e",
+      "targetSha256": "9c9b30b4db8ec8cb713aa58067b9203260243890c09a0a34c128338125870d9d",
       "origins": []
     }
   ]

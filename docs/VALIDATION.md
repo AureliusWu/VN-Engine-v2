@@ -92,3 +92,9 @@ Key Visual 提交 `45e76c4` 的 Windows 工作流成功，浏览器 CI 在作者
 回滚提交 `2d2cb34` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40457880306) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40457880458) 均成功；原生 WebView2 验证先前台词 / 舞台恢复、Auto / Meta 不改写以及进程重启。
 
 小游戏 v1 增加可实际游玩的开关谜题；单元测试验证所有结果、输入记录重放、失效导入拒绝和原状态保留、暂停 / 配置隔离；浏览器专项验证中途 Quick / Auto 存档、恢复、原生暂停事件、回滚、跳过 / 退出结果及 Studio 配置和试玩。Windows smoke 加入同一玩法的真实操作与恢复；本地 106 项 Node、6 项 Python、110 项来源检查、完整浏览器与编辑器专项均通过，本次原生结果以工作流为准。
+
+小游戏提交 `c0cca95` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40459233810) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40459233870) 均成功；原生 WebView2 实际完成输入、中途存档恢复、结果入剧情和回滚。
+
+统一 QA / 母版阶段新增测试：人工 QA 缺项与适用性、Neutral 失败传给差分、独立失败汇总、实际包文件损坏 / 同版本旧故事拒绝、CLI 阻断报告保留，以及 Chromium 实际解码和正式候选端到端门禁。所有人工 PASS 数据均明确为合成测试夹具，不是作品或实体设备证据。本地四种样例的实际文件、解码和候选包检查通过；它们缺少正式美术与人工记录，报告均保持 BLOCKED。
+
+本阶段本地最终 `npm run check`：111 项 Node、6 项 Python、115 项来源检查通过；完整 `npm run test:browser` 和 QA 的真实 Chromium 解码 / 正式候选 API 与 CLI 端到端专项通过。四样例生成实际 QA_REPORT 与 build manifest，文件 / 解码 / 包校验均 PASS，人工与艺术验收缺失继续 BLOCKED。最新工作流结果单独确认。

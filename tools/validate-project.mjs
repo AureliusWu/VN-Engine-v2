@@ -2,7 +2,7 @@ import { readFile, realpath } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { dirname, resolve, sep } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { validateProjectCompliance, ReleaseArtGateError, localAssetPath } from '../dist/index.js';
+import { validateProjectCompliance, ReleaseArtGateError, ReleaseQaGateError, localAssetPath } from '../dist/index.js';
 
 class ReleaseFileGateError extends Error {
   constructor(asset, reason) { super(`Release file check failed: ${asset}: ${reason}`); this.name = 'ReleaseFileGateError'; this.report = { asset, reason, status: 'BLOCKED' }; }
@@ -39,6 +39,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
       console.log('SPEC_PROJECT_OK', JSON.stringify({ file, ...report }));
     } catch (error) {
       if (error instanceof ReleaseArtGateError) console.error('SPEC_ART_GATE_BLOCKED', JSON.stringify({ file, ...error.report }));
+      if (error instanceof ReleaseQaGateError) console.error('SPEC_QA_GATE_BLOCKED', JSON.stringify({ file, ...error.report }));
       if (error instanceof ReleaseFileGateError) console.error('SPEC_FILE_GATE_BLOCKED', JSON.stringify({ file, ...error.report }));
       throw error;
     }

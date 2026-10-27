@@ -75,6 +75,6 @@ npm run test:browser
 
 ## 使用与后续
 
-[自研运行时说明](docs/SELF-RUNTIME.md) · [架构](docs/ARCHITECTURE.md) · [四作接入与兼容](docs/MIGRATION.md) · [来源清单](docs/provenance.json) · [许可](THIRD_PARTY_NOTICES.md)
+[小游戏协议](docs/MINIGAME.md) · [QA 报告与正式门禁](docs/QA_REPORT.md) · [自研运行时说明](docs/SELF-RUNTIME.md) · [架构](docs/ARCHITECTURE.md) · [四作接入与兼容](docs/MIGRATION.md) · [来源清单](docs/provenance.json) · [许可](THIRD_PARTY_NOTICES.md)
 
 当前已形成可独立运行和打包的自研 alpha。可视化编辑器和 Windows 宿主已提供可用初版；复杂动画时间线、协作编辑与正式安装发行仍需后续完善。四个正式项目保持原运行链；迁移不会作为自动推进步骤，需等用户主动提出。

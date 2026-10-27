@@ -5,6 +5,7 @@ import type { StageCue } from '../stage/types.js';
 import { validatePresentationTimeline } from '../stage/timeline.js';
 import { validateKeyVisual } from '../stage/key-visual.js';
 import { assessProductionArt, ReleaseArtGateError, type ArtGateResult } from './art.js';
+import { assessQaEvidence, ReleaseQaGateError, type QaGateReport } from './qa.js';
 
 export const GALGAME_SPEC_CONTRACT = 'GALGAME_SPEC-v0.1';
 export type ComplianceMode = 'development' | 'release';
@@ -19,7 +20,9 @@ export type ProjectComplianceReport = {
   lines: number;
   endings: readonly string[];
   warnings: readonly string[];
+  keyVisualUsed: boolean;
   artGate?: ArtGateResult;
+  qaGate?: QaGateReport;
 };
 
 const PLACEHOLDER_TEXT = /\b(?:TODO|FIXME|PLACEHOLDER|lorem ipsum)\b/i;
@@ -182,6 +185,8 @@ export function validateProjectCompliance(
   }
   const artGate = mode === 'release' ? assessProductionArt(project, references.map(reference => reference.id), { requiresPwa: options.requiresPwa, keyVisualUsed: usesKeyVisual }) : undefined;
   if (artGate?.release === 'BLOCKED') throw new ReleaseArtGateError(artGate);
+  const qaGate = mode === 'release' ? assessQaEvidence(project, { requiresPwa: options.requiresPwa }) : undefined;
+  if (qaGate?.release === 'BLOCKED') throw new ReleaseQaGateError(qaGate);
 
   return Object.freeze({
     contract: GALGAME_SPEC_CONTRACT,
@@ -194,6 +199,8 @@ export function validateProjectCompliance(
     lines,
     endings: Object.freeze([...endings].sort()),
     warnings: Object.freeze(warnings),
+    keyVisualUsed: usesKeyVisual,
     ...(artGate ? { artGate } : {}),
+    ...(qaGate ? { qaGate } : {}),
   });
 }

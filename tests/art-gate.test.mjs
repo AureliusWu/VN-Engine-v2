@@ -18,7 +18,8 @@ function fixture() {
   return { schema: 1, game: 'art-gate-test', version: 'v1', title: 'Art gate fixture', type: 'narrative',
     assets: [{ id: 'room', kind: 'background', src: 'assets/room.svg', sha256: hash, status: 'READY' }],
     scenes: [{ id: 'start', background: 'room', lines: [{ id: 'line', speaker: 'Narrator', text: 'sample' }], ending: 'done' }],
-    releaseEvidence: { targets: { mobile: true, pwa: true, desktop: true }, keyVisual: { used: false }, mobilePhysicalDevice: { status: 'PASS', kind: 'physical', device: 'test device', reviewer: 'test reviewer', reviewedAt: '2026-10-27', evidence: 'test://physical' }, art: { room: review } } };
+    releaseEvidence: { targets: { mobile: true, pwa: true, desktop: true }, keyVisual: { used: false }, mobilePhysicalDevice: { status: 'PASS', kind: 'physical', device: 'test device', reviewer: 'test reviewer', reviewedAt: '2026-10-27', evidence: 'test://physical' }, art: { room: review },
+      qa: Object.fromEntries(['story', 'text', 'visualIntegration', 'audio', 'accessibility', 'web', 'pwa', 'windows'].map(category => [category, { status: 'PASS', reviewer: 'synthetic test reviewer', reviewedAt: '2026-10-27', evidence: 'test://synthetic-qa' }])) } };
 }
 function blocked(project, predicate) {
   assert.throws(() => validateProjectCompliance(project, { mode: 'release' }), error => error instanceof ReleaseArtGateError && predicate(error.report));
@@ -57,11 +58,30 @@ test('dynamic portraits and UI key visuals cannot be omitted from the art review
     { id: 'title-visual', kind: 'ui', src: 'title.svg', status: 'READY', sha256: hash });
   blocked(project, report => report.assets.some(asset => asset.id === 'hero/neutral' && asset.ART_READY === 'FAIL')
     && report.assets.some(asset => asset.id === 'title-visual' && asset.ART_READY === 'FAIL'));
-  project.releaseEvidence.art['hero/neutral'] = { ...project.releaseEvidence.art.room };
+  project.releaseEvidence.art['hero/neutral'] = { ...project.releaseEvidence.art.room, masterSha256: hash, characterMaster: { id: 'hero', role: 'neutral' } };
+  project.releaseEvidence.characterMasters = { hero: { ...project.releaseEvidence.art.room, masterSha256: hash, neutralAsset: 'hero/neutral', evidence: 'test://synthetic-master' } };
   project.releaseEvidence.art['title-visual'] = { ...project.releaseEvidence.art.room };
   blocked(project, report => report.issues.some(issue => issue.includes('Dynamic presentation')));
   project.releaseEvidence.dynamicPresentation = { status: 'PASS', reviewer: 'test reviewer', reviewedAt: '2026-10-27', evidence: 'test://runtime' };
   assert.equal(validateProjectCompliance(project, { mode: 'release' }).artGate.release, 'PASS');
+});
+
+test('failed or unverified Neutral Master review blocks otherwise passed expression variants', () => {
+  const project = fixture(), review = project.releaseEvidence.art.room;
+  project.assets.push({ id: 'hero/neutral', kind: 'portrait', src: 'neutral.svg', status: 'READY', sha256: hash }, { id: 'hero/smile', kind: 'portrait', src: 'smile.svg', status: 'READY', sha256: hash });
+  project.stage = { lines: { line: { portrait: 'hero/smile' } } };
+  project.releaseEvidence.art['hero/neutral'] = { ...review, masterSha256: hash, characterMaster: { id: 'hero', role: 'neutral' } };
+  project.releaseEvidence.art['hero/smile'] = { ...review, masterSha256: hash, characterMaster: { id: 'hero', role: 'variant' } };
+  project.releaseEvidence.characterMasters = { hero: { ...review, masterSha256: hash, neutralAsset: 'hero/neutral', evidence: 'test://synthetic-master' } };
+  assert.equal(validateProjectCompliance(project, { mode: 'release' }).artGate.CHARACTER_MASTER_INHERITANCE, 'PASS');
+  project.releaseEvidence.art['hero/neutral'].STYLE_PASS = 'FAIL';
+  blocked(project, report => report.CHARACTER_MASTER_INHERITANCE === 'FAIL' && report.assets.find(asset => asset.id === 'hero/smile').ART_READY === 'FAIL');
+  project.releaseEvidence.art['hero/neutral'].STYLE_PASS = 'PASS'; project.releaseEvidence.characterMasters.hero.ART_READY = 'UNVERIFIED';
+  blocked(project, report => report.CHARACTER_MASTER_INHERITANCE === 'FAIL');
+  project.releaseEvidence.characterMasters.hero.ART_READY = 'PASS'; project.releaseEvidence.art['hero/neutral'].reviewer = 'UNVERIFIED';
+  blocked(project, report => report.CHARACTER_MASTER_INHERITANCE === 'FAIL');
+  project.releaseEvidence.art['hero/neutral'].reviewer = review.reviewer; project.releaseEvidence.art['hero/smile'].masterSha256 = 'b'.repeat(64);
+  blocked(project, report => report.CHARACTER_MASTER_INHERITANCE === 'FAIL');
 });
 
 test('a PWA package requires explicit physical-device evidence and a valid locked build identity', async () => {
