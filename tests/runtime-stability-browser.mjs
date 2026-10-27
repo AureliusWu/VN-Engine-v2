@@ -29,6 +29,20 @@ try {
   assert.deepEqual(failure, { threw: true, timers: 0, elements: 0 });
   passed('Failed mount releases the session timer and leaves no partial renderer');
 
+  const legacy = await page.evaluate(async () => {
+    const { createProject, DOMRenderer } = await import('./lib/index.js');
+    const root = document.getElementById('game'), project = { schema: 1, game: 'direct-renderer', version: 'v1', title: 'direct', type: 'narrative', assets: [],
+      settings: { textDelayMs: 0 }, scenes: [{ id: 'start', lines: [{ id: 'one', speaker: '旁白', text: '第一段' }, { id: 'two', speaker: '旁白', text: '第二段' }], ending: 'done' }] };
+    const { session, assets } = createProject(project, new URL('./', location.href));
+    const renderer = new DOMRenderer(root, session, assets, { storage: localStorage });
+    renderer.element.querySelector('[data-control=save]').click(); session.next();
+    renderer.element.querySelector('[data-control=load]').click();
+    const result = { line: session.getSnapshot().frame.lineId, oldSlot: !!localStorage.getItem('vn-engine:direct-renderer:save:1'), quickHidden: renderer.element.querySelector('[data-control=quick-save]').hidden };
+    renderer.dispose(); session.dispose(); return result;
+  });
+  assert.deepEqual(legacy, { line: 'one', oldSlot: true, quickHidden: true });
+  passed('Direct DOMRenderer callers retain the legacy single-slot save API');
+
   await page.evaluate(async () => {
     const { mountGame } = await import('./lib/index.js'); const root = document.getElementById('game');
     globalThis.optimizedGame = mountGame(root, { schema: 1, game: 'chat-stability', version: 'v1', title: '聊天稳定性', type: 'narrative', assets: [],

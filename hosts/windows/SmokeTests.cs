@@ -63,13 +63,13 @@ internal static class SmokeTests
                 await JS("document.querySelector('[data-action=together]').click()");
                 await Wait("document.querySelector('.vn-text').textContent.length > 5 && !document.querySelector('[data-action=together]')");
                 await Task.Delay(250);
-                await JS("document.querySelector('[data-control=save]').click();localStorage.setItem('vn-native-smoke:expected',document.querySelector('.vn-text').textContent)");
-                if (await JS("!!localStorage.getItem('vn-engine:" + window.GameKey + ":save:1')") != "true") throw new InvalidDataException("作品存档未写入原生配置目录");
+                await JS("document.querySelector('[data-control=save]').click();document.querySelector('[data-slot=\"1\"] button').click();localStorage.setItem('vn-native-smoke:expected',document.querySelector('.vn-text').textContent)");
+                if (await JS("!!localStorage.getItem('vn-engine:" + window.GameKey + ":v2:save:manual-1')") != "true") throw new InvalidDataException("作品存档未写入原生配置目录");
                 checks.Add("Real choices and engine saves execute in the Windows player");
             }
             else
             {
-                await JS("document.querySelector('[data-control=load]').click()");
+                await JS("document.querySelector('[data-control=load]').click();document.querySelector('[data-slot=\"1\"] button').click()");
                 await Wait("document.querySelector('.vn-text').textContent === localStorage.getItem('vn-native-smoke:expected')");
                 checks.Add("A full native process restart restores the previously chosen game route");
             }

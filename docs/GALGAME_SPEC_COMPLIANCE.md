@@ -63,6 +63,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Quick Save | PASS | 独立 Quick Slot + Session binding |
 | Quick Load | PASS | 独立 Quick Slot + Session restore |
 | Auto Save | PASS | mount runtime 自动写独立 Auto Slot |
+| Save Manager UI | PARTIAL | 已接入六槽、覆盖确认、快速存读档、旧单槽读取及自动存档提示；截图缩略图未实现，Windows 本次提交的原生验收以 CI 为准 |
 | Rollback | ENGINE_GAP | History reread 可回读，但不等同完整状态 Rollback |
 | History | PASS | 有 history + search + reread |
 | Auto | PASS | 自研 scheduler |
@@ -102,10 +103,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 
 ### P0 — Persistence UI closure
 
-- DOM Save UI 升级为多 Manual Slot
-- Quick Save / Quick Load 显式控件与快捷键
-- Auto Save 状态提示
-- Save metadata / screenshot thumbnail（若作品启用）
+- 多槽、快速存读档与自动存档提示已接入；本次 Windows 原生 CI 和可选截图缩略图仍需单独记录
 
 ### P0 — Meta / Collection UI
 

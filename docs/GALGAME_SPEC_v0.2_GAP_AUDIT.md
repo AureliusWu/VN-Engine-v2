@@ -12,7 +12,7 @@
 | 角色/背景/CG/音频的播放（§16–30） | PARTIAL | `src/render/dom.ts`、`src/runtime/media.ts` 有现有渲染和媒体运行时；能力不证明作品质量或正式素材完成。 |
 | Choice、Auto、已读 Skip、Hide UI、History（§31–35） | PASS | 现有运行调度与 DOM 交互及浏览器回归；完整状态回滚另列。 |
 | Rollback（§34） | ENGINE_GAP | 历史重读不等于回滚变量、路线、舞台、声音及历史游标。 |
-| 多槽、快速、自动存档（§36–41、111–112） | PARTIAL | `src/storage/contract.ts` 和 `src/render/mount.ts` 已接入数据与自动存档；`src/render/dom.ts` 仍是旧单槽 UI，缺多槽管理、Quick 控件、覆盖确认和自动存档提示。 |
+| 多槽、快速、自动存档（§36–41、111–112） | PARTIAL | `src/storage/contract.ts`、`src/render/mount.ts` 和 `src/render/dom.ts` 已接入六槽、覆盖确认、Quick 控件、自动存档提示与旧槽读取；本次 Windows 原生 CI 和可选缩略图需另列证据。 |
 | Meta、CG Gallery、Ending Collection、Replay（§42–44、103–104） | PARTIAL | `src/meta/state.ts` 有解锁和隔离的 replay context 数据；Gallery/Collection UI、真实 replay 进入和退出流程尚未闭环。 |
 | 演出时间线、层与关键视觉生命周期（§29–30、97、108、134） | PARTIAL | `src/stage/timeline.ts` 可解析和收敛数据；`src/render/dom.ts` 仍为固定图层，未执行 timeline，缺关键视觉的使用范围与生命周期约束。 |
 | Video（§98） | PARTIAL | `src/stage/types.ts` 和 validator 有视频及 fallback 契约；DOM 视频播放、失败回退与生命周期未接入。 |

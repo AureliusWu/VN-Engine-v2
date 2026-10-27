@@ -206,7 +206,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "fdd65f34fc82e7dc3811ce00f36579b0f24d3ce95c61ae2e241c9354a19b3b79"
+      "targetSha256": "81a04ec5cc4a4b8bc3ab30c46431d49faa1b464a782fed7ac93cffeccc30a688"
     },
     {
       "target": "examples/runtime/assets/voice-test.wav",
@@ -284,7 +284,7 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "a04b3fd7d1e829d67ee7cf7094426514f2f94632a22e677a2398304e1873c4b2"
+      "targetSha256": "325ccfdfff4c11e5b96032821b508c5f5cee8a8ea5a6ac73e6a4dfd525538c85"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
@@ -643,19 +643,19 @@
       "target": "src/render/dom-style.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "32aed4c5528ec8c80cd70663c31b6d544aa9b2536e7790c7340036dd2433c41f"
+      "targetSha256": "9db5eb65093c99b9b88c9f0c01ecceee4f3fadb546913bab8fcaa708771f0d64"
     },
     {
       "target": "src/render/dom.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "eefc8be21a75283dc0b41d5ac1ddb8dbda4b8789227ea61885c2d2f87ff2c74e"
+      "targetSha256": "d3bcd5364d3555d218300d2b1c2d8462cdca4d7f9c426c9c1e14627ec00b0395"
     },
     {
       "target": "src/render/mount.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "9ec329df8dc360fba05364a16958c6863f4a7a43dd03ea6a93e45e8de97702f9"
+      "targetSha256": "2d4ed50837a9a83daf29b7c3146d5797e75d9a9bf055349bb2cc3d5ba87bdf28"
     },
     {
       "target": "src/runtime/drivers.ts",

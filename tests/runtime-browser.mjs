@@ -24,6 +24,8 @@ try {
   await page.goto(base + '/engine/'); await page.waitForSelector('.vn-engine');
   const click = name => page.locator('.vn-engine').getByRole('button', { name, exact: true }).click();
   const choose = name => page.locator('.vn-actions').getByRole('button', { name, exact: true }).click();
+  const saveSlot = async () => { await click('存档'); await page.getByRole('button', { name: '保存到槽位 1', exact: true }).click(); };
+  const loadSlot = async () => { await click('读档'); await page.getByRole('button', { name: '读取槽位 1', exact: true }).click(); };
   const ready = () => page.waitForFunction(() => globalThis.vnDemo?.session.getSnapshot().ready);
   const select = async (name, game) => { await page.locator(`[data-project=${name}]`).click(); await page.waitForFunction(game => globalThis.vnDemo?.session.driver.game === game && !document.getElementById('error').textContent, game); await ready(); };
   await ready(); await page.locator('.vn-background').waitFor({ state: 'visible' }); await page.locator('.vn-portrait').waitFor({ state: 'visible' });
@@ -32,11 +34,38 @@ try {
   await page.screenshot({ path: out + '/self-engine-desktop.png', fullPage: true });
   await page.locator('.vn-engine').focus(); await page.keyboard.press('Space'); await choose('共同完成'); await choose('下一段');
   assert.equal(await page.locator('.vn-cg').isHidden(), true); await choose('下一段'); await ready(); await page.locator('.vn-cg').waitFor({ state: 'visible' });
-  await click('存档'); const visit = await page.evaluate(() => vnDemo.session.getSnapshot().visit); await choose('继续章节'); await click('读档'); await ready();
+  await saveSlot(); const visit = await page.evaluate(() => vnDemo.session.getSnapshot().visit); await choose('继续章节'); await loadSlot(); await ready();
   assert.equal(await page.evaluate(() => vnDemo.session.getSnapshot().frame.sceneId), 'end-together');
   assert.ok(await page.evaluate(() => vnDemo.session.getSnapshot().visit) > visit);
   assert.equal(await page.locator('.vn-effect').evaluate(element => element.getAnimations().length), 0);
   passed('Own renderer draws backgrounds/portraits/CG and same-line load suppresses one-shot effects');
+
+  await page.evaluate(() => { const key = 'vn-engine:vn-self-campus:v2:save:manual-1'; const value = JSON.parse(localStorage.getItem(key)); value.savedAt = '2000-01-01T00:00:00.000Z'; localStorage.setItem(key, JSON.stringify(value)); });
+  await click('存档');
+  assert.equal(await page.locator('.vn-save-slot').count(), 6);
+  await page.screenshot({ path: out + '/save-manager-desktop.png', fullPage: true });
+  assert.match(await page.locator('.vn-save-slot').first().innerText(), /游戏版本.*存档版本.*场景.*段落/);
+  const savedBefore = await page.evaluate(() => localStorage.getItem('vn-engine:vn-self-campus:v2:save:manual-1'));
+  await page.getByRole('button', { name: '保存到槽位 1', exact: true }).click();
+  assert.equal(await page.evaluate(() => localStorage.getItem('vn-engine:vn-self-campus:v2:save:manual-1')), savedBefore);
+  await page.getByRole('button', { name: '取消覆盖', exact: true }).click();
+  await page.getByRole('button', { name: '保存到槽位 1', exact: true }).click();
+  await page.getByRole('button', { name: '确认覆盖槽位 1', exact: true }).click();
+  assert.notEqual(await page.evaluate(() => localStorage.getItem('vn-engine:vn-self-campus:v2:save:manual-1')), savedBefore);
+  await click('存档');
+  await page.getByRole('button', { name: '关闭', exact: true }).click();
+  await page.evaluate(() => localStorage.setItem('vn-engine:vn-self-campus:v2:save:manual-2', '{broken'));
+  await click('读档'); assert.match(await page.locator('.vn-save-slot').nth(1).innerText(), /损坏/);
+  assert.equal(await page.getByRole('button', { name: '读取槽位 2', exact: true }).isDisabled(), true);
+  await page.getByRole('button', { name: '关闭', exact: true }).click();
+  await page.locator('.vn-engine').focus(); await page.keyboard.press('F5');
+  await choose('继续章节'); await page.locator('.vn-engine').focus(); await page.keyboard.press('F9');
+  assert.equal(await page.evaluate(() => vnDemo.session.getSnapshot().frame.sceneId), 'end-together');
+  await page.evaluate(() => localStorage.setItem('vn-engine:vn-self-campus:save:1', JSON.stringify(vnDemo.session.save())));
+  await choose('继续章节'); await click('读档'); await page.getByRole('button', { name: '读取旧单槽存档', exact: true }).click();
+  assert.equal(await page.evaluate(() => vnDemo.session.getSnapshot().frame.sceneId), 'end-together');
+  assert.equal(await page.evaluate(() => localStorage.getItem('vn-engine:vn-self-campus:v2:save:manual-2')), '{broken');
+  passed('Multi-slot metadata, overwrite confirmation, corrupt isolation, legacy saves and F5/F9 quick saves work in the real player');
 
   await click('历史'); const oldVisit = await page.evaluate(() => vnDemo.session.getSnapshot().visit);
   await page.getByLabel('搜索已读记录').fill('选择会改变'); await page.getByLabel('搜索已读记录').press('Space');
@@ -50,7 +79,7 @@ try {
   await select('netlove', 'vn-self-chat'); assert.equal(await page.locator('.vn-chat').isVisible(), true); assert.equal(await page.locator('.vn-portrait').isHidden(), true);
   await choose('下一段'); await choose('说明真实情况'); await page.locator('.vn-call').waitFor({ state: 'visible' });
   assert.match(await page.locator('.vn-text').innerText(), /谢谢你/); assert.equal(await page.locator('.vn-portrait').isHidden(), true);
-  await choose('下一段'); await page.locator('.vn-portrait').waitFor({ state: 'visible' }); await click('存档');
+  await choose('下一段'); await page.locator('.vn-portrait').waitFor({ state: 'visible' }); await saveSlot();
   passed('Chat bubbles, conditional call prose and on-site portraits render as distinct modes');
 
   await select('circuit', 'vn-self-investigation'); assert.equal(await page.locator('.vn-actions [data-action=reason]').count(), 0);
@@ -59,24 +88,27 @@ try {
   await choose('查看照片'); await choose('返回调查'); await choose('开始推理'); await choose('直接下结论'); await choose('重新调查');
   assert.equal(await page.evaluate(() => vnDemo.session.getSnapshot().frame.evidence.length), 0);
   for (const action of ['查看记录', '返回调查', '查看照片', '返回调查', '开始推理', '核对时间一致', '进入 调查样例 2']) await choose(action);
-  await click('存档'); await click('新游戏'); await click('读档'); assert.match(await page.locator('.vn-scene-title').innerText(), /2/);
+  await saveSlot(); await click('新游戏'); await loadSlot(); assert.match(await page.locator('.vn-scene-title').innerText(), /2/);
   passed('Hotspots, evidence documents, retry, chapter unlock and journal saves run in our investigation driver');
 
   await select('rain', 'vn-self-rain'); assert.match(await page.locator('.vn-text').innerText(), /自研解释器/);
   await choose('保留信任'); assert.match(await page.locator('.vn-text').innerText(), /选择回应/);
   await choose('下一段'); await choose('下一段'); await ready();
   assert.equal(await page.evaluate(() => vnDemo.session.getSnapshot().frame.ending), 'trust');
-  await click('存档'); await click('新游戏'); await click('读档'); assert.equal(await page.evaluate(() => vnDemo.session.getSnapshot().frame.ending), 'trust');
+  await saveSlot(); await click('新游戏'); await loadSlot(); assert.equal(await page.evaluate(() => vnDemo.session.getSnapshot().frame.ending), 'trust');
   assert.equal(requests.some(url => /\.wasm|\.rpy|renpy\.js/i.test(url)), false);
   passed('Rain-form author data reaches its ending and reloads using only the own script VM');
 
   await select('campus', 'vn-self-campus'); await page.setViewportSize({ width: 390, height: 844 }); await page.evaluate(() => document.fonts.ready);
   await page.locator('.vn-effect').evaluate(element => Promise.all(element.getAnimations().map(animation => animation.finished.catch(() => {}))));
   assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await click('存档'); assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth), true);
+  await page.screenshot({ path: out + '/save-manager-mobile.png', fullPage: true });
+  await page.getByRole('button', { name: '关闭', exact: true }).click();
   await page.screenshot({ path: out + '/self-engine-mobile.png', fullPage: true });
   passed('Own renderer remains usable at 390px without horizontal overflow');
   await page.waitForFunction(() => document.getElementById('offline-state').textContent === '可离线游玩');
-  await context.setOffline(true); await page.reload(); await ready(); await select('rain', 'vn-self-rain'); await click('读档');
+  await context.setOffline(true); await page.reload(); await ready(); await select('rain', 'vn-self-rain'); await loadSlot();
   assert.equal(await page.evaluate(() => vnDemo.session.getSnapshot().frame.ending), 'trust');
   passed('Four-mode own runtime reloads from a real offline service-worker cache');
   await context.close();

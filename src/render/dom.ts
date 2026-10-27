@@ -3,9 +3,11 @@ import { isRecord } from '../storage/save.js';
 import type { StoragePort } from '../storage/store.js';
 import type { AssetCatalog, AssetKind } from '../assets/catalog.js';
 import type { RuntimeSession, RuntimeSettings, RuntimeView } from '../runtime/session.js';
+import type { bindSessionPersistence, SaveEnvelope } from '../storage/contract.js';
+import type { LoadResult } from '../storage/store.js';
 import { DOM_STYLE } from './dom-style.js';
 
-export type DOMRendererOptions = { title?: string; font?: string; storage?: StoragePort | null; onUnlockAudio?: () => void };
+export type DOMRendererOptions = { title?: string; font?: string; storage?: StoragePort | null; persistence?: ReturnType<typeof bindSessionPersistence>; onUnlockAudio?: () => void };
 
 /** Framework-free renderer and input host for VN, chat/call and investigations. */
 export class DOMRenderer {
@@ -69,11 +71,13 @@ export class DOMRenderer {
     for (const [id, label, handler] of [
       ['auto', '自动', () => session.setAuto(!session.getView().auto)],
       ['skip', '已读快进', () => { if (!session.setSkip(!session.getView().skipping)) this.notify('只能快进已经读过的段落'); }],
-      ['save', '存档', () => this.save()], ['load', '读档', () => this.load()], ['history', '历史', () => this.history()],
+      ['save', '存档', () => options.persistence ? this.saveManager('save') : this.saveLegacy()],
+      ['load', '读档', () => options.persistence ? this.saveManager('load') : this.loadLegacy()],
+      ['quick-save', '快速存档', () => this.quickSave()], ['quick-load', '快速读档', () => this.quickLoad()], ['history', '历史', () => this.history()],
       ['evidence', '证据簿', () => this.evidence()], ['settings', '设置', () => this.settings()],
       ['hide', '隐藏界面', () => session.hide(true)], ['fullscreen', '全屏', () => this.fullscreen()],
       ['sound', '启用声音', () => options.onUnlockAudio?.()], ['restart', '新游戏', () => { session.restart(); this.notify('已开始新游戏'); }]
-    ] as const) { const button = this.button(label, handler); button.dataset.control = id; this.buttons.set(id, button); this.toolbar.append(button); }
+    ] as const) { const button = this.button(label, handler); button.dataset.control = id; if (!options.persistence && (id === 'quick-save' || id === 'quick-load')) button.hidden = true; this.buttons.set(id, button); this.toolbar.append(button); }
     this.status = this.el('span', '', 'vn-status'); this.status.setAttribute('role', 'status'); this.toolbar.append(this.status);
     this.modal = this.el('div', undefined, 'vn-modal'); this.modal.hidden = true; this.modal.setAttribute('role', 'dialog'); this.modal.setAttribute('aria-modal', 'true');
     host.append(this.stage, this.toolbar, this.modal); root.append(host);
@@ -170,7 +174,7 @@ export class DOMRenderer {
       if (snapshot.ready && frame.ending) this.actions.append(this.el('span', frame.ending === 'failure' ? '调查需要重新核对' : '已到达结局'));
     }
     if (entered || snapshot.paused !== previous?.paused) {
-      for (const id of ['auto', 'skip', 'save', 'load', 'history', 'evidence', 'settings', 'hide', 'restart']) this.buttons.get(id)!.disabled = snapshot.paused;
+      for (const id of ['auto', 'skip', 'save', 'load', 'quick-save', 'quick-load', 'history', 'evidence', 'settings', 'hide', 'restart']) this.buttons.get(id)!.disabled = snapshot.paused;
       this.buttons.get('skip')!.disabled ||= !snapshot.supportsSkip;
     }
     if (entered) this.buttons.get('evidence')!.hidden = !frame.evidence;
@@ -189,15 +193,76 @@ export class DOMRenderer {
   }
   private cancelScroll() { if (this.scrollFrame !== undefined) { this.document.defaultView?.cancelAnimationFrame(this.scrollFrame); this.scrollFrame = undefined; } }
   notify(message: string) { if (!this.disposed) this.status.textContent = message; }
-  private save() {
+  private saveManager(mode: 'save' | 'load') {
+    const persistence = this.options.persistence;
+    if (!persistence) { this.notify('存档功能暂不可用'); return; }
+    const panel = this.panel(mode === 'save' ? '选择存档槽' : '选择读档槽');
+    const list = this.el('div', undefined, 'vn-save-list'); panel.append(list);
+    const show = () => {
+      list.replaceChildren();
+      for (let index = 1; index <= persistence.contract.manualSlots; index++) {
+        const result = persistence.contract.loadManual(index), row = this.el('div', undefined, 'vn-save-slot');
+        row.dataset.slot = String(index);
+        const heading = this.el('strong', `手动存档 ${index}`), detail = this.el('span', this.saveDescription(result));
+        row.append(heading, detail);
+        const button = this.button(mode === 'save' ? `保存到槽位 ${index}` : `读取槽位 ${index}`, () => {
+          if (mode === 'load') {
+            try { const loaded = persistence.loadManual(index); if (loaded.status === 'valid') { this.closePanel(); this.notify(`已读取存档 ${index}`); } else this.notify('存档无法读取，原数据已保留'); }
+            catch { this.notify('存档无法使用，原数据已保留'); }
+            return;
+          }
+          const write = () => {
+            try { const saved = persistence.saveManual(index); if (saved.status === 'saved') { this.closePanel(); this.notify(`已保存到槽位 ${index}`); } else this.notify('存储暂不可用，可以继续游玩或导出存档'); }
+            catch { this.notify('存储暂不可用，可以继续游玩或导出存档'); }
+          };
+          if (result.status === 'empty') { write(); return; }
+          const confirmation = this.el('div', undefined, 'vn-save-confirm');
+          confirmation.append(this.el('span', `确定覆盖槽位 ${index}？`), this.button(`确认覆盖槽位 ${index}`, write), this.button('取消覆盖', show));
+          button.disabled = true; row.append(confirmation);
+        });
+        button.disabled = result.status === 'unavailable' || (mode === 'load' && result.status !== 'valid');
+        row.append(button); list.append(row);
+      }
+    };
+    show();
+    if (mode === 'load') {
+      const auto = persistence.contract.loadAuto();
+      const autoButton = this.button('读取自动存档', () => {
+        try { if (persistence.autoLoad().status === 'valid') { this.closePanel(); this.notify('已读取自动存档'); } else this.notify('自动存档无法读取，原数据已保留'); }
+        catch { this.notify('自动存档无法使用，原数据已保留'); }
+      });
+      autoButton.disabled = auto.status !== 'valid';
+      panel.append(this.el('p', `自动存档：${this.saveDescription(auto)}`), autoButton);
+      try { if (this.options.storage?.getItem(this.saveKey) !== null && this.options.storage) panel.append(this.button('读取旧单槽存档', () => this.loadLegacy())); } catch { /* Storage unavailable. */ }
+    }
+  }
+  private saveDescription(result: LoadResult<SaveEnvelope>): string {
+    if (result.status === 'empty') return '空槽';
+    if (result.status === 'invalid') return '存档损坏或版本不兼容，原数据已保留';
+    if (result.status === 'unavailable') return '存储不可用';
+    const save = result.value, summary = save.summary;
+    return [save.savedAt, `游戏版本 ${save.game_version}`, `存档版本 ${save.save_version}`,
+      summary?.title, summary?.sceneId && `场景 ${summary.sceneId}`, summary?.lineId && `段落 ${summary.lineId}`].filter(Boolean).join(' · ');
+  }
+  private quickSave() {
+    try { const result = this.options.persistence?.quickSave(); this.notify(result?.status === 'saved' ? '已快速存档' : '快速存档失败，存储暂不可用'); }
+    catch { this.notify('快速存档失败，存储暂不可用'); }
+  }
+  private quickLoad() {
+    try {
+      const result = this.options.persistence?.quickLoad();
+      this.notify(result?.status === 'valid' ? '已快速读档' : result?.status === 'empty' ? '还没有快速存档' : '快速存档无法读取，原数据已保留');
+    } catch { this.notify('快速存档无法使用，原数据已保留'); }
+  }
+  private saveLegacy() {
     try { if (!this.options.storage) throw new Error(); this.options.storage.setItem(this.saveKey, JSON.stringify(this.session.save())); this.notify('已保存当前段落'); }
     catch { this.notify('存储暂不可用，可以继续游玩或导出存档'); }
   }
-  private load() {
+  private loadLegacy() {
     let raw: string | null;
     try { if (!this.options.storage) throw new Error(); raw = this.options.storage.getItem(this.saveKey); } catch { this.notify('存储暂不可用'); return; }
     if (raw === null) { this.notify('还没有存档'); return; }
-    try { if (raw.length > 2_000_000) throw new Error(); this.session.restore(JSON.parse(raw)); this.notify('已恢复存档'); }
+    try { if (raw.length > 2_000_000) throw new Error(); this.session.restore(JSON.parse(raw)); if (!this.modal.hidden) this.closePanel(); this.notify('已恢复旧单槽存档'); }
     catch { this.notify('存档无法使用，原文件已保留'); }
   }
   private panel(title: string): HTMLElement {
@@ -256,6 +321,9 @@ export class DOMRenderer {
       return;
     }
     const target = event.target as HTMLElement;
+    if (this.options.persistence && !target.closest('input,textarea,select,[contenteditable=true]') && !this.session.getView().paused && (event.key === 'F5' || event.key === 'F9')) {
+      event.preventDefault(); if (event.key === 'F5') this.quickSave(); else this.quickLoad(); return;
+    }
     if (target.closest('button,input,textarea,select,[contenteditable=true]')) return;
     if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); this.options.onUnlockAudio?.(); this.session.next(); }
     else if (/^[1-9]$/.test(event.key)) { const action = this.session.getView().frame.actions[Number(event.key) - 1]; if (action) { event.preventDefault(); this.session.act(action.id); } }
