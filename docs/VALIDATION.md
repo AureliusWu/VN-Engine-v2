@@ -27,6 +27,8 @@ Studio 演出控件新增 Chromium 验收：图层绑定、动画终点、镜头
 
 本次本地 `npm run check` 通过 94 项 Node、6 项 Python 和 102 项来源检查；`npm run test:browser` 与 `npm run test:editor` 全部通过。浏览器证据包括 `studio-presentation.png` 和 `studio-camera.png`，由工作流随其余证据上传；视口截图不作为实体设备或正式美术验收。
 
+提交 `cb03e9c7585ba91cc4fa69ac7d0e0f6cbb6bfbeb` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40453349708) 和 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40453349702) 均成功。原生 Studio 用实际控件绑定前景立绘和动画轨道，并在 WebView2 预览确认终态，随后执行原生保存、导出和完整进程重启；镜头关键帧作者流程由 Chromium 验证。编辑面板展开状态与滚动位置在更改后保留。系统文件对话框仍使用 CI 预设路径，不冒充人工操作。
+
 日期：2026-10-25。只修改 VN-Engine-v2；四个正式游戏没有迁移，后续迁移仅在用户主动、明确提出后执行。
 
 | 检查 | 实际结果 | 证据 |
@@ -69,4 +71,4 @@ npm run build:studio -- build/studio
 
 Windows 构建和原生检查命令见 [WINDOWS.md](WINDOWS.md)。原生实际执行、系统文件对话框人工操作、签名安装发行与实体设备验收分别记录。
 
-保留此前的 [0.2.1](VALIDATION-v0.2.1.md)、[0.2.0](VALIDATION-v0.2.0.md)、[0.1](VALIDATION-v0.1.0.md) 证据。当前可用初版不包含复杂动画时间线、协作编辑或战斗系统；正式游戏迁移继续等待用户主动提出。
+保留此前的 [0.2.1](VALIDATION-v0.2.1.md)、[0.2.0](VALIDATION-v0.2.0.md)、[0.1](VALIDATION-v0.1.0.md) 证据。当前时间线支持位移 / 缩放 / 透明度与镜头关键帧；完整 Rollback、收藏专用作者控件及 Key Visual 生命周期约束仍未实现。正式游戏迁移继续等待用户主动提出。

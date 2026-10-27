@@ -83,8 +83,8 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Fade | PASS | DOM effect |
 | Flash | PASS | DOM effect |
 | Shake | PASS | DOM effect |
-| Move / Scale / Camera | PARTIAL | DOM 已执行轨道并覆盖暂停、终态与恢复；Studio 图层 / 轨道 / 镜头控件和预览已实现，本次原生作者控件 CI 待确认 |
-| Formal Layer API | PARTIAL | 五个视觉资源层、effect / ui 轨道与 Studio 控件已接入；本次原生作者控件 CI 待确认 |
+| Move / Scale / Camera | PASS | Studio 轨道 / 镜头配置、实时预览、导出与无效参数诊断通过 Chromium；`cb03e9c` Windows 原生图层 / 轨道作者控件、终态与重启检查通过 |
+| Formal Layer API | PASS | 五个视觉资源层、effect / ui 整层轨道与 Studio 控件已接入；`cb03e9c` 浏览器和 Windows 原生验收通过；不包含 Key Visual 使用范围约束 |
 | Video | PARTIAL | 本地播放、失败回退、暂停 / 跳过 / 减少动态和编辑器配置已接入；`9894454` 浏览器及 Windows CI 通过，有声视频听感、实际设备及编码支持仍需作品验证 |
 | Investigation / nontraditional play | PASS | Investigation runtime |
 | Mini game contract | PARTIAL | 可通过自定义 runtime 承载，但未提供统一 entry/exit/save/skip contract |
@@ -115,7 +115,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 
 ### P1 — Presentation runtime closure
 
-- DOM 与 Studio 图层 / 时间线 / 镜头控件已接入；本次 Windows 原生作者控件 CI 待确认
+- DOM 与 Studio 图层 / 时间线 / 镜头控件已接入，`cb03e9c` 浏览器与 Windows 原生检查通过；Key Visual 生命周期仍是独立缺口
 - Video 已接入 DOM 和编辑器，浏览器与 Windows 无声 WebM 通过；有声听感和实际设备编码支持需作品验证
 
 ### P1 — Release Evidence

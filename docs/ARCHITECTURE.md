@@ -38,7 +38,7 @@ MediaDirector 消费 visit 和阅读条件，使用注入的 AudioContext/Audio 
 
 普通模块导入没有 DOM/存储/音频副作用；框架宿主可以只用 createProject + RuntimeSession，也可直接 mountGame。作品构建使用明确相对资源、本地许可和实际字节指纹；lib 与资源都在部署作用域内，独立产物在子目录断网重载经过浏览器测试。
 
-浏览器 Web/PWA 与 Studio 使用相同自研执行链。Windows 新增 WinForms/WebView2 宿主与原生工作流，原生实际验收状态单列记录；复杂动画时间线和其他渲染后端仍待实现。作者工具只处理 JSON 数据，Windows 文件桥只在编辑器来源开放，作品窗口关闭原生桥。
+浏览器 Web/PWA 与 Studio 使用相同自研执行链。DOM 执行正式视觉图层、动画轨道与镜头关键帧，Studio 控件直接编写同一演出数据。Windows 提供 WinForms/WebView2 宿主与原生工作流，原生实际验收状态单列记录；其他渲染后端仍待实现。作者工具只处理 JSON 数据，Windows 文件桥只在编辑器来源开放，作品窗口关闭原生桥。
 
 0.2.1 的异步音频状态串行协调、演出暂停、失败清理和性能范围见 [优化记录](OPTIMIZATION-0.2.1.md)。当前只优化引擎；四作迁移仅在用户主动提出后执行。
 
