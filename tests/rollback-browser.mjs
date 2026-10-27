@@ -23,6 +23,7 @@ try {
   });
   const host = page.locator('#game > .vn-engine'); assert.equal(await host.locator('[data-control=rollback]').isDisabled(), true);
   await host.locator('[data-action=yes]').click(); await page.evaluate(() => { rollbackGame.persistence.saveManual(1); rollbackGame.persistence.quickSave(); });
+  await page.evaluate(()=>rollbackGame.readProgress.flush());
   const records = await page.evaluate(() => Object.fromEntries(Object.keys(localStorage).filter(key => key.startsWith('vn-engine:rollback-fixture:')).map(key => [key, localStorage.getItem(key)])));
   await host.locator('[data-control=rollback]').click(); await host.locator('[data-action=yes]').waitFor({ state: 'visible' });
   assert.equal(await page.evaluate(() => rollbackGame.session.driver.engine.decode(JSON.stringify(rollbackGame.session.save())).variables.trust), 0);

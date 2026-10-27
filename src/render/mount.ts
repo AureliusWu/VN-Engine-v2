@@ -4,6 +4,7 @@ import { MediaDirector } from '../runtime/media.js';
 import { bindSessionPersistence, createSaveContract } from '../storage/contract.js';
 import { createSaveBackup } from '../storage/backup.js';
 import { createContinuation } from '../storage/continue.js';
+import { createReadProgress } from '../storage/read-progress.js';
 import type { RuntimeSettings } from '../runtime/session.js';
 import { createMetaStateStore } from '../meta/state.js';
 import type { StoragePort } from '../storage/store.js';
@@ -51,10 +52,21 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
   project = structuredClone(project.type === 'narrative' && presentation ? { ...project, stage: { ...project.stage, presentation: undefined } } : project);
   if (project.type === 'narrative' && presentation) project.stage = { ...project.stage, presentation };
   const baseURL = options.baseURL ?? new URL('./', root.ownerDocument.baseURI);
-  const { session, assets } = createProject(project, baseURL, { assetURL: options.assetURL, initialPause: project.titleScreen ? 'title' : undefined });
-  let started = !project.titleScreen;
   let storage = options.storage;
   if (storage === undefined) try { storage = root.ownerDocument.defaultView?.localStorage; } catch { storage = null; }
+  let renderer: DOMRenderer | undefined, readTimer: ReturnType<typeof globalThis.setTimeout> | undefined, readWarning = false;
+  const readProgress = createReadProgress(project.game, project.version, storage);
+  const flushRead = () => {
+    if (readTimer !== undefined) globalThis.clearTimeout(readTimer); readTimer = undefined;
+    if (!storage) return;
+    const result = readProgress.flush();
+    if (!['saved', 'clean'].includes(result.status) && !readWarning) { renderer?.notify('已读记录暂未保存，可以继续阅读'); readWarning = true; }
+  };
+  const { session, assets } = createProject(project, baseURL, { assetURL: options.assetURL, initialPause: project.titleScreen ? 'title' : 'mount', readProgress: {
+    has: signature => readProgress.has(signature),
+    mark: signature => { readProgress.mark(signature); if (storage && readProgress.dirty && readTimer === undefined) readTimer = globalThis.setTimeout(flushRead, 250); }
+  } });
+  let started = !project.titleScreen;
   const persistence = bindSessionPersistence(session, createSaveContract({ game: project.game, gameVersion: project.version, storage }));
   const validatePayload = (value: unknown) => {
     const isolated = createProject(project, baseURL, { assetURL: options.assetURL, settings: { textDelayMs: 0 } });
@@ -66,7 +78,6 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
   const collections = project.collections ? structuredClone(project.collections) : undefined;
   const meta = createMetaStateStore(project.game, storage, { cgs: collections?.cgs?.map(item => item.id), endings: collections?.endings?.map(item => item.id), trueRoute: collections?.trueRoute });
   if (collections?.trueRoute) meta.evaluateTrueRoute();
-  let renderer: DOMRenderer | undefined;
   let progressVisit = -1, progressMiniGame = -1, countedEnding = false;
   const persistProgress = () => {
     const snapshot = session.getView();
@@ -97,6 +108,7 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
   };
   persistProgress();
   const disconnectProgress = session.subscribe(persistProgress);
+  const disconnectRead = session.subscribe(() => { if (session.getView().paused && readProgress.dirty) flushRead(); });
   let media: MediaDirector | undefined, context: AudioContext | undefined, disposed = false;
   const unlockAudio = () => {
     if (disposed || options.audio === false) return;
@@ -119,11 +131,12 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
     startAtTitle: project.titleScreen, onBegin: () => { started = true; },
     beginReplay: (target, saved) => mountReplay(target, project, saved, baseURL, options, session.getView().settings), onUnlockAudio: unlockAudio,
     onCgPresented: id => { if (started && !session.getView().pauseReasons.includes('title') && session.getView().reason !== 'rollback') meta.unlockCg(id); } }); }
-  catch (error) { disconnectProgress(); session.dispose(); throw error; }
+  catch (error) { disconnectProgress(); disconnectRead(); if (readTimer !== undefined) globalThis.clearTimeout(readTimer); session.dispose(); throw error; }
   const view = root.ownerDocument.defaultView;
   const hostVisibility = (event: Event) => { const hidden = (event as CustomEvent<unknown>).detail; if (hidden && typeof hidden === 'object' && 'hidden' in hidden && typeof hidden.hidden === 'boolean') session.pause('native-host', hidden.hidden); };
   view?.addEventListener('vn-engine-host-visibility', hostVisibility);
-  return { session, renderer, assets, persistence, backup, continuation, meta, unlockAudio, dispose() {
-    if (disposed) return; disposed = true; disconnectProgress(); view?.removeEventListener('vn-engine-host-visibility', hostVisibility); media?.dispose(); session.dispose(); renderer?.dispose(); if (context) void context.close().catch(() => {});
+  view?.addEventListener('pagehide', flushRead); session.pause('mount', false);
+  return { session, renderer, assets, persistence, backup, continuation, readProgress, meta, unlockAudio, dispose() {
+    if (disposed) return; disposed = true; disconnectProgress(); disconnectRead(); flushRead(); view?.removeEventListener('pagehide', flushRead); view?.removeEventListener('vn-engine-host-visibility', hostVisibility); media?.dispose(); session.dispose(); renderer?.dispose(); if (context) void context.close().catch(() => {});
   } };
 }

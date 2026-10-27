@@ -17,6 +17,7 @@ import type { ReleaseEvidence } from '../compliance/art.js';
 import { projectEndings, validateTrueRoutePolicy } from '../meta/project.js';
 import type { RollbackOptions } from './rollback.js';
 import { validateProjectMiniGames } from '../minigame/project.js';
+import type { ReadProgressPort } from './read.js';
 
 type ProjectBase = { schema: 1; game: string; version: string; title: string; titleScreen?: boolean; assets: readonly Asset[]; font?: string; settings?: Partial<RuntimeSettings>; rollback?: RollbackOptions; collections?: ProjectCollections; releaseEvidence?: ReleaseEvidence };
 export type EngineProject = ProjectBase & (
@@ -25,7 +26,7 @@ export type EngineProject = ProjectBase & (
   | { type: 'rain'; story: RainStory; defaults?: StageCue }
   | { type: 'investigation'; chapters: readonly InvestigationChapter[]; stage?: InvestigationStage }
 );
-export function createProject(project: EngineProject, baseURL: string | URL, options: { clock?: Clock; settings?: Partial<RuntimeSettings>; assetURL?: (path: string) => string; initialPause?: string } = {}) {
+export function createProject(project: EngineProject, baseURL: string | URL, options: { clock?: Clock; settings?: Partial<RuntimeSettings>; assetURL?: (path: string) => string; initialPause?: string; readProgress?: ReadProgressPort } = {}) {
   if (project.schema !== 1 || !project.game || !project.version || !project.title || !Array.isArray(project.assets)) throw new Error('Invalid engine project');
   if (project.titleScreen !== undefined && typeof project.titleScreen !== 'boolean') throw new Error('titleScreen must be boolean');
   const assets = new AssetCatalog(project.assets, baseURL, options.assetURL);
@@ -65,5 +66,5 @@ export function createProject(project: EngineProject, baseURL: string | URL, opt
   else throw new Error('Unknown project runtime');
   if (project.rollback !== undefined && !isRecord(project.rollback)) throw new Error('Invalid rollback options');
   validateProjectMiniGames(project);
-  return { session: new RuntimeSession(driver, { clock: options.clock, settings: { ...project.settings, ...options.settings }, rollback: project.rollback, initialPause: options.initialPause }), assets };
+  return { session: new RuntimeSession(driver, { clock: options.clock, settings: { ...project.settings, ...options.settings }, rollback: project.rollback, initialPause: options.initialPause, readProgress: options.readProgress }), assets };
 }

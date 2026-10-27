@@ -3,6 +3,7 @@ import { freezeData, type DeepReadonly } from './readonly.js';
 import { RollbackHistory, type RollbackOptions } from './rollback.js';
 import { MiniGameSession, validateMiniGame, type MiniGameSnapshot } from '../minigame/session.js';
 import { isRecord } from '../storage/save.js';
+import { readSignature, type ReadProgressPort } from './read.js';
 
 export type RuntimeSettings = {
   textDelayMs: number; autoDelayMs: number; skipDelayMs: number; reducedMotion: boolean;
@@ -68,9 +69,11 @@ export class RuntimeSession {
   private readonly rollbackHistory: RollbackHistory;
   private miniGame?: MiniGameSession;
   private miniGameError?: string;
-  constructor(readonly driver: RuntimeDriver, options: { settings?: Partial<RuntimeSettings>; clock?: Clock; rollback?: RollbackOptions; initialPause?: string } = {}) {
+  private readonly readProgress?: ReadProgressPort;
+  constructor(readonly driver: RuntimeDriver, options: { settings?: Partial<RuntimeSettings>; clock?: Clock; rollback?: RollbackOptions; initialPause?: string; readProgress?: ReadProgressPort } = {}) {
     this.clock = options.clock ?? systemClock; this.settings = Object.freeze(runtimeSettings(options.settings ?? {}));
     this.rollbackHistory = new RollbackHistory(options.rollback);
+    this.readProgress = options.readProgress;
     if (options.initialPause) this.pauses.add(options.initialPause);
     this.enter('start');
   }
@@ -92,7 +95,16 @@ export class RuntimeSession {
     return this.view;
   }
   private emit() { this.view = undefined; if (!this.disposed) for (const listener of [...this.listeners]) listener(); }
-  private readKey(frame = this.current) { return `${frame.lineId}\u0000${frame.text}`; }
+  private readKey(frame = this.current) { return readSignature(frame); }
+  private knownRead() {
+    const signature = this.readKey(); if (this.read.has(signature)) return true;
+    try { return this.readProgress?.has(signature) === true; } catch { return false; }
+  }
+  private markRead() {
+    if (this.count < this.glyphs.length || this.pauses.size || this.hidden) return;
+    const signature = this.readKey(); this.read.add(signature);
+    if (this.reason !== 'rollback') try { this.readProgress?.mark(signature); } catch { /* Reading remains usable without persistence. */ }
+  }
   private cancel() {
     if (this.timer) {
       if (this.timer.kind === 'hold') this.hold = Math.max(0, this.timer.due - this.clock.now());
@@ -111,14 +123,14 @@ export class RuntimeSession {
     if (['start', 'restore', 'reread'].includes(reason)) this.rollbackHistory.clear();
     if (reason !== 'rollback') this.checkpoint();
     this.voiceBlocked = false; this.autoRemaining = undefined;
-    this.eligibleSkip = this.read.has(this.readKey());
+    this.eligibleSkip = this.knownRead();
     this.glyphs = [...this.segmenter.segment(this.current.text)].map(segment => segment.segment);
     this.count = this.settings.textDelayMs === 0 || this.settings.reducedMotion ? this.glyphs.length : 0;
     this.displayed = this.count === this.glyphs.length ? this.current.text : '';
     const pause = this.current.stage.pauseMs;
     this.hold = typeof pause === 'number' && Number.isFinite(pause) ? Math.max(0, Math.min(30000, pause)) : 0;
     if (!this.eligibleSkip || this.current.actions.length || !this.current.canAdvance) this.skipping = false;
-    if (this.count === this.glyphs.length) this.read.add(this.readKey());
+    this.markRead();
     this.emit(); this.schedule();
   }
   private schedule() {
@@ -136,7 +148,7 @@ export class RuntimeSession {
       if (kind === 'typing') {
         if (this.skipping) { this.count = this.glyphs.length; this.displayed = this.current.text; }
         else { this.displayed += this.glyphs[this.count]; this.count++; }
-        if (this.count === this.glyphs.length) this.read.add(this.readKey());
+        this.markRead();
       } else if (kind === 'hold') this.hold = 0;
       else {
         this.autoRemaining = undefined;
@@ -149,7 +161,7 @@ export class RuntimeSession {
   }
   next(): boolean {
     if (this.disposed || this.pauses.size || this.hidden) return false;
-    if (this.count < this.glyphs.length) { this.cancel(); this.count = this.glyphs.length; this.displayed = this.current.text; this.read.add(this.readKey()); this.emit(); this.schedule(); return true; }
+    if (this.count < this.glyphs.length) { this.cancel(); this.count = this.glyphs.length; this.displayed = this.current.text; this.markRead(); this.emit(); this.schedule(); return true; }
     if (this.miniGame) return false;
     if (this.hold > 0 || !this.current.canAdvance || !this.driver.advance()) return false;
     this.enter('advance'); return true;
@@ -161,11 +173,11 @@ export class RuntimeSession {
   }
   pause(reason: string, paused: boolean) {
     if (this.disposed || !reason || this.pauses.has(reason) === paused) return;
-    this.cancel(); if (paused) this.pauses.add(reason); else this.pauses.delete(reason); this.emit(); this.schedule();
+    this.cancel(); if (paused) this.pauses.add(reason); else this.pauses.delete(reason); this.markRead(); this.emit(); this.schedule();
   }
   hide(hidden: boolean) {
     if (this.disposed || this.hidden === hidden) return;
-    this.cancel(); this.hidden = hidden; this.emit(); this.schedule();
+    this.cancel(); this.hidden = hidden; this.markRead(); this.emit(); this.schedule();
   }
   setAuto(enabled: boolean) { if (this.disposed) return; this.cancel(); this.automatic = enabled; this.autoRemaining = undefined; this.skipping = false; this.emit(); this.schedule(); }
   setSkip(enabled: boolean): boolean {
@@ -185,7 +197,7 @@ export class RuntimeSession {
     const next = runtimeSettings({ ...this.settings, ...patch });
     if ((Object.keys(next) as (keyof RuntimeSettings)[]).every(key => next[key] === this.settings[key])) return;
     this.cancel(); this.settings = Object.freeze(next);
-    if (this.settings.textDelayMs === 0 || this.settings.reducedMotion) { this.count = this.glyphs.length; this.displayed = this.current.text; this.read.add(this.readKey()); }
+    if (this.settings.textDelayMs === 0 || this.settings.reducedMotion) { this.count = this.glyphs.length; this.displayed = this.current.text; this.markRead(); }
     this.emit(); this.schedule();
   }
   history(): readonly ReadRecord[] { return structuredClone(this.driver.history(this.count >= this.glyphs.length)); }
@@ -237,7 +249,7 @@ export class RuntimeSession {
   restore(value: unknown) {
     if (this.disposed) throw new Error('Session is disposed');
     const miniGame = this.restoreDriver(value);
-    for (const entry of this.driver.history(false)) this.read.add(`${entry.lineId}\u0000${entry.text}`);
+    for (const entry of this.driver.history(false)) this.read.add(readSignature(entry));
     this.enter('restore', miniGame);
   }
   restart() { if (!this.disposed) { this.driver.reset(); this.enter('start'); } }

@@ -185,6 +185,10 @@ internal static class SmokeTests
                     query('[data-control=title]').click();clickText('确认返回标题');query('[data-control=title-new]').click();clickText('取消');
                     if(!query('[data-control=title-resume]')) throw Error('Native cancelled new game did not retain the reading session');
                     query('[data-control=title-new]').click();clickText('确认开始新游戏');if(resumed.session.getView().frame.lineId!=='one') throw Error('Native new game did not reset the route');
+                    resumed.readProgress.flush();const readKey=resumed.readProgress.key;
+                    resumed.dispose();resumed=mountGame(root,resumeProject,{baseURL,audio:false});query('[data-control=title-new]').click();clickText('确认开始新游戏');
+                    if(!resumed.session.setSkip(true)) throw Error('Native remount lost completed read markers');resumed.session.setSkip(false);resumed.readProgress.flush();
+                    localStorage.setItem('vn-native-smoke:read-key',readKey);
                     resumed.dispose();root.remove(); window.nativeCollectionSmoke = 'passed';
                   }).catch(error => { window.nativeCollectionSmoke = 'failed: ' + error.message; });
                   """);
@@ -199,6 +203,8 @@ internal static class SmokeTests
                 await JS("document.querySelector('[data-control=load]').click();document.querySelector('[data-slot=\"1\"] button').click()");
                 await Wait("document.querySelector('.vn-text').textContent === localStorage.getItem('vn-native-smoke:expected')");
                 checks.Add("A full native process restart restores the previously chosen game route");
+                if(await JS("JSON.parse(localStorage.getItem(localStorage.getItem('vn-native-smoke:read-key'))).records.length > 0")!="true") throw new InvalidDataException("原生进程重启未保留已读记录");
+                checks.Add("Completed read markers survive a full native process restart");
             }
         }
         var saveControl = window.IsGame ? "document.querySelector('[data-control=save]')" : "document.querySelector('#preview').contentDocument.querySelector('[data-control=save]')";
