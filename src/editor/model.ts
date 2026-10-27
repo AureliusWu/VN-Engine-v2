@@ -140,6 +140,7 @@ export function diagnoseProject(project: EngineProject, availableFiles?: Readonl
     }
   }
   if (project.type === 'investigation') for (const chapter of project.chapters) {
+    if (!record(chapter.evidence)) { add('error', 'evidence-reference', '本章证据目录必须是对象', keyFor(chapter.entryNode, chapter.id)); continue; }
     const check = (ids: unknown, label: string, key: string) => {
       if (ids === undefined) return;
       if (!Array.isArray(ids) || ids.some(id => typeof id !== 'string')) { add('error', 'evidence-reference', `${label}必须是证据 ID 列表`, key); return; }
@@ -149,11 +150,14 @@ export function diagnoseProject(project: EngineProject, availableFiles?: Readonl
     check(chapter.requiredEvidence, '本章完成所需证据', keyFor(chapter.entryNode, chapter.id));
     for (const [id, node] of Object.entries(chapter.nodes)) {
       const key = keyFor(id, chapter.id);
+      if (!record(node)) { add('error', 'evidence-reference', '调查节点必须是对象', key); continue; }
       check(node.requiresEvidence, '节点所需证据', key); check(node.excludesEvidence, '节点排除证据', key);
       if (Array.isArray(node.requiresEvidence) && Array.isArray(node.excludesEvidence)
         && node.requiresEvidence.some(id => node.excludesEvidence!.includes(id))) add('error', 'evidence-conflict', '节点同时要求和排除同一证据', key);
-      for (const action of node.actions ?? []) {
+      for (const action of Array.isArray(node.actions) ? node.actions : []) {
+        if (!record(action)) { add('error', 'evidence-reference', '调查动作必须是对象', key); continue; }
         check(action.requiresEvidence, `动作 ${action.id} 所需证据`, key);
+        if (action.resetEvidence && action.collect) add('error', 'evidence-conflict', `动作 ${action.id} 不能同时清空和收集证据`, key);
         for (const name of ['collect', 'hidesWhenCollected'] as const) if (action[name] !== undefined) check([action[name]], `动作 ${action.id} ${name}`, key);
       }
     }

@@ -78,6 +78,53 @@ internal static class SmokeTests
             await JS("document.querySelector('[data-command=open]').click()");
             await Wait("Number(document.body.dataset.previewRevision)>" + previousRevision + " && document.querySelector('#project-name').textContent === 'Windows native smoke' && document.querySelector('#preview').contentDocument?.querySelector('.vn-portrait')?.naturalWidth > 0");
             checks.Add("Saved workspace reopens from its new directory with its copied assets");
+            await JS("""
+              window.nativeLogicAuthor='pending';
+              (async()=>{try {
+                const {newProject}=await import('/lib/editor/index.js');
+                const load=p=>{document.querySelector('[data-tab=source]').click();document.querySelector('#source').value=JSON.stringify(p);document.querySelector('[data-command=apply-source]').click();document.querySelector('[data-tab=story]').click();};
+                const change=(label,value)=>{const input=document.querySelector('[aria-label="'+label+'"]');if(!input)throw Error('Missing field '+label);input.value=value;input.dispatchEvent(new Event('change'));};
+                const click=label=>{const button=[...document.querySelectorAll('#inspector button')].find(b=>b.textContent===label);if(!button||button.disabled)throw Error('Unavailable control '+label);button.click();};
+                const p=newProject('script');p.settings={textDelayMs:0};p.program.variables.found={initial:false};
+                p.program.blocks[0].exit.choices[0].next='gate';
+                p.program.blocks[1].lines[0].text='原生条件命中';
+                p.program.blocks.push({id:'bad',lines:[{id:'bad-1',speaker:'作者',text:'原生条件未满足'}],exit:{type:'end',ending:'bad'}});
+                p.program.blocks.push({id:'gate',lines:[],exit:{type:'branch',routes:[{next:'bad'}]}});
+                load(p);document.querySelector('[aria-label="编辑节点 gate"]').click();click('添加条件路由');
+                change('路由 1 目标','end');change('路由 1 条件 1 运算','gte');change('路由 1 条件 1 值','1');
+                click('路由 1 添加条件');change('路由 1 条件 2 变量','found');change('路由 1 条件 2 值','false');
+                if(document.querySelector('[aria-label="路由 1 条件 2 运算"]').options.length!==1)throw Error('Boolean operator mismatch');
+                if(document.querySelector('[data-command=export]').disabled)throw Error(document.querySelector('#diagnostics').textContent);
+                document.querySelector('[data-command=preview]').click();window.nativeLogicAuthor='script-ready';
+              }catch(e){window.nativeLogicAuthor='failed: '+e.message;}})();
+              """);
+            await Wait("window.nativeLogicAuthor !== 'pending'");
+            if(await JS("window.nativeLogicAuthor === 'script-ready'")!="true")throw new InvalidDataException("Native condition authoring: "+await JS("window.nativeLogicAuthor"));
+            await Wait("!!document.querySelector('#preview').contentDocument?.querySelector('[data-action=yes]')");
+            await JS("document.querySelector('#preview').contentDocument.querySelector('[data-action=yes]').click()");
+            await Wait("document.querySelector('#preview').contentDocument?.querySelector('.vn-text')?.textContent === '原生条件命中'");
+            checks.Add("Native Studio authors numeric and boolean conditions through actual controls and the shared runtime selects the expected branch");
+            await JS("""
+              window.nativeEvidenceAuthor='pending';
+              (async()=>{try {
+                const {newProject}=await import('/lib/editor/index.js');const {runRouteSuite}=await import('/lib/index.js');
+                const p=newProject('investigation');p.settings={textDelayMs:0};p.routeTests={schema:1,cases:[{id:'native-evidence',steps:['read','back','reason'].map(id=>({type:'action',id})),expect:{lineId:'chapter-1/end',ending:'chapter-1:complete',evidence:['note']}}]};
+                document.querySelector('[data-tab=source]').click();document.querySelector('#source').value=JSON.stringify(p);document.querySelector('[data-command=apply-source]').click();document.querySelector('[data-tab=story]').click();
+                const section=[...document.querySelectorAll('#inspector>details')].find(d=>d.querySelector('summary')?.textContent==='本章证据目录');section.open=true;
+                const input=document.querySelector('[aria-label="证据 note ID"]');input.value='clue';input.dispatchEvent(new Event('change'));
+                if(document.querySelector('[aria-label="动作 1 持有时隐藏"]').value!=='clue'||!document.querySelector('[aria-label="动作 2 所需证据 clue"]').checked)throw Error('Evidence references not rewritten');
+                if(![...document.querySelectorAll('#inspector button')].find(b=>b.textContent==='删除证据 clue')?.disabled)throw Error('Referenced evidence can be deleted');
+                document.querySelector('[data-tab=source]').click();const edited=JSON.parse(document.querySelector('#source').value);
+                if(runRouteSuite(edited).status!=='PASS'||edited.routeTests.cases[0].expect.evidence[0]!=='clue')throw Error('Renamed evidence route did not pass');
+                document.querySelector('[data-tab=story]').click();document.querySelector('[data-command=preview]').click();window.nativeEvidenceAuthor='ready';
+              }catch(e){window.nativeEvidenceAuthor='failed: '+e.message;}})();
+              """);
+            await Wait("window.nativeEvidenceAuthor !== 'pending'");
+            if(await JS("window.nativeEvidenceAuthor === 'ready'")!="true")throw new InvalidDataException("Native evidence authoring: "+await JS("window.nativeEvidenceAuthor"));
+            await Wait("!!document.querySelector('#preview').contentDocument?.querySelector('[data-action=read]')");
+            await JS("document.querySelector('#preview').contentDocument.querySelector('[data-action=read]').click();document.querySelector('#preview').contentDocument.querySelector('[data-action=back]').click();document.querySelector('#preview').contentDocument.querySelector('[data-action=reason]').click()");
+            await Wait("document.querySelector('#preview').contentDocument?.querySelector('.vn-text')?.textContent === '记录已核对。'");
+            checks.Add("Native evidence controls atomically rename real constraints and route assertions, protect deletion and complete the investigation in WebView2");
             await JS("window.nativeDenied=false; const onDenied=e=>{if(e.data?.id==='smoke-invalid'){window.nativeDenied=e.data.ok===false;chrome.webview.removeEventListener('message',onDenied)}};chrome.webview.addEventListener('message',onDenied);chrome.webview.postMessage({id:'smoke-invalid',command:'read-any-file',path:'C:/Windows/win.ini'})");
             await Wait("window.nativeDenied === true");
             checks.Add("The native bridge rejects undeclared commands");

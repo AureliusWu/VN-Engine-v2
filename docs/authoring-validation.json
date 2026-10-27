@@ -1,0 +1,50 @@
+{
+  "schema": 1,
+  "baseline": "e383a1fd08ec416f52bed25ff5abe0a351eaf9f5",
+  "modelCommit": "c14598c5a79e396f9ef9845bc828063ba8759a56",
+  "scope": "engine-authoring-only",
+  "version": "0.3.0 alpha",
+  "local": {
+    "core": {
+      "status": "PASS",
+      "node": 146,
+      "python": 6,
+      "provenance": 128
+    },
+    "browser": {
+      "status": "PASS",
+      "browser": "153.0.8010.12",
+      "checks": [
+        "Actual controls author numeric AND boolean routing, preserve final fallback and execute both route/save-restore cases",
+        "Route ordering is undoable, fallback stays last and invalid numeric input preserves authored bytes",
+        "Evidence rename updates collections, hiding, completion constraints and route assertions; real investigation still completes",
+        "Evidence checklist conflicts block export; additions, deletion and reset undo cleanly without touching player saves",
+        "Evidence authoring fits a 390px viewport and retains inert authored text"
+      ]
+    },
+    "editor": {
+      "status": "PASS"
+    }
+  },
+  "native": {
+    "status": "UNVERIFIED",
+    "reason": "Await interface commit workflow; not inferred from model-stage success"
+  },
+  "sourceSha256": {
+    "src/editor/authoring.ts": "1e0e6c8fe4057afd3243e93d9f32d751ce6b12bdea148e6e1c30f379fbf74054",
+    "src/editor/model.ts": "4362e2683e774af4ddca0a2a00d0a9d753558e2304af7373f2af65773f09b662",
+    "editor/app.mjs": "0e3911e529b909d879696dbab9d84d097ac811be4bd4ce724d9e2d440e35d9e0",
+    "editor/logic.mjs": "aa0ab335b4fb34310d6cd3b7537c4f769b0a6e4147892acb58ce1552b72aef4e",
+    "editor/style.css": "22e02129fb1e88afc38da0612a5c5e0f529728becf243d34d3ca4f84c18a3aa3",
+    "editor/studio-font.woff2": "771b417cd5dfaa461e74bd104de121e5a3b8cfd76c387039c54b061fd70a6615",
+    "hosts/windows/SmokeTests.cs": "22758e5a9f868db094a56586ef5f2e6a9b47516049cd0e3a2eac19fc3db944ce",
+    "tests/authoring.test.mjs": "dc017eddbfae2c3ac10ab68da38f3471fb71ec162ebd407213c0e1c881fd30c6",
+    "tests/authoring-browser.mjs": "a4858b42627941d72a6ad17159f8626f5e415a36a6ff07be630e1d20e4121126",
+    "package.json": "404a85bd8a0ce7c17f37512d78f6be5ac5db4a737108ee6e7412061644ec99f3"
+  },
+  "limitations": [
+    "No published-game ID/save migration performed",
+    "Chapter and variable-catalog authoring remain future work",
+    "No physical-device or formal-art certification"
+  ]
+}

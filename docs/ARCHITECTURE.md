@@ -4,7 +4,7 @@ v0.3.0 主链由本仓库自研模块承担。解释器/状态机 → 玩法驱�
 
 | 层 | 入口 | 责任 |
 | --- | --- | --- |
-| 作者工具 | EditorModel / Studio | 原子作者命令、图、诊断、草稿、同一运行时预览与数据导出 |
+| 作者工具 | EditorModel / Studio | 原子作者命令、类型化条件、证据引用保护、图、诊断、草稿、同一运行时预览与数据导出 |
 | Windows 宿主 | hosts/windows | 原生窗口与受限文件桥、本地内容、作品校验、配置持久化和生命周期 |
 | 作者数据 | EngineProject / ScriptProgram | 显式身份、版本、玩法、变量、剧本与资源 |
 | 路线回归 | runRouteSuite / createRouteRecorder | 真实开场操作、受限步骤、状态断言、存读档与声明结局覆盖；Studio Worker 隔离，正式 QA 门禁阻断缺项 |

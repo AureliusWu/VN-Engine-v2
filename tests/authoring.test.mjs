@@ -54,6 +54,8 @@ test('evidence diagnostics locate missing and contradictory node constraints wit
   assert.ok(diagnostics.some(d => d.code === 'evidence-reference' && d.node === '["chapter-1","room"]'));
   assert.ok(diagnostics.some(d => d.code === 'evidence-conflict'));
   assert.equal(model.serialize(), before);
+  const broken = newProject('investigation'); broken.chapters[0].nodes.note = null;
+  assert.ok(new EditorModel(broken).diagnostics().some(d => d.severity === 'error'));
 });
 
 test('typed conditions preserve booleans, finite numbers and combined comparisons with runtime semantics', () => {
@@ -61,6 +63,7 @@ test('typed conditions preserve booleans, finite numbers and combined comparison
   const terms = [{ key: 'trust', op: 'gte', value: 2 }, { key: 'trust', op: 'eq', value: 3 }, { key: 'found', op: 'eq', value: false }];
   const before = structuredClone(terms), condition = conditionFromTerms(variables, terms);
   assert.deepEqual(condition, { trust: { gte: 2, eq: 3 }, found: { eq: false } }); assert.deepEqual(terms, before);
+  assert.deepEqual(conditionFromTerms({ 'existing key': { initial: 0 } }, [{ key: 'existing key', op: 'eq', value: 1 }]), { 'existing key': { eq: 1 } });
   const project = newProject('script'); project.program.variables = variables;
   project.program.blocks[0].exit.choices[0].effects = [{ op: 'set', key: 'trust', value: 3 }];
   project.program.blocks[0].exit.choices[0].next = 'routing';

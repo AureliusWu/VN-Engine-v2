@@ -2,7 +2,7 @@
 
 最近完成：启动 Auto 保护与安全 Continue、可配置标题 / 确认流程、跨重启已读记录，均已通过浏览器与 Windows；范围和证据见 [本轮优化](OPTIMIZATION-PLAYER-LIFECYCLE.md)。此前声音 / 阅读 / 备份见 [上一轮](OPTIMIZATION-NEXT.md)。版本保持 0.3.0 alpha。
 
-本轮补齐真实路线用例与逐步存读档、Studio 从头录制 / 表单 / Worker 和 QA / 正式候选门禁；四种独立样例的路线矩阵与 CI 报告见 [路线 QA 计划与证据](OPTIMIZATION-ROUTE-QA.md)。后续作者工具优先考虑条件 / 证据表单和章节引用的安全编辑；这不授权迁移原四作。
+上一轮补齐真实路线用例与逐步存读档、Studio 从头录制 / 表单 / Worker 和 QA / 正式候选门禁；四种独立样例的路线矩阵与 CI 报告见 [路线 QA 计划与证据](OPTIMIZATION-ROUTE-QA.md)。本轮加入条件 / 证据表单与证据引用保护，实施和证据见 [作者工具计划](OPTIMIZATION-AUTHORING.md)。后续优先考虑章节引用与变量目录的安全编辑；这不授权迁移原四作。
 
 ## 0.1：四作能力沉淀
 

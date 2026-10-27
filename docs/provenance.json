@@ -64,7 +64,7 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "3a2496bdd1d5674651aee624011602324c1ee6248437f7f8cb6cb111edf385b7"
+      "targetSha256": "0e3911e529b909d879696dbab9d84d097ac811be4bd4ce724d9e2d440e35d9e0"
     },
     {
       "target": "editor/collections.mjs",
@@ -77,6 +77,12 @@
       "mode": "new",
       "origins": [],
       "targetSha256": "62662aa9b1ae2f3c011c713bf63c8756ad88bbd9dfed6ec272348ef81f4b1f03"
+    },
+    {
+      "target": "editor/logic.mjs",
+      "mode": "new",
+      "targetSha256": "aa0ab335b4fb34310d6cd3b7537c4f769b0a6e4147892acb58ce1552b72aef4e",
+      "origins": []
     },
     {
       "target": "editor/minigame.mjs",
@@ -137,13 +143,13 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "967ba9d66dbd32c1fee0dcf80f26b8c4a9a80fa2dc488809a9dd8a29893d9b01"
+      "targetSha256": "771b417cd5dfaa461e74bd104de121e5a3b8cfd76c387039c54b061fd70a6615"
     },
     {
       "target": "editor/style.css",
       "mode": "new",
       "origins": [],
-      "targetSha256": "408f06116ccd497fba9c20cd8e605011ca979ec568eda1412bf8f97ddf114dcd"
+      "targetSha256": "22e02129fb1e88afc38da0612a5c5e0f529728becf243d34d3ca4f84c18a3aa3"
     },
     {
       "target": "examples/demo/demo-font.woff2",
@@ -320,7 +326,7 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "01fa917b5d3055f07f9c4d3665a148a25d918cf567f5065f53d7fc07fbfe503f"
+      "targetSha256": "22758e5a9f868db094a56586ef5f2e6a9b47516049cd0e3a2eac19fc3db944ce"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
@@ -540,7 +546,7 @@
     {
       "target": "src/editor/authoring.ts",
       "mode": "new",
-      "targetSha256": "bf0f85e44c08f00709db22baa5437727a553b0effdddbfa9759af55bae24ef58",
+      "targetSha256": "1e0e6c8fe4057afd3243e93d9f32d751ce6b12bdea148e6e1c30f379fbf74054",
       "origins": []
     },
     {
@@ -553,7 +559,7 @@
       "target": "src/editor/model.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "6ab260fab181b1754132f5cd45ab9c2addfe05ad792c67e1a7869e295ba2c4db"
+      "targetSha256": "4362e2683e774af4ddca0a2a00d0a9d753558e2304af7373f2af65773f09b662"
     },
     {
       "target": "src/history/search.ts",

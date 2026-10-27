@@ -9,7 +9,7 @@ const safeID = (id: string) => !!id.trim() && id === id.trim() && !['__proto__',
 export function conditionFromTerms(variables: Readonly<Record<string, Variable>>, terms: readonly ConditionTerm[]): Condition {
   const condition: Condition = {};
   for (const { key, op, value } of terms) {
-    if (!safeID(key) || !Object.hasOwn(variables, key)) throw new Error('条件变量不存在');
+    if (typeof key !== 'string' || !key || ['__proto__', 'prototype', 'constructor'].includes(key) || !Object.hasOwn(variables, key)) throw new Error('条件变量不存在');
     if (!['eq', 'gte'].includes(op) || typeof value !== typeof variables[key].initial
       || (typeof value === 'number' && !Number.isFinite(value)) || (op === 'gte' && typeof value !== 'number')) throw new Error('条件运算或值类型无效');
     const rule = condition[key] as { eq?: Scalar; gte?: number } | undefined;

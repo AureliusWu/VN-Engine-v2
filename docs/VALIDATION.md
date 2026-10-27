@@ -4,6 +4,14 @@
 
 模型阶段本地 `npm run check` 通过：146 项 Node、6 项 Python、127 项来源和四份独立样例校验。新增检查覆盖完整引用的原子重命名、同章隔离、路线断言歧义拒绝、删除保护、撤销重做、元数据保留及真实运行器回归；条件接口检查布尔 / 数值和组合运算。Studio 表单与本轮浏览器 / 原生结果尚待后续验证。
 
+模型提交 `c14598c5a79e396f9ef9845bc828063ba8759a56` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40537666476) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40537666750) 均成功。
+
+界面阶段本地完整 `npm run test:browser` 已通过。真实 Chromium 使用表单编写数值 AND 布尔路由、上下移 / 撤销并保留最后兜底，导出后的两条实际路线与逐步存读档一致；证据重命名后真实调查与路线断言通过，录音元数据保留。清空 / 收集冲突阻断导出，独立清空动作可重新收集后完成。新增 / 删除 / 撤销、惰性文本、玩家存档字节隔离及 390px 无页面溢出均有专项检查；桌面与窄屏截图已查看，不冒充实体设备验收。
+
+首次本地并行启动两个包含 TypeScript 构建的检查时，它们争用 `dist`，一次 Node 导入读到尚未写完的导出。随后改为顺序检查；本轮最终结果单独记录，不据该临时目录竞争更改运行逻辑。Windows smoke 新增真实条件表单与证据重命名 / 调查完成流程，其执行结果仍以界面提交对应的 Windows 工作流为准。
+
+界面阶段最终顺序 `npm run check`（146 项 Node、6 项 Python、128 项来源与四样例）及完整 `npm run test:editor` 均通过。机器记录包含本轮源文件实际 SHA256 和检查范围，见 [authoring-validation.json](authoring-validation.json)。
+
 ## 路线 QA 与作者工具
 
 路线门禁最终提交 `e383a1fd08ec416f52bed25ff5abe0a351eaf9f5` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40518708431) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40518708454) 均成功；上一轮闭环，不把旧结果用于本轮新代码。

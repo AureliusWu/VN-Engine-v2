@@ -2,6 +2,7 @@ import { EditorModel, newProject } from '../lib/editor/index.js';
 import { renderPresentationEditor } from './presentation.mjs';
 import { renderCollectionsEditor } from './collections.mjs';
 import { createRoutesPanel } from './routes.mjs';
+import { renderBranchEditor, renderEvidenceCatalog, evidenceChecklist } from './logic.mjs';
 import { ENGINE_VERSION } from '../lib/index.js';
 import { nativeHost, nativeRequest } from './native.mjs';
 
@@ -209,17 +210,28 @@ function renderInspector() {
     field(root, '节点结果', data.outcome ?? '', value => { const next = structuredClone(valueAt(path)); if (!value) delete next.outcome; else { next.kind = 'ending'; next.outcome = value; } set(path, next, true); }, { choices: [['', '继续调查'], ['failure', '失败可重试'], ['complete', '本章完成']] });
     root.append(element('h3', '调查动作'));
     const chapter = project.chapters.find(c => c.id === node.chapter), targets = Object.keys(chapter.nodes).map(id => [id, id]);
+    const logic = { element, field, action, valueAt, set, project, model, mutate, run };
     for (let i = 0; i < data.actions.length; i++) {
       const card = element('div', undefined, { class: 'line-card' }), actionPath = [...path, 'actions', i]; root.append(card);
       nodeField(card, `动作 ${i + 1} ID`, [...actionPath, 'id']); nodeField(card, `动作 ${i + 1} 名称`, [...actionPath, 'label']); nodeField(card, `动作 ${i + 1} 目标`, [...actionPath, 'next'], { choices: targets });
       field(card, `动作 ${i + 1} 收集证据`, data.actions[i].collect ?? '', value => { const next = structuredClone(valueAt(actionPath)); if (value) next.collect = value; else delete next.collect; set(actionPath, next); }, { choices: [['', '不收集'], ...Object.keys(chapter.evidence).map(id => [id, chapter.evidence[id].title])] });
-      jsonField(card, `动作 ${i + 1} 所需证据`, [...actionPath, 'requiresEvidence'], []);
+      evidenceChecklist(card, `动作 ${i + 1} 所需证据`, [...actionPath, 'requiresEvidence'], chapter, logic);
+      const hidden = data.actions[i].hidesWhenCollected ?? '', evidenceChoices = [['', '始终显示'], ...Object.keys(chapter.evidence).map(id => [id, chapter.evidence[id].title])];
+      if (hidden && !Object.hasOwn(chapter.evidence, hidden)) evidenceChoices.push([hidden, hidden + '（缺失）']);
+      field(card, `动作 ${i + 1} 持有时隐藏`, hidden, value => { const next = structuredClone(valueAt(actionPath)); if (value) next.hidesWhenCollected = value; else delete next.hidesWhenCollected; set(actionPath, next, true); }, { choices: evidenceChoices });
+      field(card, `动作 ${i + 1} 清空证据`, data.actions[i].resetEvidence ? 'true' : 'false', value => set([...actionPath, 'resetEvidence'], value === 'true', true), { choices: [['false', '保留证据'], ['true', '清空证据（不能同时收集）']] });
       card.append(action('删除动作', () => { const actions = structuredClone(valueAt([...path, 'actions'])); actions.splice(i, 1); set([...path, 'actions'], actions, true); }, 'small-button danger'));
     }
     root.append(action('添加调查动作', () => { const actions = structuredClone(valueAt([...path, 'actions'])), ids = new Set(actions.map(a => a.id)); let id = 'action-1'; for (let i = 2; ids.has(id); i++) id = 'action-' + i; actions.push({ id, label: '新的调查动作', next: node.id }); set([...path, 'actions'], actions, true); }));
     jsonField(root, '完整动作字段（隐藏与重置证据）', [...path, 'actions'], []);
-    jsonField(root, '节点所需证据', [...path, 'requiresEvidence'], []);
-    const chapterIndex = path[1]; jsonField(root, '本章证据目录', ['chapters', chapterIndex, 'evidence'], {});
+    evidenceChecklist(root, '节点所需证据', [...path, 'requiresEvidence'], chapter, logic);
+    evidenceChecklist(root, '节点排除证据', [...path, 'excludesEvidence'], chapter, logic);
+    const chapterIndex = path[1], catalog = inspectorSection(root, `evidence:${chapter.id}`, '本章证据目录');
+    renderEvidenceCatalog(catalog, chapter, chapterIndex, logic);
+    const advanced = inspectorSection(root, `evidence:${chapter.id}:json`, '高级证据 JSON');
+    jsonField(advanced, '本章证据目录 JSON', ['chapters', chapterIndex, 'evidence'], {});
+    jsonField(advanced, '节点所需证据 JSON', [...path, 'requiresEvidence'], []);
+    jsonField(advanced, '节点排除证据 JSON', [...path, 'excludesEvidence'], []);
     renderCue(root, ['stage', 'nodes', `${node.chapter}/${node.id}`]);
     root.append(element('p', '调查动作中的 next 连接同章节点。证据联合可达性由原调查状态机校验，允许返回调查。', { class: 'help' }));
     return;
@@ -254,7 +266,10 @@ function renderInspector() {
   const targets = model.graph().nodes.filter(n => n.chapter === node.chapter).map(n => [n.id, `${n.title} · ${n.id}`]);
   if (exit.type === 'jump') nodeField(root, '继续到', [...exitPath, 'next'], { choices: targets });
   if (exit.type === 'end') nodeField(root, '结局名称', [...exitPath, 'ending']);
-  if (exit.type === 'branch') jsonField(root, '条件路由（末项为兜底）', [...exitPath, 'routes'], []);
+  if (exit.type === 'branch') {
+    renderBranchEditor(root, [...exitPath, 'routes'], { element, field, action, valueAt, set, project });
+    jsonField(inspectorSection(root, `${node.key}:branch-json`, '高级条件 JSON'), '条件路由（末项为兜底）', [...exitPath, 'routes'], []);
+  }
   if (exit.type === 'choice') {
     for (let i = 0; i < exit.choices.length; i++) {
       const choicePath = [...exitPath, 'choices', i], card = element('div', undefined, { class: 'line-card' }); root.append(card);
