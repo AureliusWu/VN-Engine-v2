@@ -6,6 +6,8 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 
 用户提供的最高规范已更新为 [GALGAME SPEC v0.2](GALGAME_SPEC_v0.2.md)。现有机器契约和本页原有状态仍对应 v0.1；v0.2 的逐项差距、适用范围与实际证据见 [v0.2 Gap Audit](GALGAME_SPEC_v0.2_GAP_AUDIT.md)。不能通过改版本标识宣称完成 v0.2。
 
+正式发布另执行 [v0.2 美术与设备证据门禁](RELEASE_ART_GATE.md)；该补充门禁只核对结构化人工声明与证据引用，不自动判定美术质量或证据真实性。
+
 状态统一使用：`PASS / PARTIAL / ENGINE_GAP / UNVERIFIED / N/A`。
 
 ## 当前基线
@@ -16,7 +18,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 - 主入口：`validateProjectCompliance()`
 - CLI：`node tools/validate-project.mjs [--release] project.json [...]`
 - CI：`npm run check`
-- 正式总 Gate：`npm run gate:release`
+- 正式总 Gate：`npm run gate:release -- /path/to/project.json`
 
 ## 已落地的规范化能力
 
@@ -27,7 +29,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Asset manifest integrity | PASS | 复用 `AssetCatalog`，检查 ID、kind、路径与 manifest |
 | Asset reference validation | PASS | 对背景、立绘、CG、BGM、Ambience、SE、Voice、Font、Video 与 fallback 做 ID + kind 交叉检查 |
 | Placeholder text gate | PASS | development 记 warning；release 对 `TODO / FIXME / PLACEHOLDER / lorem ipsum` 失败 |
-| Asset status gate | PARTIAL | 支持读取 `PLACEHOLDER / DRAFT / REVIEW / READY / DEPRECATED`；当前资产 schema 尚未强制要求 status |
+| Asset status gate | PARTIAL | 开发模式允许未完成状态；正式门禁拒绝清单中的 PLACEHOLDER，并要求相关视觉资产声明 READY 和人工证据 |
 | Build Identity | PASS | 独立构建 manifest 写入 Game Version、Engine Version、Commit SHA、Build Time |
 | Build checksum | PASS | 独立构建继续为每个 runtime 文件写入 SHA256 |
 | Release commit lock | PASS | `VN_RELEASE_BUILD=1` 时缺少 `VN_ENGINE_COMMIT` / `GITHUB_SHA` 直接失败 |
@@ -83,7 +85,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Shake | PASS | DOM effect |
 | Move / Scale / Camera | PARTIAL | DOM 已执行轨道并覆盖暂停、终态与恢复；本次 Windows CI 和可视化作者控件仍需验证 |
 | Formal Layer API | PARTIAL | DOM 已接入五个视觉资源层与 effect / ui 轨道；本次 Windows CI 和可视化作者控件仍需验证 |
-| Video | PARTIAL | 本地播放、失败回退、暂停 / 跳过 / 减少动态和编辑器配置已接入；本次 Windows 原生及完整 CI 结果待确认，不同设备编解码支持需作品验证 |
+| Video | PARTIAL | 本地播放、失败回退、暂停 / 跳过 / 减少动态和编辑器配置已接入；`9894454` 浏览器及 Windows CI 通过，有声视频听感、实际设备及编码支持仍需作品验证 |
 | Investigation / nontraditional play | PASS | Investigation runtime |
 | Mini game contract | PARTIAL | 可通过自定义 runtime 承载，但未提供统一 entry/exit/save/skip contract |
 | Web Build | PASS | Standalone + PWA |
@@ -114,11 +116,11 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 ### P1 — Presentation runtime closure
 
 - DOM 已消费 Formal Layer 与时间线；继续确认 Windows 原生 CI，并补可视化作者控件
-- Video 已接入 DOM 和编辑器；等待本次 Windows 原生及完整 CI 验收
+- Video 已接入 DOM 和编辑器，浏览器与 Windows 无声 WebM 通过；有声听感和实际设备编码支持需作品验证
 
 ### P1 — Release Evidence
 
-- 将 `gate:release` 的 JSON 输出作为 CI artifact
+- 作品专用的 `gate:release -- project.json` 输出结构化检查结果；按作品发行流程保存为 CI artifact
 - 统一 `QA_REPORT`
 - Windows / Web / PWA 的 build identity 与 checksum 汇总
 - RC / RELEASE 时强制 `VN_RELEASE_BUILD=1`

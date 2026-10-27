@@ -64,7 +64,7 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "848f86fe1d309e90be54133694f4e7874ff9fe18aee510604ead6063d57d28af"
+      "targetSha256": "af6d23a374222c633236dcc07c0a248c62b725acc5e45fba1bbc779d9c89e629"
     },
     {
       "target": "editor/index.html",
@@ -107,7 +107,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "b1749fe8ec1ca1319763d270bcc8e10def28b198a044eae46d27fc53e6b5e8a1"
+      "targetSha256": "39e445247421b429524212df69fd3499c19ede80b273526e0816474d6431d992"
     },
     {
       "target": "editor/style.css",
@@ -442,7 +442,7 @@
       "target": "src/assets/catalog.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "7c1b1b26446894c102bc12804fdd30c7f711bf68c0410e7ed911fbb4c5670632"
+      "targetSha256": "d8dce6f6876788f35b87595a1ce183b6cb9df806d4773bb136835a68109bcc2f"
     },
     {
       "target": "src/audio/catalog.ts",
@@ -490,9 +490,15 @@
       ]
     },
     {
+      "target": "src/compliance/art.ts",
+      "mode": "new",
+      "targetSha256": "280f97b01e1c82227957af387e44caa9d11461c6b7404c0b4cc7c395371dc5ac",
+      "origins": []
+    },
+    {
       "target": "src/compliance/project.ts",
       "mode": "new",
-      "targetSha256": "3c97843faee4198dc121eb24271ee83767523847c0a1019f1d484d3a35fbad9c",
+      "targetSha256": "9dc6b6e935222335928a4c9487e811332d621e654a40f163d7ff8a7f3cd074cb",
       "origins": []
     },
     {
@@ -523,7 +529,7 @@
     {
       "target": "src/index.ts",
       "mode": "new",
-      "targetSha256": "1cc28cae03d6b1fc86042983af32b07aafb82271f9fae1ed76baca71ae9c02c8",
+      "targetSha256": "9952d08901125d9d0257f8fb7d1581c02f1fb3de75475fc06af0906004235725",
       "origins": []
     },
     {
@@ -679,7 +685,7 @@
       "target": "src/runtime/project.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "c9b495be4e9c418865f01f78f5d4284d8be950f9486ecfe589bcbf902fa77601"
+      "targetSha256": "04d1fe7455e5b53a77e1c2da1d4a2c1e66f966968e7461009e9a988cb3a9b577"
     },
     {
       "target": "src/runtime/readonly.ts",
@@ -832,7 +838,7 @@
       "target": "tools/package-game.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "03c0dd064fc499db76b50ffbf16b5d46a6e8288f8dd9bba5504fb8f984f1fcaf"
+      "targetSha256": "0f5e898d2986da431280f43c616966d2a5341f68cfe0a13e3e01d689fe2ba001"
     },
     {
       "target": "tools/package-studio.mjs",
@@ -905,7 +911,7 @@
     {
       "target": "tools/validate-project.mjs",
       "mode": "new",
-      "targetSha256": "b2db9c9ef45382d4f6a9c491a17e4ffc5ffe5dd48176a3f75a5c120def6b7f5f",
+      "targetSha256": "f9d1ac2a2c3c4aab58e715bbf04a340415cbc33e2ead999658afe52ac9ed7483",
       "origins": []
     }
   ]

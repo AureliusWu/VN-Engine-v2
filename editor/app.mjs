@@ -237,7 +237,7 @@ function renderAssets() {
     const card = element('article', undefined, { class: 'asset-card' }), path = ['assets', index]; root.append(card);
     card.append(element('h3', asset.id || '未命名资源'));
     for (const [name, label] of [['id', '资源 ID'], ['src', '相对路径'], ['alt', '资源说明']]) nodeField(card, label, [...path, name]);
-    nodeField(card, '资源类型', [...path, 'kind'], { choices: [['background', '背景'], ['portrait', '立绘'], ['cg', 'CG'], ['audio', '音频'], ['font', '字体'], ['video', '视频']] });
+    nodeField(card, '资源类型', [...path, 'kind'], { choices: [['background', '背景'], ['portrait', '立绘'], ['cg', 'CG'], ['ui', 'UI 视觉'], ['audio', '音频'], ['font', '字体'], ['video', '视频']] });
     field(card, '许可名称', asset.license?.name ?? '', value => set([...path, 'license'], { name: value, src: valueAt([...path, 'license'])?.src ?? '' }));
     field(card, '许可文件路径', asset.license?.src ?? '', value => set([...path, 'license'], { name: valueAt([...path, 'license'])?.name ?? '', src: value }));
     card.append(action('移除资源条目', () => { const assets = structuredClone(model.getView().project.assets); assets.splice(index, 1); set(['assets'], assets, true); }, 'small-button danger'));

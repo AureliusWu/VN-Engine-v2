@@ -2,7 +2,7 @@ import { mkdir, readFile, writeFile, readdir, stat, realpath } from 'node:fs/pro
 import { resolve, dirname, relative, sep } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
-import { createProject, localAssetPath, ENGINE_VERSION, validateProjectCompliance } from '../dist/index.js';
+import { createProject, localAssetPath, ENGINE_VERSION, validateProjectCompliance, ReleaseArtGateError } from '../dist/index.js';
 import { fingerprintFiles, renderWorker } from './pwa.mjs';
 
 const repository = resolve(fileURLToPath(new URL('..', import.meta.url)));
@@ -50,7 +50,7 @@ export async function packageGame(projectFile, output) {
     }
   }
   if (project.font && !project.assets.find(asset => asset.id === project.font)?.license) throw new Error('Bundled project font needs its own license record');
-  const compliance = validateProjectCompliance(project, { mode: complianceMode });
+  const compliance = validateProjectCompliance(project, { mode: complianceMode, requiresPwa: complianceMode === 'release' });
   files.set('project.json', Buffer.from(JSON.stringify(project, null, 2) + '\n'));
   for (const path of await modules(resolve(repository, 'dist'))) {
     const name = 'lib/' + relative(resolve(repository, 'dist'), path).split(sep).join('/');
@@ -70,14 +70,16 @@ catch(failure){error.textContent='启动未完成：'+failure.message;}
   const version = fingerprintFiles(bytes);
   files.set('sw.js', Buffer.from(renderWorker({ namespace: 'vn-self-' + project.game, version, urls: [...files.keys()] })));
   const commitSha = process.env.VN_ENGINE_COMMIT ?? process.env.GITHUB_SHA ?? 'UNVERIFIED';
-  if (complianceMode === 'release' && commitSha === 'UNVERIFIED') throw new Error('Release build requires VN_ENGINE_COMMIT or GITHUB_SHA');
+  if (complianceMode === 'release' && (!/^[a-f0-9]{40}$/i.test(commitSha)
+    || (process.env.VN_ENGINE_COMMIT && process.env.GITHUB_SHA && process.env.VN_ENGINE_COMMIT.toLowerCase() !== process.env.GITHUB_SHA.toLowerCase())))
+    throw new Error('Release build requires a valid matching VN_ENGINE_COMMIT or GITHUB_SHA');
   const metadata = {
     schema: 1,
     game: project.game,
     version: project.version,
     engine: 'VN Engine v2 self runtime ' + ENGINE_VERSION,
     buildIdentity: { gameVersion: project.version, engineVersion: ENGINE_VERSION, commitSha, buildTime: buildTimestamp() },
-    compliance: { contract: compliance.contract, mode: compliance.mode, warnings: [...compliance.warnings] },
+    compliance: { contract: compliance.contract, mode: compliance.mode, warnings: [...compliance.warnings], ...(compliance.artGate ? { artGate: compliance.artGate } : {}) },
     contentFingerprint: version,
     files: [...files].map(([name, bytes]) => ({ name, size: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') }))
   };
@@ -89,5 +91,6 @@ catch(failure){error.textContent='启动未完成：'+failure.message;}
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const source = process.argv[2], output = process.argv[3];
   if (!source || !output) throw new Error('Usage: node tools/package-game.mjs project.json output-directory');
-  console.log(JSON.stringify(await packageGame(source, output)));
+  try { console.log(JSON.stringify(await packageGame(source, output))); }
+  catch (error) { if (error instanceof ReleaseArtGateError) console.error('SPEC_ART_GATE_BLOCKED', JSON.stringify(error.report)); throw error; }
 }

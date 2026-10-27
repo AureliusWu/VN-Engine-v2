@@ -13,8 +13,9 @@ import { NarrativeDriver, ScriptDriver, InvestigationDriver, type NarrativeStage
 import { RuntimeSession, type RuntimeSettings, type Clock } from './session.js';
 import type { ProjectCollections } from '../meta/state.js';
 import { isRecord } from '../storage/save.js';
+import type { ReleaseEvidence } from '../compliance/art.js';
 
-type ProjectBase = { schema: 1; game: string; version: string; title: string; assets: readonly Asset[]; font?: string; settings?: Partial<RuntimeSettings>; collections?: ProjectCollections };
+type ProjectBase = { schema: 1; game: string; version: string; title: string; assets: readonly Asset[]; font?: string; settings?: Partial<RuntimeSettings>; collections?: ProjectCollections; releaseEvidence?: ReleaseEvidence };
 export type EngineProject = ProjectBase & (
   { type: 'narrative'; adapter?: 'healing' | 'netlove'; entry?: string; stats?: Record<string, number>; scenes: readonly Scene[]; stage?: NarrativeStage }
   | { type: 'script'; program: ScriptProgram; defaults?: StageCue }

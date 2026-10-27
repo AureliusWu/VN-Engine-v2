@@ -15,10 +15,10 @@
 | 多槽、快速、自动存档（§36–41、111–112） | PARTIAL | `src/storage/contract.ts`、`src/render/mount.ts` 和 `src/render/dom.ts` 已接入六槽、覆盖确认、Quick 控件、自动存档提示与旧槽读取；本次 Windows 原生 CI 和可选缩略图需另列证据。 |
 | Meta、CG Gallery、Ending Collection、Replay（§42–44、103–104） | PARTIAL | 项目可声明图鉴、结局和回看数据；播放器提供锁定遮蔽、进度、查看和独立会话回看，普通存档 / Meta 隔离；`4a8a57e` 浏览器及 Windows CI 已通过，可视化作者控件仍待实现。 |
 | 演出时间线、层与关键视觉生命周期（§29–30、97、108、134） | PARTIAL | DOM 已消费五个视觉资源层、效果 / UI 轨道和镜头，处理暂停、跳过、读档及后续段落终态重建；本次 Windows CI、可视化作者控件和关键视觉使用范围约束仍待完成。 |
-| Video（§98） | PARTIAL | DOM 本地播放、结束清理、失败回退、暂停 / 跳过 / 减少动态及编辑器配置已实现；本次 Windows 和完整 CI 尚待结果，实际设备的编解码支持仍须验证。 |
+| Video（§98） | PARTIAL | DOM 播放、结束清理、失败回退、暂停 / 跳过 / 减少动态及编辑器配置已实现；`9894454` 浏览器及 Windows 无声 WebM 检查通过，有声听感和实际设备的编解码支持仍须验证。 |
 | 小游戏（§99–100） | PARTIAL | 不同玩法驱动存在，但缺统一 entry / exit / save / restore / skip / abort / result 协议。 |
 | 设置、输入、字号、安全区域、无障碍（§45–49、96） | PARTIAL | 有 DOM 设置、键盘交互、样式和现有浏览器检查；作品具体设备、安全区域、字体与可访问体验须逐项验收。 |
-| 作品打包、PWA、桌面与 CI（§62–71、80、115–117） | PARTIAL | `tools/package-game.mjs` 生成指纹、SHA256 与 build identity；基线 GitHub Engine checks / Windows 工作流成功。每个正式作品的发行、离线和各平台验收需单独证据；`gate:release` 不是完整 v0.2 Art Gate。 |
+| 作品打包、PWA、桌面与 CI（§62–71、80、115–117） | PARTIAL | 生成指纹、SHA256 与 build identity；正式打包调用 v0.2 美术 / 设备证据门禁。每个作品的实际发行、离线和各平台验收仍需单独证据；不能据此声称 v0.2 全量合规。 |
 | 编辑器与数据驱动（§84–85、119） | PARTIAL | Studio 和项目格式存在；新增运行时能力还需评估编辑器适配，不把既有编辑器成功当作新能力验收。 |
 | QA / 证据 / 错误处理（§72–81、86–90、121–125） | PARTIAL | v0.1 报告有结构化项目检查，媒体和存档有失败处理；尚无覆盖 v0.2 的统一作品验收报告与人工证据门禁。 |
 
@@ -26,13 +26,13 @@
 
 | 要求 | 基线状态 | 依据与缺口 |
 | --- | --- | --- |
-| `TECH_READY` 与 `ART_READY` 分开（§130） | ENGINE_GAP | 打包检查文件、可选 SHA256 和引用，不提供这两个独立状态；不检查美术构图，也不能推导 ART_READY。 |
-| Production Art Visual Gate（§131–133、138–140） | ENGINE_GAP | 未发现七项视觉门禁、逐资产人工复核记录或据此阻止发行的逻辑；图像解码/构建通过不能替代。 |
+| `TECH_READY` 与 `ART_READY` 分开（§130） | PARTIAL | 两种状态分别声明和检查，技术结果不会自动推导美术结果；validator 不自动解码图片或验证人工声明真实性。 |
+| Production Art Visual Gate（§131–133、138–140） | PARTIAL | 七项人工声明、审核者、日期和证据引用缺失时阻止发布；角色母版 / 差分继承、实际截图内容和真实性仍需人工验收或后续实现。 |
 | Key Visual 生命周期（§134） | ENGINE_GAP | `StageCue` 无装饰使用范围或生命周期声明；固定渲染层也没有该项门禁。 |
-| 移动端实体设备（§135） | UNVERIFIED | 仓库旧浏览器报告有视口检查，未找到本次作品在实体移动设备上的验收记录；`MOBILE_PHYSICAL_DEVICE` 不能标 PASS。 |
-| 资产生产链真实性（§136） | PARTIAL | `docs/provenance.json` 追踪引擎源代码及来源快照，并非作品逐资产生产链；缺资产级可核验来源及人工判断记录。未知来源不能猜测。 |
-| Production runtime 占位资产（§137） | PARTIAL | validator 接受可选 `status`，release 时拒绝任一声明为 `PLACEHOLDER` 的清单项；这比只拒绝被引用项更严格，但状态不是强制、动态引用仅告警，文件名/目录和程序化占位也未核实。 |
-| Release Art Gate（§139） | ENGINE_GAP | `gate:release` 执行现有 v0.1 校验和浏览器测试，没有聚合七项人工证据或在美术未验收时阻止正式作品发布。 |
+| 移动端实体设备（§135） | PARTIAL | 作品声明移动端 / PWA 时，门禁要求实体设备、人工审核者、日期和证据；本仓库样例没有实体设备验收，不能标 PASS。 |
+| 资产生产链真实性（§136） | PARTIAL | `docs/provenance.json` 追踪引擎代码；作品门禁要求逐资产来源、审核和证据引用，但不能自动判定内容真实性。未知来源不能猜测。 |
+| Production runtime 占位资产（§137） | PARTIAL | release 拒绝清单中任何显式 PLACEHOLDER，正式视觉资产须声明 READY；路径 / 名称和程序化来源触发人工复核警告，机器不能可靠识别未标注占位稿。 |
+| Release Art Gate（§139） | PARTIAL | 正式作品校验 / 打包汇总七项人工证据、独立技术与美术状态、占位与实体设备结果并阻止缺项；母版 / 差分继承、视觉遮挡与证据真实性仍未自动证明。 |
 
 ## 基线验证与边界
 

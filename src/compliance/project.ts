@@ -3,6 +3,7 @@ import type { RainLine } from '../adapters/rain-runtime.js';
 import { createProject, type EngineProject } from '../runtime/project.js';
 import type { StageCue } from '../stage/types.js';
 import { validatePresentationTimeline } from '../stage/timeline.js';
+import { assessProductionArt, ReleaseArtGateError, type ArtGateResult } from './art.js';
 
 export const GALGAME_SPEC_CONTRACT = 'GALGAME_SPEC-v0.1';
 export type ComplianceMode = 'development' | 'release';
@@ -17,6 +18,7 @@ export type ProjectComplianceReport = {
   lines: number;
   endings: readonly string[];
   warnings: readonly string[];
+  artGate?: ArtGateResult;
 };
 
 const PLACEHOLDER_TEXT = /\b(?:TODO|FIXME|PLACEHOLDER|lorem ipsum)\b/i;
@@ -65,7 +67,7 @@ function cueReferences(cue: StageCue | undefined, context: string): AssetReferen
  */
 export function validateProjectCompliance(
   project: EngineProject,
-  options: { mode?: ComplianceMode } = {},
+  options: { mode?: ComplianceMode; requiresPwa?: boolean } = {},
 ): ProjectComplianceReport {
   const mode = options.mode ?? 'development';
   const runtime = createProject(project, 'https://vn-engine.invalid/');
@@ -89,7 +91,6 @@ export function validateProjectCompliance(
   for (const asset of project.assets) {
     const status = (asset as typeof asset & { status?: unknown }).status;
     if (status !== undefined && !ASSET_STATUSES.has(String(status))) throw new Error(`Invalid asset status: ${asset.id}`);
-    if (mode === 'release' && status === 'PLACEHOLDER') throw new Error(`Release references PLACEHOLDER asset: ${asset.id}`);
   }
   if (project.font) references.push({ id: project.font, kind: 'font', context: 'project.font' });
   for (const item of project.collections?.cgs ?? []) references.push({ id: item.id, kind: 'cg', context: 'collections.cgs' });
@@ -164,6 +165,9 @@ export function validateProjectCompliance(
     catch { throw new Error(`Missing or mismatched asset reference: ${reference.context} -> ${reference.id} (${reference.kind})`); }
   }
 
+  const artGate = mode === 'release' ? assessProductionArt(project, references.map(reference => reference.id), { requiresPwa: options.requiresPwa }) : undefined;
+  if (artGate?.release === 'BLOCKED') throw new ReleaseArtGateError(artGate);
+
   return Object.freeze({
     contract: GALGAME_SPEC_CONTRACT,
     mode,
@@ -175,5 +179,6 @@ export function validateProjectCompliance(
     lines,
     endings: Object.freeze([...endings].sort()),
     warnings: Object.freeze(warnings),
+    ...(artGate ? { artGate } : {}),
   });
 }
