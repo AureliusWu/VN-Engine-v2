@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { AssetCatalog, resolvePresentationTimeline, settlePresentationTimeline, validatePresentationTimeline, validateProjectCompliance } from '../dist/index.js';
+import { AssetCatalog, createProject, resolvePresentationTimeline, settlePresentationTimeline, validatePresentationTimeline, validateProjectCompliance } from '../dist/index.js';
 
 test('presentation timeline resolves movement, scale, opacity and camera deterministically', () => {
   const timeline = {
@@ -48,4 +48,25 @@ test('video is a first-class asset kind and compliance validates video fallback 
   assert.equal(validateProjectCompliance(project).references, 2);
   project.defaults.video.fallback.asset = 'missing';
   assert.throws(() => validateProjectCompliance(project), /Missing or mismatched asset reference/);
+});
+
+test('timeline, video and visual layers reach real driver frames without persisting one-shot cues', () => {
+  const timeline = { durationMs: 100, animations: [{ id: 'move', layer: 'character-front', to: { x: 20 }, durationMs: 100 }] };
+  const project = { schema: 1, game: 'cue-test', version: 'v1', title: 'Cue test', type: 'narrative', settings: { textDelayMs: 0 },
+    assets: [{ id: 'hero', kind: 'portrait', src: 'hero.svg' }, { id: 'clip', kind: 'video', src: 'clip.webm' }],
+    stage: { lines: { first: { layers: { 'character-front': { asset: 'hero', kind: 'portrait' } }, timeline, video: { asset: 'clip' } } } },
+    scenes: [{ id: 'start', lines: [{ id: 'first', speaker: 'Narrator', text: 'one' }, { id: 'second', speaker: 'Narrator', text: 'two' }], ending: 'done' }] };
+  const { session } = createProject(project, 'https://example.invalid/');
+  assert.deepEqual(session.getSnapshot().frame.stage.timeline, timeline);
+  assert.equal(session.getSnapshot().frame.stage.video.asset, 'clip');
+  session.next(); const cue = session.getSnapshot().frame.stage;
+  assert.equal(cue.layers['character-front'].asset, 'hero');
+  assert.equal(cue.timeline, undefined); assert.equal(cue.video, undefined);
+  assert.equal(cue.presentationState.layers['character-front'].transform.x, 20);
+  const saved = session.save(); session.restart(); session.restore(saved);
+  assert.equal(session.getSnapshot().frame.stage.presentationState.layers['character-front'].transform.x, 20);
+  assert.equal(validateProjectCompliance(project).references, 2);
+  project.stage.lines.first.layers['character-front'].asset = 'missing';
+  assert.throws(() => validateProjectCompliance(project), /Missing or mismatched asset reference/);
+  session.dispose();
 });

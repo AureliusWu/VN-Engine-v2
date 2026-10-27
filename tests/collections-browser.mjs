@@ -15,9 +15,9 @@ try {
     const root = document.getElementById('game'), baseURL = new URL('./', location.href);
     for (const key of Object.keys(localStorage)) if (key.startsWith('vn-engine:collection-fixture:')) localStorage.removeItem(key);
     const project = { schema: 1, game: 'collection-fixture', version: 'v1', title: 'Collection fixture', type: 'narrative', settings: { textDelayMs: 0 },
-      assets: [{ id: 'secret-cg', kind: 'cg', src: 'assets/letter.svg' }], scenes: [
+      assets: [{ id: 'secret-cg', kind: 'cg', src: 'assets/letter.svg' }], stage: { lines: { finish: { layers: { cg: { asset: 'secret-cg', kind: 'cg' } } } } }, scenes: [
         { id: 'start', lines: [{ id: 'begin', speaker: '旁白', text: '回看起点' }], next: 'final' },
-        { id: 'final', lines: [{ id: 'finish', speaker: '旁白', text: '回看终点' }], cg: 'secret-cg', ending: 'complete' }
+        { id: 'final', lines: [{ id: 'finish', speaker: '旁白', text: '回看终点' }], ending: 'complete' }
       ] };
     const scratch = createProject(project, baseURL); const replay = scratch.session.save(); scratch.session.dispose();
     project.collections = { cgs: [{ id: 'secret-cg', title: '不应泄露的图片标题', replay }], endings: [

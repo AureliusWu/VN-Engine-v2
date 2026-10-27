@@ -59,7 +59,10 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
     if (snapshot.reason === 'start') countedEnding = false;
     const saved = persistence.autoSave();
     if (renderer && saved.status === 'saved' && snapshot.reason !== 'start') renderer.notify('已自动存档');
-    if (snapshot.frame.stage.cg) meta.unlockCg(snapshot.frame.stage.cg);
+    const stage = snapshot.frame.stage, cgIds = new Set<string>();
+    if ((!stage.layers || !Object.hasOwn(stage.layers, 'cg')) && stage.cg) cgIds.add(stage.cg);
+    for (const asset of Object.values(stage.layers ?? {})) if (asset?.kind === 'cg') cgIds.add(asset.asset);
+    for (const id of cgIds) meta.unlockCg(id);
     if (snapshot.frame.ending) {
       meta.markEndingSeen(snapshot.frame.ending);
       if (!countedEnding && snapshot.reason !== 'restore' && snapshot.reason !== 'reread') { meta.recordPlaythrough(); countedEnding = true; }

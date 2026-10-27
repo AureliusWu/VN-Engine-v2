@@ -1,6 +1,11 @@
 export const STAGE_LAYERS = ['background', 'character-back', 'character', 'character-front', 'cg', 'effect', 'ui'] as const;
 export type StageLayer = typeof STAGE_LAYERS[number];
+export type StageVisualLayer = 'background' | 'character-back' | 'character' | 'character-front' | 'cg';
+export type StageLayerAsset = { asset: string; kind: 'background' | 'portrait' | 'cg' };
 export type StageTransform = { x?: number; y?: number; scale?: number; opacity?: number };
+/** Reconstructed final presentation from earlier cues; current one-shot tracks remain separate. */
+export type StagePresentationState = { camera?: { x: number; y: number; scale: number };
+  layers?: Partial<Record<StageLayer, { target?: string; transform: Required<StageTransform> }>> };
 export type StageAnimation = {
   id: string;
   layer: StageLayer;
@@ -25,6 +30,8 @@ export type PresentationTimeline = {
 };
 export type StageCue = {
   background?: string | null; portrait?: string | null; cg?: string | null;
+  layers?: Partial<Record<StageVisualLayer, StageLayerAsset | null>>;
+  presentationState?: StagePresentationState;
   music?: string | null; ambience?: string | null; sound?: string; voice?: string;
   effect?: { type: 'fade' | 'flash' | 'shake'; durationMs?: number };
   timeline?: PresentationTimeline;

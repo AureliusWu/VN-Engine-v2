@@ -71,8 +71,8 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Hide UI | PASS | DOM runtime |
 | Settings persistence | PASS | 阅读与声音设置持久化 |
 | Persistent Meta State | PASS | 独立 MetaState API 与 mount runtime 更新 |
-| CG Gallery | PARTIAL | 可配置项目数据、锁定遮蔽、查看图片和独立回看；本次提交的 Windows 原生及完整 CI 证据待确认 |
-| Ending Collection | PARTIAL | 可配置标题、True Ending、解锁进度和独立回看；本次提交的 Windows 原生及完整 CI 证据待确认 |
+| CG Gallery | PARTIAL | 配置、锁定遮蔽、查看与独立回看已通过 `4a8a57e` 浏览器和 Windows CI；专用可视化作者控件仍未提供 |
+| Ending Collection | PARTIAL | 标题、True Ending、解锁进度与回看已通过 `4a8a57e` 浏览器和 Windows CI；专用可视化作者控件仍未提供 |
 | BGM | PASS | Runtime media |
 | SE | PASS | Runtime media |
 | Ambience | PASS | Runtime media |
@@ -81,8 +81,8 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Fade | PASS | DOM effect |
 | Flash | PASS | DOM effect |
 | Shake | PASS | DOM effect |
-| Move / Scale / Camera | PARTIAL | Timeline resolver 与收敛逻辑已完成；DOM 实际动画消费尚未接入 |
-| Formal Layer API | PARTIAL | 正式 Layer vocabulary 已定义；DOM 仍主要使用固定内部层结构 |
+| Move / Scale / Camera | PARTIAL | DOM 已执行轨道并覆盖暂停、终态与恢复；本次 Windows CI 和可视化作者控件仍需验证 |
+| Formal Layer API | PARTIAL | DOM 已接入五个视觉资源层与 effect / ui 轨道；本次 Windows CI 和可视化作者控件仍需验证 |
 | Video | PARTIAL | Asset/Cue/Fallback/Compliance 已完成；DOM video playback 尚未接入 |
 | Investigation / nontraditional play | PASS | Investigation runtime |
 | Mini game contract | PARTIAL | 可通过自定义 runtime 承载，但未提供统一 entry/exit/save/skip contract |
@@ -107,16 +107,13 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 
 ### P0 — Meta / Collection UI
 
-- CG Gallery 与 Ending Collection 已接入播放器；本次 Windows 原生及完整 CI 证据待确认
+- CG Gallery 与 Ending Collection 已接入播放器；专用可视化作者控件仍待实现
 - True Route unlock policy 数据化
 - Replay 结束后安全返回 Collection
 
 ### P1 — Presentation runtime closure
 
-- DOM 消费 Formal Layer API
-- DOM 执行 Move / Scale / Camera Timeline
-- Timeline 与 pause / hide / background 生命周期联动
-- Skip 后动画实际落到最终 CSS 状态
+- DOM 已消费 Formal Layer 与时间线；继续确认 Windows 原生 CI，并补可视化作者控件
 - Video 元素播放、结束、Skip 与 fallback
 
 ### P1 — Release Evidence

@@ -37,6 +37,12 @@ function cueReferences(cue: StageCue | undefined, context: string): AssetReferen
   add(cue.ambience, 'audio', 'ambience');
   add(cue.sound, 'audio', 'sound');
   add(cue.voice, 'audio', 'voice');
+  if (cue.layers) for (const [layer, value] of Object.entries(cue.layers)) {
+    if (!['background', 'character-back', 'character', 'character-front', 'cg'].includes(layer)) throw new Error(`Invalid visual layer: ${context}.${layer}`);
+    if (value === null) continue;
+    if (!value || typeof value.asset !== 'string' || !value.asset || !['background', 'portrait', 'cg'].includes(value.kind)) throw new Error(`Invalid layer asset: ${context}.${layer}`);
+    add(value.asset, value.kind, `layers.${layer}`);
+  }
   if (cue.timeline) validatePresentationTimeline(cue.timeline);
   if (cue.video) {
     add(cue.video.asset, 'video', 'video.asset');

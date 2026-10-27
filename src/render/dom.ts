@@ -6,6 +6,8 @@ import type { RuntimeSession, RuntimeSettings, RuntimeView } from '../runtime/se
 import type { bindSessionPersistence, SaveEnvelope } from '../storage/contract.js';
 import type { LoadResult } from '../storage/store.js';
 import type { CollectionCg, CollectionEnding, ProjectCollections, createMetaStateStore } from '../meta/state.js';
+import type { PresentationTimeline, StageLayer, StageLayerAsset, StageVisualLayer } from '../stage/types.js';
+import { resolvePresentationTimeline } from '../stage/timeline.js';
 import { DOM_STYLE } from './dom-style.js';
 
 export type DOMRendererOptions = { title?: string; font?: string; storage?: StoragePort | null; persistence?: ReturnType<typeof bindSessionPersistence>;
@@ -17,6 +19,7 @@ export class DOMRenderer {
   readonly element: HTMLElement;
   private document: Document;
   private stage: HTMLElement;
+  private camera: HTMLElement;
   private reading: HTMLElement;
   private speaker: HTMLElement;
   private text: HTMLElement;
@@ -25,6 +28,8 @@ export class DOMRenderer {
   private mode: HTMLElement;
   private background: HTMLImageElement;
   private portrait: HTMLImageElement;
+  private characterBack: HTMLImageElement;
+  private characterFront: HTMLImageElement;
   private cg: HTMLImageElement;
   private effect: HTMLElement;
   private chat: HTMLElement;
@@ -55,6 +60,8 @@ export class DOMRenderer {
   private onChatScroll: () => void;
   private chatPinned = true;
   private scrollFrame?: number;
+  private layerNodes!: Record<StageLayer, HTMLElement>;
+  private timeline?: { value: PresentationTimeline; elapsed: number; previousTime?: number; frame?: number; finished: boolean };
   constructor(readonly root: HTMLElement, readonly session: RuntimeSession, readonly assets: AssetCatalog, readonly options: DOMRendererOptions = {}) {
     this.document = root.ownerDocument;
     this.saveKey = `vn-engine:${session.driver.game}:save:1`; this.settingsKey = `vn-engine:${session.driver.game}:settings`;
@@ -62,16 +69,20 @@ export class DOMRenderer {
     const host = this.el('section', undefined, 'vn-engine'); this.element = host; host.tabIndex = 0; host.setAttribute('aria-label', options.title ?? '自研叙事引擎');
     const style = this.el('style'); style.textContent = DOM_STYLE;
     if (options.font) style.textContent += `\n@font-face{font-family:VNRuntime;src:url(${JSON.stringify(assets.url(options.font, 'font'))}) format('woff2');font-display:swap}.vn-engine{font-family:VNRuntime,system-ui,sans-serif}`;
-    host.append(style); this.stage = this.el('div', undefined, 'vn-stage');
-    this.background = this.image('vn-image vn-background'); this.portrait = this.image('vn-image vn-portrait'); this.cg = this.image('vn-image vn-cg');
+    host.append(style); this.stage = this.el('div', undefined, 'vn-stage'); this.camera = this.el('div', undefined, 'vn-camera');
+    this.background = this.image('vn-image vn-background'); this.characterBack = this.image('vn-image vn-character-layer vn-character-back');
+    this.portrait = this.image('vn-image vn-portrait'); this.characterFront = this.image('vn-image vn-character-layer vn-character-front'); this.cg = this.image('vn-image vn-cg');
     this.effect = this.el('div', undefined, 'vn-effect'); this.title = this.el('div', undefined, 'vn-scene-title'); this.mode = this.el('div', undefined, 'vn-mode');
     this.chat = this.el('div', undefined, 'vn-chat'); this.currentBubble = this.el('div', undefined, 'vn-bubble vn-current'); this.bubbleText = this.el('span');
     this.call = this.el('div', undefined, 'vn-call'); this.call.append(this.el('span', '◌', 'vn-call-icon'), this.el('p', '语音通话'), this.el('p', '当前为远程交流'));
     this.documentView = this.el('div', undefined, 'vn-document'); this.hotspots = this.el('div', undefined, 'vn-hotspots');
     this.reading = this.el('div', undefined, 'vn-reading'); this.speaker = this.el('div', undefined, 'vn-speaker'); this.text = this.el('p', undefined, 'vn-text');
     this.actions = this.el('div', undefined, 'vn-actions'); this.reading.append(this.speaker, this.text, this.actions);
+    this.layerNodes = { background: this.background, 'character-back': this.characterBack, character: this.portrait, 'character-front': this.characterFront, cg: this.cg, effect: this.effect, ui: this.reading };
+    for (const [layer, node] of Object.entries(this.layerNodes)) node.dataset.layer = layer;
+    this.camera.append(this.background, this.characterBack, this.portrait, this.characterFront, this.cg);
     this.restoreButton = this.button('恢复界面', () => session.hide(false)); this.restoreButton.className = 'vn-restore'; this.restoreButton.hidden = true;
-    this.stage.append(this.background, this.portrait, this.cg, this.chat, this.call, this.documentView, this.hotspots, this.effect, this.title, this.mode, this.reading, this.restoreButton);
+    this.stage.append(this.camera, this.chat, this.call, this.documentView, this.hotspots, this.effect, this.title, this.mode, this.reading, this.restoreButton);
     this.toolbar = this.el('div', undefined, 'vn-toolbar');
     for (const [id, label, handler] of [
       ['auto', '自动', () => session.setAuto(!session.getView().auto)],
@@ -136,7 +147,15 @@ export class DOMRenderer {
       this.cancelScroll();
       this.element.dataset.mode = frame.mode; this.element.dataset.scene = frame.sceneId; this.element.dataset.line = frame.lineId; this.element.dataset.visit = String(snapshot.visit);
       this.visit = snapshot.visit; this.title.textContent = frame.title; this.mode.textContent = { vn: 'STORY', chat: 'CHAT', call: 'CALL', investigation: 'INVESTIGATION', document: 'EVIDENCE' }[frame.mode];
-      this.paint(this.background, frame.stage.background, 'background'); this.paint(this.portrait, frame.stage.portrait, 'portrait'); this.paint(this.cg, frame.stage.cg, 'cg');
+      const layers = frame.stage.layers;
+      const layer = (name: StageVisualLayer, fallback?: StageLayerAsset | null) => layers && Object.hasOwn(layers, name) ? layers[name] : fallback;
+      for (const [name, value] of [
+        ['background', layer('background', frame.stage.background ? { asset: frame.stage.background, kind: 'background' } : null)],
+        ['character-back', layer('character-back')],
+        ['character', layer('character', frame.stage.portrait ? { asset: frame.stage.portrait, kind: 'portrait' } : null)],
+        ['character-front', layer('character-front')],
+        ['cg', layer('cg', frame.stage.cg ? { asset: frame.stage.cg, kind: 'cg' } : null)]
+      ] as const) this.paint(this.layerNodes[name] as HTMLImageElement, value?.asset, value?.kind ?? 'portrait');
       this.chat.hidden = frame.mode !== 'chat'; this.call.hidden = frame.mode !== 'call';
       if (frame.mode === 'chat') {
         this.chat.replaceChildren();
@@ -169,6 +188,7 @@ export class DOMRenderer {
         else if (!snapshot.paused && animation.playState === 'paused') animation.play();
       }
     }
+    this.updateTimeline(snapshot, entered);
     if (entered) this.speaker.textContent = frame.speaker;
     if (entered || snapshot.text !== previous?.text) {
       if (frame.mode === 'chat') { this.text.textContent = '聊天消息会按阅读节奏逐步显示。'; this.bubbleText.textContent = snapshot.text; if (this.chatPinned) this.queueScroll(); }
@@ -194,6 +214,58 @@ export class DOMRenderer {
     if (snapshot.skipping !== previous?.skipping) this.buttons.get('skip')!.setAttribute('aria-pressed', String(snapshot.skipping));
   }
   private animations(): Animation[] { return [...(this.effect.getAnimations?.() ?? []), ...(this.stage.getAnimations?.() ?? [])]; }
+  private stopTimeline() {
+    if (this.timeline?.frame !== undefined) this.document.defaultView?.cancelAnimationFrame(this.timeline.frame);
+    if (this.timeline) { this.timeline.frame = undefined; this.timeline.previousTime = undefined; }
+  }
+  private paintTimeline(time: number) {
+    const active = this.timeline; if (!active) return;
+    const resolved = resolvePresentationTimeline(active.value, time), tracks = active.value.animations ?? [];
+    if (active.value.camera?.length) this.camera.style.transform = `translate(${resolved.camera.x}px, ${resolved.camera.y}px) scale(${resolved.camera.scale})`;
+    const selected = new Map<StageLayer, { index: number; start: number }>();
+    resolved.animations.forEach((item, index) => {
+      const node = this.layerNodes[item.layer], track = tracks[index], start = track.startMs ?? 0;
+      if (item.target && node.dataset.asset !== item.target) return;
+      const previous = selected.get(item.layer);
+      if (!previous || (start <= time && (previous.start > time || start >= previous.start)) || (previous.start > time && start < previous.start)) selected.set(item.layer, { index, start });
+    });
+    for (const [name, choice] of selected) {
+      const value = resolved.animations[choice.index].transform, node = this.layerNodes[name];
+      node.style.transform = `translate(${value.x}px, ${value.y}px) scale(${value.scale})`; node.style.opacity = String(value.opacity);
+    }
+  }
+  private updateTimeline(snapshot: RuntimeView, entered: boolean) {
+    if (entered) {
+      this.stopTimeline(); this.timeline = undefined; this.camera.style.removeProperty('transform');
+      for (const node of Object.values(this.layerNodes)) { node.style.removeProperty('transform'); node.style.removeProperty('opacity'); }
+      const state = snapshot.frame.stage.presentationState;
+      if (state?.camera) this.camera.style.transform = `translate(${state.camera.x}px, ${state.camera.y}px) scale(${state.camera.scale})`;
+      for (const [name, item] of Object.entries(state?.layers ?? {})) {
+        const node = this.layerNodes[name as StageLayer]; if (!node || !item || (item.target && node.dataset.asset !== item.target)) continue;
+        const value = item.transform; node.style.transform = `translate(${value.x}px, ${value.y}px) scale(${value.scale})`; node.style.opacity = String(value.opacity);
+      }
+      if (snapshot.frame.stage.timeline) this.timeline = { value: snapshot.frame.stage.timeline, elapsed: 0, finished: false };
+    }
+    const active = this.timeline; if (!active || active.finished) return;
+    const view = this.document.defaultView, reduce = snapshot.settings.reducedMotion || !!view?.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (reduce || snapshot.skipping || ['restore', 'reread'].includes(snapshot.reason) || active.value.durationMs === 0) {
+      this.stopTimeline(); active.elapsed = active.value.durationMs; this.paintTimeline(active.elapsed); active.finished = true; return;
+    }
+    if (snapshot.paused || !view) { this.stopTimeline(); return; }
+    if (active.frame !== undefined) return;
+    this.paintTimeline(active.elapsed);
+    const tick = (time: number) => {
+      if (this.disposed || this.timeline !== active) return;
+      active.frame = undefined;
+      if (this.session.getView().paused) { active.previousTime = undefined; return; }
+      if (view.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { active.elapsed = active.value.durationMs; this.paintTimeline(active.elapsed); active.finished = true; return; }
+      if (active.previousTime !== undefined) active.elapsed = Math.min(active.value.durationMs, active.elapsed + Math.max(0, time - active.previousTime));
+      active.previousTime = time; this.paintTimeline(active.elapsed);
+      if (active.elapsed >= active.value.durationMs) { active.finished = true; active.previousTime = undefined; }
+      else active.frame = view.requestAnimationFrame(tick);
+    };
+    active.frame = view.requestAnimationFrame(tick);
+  }
   private queueScroll() {
     const view = this.document.defaultView;
     if (!view || this.scrollFrame !== undefined) return;
@@ -390,7 +462,7 @@ export class DOMRenderer {
   dispose() {
     if (this.disposed) return; this.disposed = true; this.panelCleanup?.(); this.panelCleanup = undefined; this.replayReturn = undefined; this.disconnect(); this.session.pause('panel', false);
     this.document.removeEventListener('visibilitychange', this.onVisibility); this.element.removeEventListener('keydown', this.onKey); this.element.removeEventListener('pointerdown', this.onPointer);
-    this.chat.removeEventListener('scroll', this.onChatScroll); this.cancelScroll();
+    this.chat.removeEventListener('scroll', this.onChatScroll); this.cancelScroll(); this.stopTimeline(); this.timeline = undefined;
     for (const { probe } of this.probes.values()) { probe.onload = null; probe.onerror = null; probe.removeAttribute('src'); } this.probes.clear();
     for (const animation of this.animations()) animation.cancel(); this.element.remove();
   }
