@@ -27,6 +27,9 @@ test('media director binds a visit once and stale UI ticks never repeat an effec
   session.configure({ opacity: .6 }); session.configure({ textDelayMs: 15 }); await tick();
   assert.equal(players.filter(player => player.src.endsWith('cue.wav')).length, 1);
   session.next(); await tick(); assert.equal(players.filter(player => player.src.endsWith('cue.wav')).length, 2);
+  assert.equal(session.rollback(), true); await tick();
+  assert.equal(players.filter(player => player.src.endsWith('cue.wav')).length, 2);
+  assert.equal(players.filter(player => player.src.endsWith('voice.wav')).length, 2);
   const save = session.save(); session.restore(save); await tick();
   assert.equal(players.filter(player => player.src.endsWith('cue.wav')).length, 2);
   media.dispose(); session.dispose();

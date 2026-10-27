@@ -1,5 +1,6 @@
 import type { ReadRecord, RuntimeDriver, RuntimeFrame } from '../stage/types.js';
 import { freezeData, type DeepReadonly } from './readonly.js';
+import { RollbackHistory, type RollbackOptions } from './rollback.js';
 
 export type RuntimeSettings = {
   textDelayMs: number; autoDelayMs: number; skipDelayMs: number; reducedMotion: boolean;
@@ -9,11 +10,12 @@ export const DEFAULT_RUNTIME_SETTINGS: RuntimeSettings = { textDelayMs: 28, auto
   reducedMotion: false, music: true, volume: .25, voiceEnabled: true, voiceVolume: .8, soundEffects: true, opacity: .85 };
 export interface Clock { now(): number; set(callback: () => void, delay: number): unknown; clear(handle: unknown): void }
 const systemClock: Clock = { now: () => Date.now(), set: (callback, delay) => globalThis.setTimeout(callback, delay), clear: handle => globalThis.clearTimeout(handle as number) };
-export type VisitReason = 'start' | 'advance' | 'action' | 'restore' | 'reread';
+export type VisitReason = 'start' | 'advance' | 'action' | 'restore' | 'reread' | 'rollback';
 export type RuntimeSnapshot = {
   frame: RuntimeFrame; visit: number; reason: VisitReason; text: string; complete: boolean; ready: boolean;
   paused: boolean; pauseReasons: readonly string[]; hidden: boolean; auto: boolean; skipping: boolean; voiceBlocked: boolean;
   settings: RuntimeSettings; supportsSkip: boolean; supportsReread: boolean;
+  supportsRollback: boolean; canRollback: boolean; rollbackDepth: number;
 };
 export type RuntimeView = DeepReadonly<RuntimeSnapshot>;
 
@@ -50,8 +52,10 @@ export class RuntimeSession {
   private timer?: { handle: unknown; kind: 'typing' | 'hold' | 'auto' | 'skip'; due: number; generation: number };
   private generation = 0;
   private disposed = false;
-  constructor(readonly driver: RuntimeDriver, options: { settings?: Partial<RuntimeSettings>; clock?: Clock } = {}) {
+  private readonly rollbackHistory: RollbackHistory;
+  constructor(readonly driver: RuntimeDriver, options: { settings?: Partial<RuntimeSettings>; clock?: Clock; rollback?: RollbackOptions } = {}) {
     this.clock = options.clock ?? systemClock; this.settings = Object.freeze(runtimeSettings(options.settings ?? {}));
+    this.rollbackHistory = new RollbackHistory(options.rollback);
     this.enter('start');
   }
   private readonly clock: Clock;
@@ -66,7 +70,8 @@ export class RuntimeSession {
       text: this.displayed, complete: this.count >= this.glyphs.length,
       ready: this.count >= this.glyphs.length && this.hold <= 0, paused: this.pauses.size > 0 || this.hidden,
       pauseReasons: Object.freeze([...this.pauses]), hidden: this.hidden, auto: this.automatic, skipping: this.skipping, voiceBlocked: this.voiceBlocked,
-      settings: this.settings, supportsSkip: this.driver.supportsSkip, supportsReread: this.driver.supportsReread });
+      settings: this.settings, supportsSkip: this.driver.supportsSkip, supportsReread: this.driver.supportsReread,
+      supportsRollback: this.rollbackHistory.enabled, canRollback: this.rollbackHistory.depth > 0, rollbackDepth: this.rollbackHistory.depth });
     return this.view;
   }
   private emit() { this.view = undefined; if (!this.disposed) for (const listener of [...this.listeners]) listener(); }
@@ -81,7 +86,12 @@ export class RuntimeSession {
   }
   private enter(reason: VisitReason) {
     this.cancel(); this.current = freezeData(structuredClone(this.driver.frame())); this.visit++; this.reason = reason;
-    if (['start', 'restore', 'reread'].includes(reason)) { this.automatic = false; this.skipping = false; }
+    if (['start', 'restore', 'reread', 'rollback'].includes(reason)) { this.automatic = false; this.skipping = false; }
+    if (['start', 'restore', 'reread'].includes(reason)) this.rollbackHistory.clear();
+    if (reason !== 'rollback' && this.rollbackHistory.enabled) {
+      try { this.rollbackHistory.capture(this.driver.checkpoint ? this.driver.checkpoint() : this.driver.save()); }
+      catch { this.rollbackHistory.clear(); } // An unavailable optional checkpoint must not stop reading.
+    }
     this.voiceBlocked = false; this.autoRemaining = undefined;
     this.eligibleSkip = this.read.has(this.readKey());
     this.glyphs = [...this.segmenter.segment(this.current.text)].map(segment => segment.segment);
@@ -156,6 +166,11 @@ export class RuntimeSession {
     this.emit(); this.schedule();
   }
   history(): readonly ReadRecord[] { return structuredClone(this.driver.history(this.count >= this.glyphs.length)); }
+  rollback(steps = 1): boolean {
+    if (this.disposed || this.hidden || this.pauses.size) return false;
+    const target = this.rollbackHistory.target(steps); if (target === undefined) return false;
+    this.driver.restore(target); this.rollbackHistory.rewind(steps); this.enter('rollback'); return true;
+  }
   reread(id: string): boolean {
     if (this.disposed || this.hidden || !this.driver.supportsReread || !this.driver.reread(id)) return false;
     this.enter('reread'); return true;
@@ -168,5 +183,5 @@ export class RuntimeSession {
     this.enter('restore');
   }
   restart() { if (!this.disposed) { this.driver.reset(); this.enter('start'); } }
-  dispose() { if (this.disposed) return; this.cancel(); this.disposed = true; this.listeners.clear(); }
+  dispose() { if (this.disposed) return; this.cancel(); this.rollbackHistory.clear(); this.disposed = true; this.listeners.clear(); }
 }

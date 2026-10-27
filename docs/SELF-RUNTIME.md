@@ -92,3 +92,5 @@ Studio 的“收藏与解锁”面板可配置条目、标记真结局，并将�
 Studio 直接维护 EngineProject，预览共用 createProject/mountGame，见 [EDITOR.md](EDITOR.md)。mountGame 可注入 assetURL 将已授权本地文件映射到临时 blob 或本地来源；默认目录 URL 和清单验证保持不变。宿主的 `vn-engine-host-visibility` 事件以布尔 hidden 状态门控同一会话，销毁会移除监听。Windows 原生窗口与受限文件桥见 [WINDOWS.md](WINDOWS.md)。游戏独立构建不带作者模块。
 
 装饰视觉使用台词 / 场景 cue 的 `keyVisual: { asset, scope: "banner" | "fullscreen", sceneType, durationMs }`，资源类型须为 `ui`，时长 100–30000ms，不允许放在全局 defaults。普通 `story` 仅允许独立横幅；全屏必须显式声明 `title / cg / transition / interstitial / special_presentation`，置于交互内容下方，不接收指针。离开当前 visit、读档、跳过或减少动态会清理；隐藏、后台和宿主暂停期间暂停剩余时间。布局安全与实际构图仍需作品级视觉验收；运行时声明了 Key Visual 时，发布证据不能声明未使用。
+
+回滚使用 `session.rollback(steps = 1)` 或播放器“回退” / Backspace，恢复实际 driver 存档对应的路线、变量、舞台与历史游标。当前台词时间线收敛到终态，BGM / 环境音重新选择相应绑定，语音从该句开始；不承诺音频采样级寻址。回滚不会补播 SE、闪光、视频或装饰图，不写 Auto / 手动 / Quick 或 Meta，已取得的跨周目解锁不撤销。项目可设 `rollback: { enabled: false }` 关闭，或配置 `limit: 1–200`（默认 80）。检查点仅在当前会话内保留，并受总大小限制；读档、历史重读和重开会清空旧检查点，不从外部存档导入回滚轨迹。

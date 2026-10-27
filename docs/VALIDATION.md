@@ -79,6 +79,12 @@ npm run build:studio -- build/studio
 
 Windows 构建和原生检查命令见 [WINDOWS.md](WINDOWS.md)。原生实际执行、系统文件对话框人工操作、签名安装发行与实体设备验收分别记录。
 
-保留此前的 [0.2.1](VALIDATION-v0.2.1.md)、[0.2.0](VALIDATION-v0.2.0.md)、[0.1](VALIDATION-v0.1.0.md) 证据。当前时间线支持位移 / 缩放 / 透明度与镜头关键帧；完整 Rollback、收藏专用作者控件及 Key Visual 生命周期约束仍未实现。正式游戏迁移继续等待用户主动提出。
+保留此前的 [0.2.1](VALIDATION-v0.2.1.md)、[0.2.0](VALIDATION-v0.2.0.md)、[0.1](VALIDATION-v0.1.0.md) 证据。当前时间线支持位移 / 缩放 / 透明度与镜头关键帧；收藏作者面板和 Key Visual 生命周期约束已验收；会话内状态回滚已实现，本轮原生结果以工作流为准。正式游戏迁移继续等待用户主动提出。
 
 Key Visual 提交 `45e76c4` 的 Windows 工作流成功，浏览器 CI 在作者控件中发现异步 toggle 事件与属性重建竞争：修改资源后面板可能收起。修复在重建前同步读取实际展开状态；该失败保留记录，修复结果以新提交 CI 为准。
+
+修复提交 `9986aa7` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40457166036) 和 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40457166043) 均成功；同步属性编辑期间展开状态得到保留，Key Visual 范围 / 生命周期及原生检查通过。
+
+状态回滚本地通过 102 项 Node、6 项 Python、107 项来源检查与完整浏览器回归：三类 driver 的路线 / 变量 / 证据恢复、有限步数和读档边界、声音绑定 / 语音回到当前句且不重播 SE；真实 DOM 验证终态和存档 / Meta 字节保持不变。Studio 可关闭回滚或配置步数。Windows smoke 新增真实回退控件到之前台词 / 舞台的检查，本次原生结果以对应工作流为准。
+
+回滚性能修正：内部检查点只捕获已由 driver 持有的路线和位置，恢复仍通过标准 codec 重建；不在每次翻页时做完整路线重放。关闭回滚不抓取检查点，抓取异常保留阅读能力。500 次同场景翻页的本地单进程微测约 50ms（开启 / 关闭均为这一量级），仅说明该合成夹具，不代表端到端 FPS。

@@ -66,7 +66,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Quick Load | PASS | 独立 Quick Slot + Session restore |
 | Auto Save | PASS | mount runtime 自动写独立 Auto Slot |
 | Save Manager UI | PASS | 六槽、覆盖确认、快速存读档、旧单槽读取和自动提示已通过浏览器及 Windows 原生验收；可选截图缩略图未实现 |
-| Rollback | ENGINE_GAP | History reread 可回读，但不等同完整状态 Rollback |
+| Rollback | PARTIAL | 有界检查点恢复实际路线 / 变量 / 舞台 / 声音绑定 / 历史游标，不写 Save 或 Meta；本轮浏览器通过，Windows 待确认 |
 | History | PASS | 有 history + search + reread |
 | Auto | PASS | 自研 scheduler |
 | Skip Read | PASS | 仅已读文本，Choice 处停止 |
@@ -84,7 +84,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Flash | PASS | DOM effect |
 | Shake | PASS | DOM effect |
 | Move / Scale / Camera | PASS | Studio 轨道 / 镜头配置、实时预览、导出与无效参数诊断通过 Chromium；`cb03e9c` Windows 原生图层 / 轨道作者控件、终态与重启检查通过 |
-| Formal Layer API | PASS | 五个视觉资源层、effect / ui 整层轨道与 Studio 控件已接入；`cb03e9c` 浏览器和 Windows 原生验收通过；不包含 Key Visual 使用范围约束 |
+| Formal Layer API | PASS | 五个视觉资源层、effect / ui 整层轨道与 Studio 控件已接入；`cb03e9c` 浏览器和 Windows 原生验收通过；Key Visual 范围 / 时限另有约束，不能替代作品美术验收 |
 | Video | PARTIAL | 本地播放、失败回退、暂停 / 跳过 / 减少动态和编辑器配置已接入；`9894454` 浏览器及 Windows CI 通过，有声视频听感、实际设备及编码支持仍需作品验证 |
 | Investigation / nontraditional play | PASS | Investigation runtime |
 | Mini game contract | PARTIAL | 可通过自定义 runtime 承载，但未提供统一 entry/exit/save/skip contract |
@@ -115,7 +115,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 
 ### P1 — Presentation runtime closure
 
-- DOM 与 Studio 图层 / 时间线 / 镜头控件已接入，`cb03e9c` 浏览器与 Windows 原生检查通过；Key Visual 生命周期仍是独立缺口
+- DOM 与 Studio 图层 / 时间线 / 镜头控件已接入，`cb03e9c` 浏览器与 Windows 原生检查通过；Key Visual 范围 / 生命周期已通过 `9986aa7` 浏览器及 Windows 检查，实际构图仍需作品验收
 - Video 已接入 DOM 和编辑器，浏览器与 Windows 无声 WebM 通过；有声听感和实际设备编码支持需作品验证
 
 ### P1 — Release Evidence

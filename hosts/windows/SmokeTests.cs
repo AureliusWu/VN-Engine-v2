@@ -123,6 +123,11 @@ internal static class SmokeTests
                     if (query('.vn-video-fallback').dataset.asset !== 'memory') throw Error('Native video fallback was not selected');
                     instance.session.next();
                     if (!query('[data-layer="character-front"]').style.transform.includes('55px')) throw Error('Final timeline state did not persist');
+                    const rollbackMeta = localStorage.getItem(instance.meta.key), rollbackAuto = localStorage.getItem(instance.persistence.contract.keyFor('auto'));
+                    query('[data-control=rollback]').click();
+                    if (!query('.vn-text').textContent.includes('replay start') || !query('[data-layer="character-front"]').style.transform.includes('55px')) throw Error('Native rollback did not restore the previous presentation');
+                    if (localStorage.getItem(instance.meta.key) !== rollbackMeta || localStorage.getItem(instance.persistence.contract.keyFor('auto')) !== rollbackAuto) throw Error('Native rollback changed persistence or Meta');
+                    instance.session.next();
                     const state = JSON.stringify(instance.session.save().state), meta = localStorage.getItem(instance.meta.key), auto = localStorage.getItem(instance.persistence.contract.keyFor('auto'));
                     query('[data-control=gallery]').click(); clickText('查看 CG'); clickText('回看剧情');
                     if (!query('.vn-replay .vn-text')?.textContent.includes('replay start')) throw Error('Replay did not start');
@@ -137,7 +142,7 @@ internal static class SmokeTests
                 var collectionResult = await JS("window.nativeCollectionSmoke");
                 if (collectionResult != "\"passed\"") throw new InvalidDataException("Native collection/video check: " + collectionResult);
                 await window.Browser.CoreWebView2.CallDevToolsProtocolMethodAsync("Emulation.setEmulatedMedia", "{\"features\":[]}");
-                checks.Add("Native WebView2 plays local video and scoped Key Visual; reduced motion cleans decoration and falls back, preserving timeline, gallery and replay state");
+                checks.Add("Native WebView2 plays local video and scoped Key Visual; rollback restores the previous presentation without changing Save/Meta, and replay remains isolated");
             }
             else
             {

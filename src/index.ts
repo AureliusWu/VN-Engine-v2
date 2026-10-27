@@ -27,6 +27,7 @@ export * from './script/engine.js';
 export * from './adapters/rain-runtime.js';
 export * from './runtime/drivers.js';
 export * from './runtime/session.js';
+export type { RollbackOptions } from './runtime/rollback.js';
 export * from './runtime/project.js';
 export * from './runtime/media.js';
 export * from './compliance/project.js';

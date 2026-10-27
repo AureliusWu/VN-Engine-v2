@@ -63,5 +63,7 @@ export interface RuntimeDriver {
   history(includeCurrent?: boolean): readonly ReadRecord[];
   reread(id: string): boolean;
   save(): unknown;
+  /** Owned route/position only; restore still validates it through the normal codec. */
+  checkpoint?(): unknown;
   restore(value: unknown): void;
 }

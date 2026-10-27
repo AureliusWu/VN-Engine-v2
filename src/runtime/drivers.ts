@@ -64,6 +64,9 @@ export class NarrativeDriver implements RuntimeDriver {
     this.state = this.engine.reread(this.state, record); return true;
   }
   save(): unknown { return this.codec.encode(this.state); }
+  checkpoint(): unknown { return { schema: 1, game: this.game, savedAt: new Date().toISOString(), state: {
+    schema: 1, storyVersion: this.state.storyVersion, sceneId: this.state.sceneId, line: this.state.line, decisions: structuredClone(this.state.decisions)
+  } }; }
   restore(value: unknown) { this.state = this.codec.decode(JSON.stringify(value)).state; }
 }
 
@@ -101,6 +104,8 @@ export class ScriptDriver implements RuntimeDriver {
     this.state = this.engine.replay(this.state.decisions.slice(0, count), record.sceneId, record.line); return true;
   }
   save(): unknown { return this.engine.encode(this.state); }
+  checkpoint(): unknown { return { format: 'vn-script-save', schema: 1, game: this.game, version: this.engine.program.version,
+    state: { blockId: this.state.blockId, line: this.state.line, decisions: structuredClone(this.state.decisions) } }; }
   restore(value: unknown) { this.state = this.engine.decode(JSON.stringify(value)); }
 }
 

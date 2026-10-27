@@ -64,7 +64,7 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "02435160eac4568ff9fa3b294656604d3cd664bf4a6fe0a1ebfa00651e11cb13"
+      "targetSha256": "8318d17a7ecd9f3649ca681e05596e54db59a4774184dcbc9d4235745a725bbc"
     },
     {
       "target": "editor/collections.mjs",
@@ -119,7 +119,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "b6cf2f011fa2f0e2812b51e451ac9bd001bbe577b9c0b30de75ca5162367afdc"
+      "targetSha256": "a22d805805d5c3e1872095c9c95582c63f40136e79af6b2de08ef506108e2bf9"
     },
     {
       "target": "editor/style.css",
@@ -302,7 +302,7 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "649b0bc952086620f13d5504b4f461ab263fdaba5914dc36f2ca0bb292378159"
+      "targetSha256": "04c73eb2fc2d5b58eb9f0ee16f38f1381f67311c06b9c995bd85985a4b05c015"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
@@ -541,7 +541,7 @@
     {
       "target": "src/index.ts",
       "mode": "new",
-      "targetSha256": "63012e64956155cd6106468dbbdb0036a442dd52c990ff3909daea27056dd142",
+      "targetSha256": "0cd2f7a8d0f19388d00eb9233b3b1d8d67af3b4867d5047a2fa86a7ef726ca5b",
       "origins": []
     },
     {
@@ -679,7 +679,7 @@
       "target": "src/render/dom.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "7ab157a45483758730c1909c97c20074ace63e036d4936a7e8df8c6a582c7b04"
+      "targetSha256": "9268d648b1d2ce61d01b96372eeb8c519b4a503bfee00716e1b95e198f22672c"
     },
     {
       "target": "src/render/key-visual.ts",
@@ -691,13 +691,13 @@
       "target": "src/render/mount.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "a772e0ca81af30727e518c45689616aa1e7fdb15f7471538f277c7b78083a558"
+      "targetSha256": "d90658f293799cc60006ee7711d679cee890560617e1731b376c72cd053f90ca"
     },
     {
       "target": "src/runtime/drivers.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "c61ce90ffb40fed5ca29eeadaa6811968066a76f84d92e9e1e342fb00d3afe8c"
+      "targetSha256": "63883bca47b36657b09f6b666011fed208ca881684d02d3cb65c5899a93856d1"
     },
     {
       "target": "src/runtime/media.ts",
@@ -709,7 +709,7 @@
       "target": "src/runtime/project.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "87dd0db51b369e987aa7f0d2dc986044d8e9a830951c432c41e044d19e0423eb"
+      "targetSha256": "3fe61013726a85f5df34550004e1828ab7c2e91ed05c34d94fdc941f1c1435e2"
     },
     {
       "target": "src/runtime/readonly.ts",
@@ -718,10 +718,16 @@
       "targetSha256": "0c927dfe1cde980d9cf4dcb04f62a1d9bbf10224e7bf6aef64c36db67d9091cb"
     },
     {
+      "target": "src/runtime/rollback.ts",
+      "mode": "new",
+      "targetSha256": "fcd9f5173e5cd629b69d3787f768d882544cb9d72f5ec455be77d7f99fc0efb9",
+      "origins": []
+    },
+    {
       "target": "src/runtime/session.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "0b4cb0bc7c105de29f03fad2a63b0b76578e86437e170a5a746d14c883d984f1"
+      "targetSha256": "f7133a42c1361d74aa57e500bd6a1eec6caddb3dcb5b19d808233d98a4d6a206"
     },
     {
       "target": "src/script/engine.ts",
@@ -757,7 +763,7 @@
       "target": "src/stage/types.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "f0612e42890fd9d9bee25f96afd4d3c392ea49d0f918c02c710719044e94c0a1"
+      "targetSha256": "7504ab44495e3619f02a7fd9df68bf0a5593dc55646b27918230fb9e09b103f0"
     },
     {
       "target": "src/storage/contract.ts",

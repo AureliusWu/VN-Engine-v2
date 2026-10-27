@@ -60,6 +60,8 @@ function renderProject() {
   const root = $('project-fields'); root.replaceChildren();
   const project = model.getView().project;
   for (const [key, label] of [['title', '作品名称'], ['game', '作品 ID'], ['version', '故事版本']]) field(root, label, project[key], value => set([key], value));
+  field(root, '允许回退', project.rollback?.enabled === false ? 'false' : 'true', value => { set(['rollback'], { ...model.getView().project.rollback, enabled: value === 'true' }, true); renderProject(); }, { choices: [['true', '允许'], ['false', '关闭']] });
+  field(root, '回退保留步数', project.rollback?.limit ?? 80, value => set(['rollback'], { ...model.getView().project.rollback, limit: Number(value) }, true));
 }
 function update(inspector = false) {
   const graph = model.graph(); if (!graph.nodes.some(n => n.key === selected)) selected = graph.nodes[0]?.key;

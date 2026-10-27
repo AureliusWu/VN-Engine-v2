@@ -95,6 +95,7 @@ export class DOMRenderer {
     this.toolbar = this.el('div', undefined, 'vn-toolbar');
     for (const [id, label, handler] of [
       ['auto', '自动', () => session.setAuto(!session.getView().auto)],
+      ['rollback', '回退', () => { try { if (!session.rollback()) this.notify('当前没有可回退的位置'); } catch { this.notify('回退失败，当前进度已保留'); } }],
       ['skip', '已读快进', () => { if (!session.setSkip(!session.getView().skipping)) this.notify('只能快进已经读过的段落'); }],
       ['save', '存档', () => options.persistence ? this.saveManager('save') : this.saveLegacy()],
       ['load', '读档', () => options.persistence ? this.saveManager('load') : this.loadLegacy()],
@@ -225,6 +226,8 @@ export class DOMRenderer {
       this.buttons.get('skip')!.disabled ||= !snapshot.supportsSkip;
     }
     if (entered) this.buttons.get('evidence')!.hidden = !frame.evidence;
+    this.buttons.get('rollback')!.hidden = !snapshot.supportsRollback;
+    this.buttons.get('rollback')!.disabled = snapshot.paused || !snapshot.canRollback;
     if (snapshot.auto !== previous?.auto) this.buttons.get('auto')!.setAttribute('aria-pressed', String(snapshot.auto));
     if (snapshot.skipping !== previous?.skipping) this.buttons.get('skip')!.setAttribute('aria-pressed', String(snapshot.skipping));
   }
@@ -257,7 +260,7 @@ export class DOMRenderer {
       const cue = snapshot.frame.stage.video; if (!cue) return;
       const active: NonNullable<DOMRenderer['videoState']> = { cue, attempt: 0, finished: false }; this.videoState = active;
       const reduce = snapshot.settings.reducedMotion || !!this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-      if (reduce || snapshot.skipping || ['restore', 'reread'].includes(snapshot.reason)) { this.fallbackVideo(active, false); return; }
+      if (reduce || snapshot.skipping || ['restore', 'reread', 'rollback'].includes(snapshot.reason)) { this.fallbackVideo(active, false); return; }
       try {
         this.video.src = this.assets.url(cue.asset, 'video'); this.video.muted = cue.muted !== false; this.video.volume = snapshot.settings.volume;
         this.video.loop = cue.loop === true; this.video.hidden = false;
@@ -313,7 +316,7 @@ export class DOMRenderer {
     }
     const active = this.timeline; if (!active || active.finished) return;
     const view = this.document.defaultView, reduce = snapshot.settings.reducedMotion || !!view?.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (reduce || snapshot.skipping || ['restore', 'reread'].includes(snapshot.reason) || active.value.durationMs === 0) {
+    if (reduce || snapshot.skipping || ['restore', 'reread', 'rollback'].includes(snapshot.reason) || active.value.durationMs === 0) {
       this.stopTimeline(); active.elapsed = active.value.durationMs; this.paintTimeline(active.elapsed); active.finished = true; return;
     }
     if (snapshot.paused || !view) { this.stopTimeline(); return; }
@@ -520,6 +523,7 @@ export class DOMRenderer {
     }
     if (target.closest('button,input,textarea,select,[contenteditable=true]')) return;
     if (event.key === ' ' || event.key === 'Enter') { event.preventDefault(); this.options.onUnlockAudio?.(); this.session.next(); }
+    else if (event.key === 'Backspace' && !this.session.getView().paused) { event.preventDefault(); try { this.session.rollback(); } catch { this.notify('回退失败，当前进度已保留'); } }
     else if (/^[1-9]$/.test(event.key)) { const action = this.session.getView().frame.actions[Number(event.key) - 1]; if (action) { event.preventDefault(); this.session.act(action.id); } }
     else if (event.key.toLowerCase() === 'h') { event.preventDefault(); this.session.hide(!this.session.getView().hidden); }
     else if (event.key.toLowerCase() === 'a') { event.preventDefault(); this.session.setAuto(!this.session.getView().auto); }

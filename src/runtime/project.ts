@@ -15,8 +15,9 @@ import type { ProjectCollections } from '../meta/state.js';
 import { isRecord } from '../storage/save.js';
 import type { ReleaseEvidence } from '../compliance/art.js';
 import { projectEndings, validateTrueRoutePolicy } from '../meta/project.js';
+import type { RollbackOptions } from './rollback.js';
 
-type ProjectBase = { schema: 1; game: string; version: string; title: string; assets: readonly Asset[]; font?: string; settings?: Partial<RuntimeSettings>; collections?: ProjectCollections; releaseEvidence?: ReleaseEvidence };
+type ProjectBase = { schema: 1; game: string; version: string; title: string; assets: readonly Asset[]; font?: string; settings?: Partial<RuntimeSettings>; rollback?: RollbackOptions; collections?: ProjectCollections; releaseEvidence?: ReleaseEvidence };
 export type EngineProject = ProjectBase & (
   { type: 'narrative'; adapter?: 'healing' | 'netlove'; entry?: string; stats?: Record<string, number>; scenes: readonly Scene[]; stage?: NarrativeStage }
   | { type: 'script'; program: ScriptProgram; defaults?: StageCue }
@@ -60,5 +61,6 @@ export function createProject(project: EngineProject, baseURL: string | URL, opt
   else if (project.type === 'script') driver = new ScriptDriver(new ScriptEngine({ ...project.program, game: project.game, version: project.version }), project.defaults);
   else if (project.type === 'rain') driver = new ScriptDriver(createRainRuntime(project.story, { game: project.game, version: project.version }), project.defaults);
   else throw new Error('Unknown project runtime');
-  return { session: new RuntimeSession(driver, { clock: options.clock, settings: { ...project.settings, ...options.settings } }), assets };
+  if (project.rollback !== undefined && !isRecord(project.rollback)) throw new Error('Invalid rollback options');
+  return { session: new RuntimeSession(driver, { clock: options.clock, settings: { ...project.settings, ...options.settings }, rollback: project.rollback }), assets };
 }
