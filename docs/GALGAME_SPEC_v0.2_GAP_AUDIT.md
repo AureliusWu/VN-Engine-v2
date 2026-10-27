@@ -1,6 +1,6 @@
 # GALGAME SPEC v0.2 差距审计
 
-审计基线：`3075a7480fe43423a1516dc1328cf84f4cac1742`，2026-10-27；当前已验证进展更新至 `9f7e422`。规范正文来自用户提供的交接文件，见 [GALGAME SPEC v0.2](GALGAME_SPEC_v0.2.md)。引擎保持 `0.3.0 alpha`；本表不代表任何作品已达到 RELEASE。
+审计基线：`3075a7480fe43423a1516dc1328cf84f4cac1742`，2026-10-27；当前已验证进展更新至 `2d185bd`。规范正文来自用户提供的交接文件，见 [GALGAME SPEC v0.2](GALGAME_SPEC_v0.2.md)。引擎保持 `0.3.0 alpha`；本表不代表任何作品已达到 RELEASE。
 
 状态：`PASS` 表示所描述的有限能力有实现和证据；`PARTIAL` 表示有一部分；`ENGINE_GAP` 表示缺少明确的引擎能力；`UNVERIFIED` 表示没有对应证据；`N/A` 只在具体项目明确不适用时使用。状态不因接口存在而提升。v0.1 原机器契约仍为 `GALGAME_SPEC-v0.1`。
 
@@ -10,7 +10,8 @@
 | --- | --- | --- |
 | 项目身份、故事结构、引用、占位文本（§3–15、50、55–58） | PARTIAL | `src/compliance/project.ts` 调用真实项目构造器并检查静态引用和占位文本；动态 presentation 仅告警，剧情质量、路线矩阵和作品审读须另有证据。 |
 | 角色/背景/CG/音频的播放（§16–30） | PARTIAL | `src/render/dom.ts`、`src/runtime/media.ts` 有现有渲染和媒体运行时；能力不证明作品质量或正式素材完成。 |
-| Choice、Auto、已读 Skip、Hide UI、History（§31–35） | PASS | 现有运行调度与 DOM 交互及浏览器回归；完整状态回滚另列。 |
+| Choice、Auto、已读 Skip、Hide UI、History（§31–35） | PASS | 运行调度与 DOM 交互已接入；`2d185bd` 增加有界跨重启精确已读记录，文本 / 版本变化不冒充已读，浏览器导航及 Windows 进程重启通过；完整状态回滚另列。 |
+| 启动、标题、New Game / Continue（§89–92、110） | PASS | 保留挂载前 Auto、独立路线验证、可选标题与确认流程、Studio 配置；`2d185bd` 浏览器 / Windows 通过；不代表正式标题美术完成。 |
 | Rollback（§34） | PASS | 新增有界会话检查点，恢复实际路线 / 变量 / 舞台 / 声音绑定 / 历史游标，排除 Save / Meta 写入；`2d2cb34` 浏览器及 Windows 通过；检查点仅限当前会话。 |
 | 多槽、快速、自动存档（§36–41、111–112） | PASS | 六槽、覆盖确认、Quick 控件、自动存档提示与旧槽读取已接入，浏览器和 Windows 原生重启检查通过；整体备份、路线验证与预览确认已通过 `9f7e422` 浏览器 / Windows CI；可选截图缩略图未实现。 |
 | Meta、CG Gallery、Ending Collection、Replay（§42–44、103–104） | PASS | 项目可声明图鉴、结局和回看数据；播放器提供锁定遮蔽、进度、查看和独立会话回看，普通存档 / Meta 隔离；`4a8a57e` 浏览器及 Windows CI 已通过，Studio 作者面板、实际预览回看起点与真路线规则已通过 `36d492a` 浏览器及 Windows 原生检查。 |
@@ -36,7 +37,9 @@
 
 ## 基线验证与边界
 
-- 当前 `9f7e422`：119 项 Node、6 项 Python、116 项来源检查、完整浏览器 / 编辑器和 Windows CI 通过，声音分轨、阅读 / 焦点及多槽备份完成；四样例锁定提交后的文件 / 解码 / 包复核通过，正式人工验收仍 BLOCKED；详见 [本轮计划与证据](OPTIMIZATION-NEXT.md)。
+- 当前 `2d185bd`：127 项 Node、6 项 Python、119 项来源检查、完整浏览器 / 编辑器及 Windows CI 通过，启动保护、标题 / 确认与持久已读完成；四样例实际字节 / 解码 / 包检查 PASS，生产人工验收仍 BLOCKED，详见 [本轮计划](OPTIMIZATION-PLAYER-LIFECYCLE.md)。
+
+- 上一轮 `9f7e422`：119 项 Node、6 项 Python、116 项来源检查、完整浏览器 / 编辑器和 Windows CI 通过，声音分轨、阅读 / 焦点及多槽备份完成；四样例锁定提交后的文件 / 解码 / 包复核通过，正式人工验收仍 BLOCKED；详见 [该轮计划与证据](OPTIMIZATION-NEXT.md)。
 
 - 上一轮 `bc253ca`：111 项 Node、6 项 Python、115 项来源检查，浏览器和 Windows CI 全部通过，四样例实际文件 / 解码 / 构建包检查通过但正式人工验收保持 BLOCKED；详见 [顺序优化与证据](OPTIMIZATION-v0.2-QUEUE.md)。
 

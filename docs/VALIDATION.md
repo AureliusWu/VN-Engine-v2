@@ -2,6 +2,8 @@
 
 ## 启动 / 标题 / 已读记录
 
+最终实现 `2d185bd478cb5315fd3b3929ea8cb6d13b406c37` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40493930513) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40493930378) 均成功。Windows 实际执行保留 Auto / Continue、标题设置与确认 / 取消、新游戏、重挂载已读快进及完整进程重启后的持久标记；浏览器 / 编辑器及四样例锁定提交 QA 复核通过。正式美术 / 听感 / 实体设备仍未验收，见 [本轮机器记录](player-lifecycle-validation.json)。
+
 已读阶段本地最终 `npm run check`（127 项 Node、6 项 Python、119 个来源）、完整 `npm run test:browser` 与 `npm run test:editor` 通过。新增检查覆盖准确文本 / 发言人 / 游戏 / 版本隔离、标题 / 暂停 / 隐藏、部分显示、读档历史不批量写入、回滚不 mark、容量与字节上限、并发合并、配额 / 损坏 / 不可用。Chromium 真正导航后重建实例，验证首句已读保留、未完成的下一句保持未读与快进停止；回看 / 回滚字节隔离用例在显式刷新已完成的原会话读记录后检查。Windows smoke 新增重挂载与完整进程重启的真实标记检查，本提交原生结果尚待确认。
 
 标题提交 `13b12a379924b220dd81ab3e4633a3a7c942cbaa` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40492624097) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40492624215) 均成功。

@@ -37,7 +37,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Machine-readable evidence | PASS | validator 返回结构结果；新增 QA_REPORT 聚合实际字节 / 解码 / 人工证据 / 构建包，`bc253ca` 完整 CI 通过，范围见验证记录 |
 | Save Contract v2 | PASS | 独立 `save_version / game_version`、默认 6 手动槽、Quick、Auto、Migration Registry、损坏存档隔离 |
 | Session persistence binding | PASS | `bindSessionPersistence()` 直接通过 `RuntimeSession.save()/restore()` 工作 |
-| Auto Save runtime binding | PASS | `mountGame()` 每次进入新的 visit 写独立 Auto Slot，不覆盖手动/Quick |
+| Auto Save runtime binding | PASS | 有效阅读 visit 更新独立 Auto，不覆盖手动 / Quick；挂载保留已有 Auto，标题开始前不写，`9ae181c` / `2d185bd` 浏览器与 Windows 通过 |
 | Persistent Meta State | PASS | 独立 Meta key，记录 `ending_seen / cg_unlocked / playthrough_count / true_route_unlocked` |
 | Replay Context isolation | PASS | Replay Context 独立生成，不写普通 Save / Route 状态 |
 | Collection data API | PASS | 可计算 CG / Ending 的 unlock progress，已接入正式 Gallery / Collection UI |
@@ -72,6 +72,8 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Skip Read | PASS | 仅已读文本，Choice 处停止 |
 | Hide UI | PASS | DOM runtime |
 | Settings persistence | PASS | 独立总音量 / BGM / Ambience / SE / Voice / Video、阅读字号与高对比持久化，旧设置保留；`d0f6e36` / `0ff9841` 浏览器与 Windows 已通过 |
+| Title / Continue | PASS | 可选标题、独立路线验证后的最近有效存档、新游戏 / 返回确认、设置 / 收藏返回与 Studio 配置；`13b12a3` / `2d185bd` 浏览器与 Windows 通过 |
+| Persistent read markers | PASS | 游戏 / 故事版本 / 精确文本隔离，有界记录与合并刷新；不批量导入历史，回看 / 回滚不 mark；`2d185bd` 浏览器导航与 Windows 进程重启通过 |
 | Multi-slot backup | PASS | 已用手动 / Quick / Auto 槽整体导出、独立路线验证、预览 / 确认、冲突检查及失败恢复；`9f7e422` 浏览器 / Windows 通过；StoragePort 不保证跨标签页全程事务，Meta / 设置不在备份内 |
 | Persistent Meta State | PASS | 独立 MetaState API 与 mount runtime 更新 |
 | CG Gallery | PASS | 配置、锁定遮蔽、查看与独立回看已通过 `4a8a57e` 浏览器和 Windows CI；Studio 作者控件、真实预览回看起点和规则已通过 `36d492a` 浏览器与 Windows CI |

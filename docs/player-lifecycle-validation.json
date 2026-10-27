@@ -1,0 +1,164 @@
+{
+  "schema": 1,
+  "checkedAt": "2026-10-27T11:12:48.049786+00:00",
+  "repository": "AureliusWu/VN-Engine-v2",
+  "baseCommit": "2ef600769c54d24e555d54031545fad9ef741812",
+  "implementationCommit": "2d185bd478cb5315fd3b3929ea8cb6d13b406c37",
+  "engineVersion": "0.3.0 alpha",
+  "scope": "Engine only. No game migrations or formal publication.",
+  "checks": {
+    "node": 127,
+    "python": 6,
+    "provenanceFiles": 119,
+    "browser": "PASS",
+    "editor": "PASS",
+    "windowsNative": "PASS"
+  },
+  "steps": [
+    {
+      "order": 1,
+      "capability": "Preserve prior Auto and continue latest reachable save",
+      "commit": "9ae181c4cd03702f6372aa5f6e83f15fea030899",
+      "status": "PASS"
+    },
+    {
+      "order": 2,
+      "capability": "Authored title menus, confirmed new game and return, paused startup",
+      "commit": "13b12a379924b220dd81ab3e4633a3a7c942cbaa",
+      "status": "PASS"
+    },
+    {
+      "order": 3,
+      "capability": "Bounded exact read markers across restart, isolated from replay and rollback",
+      "commit": "2d185bd478cb5315fd3b3929ea8cb6d13b406c37",
+      "status": "PASS"
+    }
+  ],
+  "alphaSampleReports": [
+    {
+      "sample": "campus",
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "commitSha": "2d185bd478cb5315fd3b3929ea8cb6d13b406c37",
+      "productionAcceptance": "BLOCKED"
+    },
+    {
+      "sample": "netlove",
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "commitSha": "2d185bd478cb5315fd3b3929ea8cb6d13b406c37",
+      "productionAcceptance": "BLOCKED"
+    },
+    {
+      "sample": "circuit",
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "commitSha": "2d185bd478cb5315fd3b3929ea8cb6d13b406c37",
+      "productionAcceptance": "BLOCKED"
+    },
+    {
+      "sample": "rain",
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "commitSha": "2d185bd478cb5315fd3b3929ea8cb6d13b406c37",
+      "productionAcceptance": "BLOCKED"
+    }
+  ],
+  "unverified": [
+    "Physical mobile devices",
+    "Production art and listening quality",
+    "Full screen-reader evaluation"
+  ],
+  "fullGalgameSpecCertification": false,
+  "workflows": [
+    {
+      "id": 40491427233,
+      "name": "Windows native host",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40491427233",
+      "head_sha": "9ae181c4cd03702f6372aa5f6e83f15fea030899"
+    },
+    {
+      "id": 40491427170,
+      "name": "Engine checks",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40491427170",
+      "head_sha": "9ae181c4cd03702f6372aa5f6e83f15fea030899"
+    },
+    {
+      "id": 40492624097,
+      "name": "Engine checks",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40492624097",
+      "head_sha": "13b12a379924b220dd81ab3e4633a3a7c942cbaa"
+    },
+    {
+      "id": 40492624215,
+      "name": "Windows native host",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40492624215",
+      "head_sha": "13b12a379924b220dd81ab3e4633a3a7c942cbaa"
+    },
+    {
+      "id": 40493930513,
+      "name": "Engine checks",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40493930513",
+      "head_sha": "2d185bd478cb5315fd3b3929ea8cb6d13b406c37"
+    },
+    {
+      "id": 40493930378,
+      "name": "Windows native host",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40493930378",
+      "head_sha": "2d185bd478cb5315fd3b3929ea8cb6d13b406c37"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12730585763,
+      "name": "vn-engine-standalone-samples",
+      "size": 825445,
+      "expired": false,
+      "runId": 40493930513
+    },
+    {
+      "id": 12729446955,
+      "name": "engine-browser-evidence",
+      "size": 3019599,
+      "expired": false,
+      "runId": 40493930513
+    },
+    {
+      "id": 12729316894,
+      "name": "alpha-qa-reports",
+      "size": 42755,
+      "expired": false,
+      "runId": 40493930513
+    },
+    {
+      "id": 12729316871,
+      "name": "VNEngine-Studio-win-x64",
+      "size": 49614643,
+      "expired": false,
+      "runId": 40493930378
+    },
+    {
+      "id": 12729197260,
+      "name": "windows-native-evidence",
+      "size": 338429,
+      "expired": false,
+      "runId": 40493930378
+    }
+  ]
+}

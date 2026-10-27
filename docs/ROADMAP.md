@@ -1,6 +1,6 @@
 # 后续工作
 
-最近完成：独立分轨与总音量、可读性与键盘焦点、多槽备份 / 预览确认，均已通过浏览器与 Windows；范围、并发限制和证据见 [本轮优化](OPTIMIZATION-NEXT.md)。版本保持 0.3.0 alpha。
+最近完成：启动 Auto 保护与安全 Continue、可配置标题 / 确认流程、跨重启已读记录，均已通过浏览器与 Windows；范围和证据见 [本轮优化](OPTIMIZATION-PLAYER-LIFECYCLE.md)。此前声音 / 阅读 / 备份见 [上一轮](OPTIMIZATION-NEXT.md)。版本保持 0.3.0 alpha。
 
 ## 0.1：四作能力沉淀
 
