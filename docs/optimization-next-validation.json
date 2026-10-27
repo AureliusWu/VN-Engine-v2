@@ -1,0 +1,163 @@
+{
+  "schema": 1,
+  "checkedAt": "2026-10-27T10:28:26.942527+00:00",
+  "repository": "AureliusWu/VN-Engine-v2",
+  "implementationCommit": "9f7e4221de638ab44e945dfdb96a05a350b73ddb",
+  "engineVersion": "0.3.0 alpha",
+  "scope": "Engine only; no game migrations or release publication.",
+  "checks": {
+    "node": 119,
+    "python": 6,
+    "provenanceFiles": 116,
+    "browser": "PASS",
+    "editor": "PASS",
+    "windowsNative": "PASS"
+  },
+  "steps": [
+    {
+      "order": 1,
+      "capability": "Master and independent audio channels",
+      "commit": "d0f6e36fbd5c7a909b2c900833837cccb3e983e4",
+      "status": "PASS"
+    },
+    {
+      "order": 2,
+      "capability": "Reading scale, contrast and modal keyboard focus",
+      "commit": "0ff984155290a1de3cfa265e080511a954635358",
+      "status": "PASS"
+    },
+    {
+      "order": 3,
+      "capability": "Isolated, validated multi-slot save backup with preview and conflict detection",
+      "commit": "9f7e4221de638ab44e945dfdb96a05a350b73ddb",
+      "status": "PASS"
+    }
+  ],
+  "alphaSampleReports": [
+    {
+      "sample": "campus",
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "commitSha": "9f7e4221de638ab44e945dfdb96a05a350b73ddb",
+      "productionAcceptance": "BLOCKED"
+    },
+    {
+      "sample": "netlove",
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "commitSha": "9f7e4221de638ab44e945dfdb96a05a350b73ddb",
+      "productionAcceptance": "BLOCKED"
+    },
+    {
+      "sample": "circuit",
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "commitSha": "9f7e4221de638ab44e945dfdb96a05a350b73ddb",
+      "productionAcceptance": "BLOCKED"
+    },
+    {
+      "sample": "rain",
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "commitSha": "9f7e4221de638ab44e945dfdb96a05a350b73ddb",
+      "productionAcceptance": "BLOCKED"
+    }
+  ],
+  "unverified": [
+    "Production audio listening and art quality",
+    "Physical mobile devices",
+    "Full screen-reader accessibility evaluation"
+  ],
+  "fullGalgameSpecCertification": false,
+  "workflows": [
+    {
+      "id": 40486346521,
+      "name": "Engine checks",
+      "head_sha": "d0f6e36fbd5c7a909b2c900833837cccb3e983e4",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40486346521"
+    },
+    {
+      "id": 40486346529,
+      "name": "Windows native host",
+      "head_sha": "d0f6e36fbd5c7a909b2c900833837cccb3e983e4",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40486346529"
+    },
+    {
+      "id": 40486930277,
+      "name": "Windows native host",
+      "head_sha": "0ff984155290a1de3cfa265e080511a954635358",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40486930277"
+    },
+    {
+      "id": 40486930321,
+      "name": "Engine checks",
+      "head_sha": "0ff984155290a1de3cfa265e080511a954635358",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40486930321"
+    },
+    {
+      "id": 40488332817,
+      "name": "Windows native host",
+      "head_sha": "9f7e4221de638ab44e945dfdb96a05a350b73ddb",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40488332817"
+    },
+    {
+      "id": 40488332833,
+      "name": "Engine checks",
+      "head_sha": "9f7e4221de638ab44e945dfdb96a05a350b73ddb",
+      "status": "completed",
+      "conclusion": "success",
+      "html_url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40488332833"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12726415977,
+      "name": "engine-browser-evidence",
+      "size": 2650066,
+      "expired": false,
+      "runId": 40488332833
+    },
+    {
+      "id": 12726291148,
+      "name": "vn-engine-standalone-samples",
+      "size": 803204,
+      "expired": false,
+      "runId": 40488332833
+    },
+    {
+      "id": 12726116486,
+      "name": "alpha-qa-reports",
+      "size": 41464,
+      "expired": false,
+      "runId": 40488332833
+    },
+    {
+      "id": 12725768661,
+      "name": "windows-native-evidence",
+      "size": 334796,
+      "expired": false,
+      "runId": 40488332817
+    },
+    {
+      "id": 12725693880,
+      "name": "VNEngine-Studio-win-x64",
+      "size": 49596033,
+      "expired": false,
+      "runId": 40488332817
+    }
+  ]
+}

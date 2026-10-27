@@ -2,6 +2,8 @@
 
 ## 下一轮：声音 / 阅读 / 备份
 
+最终实现 `9f7e4221de638ab44e945dfdb96a05a350b73ddb` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40488332833) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40488332817) 均成功；原生实际执行设置、回看继承、备份文件输入 / 预览 / 确认 / 读取恢复槽位及进程重启。按相同提交锁重建的四样例，文件 / 解码 / 包复核均 PASS，正式人工验收仍 BLOCKED。来源与逐项结果见 [本轮验证记录](optimization-next-validation.json)。
+
 备份阶段本地最终 `npm run check`（119 项 Node、6 项 Python、116 个来源）、完整 `npm run test:browser` 与 `npm run test:editor` 均通过；实际检查 390px 备份预览截图，未宣称实体设备验收。未配置提交锁的本地 QA 样例包被身份检查拒绝；推送后按该确切提交重建复核，不使用前一个提交号标记新代码。
 
 备份阶段新增 7 项核心测试：四种叙事驱动、跨游戏 / 重复槽 / 不可能路线拒绝、迁移、预览不可变与一次提交、确认前冲突、配额与回滚失败、小游戏中途状态。Chromium 实际下载 / 上传文件并走预览、取消、确认、读档，检查当前位置 / Meta 不改、预览后并发写入拒绝、关闭面板的迟到文件与连续选文件竞争。Windows smoke 新增真实 WebView2 文件输入、预览确认与读取已恢复槽位；原生结果以本提交工作流为准。
