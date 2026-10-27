@@ -66,7 +66,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Quick Load | PASS | 独立 Quick Slot + Session restore |
 | Auto Save | PASS | mount runtime 自动写独立 Auto Slot |
 | Save Manager UI | PASS | 六槽、覆盖确认、快速存读档、旧单槽读取和自动提示已通过浏览器及 Windows 原生验收；可选截图缩略图未实现 |
-| Rollback | PARTIAL | 有界检查点恢复实际路线 / 变量 / 舞台 / 声音绑定 / 历史游标，不写 Save 或 Meta；本轮浏览器通过，Windows 待确认 |
+| Rollback | PASS | 有界会话检查点恢复实际路线 / 变量 / 舞台 / 声音绑定 / 历史游标，不写 Save 或 Meta；`2d2cb34` 浏览器及 Windows 通过，检查点不跨读档 / 重开 |
 | History | PASS | 有 history + search + reread |
 | Auto | PASS | 自研 scheduler |
 | Skip Read | PASS | 仅已读文本，Choice 处停止 |
@@ -87,7 +87,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Formal Layer API | PASS | 五个视觉资源层、effect / ui 整层轨道与 Studio 控件已接入；`cb03e9c` 浏览器和 Windows 原生验收通过；Key Visual 范围 / 时限另有约束，不能替代作品美术验收 |
 | Video | PARTIAL | 本地播放、失败回退、暂停 / 跳过 / 减少动态和编辑器配置已接入；`9894454` 浏览器及 Windows CI 通过，有声视频听感、实际设备及编码支持仍需作品验证 |
 | Investigation / nontraditional play | PASS | Investigation runtime |
-| Mini game contract | PARTIAL | 可通过自定义 runtime 承载，但未提供统一 entry/exit/save/skip contract |
+| Mini game contract | PARTIAL | 小游戏 v1 已接入 runtime / Studio，当前有开关谜题适配器，覆盖 entry / exit / save / restore / skip / abort / result；本轮 Windows 待确认，其他玩法适配器仍需实现 |
 | Web Build | PASS | Standalone + PWA |
 | PWA offline | PASS | Service Worker / fingerprint |
 | Windows Build | PASS | 独立 Windows host workflow 与验收记录 |

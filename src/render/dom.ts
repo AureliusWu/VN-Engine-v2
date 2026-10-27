@@ -214,11 +214,13 @@ export class DOMRenderer {
       this.reading.hidden = snapshot.hidden; this.toolbar.hidden = snapshot.hidden; this.restoreButton.hidden = !snapshot.hidden; this.hotspots.hidden = snapshot.hidden;
     }
     if (entered || snapshot.ready !== previous?.ready || snapshot.paused !== previous?.paused) for (const button of this.hotspots.querySelectorAll('button')) button.disabled = !snapshot.ready || snapshot.paused;
-    const actionsKey = `${snapshot.visit}:${snapshot.complete}:${snapshot.ready}:${snapshot.paused}`;
+    if (entered && snapshot.miniGameError) this.notify(snapshot.miniGameError);
+    const actionsKey = `${snapshot.visit}:${snapshot.complete}:${snapshot.ready}:${snapshot.paused}:${snapshot.miniGame?.revision ?? ''}`;
     if (actionsKey !== this.actionsKey) {
       this.actionsKey = actionsKey; this.actions.replaceChildren();
       if (!snapshot.complete || frame.canAdvance) { const next = this.button(snapshot.complete ? '下一段' : '显示全文', () => this.session.next()); next.dataset.control = 'next'; next.disabled = snapshot.paused || (snapshot.complete && !snapshot.ready); this.actions.append(next); }
-      if (snapshot.ready) for (const action of frame.actions) { const button = this.button(action.label, () => this.session.act(action.id)); button.dataset.action = action.id; if (action.tone) button.dataset.tone = action.tone; button.disabled = snapshot.paused; this.actions.append(button); }
+      if (snapshot.ready && snapshot.miniGame) this.miniGameControls(snapshot);
+      else if (snapshot.ready) for (const action of frame.actions) { const button = this.button(action.label, () => this.session.act(action.id)); button.dataset.action = action.id; if (action.tone) button.dataset.tone = action.tone; button.disabled = snapshot.paused; this.actions.append(button); }
       if (snapshot.ready && frame.ending) this.actions.append(this.el('span', frame.ending === 'failure' ? '调查需要重新核对' : '已到达结局'));
     }
     if (entered || snapshot.paused !== previous?.paused) {
@@ -232,6 +234,24 @@ export class DOMRenderer {
     if (snapshot.skipping !== previous?.skipping) this.buttons.get('skip')!.setAttribute('aria-pressed', String(snapshot.skipping));
   }
   private animations(): Animation[] { return [...(this.effect.getAnimations?.() ?? []), ...(this.stage.getAnimations?.() ?? [])]; }
+  private miniGameControls(snapshot: RuntimeView) {
+    const game = snapshot.miniGame!;
+    const box = this.el('div', undefined, 'vn-minigame'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', '小游戏'); this.actions.append(box);
+    const button = (label: string, control: string, act: () => void) => { const node = this.button(label, act); node.dataset.control = control; node.disabled = snapshot.paused; box.append(node); return node; };
+    if (game.phase === 'idle') { button('开始小游戏', 'mini-game-start', () => { this.session.startMiniGame(); }); return; }
+    box.append(this.el('p', `目标：${game.target.map(value => value ? '开' : '关').join(' / ')} · 操作 ${game.moves} / ${game.maxMoves}`));
+    for (const [index, enabled] of game.board.entries()) {
+      const node = button(`开关 ${index + 1}：${enabled ? '开' : '关'}`, 'mini-game-input', () => { this.session.playMiniGame(index); });
+      node.dataset.input = String(index); node.setAttribute('aria-pressed', String(enabled)); node.disabled ||= game.phase !== 'active';
+    }
+    if (game.phase === 'complete') {
+      const result = { success: '成功', failure: '失败', skip: '已跳过', abort: '已退出' }[game.result!]; box.append(this.el('p', result));
+      button('继续剧情', 'mini-game-continue', () => { this.session.finishMiniGame(); });
+    } else {
+      if (game.canSkip) button('跳过小游戏', 'mini-game-skip', () => { this.session.skipMiniGame(); });
+      button('退出小游戏', 'mini-game-abort', () => { this.session.abortMiniGame(); });
+    }
+  }
   private clearVideo() {
     if (this.videoState) this.videoState.attempt++;
     this.videoState = undefined; this.video.onended = null; this.video.onerror = null;

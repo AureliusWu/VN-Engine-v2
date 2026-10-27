@@ -1,6 +1,8 @@
 import type { ReadRecord, RuntimeDriver, RuntimeFrame } from '../stage/types.js';
 import { freezeData, type DeepReadonly } from './readonly.js';
 import { RollbackHistory, type RollbackOptions } from './rollback.js';
+import { MiniGameSession, validateMiniGame, type MiniGameSnapshot } from '../minigame/session.js';
+import { isRecord } from '../storage/save.js';
 
 export type RuntimeSettings = {
   textDelayMs: number; autoDelayMs: number; skipDelayMs: number; reducedMotion: boolean;
@@ -16,6 +18,7 @@ export type RuntimeSnapshot = {
   paused: boolean; pauseReasons: readonly string[]; hidden: boolean; auto: boolean; skipping: boolean; voiceBlocked: boolean;
   settings: RuntimeSettings; supportsSkip: boolean; supportsReread: boolean;
   supportsRollback: boolean; canRollback: boolean; rollbackDepth: number;
+  miniGame?: MiniGameSnapshot; miniGameError?: string;
 };
 export type RuntimeView = DeepReadonly<RuntimeSnapshot>;
 
@@ -53,6 +56,8 @@ export class RuntimeSession {
   private generation = 0;
   private disposed = false;
   private readonly rollbackHistory: RollbackHistory;
+  private miniGame?: MiniGameSession;
+  private miniGameError?: string;
   constructor(readonly driver: RuntimeDriver, options: { settings?: Partial<RuntimeSettings>; clock?: Clock; rollback?: RollbackOptions } = {}) {
     this.clock = options.clock ?? systemClock; this.settings = Object.freeze(runtimeSettings(options.settings ?? {}));
     this.rollbackHistory = new RollbackHistory(options.rollback);
@@ -71,7 +76,8 @@ export class RuntimeSession {
       ready: this.count >= this.glyphs.length && this.hold <= 0, paused: this.pauses.size > 0 || this.hidden,
       pauseReasons: Object.freeze([...this.pauses]), hidden: this.hidden, auto: this.automatic, skipping: this.skipping, voiceBlocked: this.voiceBlocked,
       settings: this.settings, supportsSkip: this.driver.supportsSkip, supportsReread: this.driver.supportsReread,
-      supportsRollback: this.rollbackHistory.enabled, canRollback: this.rollbackHistory.depth > 0, rollbackDepth: this.rollbackHistory.depth });
+      supportsRollback: this.rollbackHistory.enabled, canRollback: this.rollbackHistory.depth > 0, rollbackDepth: this.rollbackHistory.depth,
+      miniGame: this.miniGame?.getView(), miniGameError: this.miniGameError });
     return this.view;
   }
   private emit() { this.view = undefined; if (!this.disposed) for (const listener of [...this.listeners]) listener(); }
@@ -84,14 +90,15 @@ export class RuntimeSession {
     }
     this.generation++;
   }
-  private enter(reason: VisitReason) {
+  private enter(reason: VisitReason, restoredMiniGame?: MiniGameSession) {
     this.cancel(); this.current = freezeData(structuredClone(this.driver.frame())); this.visit++; this.reason = reason;
+    this.miniGame = restoredMiniGame; this.miniGameError = undefined;
+    if (!this.miniGame && this.current.stage.miniGame) try {
+      validateMiniGame(this.current.stage.miniGame, this.current.actions.map(action => action.id)); this.miniGame = new MiniGameSession(this.current.stage.miniGame);
+    } catch { this.miniGameError = '小游戏配置与当前剧情操作不匹配，已保留普通操作'; }
     if (['start', 'restore', 'reread', 'rollback'].includes(reason)) { this.automatic = false; this.skipping = false; }
     if (['start', 'restore', 'reread'].includes(reason)) this.rollbackHistory.clear();
-    if (reason !== 'rollback' && this.rollbackHistory.enabled) {
-      try { this.rollbackHistory.capture(this.driver.checkpoint ? this.driver.checkpoint() : this.driver.save()); }
-      catch { this.rollbackHistory.clear(); } // An unavailable optional checkpoint must not stop reading.
-    }
+    if (reason !== 'rollback') this.checkpoint();
     this.voiceBlocked = false; this.autoRemaining = undefined;
     this.eligibleSkip = this.read.has(this.readKey());
     this.glyphs = [...this.segmenter.segment(this.current.text)].map(segment => segment.segment);
@@ -132,11 +139,12 @@ export class RuntimeSession {
   next(): boolean {
     if (this.disposed || this.pauses.size || this.hidden) return false;
     if (this.count < this.glyphs.length) { this.cancel(); this.count = this.glyphs.length; this.displayed = this.current.text; this.read.add(this.readKey()); this.emit(); this.schedule(); return true; }
+    if (this.miniGame) return false;
     if (this.hold > 0 || !this.current.canAdvance || !this.driver.advance()) return false;
     this.enter('advance'); return true;
   }
   act(id: string): boolean {
-    if (this.disposed || this.pauses.size || this.hidden || this.count < this.glyphs.length || this.hold > 0
+    if (this.disposed || this.miniGame || this.pauses.size || this.hidden || this.count < this.glyphs.length || this.hold > 0
       || !this.current.actions.some(action => action.id === id) || !this.driver.act(id)) return false;
     this.enter('action'); return true;
   }
@@ -166,22 +174,57 @@ export class RuntimeSession {
     this.emit(); this.schedule();
   }
   history(): readonly ReadRecord[] { return structuredClone(this.driver.history(this.count >= this.glyphs.length)); }
+  private withMiniGame(value: unknown): unknown {
+    if (!this.miniGame) return value;
+    if (!isRecord(value)) throw new Error('Mini-game persistence requires an object driver save');
+    return { ...value, vnMiniGame: { frameId: this.current.id, state: this.miniGame.save() } };
+  }
+  private checkpoint(replace = false) {
+    if (!this.rollbackHistory.enabled) return;
+    try { const value = this.withMiniGame(this.driver.checkpoint ? this.driver.checkpoint() : this.driver.save());
+      if (replace) this.rollbackHistory.replaceCurrent(value); else this.rollbackHistory.capture(value);
+    } catch { this.rollbackHistory.clear(); }
+  }
+  private miniGameReady() { return !this.disposed && !this.hidden && !this.pauses.size && this.count >= this.glyphs.length && this.hold <= 0; }
+  private changeMiniGame(change: (game: MiniGameSession) => boolean) {
+    if (!this.miniGameReady() || !this.miniGame || !change(this.miniGame)) return false;
+    this.cancel(); this.automatic = false; this.skipping = false; this.checkpoint(true); this.emit(); this.schedule(); return true;
+  }
+  startMiniGame() { return this.changeMiniGame(game => game.start()); }
+  playMiniGame(index: number) { return this.changeMiniGame(game => game.play(index)); }
+  skipMiniGame() { return this.changeMiniGame(game => game.skip()); }
+  abortMiniGame() { return this.changeMiniGame(game => game.abort()); }
+  finishMiniGame() {
+    const action = this.miniGame?.resultAction();
+    if (!this.miniGameReady() || !action || !this.current.actions.some(item => item.id === action) || !this.driver.act(action)) return false;
+    this.enter('action'); return true;
+  }
+  private restoreDriver(value: unknown): MiniGameSession | undefined {
+    if (!isRecord(value) || value.vnMiniGame === undefined) { this.driver.restore(value); return undefined; }
+    const before = this.driver.checkpoint ? this.driver.checkpoint() : this.driver.save(); this.driver.restore(value);
+    try {
+      const frame = this.driver.frame(), extra = value.vnMiniGame;
+      if (!isRecord(extra) || extra.frameId !== frame.id || !frame.stage.miniGame) throw new Error('Mini-game save belongs to another story visit');
+      validateMiniGame(frame.stage.miniGame, frame.actions.map(action => action.id));
+      const game = new MiniGameSession(frame.stage.miniGame); game.restore(extra.state); return game;
+    } catch (error) { this.driver.restore(before); throw error; }
+  }
   rollback(steps = 1): boolean {
     if (this.disposed || this.hidden || this.pauses.size) return false;
     const target = this.rollbackHistory.target(steps); if (target === undefined) return false;
-    this.driver.restore(target); this.rollbackHistory.rewind(steps); this.enter('rollback'); return true;
+    const miniGame = this.restoreDriver(target); this.rollbackHistory.rewind(steps); this.enter('rollback', miniGame); return true;
   }
   reread(id: string): boolean {
     if (this.disposed || this.hidden || !this.driver.supportsReread || !this.driver.reread(id)) return false;
     this.enter('reread'); return true;
   }
-  save(): unknown { if (this.disposed) throw new Error('Session is disposed'); return structuredClone(this.driver.save()); }
+  save(): unknown { if (this.disposed) throw new Error('Session is disposed'); return structuredClone(this.withMiniGame(this.driver.save())); }
   restore(value: unknown) {
     if (this.disposed) throw new Error('Session is disposed');
-    this.driver.restore(value);
+    const miniGame = this.restoreDriver(value);
     for (const entry of this.driver.history(false)) this.read.add(`${entry.lineId}\u0000${entry.text}`);
-    this.enter('restore');
+    this.enter('restore', miniGame);
   }
   restart() { if (!this.disposed) { this.driver.reset(); this.enter('start'); } }
-  dispose() { if (this.disposed) return; this.cancel(); this.rollbackHistory.clear(); this.disposed = true; this.listeners.clear(); }
+  dispose() { if (this.disposed) return; this.cancel(); this.rollbackHistory.clear(); this.miniGame = undefined; this.disposed = true; this.listeners.clear(); }
 }

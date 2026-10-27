@@ -1,9 +1,10 @@
+import { renderMiniGameEditor } from './minigame.mjs';
 const visualLayers = ['background', 'character-back', 'character', 'character-front', 'cg'];
 const layers = [...visualLayers, 'effect', 'ui'];
 const dimensions = [['x', 'X'], ['y', 'Y'], ['scale', '缩放'], ['opacity', '透明度']];
 
 /** Author the same data consumed by the runtime; mutations stay inside EditorModel transactions. */
-export function renderPresentationEditor(parent, path, { element, field, action, valueAt, set, assets, section }) {
+export function renderPresentationEditor(parent, path, { element, field, action, valueAt, set, assets, section, miniGameActions = [] }) {
   const details = section(parent, JSON.stringify(path) + ':presentation', '正式图层与时间线');
   const cue = valueAt(path) ?? {};
   const changeCue = change => { const next = structuredClone(valueAt(path) ?? {}); change(next); set(path, next, true); };
@@ -28,6 +29,7 @@ export function renderPresentationEditor(parent, path, { element, field, action,
     field(details, '装饰视觉场景类型', keyVisual.sceneType, value => edit(next => { next.sceneType = value; }), { choices: ['story', 'title', 'cg', 'transition', 'interstitial', 'special_presentation'] });
     field(details, '装饰视觉时长 ms', keyVisual.durationMs, value => edit(next => { next.durationMs = Number(value); }));
   }
+  renderMiniGameEditor(details, cue, { field, action, element, changeCue, actions: miniGameActions });
   const editTimeline = change => changeCue(next => {
     const timeline = next.timeline && typeof next.timeline === 'object' ? next.timeline : { durationMs: 1000, animations: [], camera: [] };
     change(timeline); next.timeline = timeline;

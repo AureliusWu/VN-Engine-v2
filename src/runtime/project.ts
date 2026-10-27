@@ -16,6 +16,7 @@ import { isRecord } from '../storage/save.js';
 import type { ReleaseEvidence } from '../compliance/art.js';
 import { projectEndings, validateTrueRoutePolicy } from '../meta/project.js';
 import type { RollbackOptions } from './rollback.js';
+import { validateProjectMiniGames } from '../minigame/project.js';
 
 type ProjectBase = { schema: 1; game: string; version: string; title: string; assets: readonly Asset[]; font?: string; settings?: Partial<RuntimeSettings>; rollback?: RollbackOptions; collections?: ProjectCollections; releaseEvidence?: ReleaseEvidence };
 export type EngineProject = ProjectBase & (
@@ -62,5 +63,6 @@ export function createProject(project: EngineProject, baseURL: string | URL, opt
   else if (project.type === 'rain') driver = new ScriptDriver(createRainRuntime(project.story, { game: project.game, version: project.version }), project.defaults);
   else throw new Error('Unknown project runtime');
   if (project.rollback !== undefined && !isRecord(project.rollback)) throw new Error('Invalid rollback options');
+  validateProjectMiniGames(project);
   return { session: new RuntimeSession(driver, { clock: options.clock, settings: { ...project.settings, ...options.settings }, rollback: project.rollback }), assets };
 }

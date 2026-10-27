@@ -88,3 +88,7 @@ Key Visual 提交 `45e76c4` 的 Windows 工作流成功，浏览器 CI 在作者
 状态回滚本地通过 102 项 Node、6 项 Python、107 项来源检查与完整浏览器回归：三类 driver 的路线 / 变量 / 证据恢复、有限步数和读档边界、声音绑定 / 语音回到当前句且不重播 SE；真实 DOM 验证终态和存档 / Meta 字节保持不变。Studio 可关闭回滚或配置步数。Windows smoke 新增真实回退控件到之前台词 / 舞台的检查，本次原生结果以对应工作流为准。
 
 回滚性能修正：内部检查点只捕获已由 driver 持有的路线和位置，恢复仍通过标准 codec 重建；不在每次翻页时做完整路线重放。关闭回滚不抓取检查点，抓取异常保留阅读能力。500 次同场景翻页的本地单进程微测约 50ms（开启 / 关闭均为这一量级），仅说明该合成夹具，不代表端到端 FPS。
+
+回滚提交 `2d2cb34` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40457880306) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40457880458) 均成功；原生 WebView2 验证先前台词 / 舞台恢复、Auto / Meta 不改写以及进程重启。
+
+小游戏 v1 增加可实际游玩的开关谜题；单元测试验证所有结果、输入记录重放、失效导入拒绝和原状态保留、暂停 / 配置隔离；浏览器专项验证中途 Quick / Auto 存档、恢复、原生暂停事件、回滚、跳过 / 退出结果及 Studio 配置和试玩。Windows smoke 加入同一玩法的真实操作与恢复；本地 106 项 Node、6 项 Python、110 项来源检查、完整浏览器与编辑器专项均通过，本次原生结果以工作流为准。

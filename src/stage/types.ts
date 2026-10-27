@@ -1,3 +1,4 @@
+import type { MiniGameDefinition } from '../minigame/session.js';
 export const STAGE_LAYERS = ['background', 'character-back', 'character', 'character-front', 'cg', 'effect', 'ui'] as const;
 export type StageLayer = typeof STAGE_LAYERS[number];
 export type StageVisualLayer = 'background' | 'character-back' | 'character' | 'character-front' | 'cg';
@@ -39,6 +40,7 @@ export type StageCue = {
   timeline?: PresentationTimeline;
   video?: StageVideo;
   keyVisual?: StageKeyVisual;
+  miniGame?: MiniGameDefinition;
   pauseMs?: number;
   document?: { title: string; lines: readonly string[] };
 };

@@ -52,11 +52,16 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
   const meta = createMetaStateStore(project.game, storage, { cgs: collections?.cgs?.map(item => item.id), endings: collections?.endings?.map(item => item.id), trueRoute: collections?.trueRoute });
   if (collections?.trueRoute) meta.evaluateTrueRoute();
   let renderer: DOMRenderer | undefined;
-  let progressVisit = -1, countedEnding = false;
+  let progressVisit = -1, progressMiniGame = -1, countedEnding = false;
   const persistProgress = () => {
     const snapshot = session.getView();
-    if (snapshot.visit === progressVisit) return;
+    if (snapshot.visit === progressVisit) {
+      const revision = snapshot.miniGame?.revision ?? -1;
+      if (revision !== progressMiniGame && snapshot.reason !== 'rollback') { progressMiniGame = revision; persistence.autoSave(); }
+      return;
+    }
     progressVisit = snapshot.visit;
+    progressMiniGame = snapshot.miniGame?.revision ?? -1;
     if (snapshot.reason === 'rollback') return;
     if (snapshot.reason === 'start') countedEnding = false;
     const saved = persistence.autoSave();

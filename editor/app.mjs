@@ -169,7 +169,10 @@ function renderCue(parent, path) {
   muted.disabled = !video?.asset;
   const loop = field(details, '视频循环', video?.loop ? 'true' : 'false', value => updateVideo({ loop: value === 'true' }), { choices: [['false', '播放一次'], ['true', '循环']] });
   loop.disabled = !video?.asset;
-  renderPresentationEditor(parent, path, { element, field, action, valueAt, set, assets, section: inspectorSection });
+  const node = graphNode(), data = node ? valueAt(node.path) : {}, project = model.getView().project;
+  const choices = project.type === 'script' ? (data.exit?.type === 'choice' ? data.exit.choices : []) : project.type === 'narrative' ? data.choices ?? [] : data.actions ?? [];
+  const miniGameActions = choices.map(choice => choice.id); if (data.continuation) miniGameActions.push('@continue');
+  renderPresentationEditor(parent, path, { element, field, action, valueAt, set, assets, section: inspectorSection, miniGameActions });
 }
 function renderInspector() {
   const root = $('inspector'), node = graphNode();

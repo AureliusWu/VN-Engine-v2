@@ -25,4 +25,5 @@ export class RollbackHistory {
     return JSON.parse(this.points[this.points.length - 1 - steps]);
   }
   rewind(steps: number) { for (let i = 0; i < steps; i++) this.size -= this.points.pop()!.length; }
+  replaceCurrent(value: unknown) { if (this.points.length) this.size -= this.points.pop()!.length; this.capture(value); }
 }

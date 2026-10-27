@@ -135,14 +135,26 @@ internal static class SmokeTests
                     if (!query('.vn-replay .vn-text')?.textContent.includes('replay end')) throw Error('Replay did not advance');
                     clickText('返回图鉴');
                     if (JSON.stringify(instance.session.save().state) !== state || localStorage.getItem(instance.meta.key) !== meta || localStorage.getItem(instance.persistence.contract.keyFor('auto')) !== auto) throw Error('Replay changed normal state');
-                    instance.dispose(); root.remove(); window.nativeCollectionSmoke = 'passed';
+                    instance.dispose();
+                    const puzzleProject = {schema:1, game:'native-mini-game-fixture', version:'v1', title:'Native puzzle', type:'narrative', settings:{textDelayMs:0}, assets:[],
+                      stage:{lines:{puzzle:{miniGame:{id:'switches',kind:'switches',initial:[false,false],target:[true,true],maxMoves:3,results:{success:'yes',failure:'no',abort:'no',skip:'yes'}}}}},
+                      scenes:[{id:'start',lines:[{id:'puzzle',speaker:'N',text:'Solve the puzzle'}],choices:[{id:'yes',text:'Success',next:'end'},{id:'no',text:'Failure',next:'end'}]},
+                        {id:'end',lines:[{id:'done',speaker:'N',text:'Puzzle finished'}],ending:'done'}]};
+                    const puzzle = mountGame(root, puzzleProject, {baseURL,audio:false});
+                    query('[data-control=mini-game-start]').click(); query('[data-input="0"]').click(); const puzzleSave=puzzle.session.save();
+                    query('[data-input="0"]').click(); puzzle.session.restore(puzzleSave);
+                    if (query('[data-input="0"]').getAttribute('aria-pressed')!=='true') throw Error('Native mini-game did not restore its input journal');
+                    query('[data-input="1"]').click(); query('[data-control=mini-game-continue]').click();
+                    if (puzzle.session.save().state.decisions[0].choiceId!=='yes') throw Error('Native mini-game result did not enter the story route');
+                    query('[data-control=rollback]').click(); if (puzzle.session.getView().miniGame?.result!=='success') throw Error('Native mini-game rollback lost its result');
+                    puzzle.dispose(); root.remove(); window.nativeCollectionSmoke = 'passed';
                   }).catch(error => { window.nativeCollectionSmoke = 'failed: ' + error.message; });
                   """);
                 await Wait("!!window.nativeCollectionSmoke && window.nativeCollectionSmoke !== 'pending'");
                 var collectionResult = await JS("window.nativeCollectionSmoke");
                 if (collectionResult != "\"passed\"") throw new InvalidDataException("Native collection/video check: " + collectionResult);
                 await window.Browser.CoreWebView2.CallDevToolsProtocolMethodAsync("Emulation.setEmulatedMedia", "{\"features\":[]}");
-                checks.Add("Native WebView2 plays local video and scoped Key Visual; rollback restores the previous presentation without changing Save/Meta, and replay remains isolated");
+                checks.Add("Native WebView2 validates video, scoped Key Visual, isolated replay, state rollback and mini-game play/save/restore/result/rollback");
             }
             else
             {
