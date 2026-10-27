@@ -22,7 +22,7 @@ try {
   const page = await context.newPage(); page.on('pageerror', error => errors.push(error.message));
   const requests = []; page.on('request', request => requests.push(request.url()));
   await page.goto(base + '/engine/'); await page.waitForSelector('.vn-engine');
-  const click = name => page.locator('.vn-engine').getByRole('button', { name, exact: true }).click();
+  const click = async name => { await page.locator('.vn-engine').getByRole('button', { name, exact: true }).click(); if (name === '新游戏') await page.getByRole('button', {name:'确认开始新游戏',exact:true}).click(); };
   const choose = name => page.locator('.vn-actions').getByRole('button', { name, exact: true }).click();
   const saveSlot = async () => { await click('存档'); await page.getByRole('button', { name: '保存到槽位 1', exact: true }).click(); };
   const loadSlot = async () => { await click('读档'); await page.getByRole('button', { name: '读取槽位 1', exact: true }).click(); };

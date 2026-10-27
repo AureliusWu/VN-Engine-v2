@@ -2,6 +2,10 @@
 
 ## 启动 / 标题 / 已读记录
 
+标题阶段本地 122 项 Node、6 项 Python、117 个来源、完整浏览器与编辑器通过；覆盖开始前 Auto / Meta 不写、设置 / 收藏返回、Esc 不绕过、取消与确认新游戏 / 返回标题、Continue / Load、保留当前会话与旧手动 / Quick / Meta、视频回退 CG 在实际开始后解锁、Studio 预览 / 导出 / 撤销。桌面和 390px 截图已检查，不代表实体设备。Windows 原生增加相同标题流程，结果以本提交 CI 为准。
+
+启动提交 `9ae181c4cd03702f6372aa5f6e83f15fea030899` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40491427170) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40491427233) 均成功。
+
 启动修复本地通过 121 项 Node、6 项 Python、117 个来源检查及完整浏览器回归；Chromium 实际页面重载后旧 Auto 字节不变，Continue 能跳过损坏候选并恢复真实位置。核心覆盖四种驱动、同时间优先级、错槽、空槽与不可用存储；原生 WebView2 smoke 已加入重挂载与 Continue，Windows 结果以本提交工作流为准。
 
 ## 下一轮：声音 / 阅读 / 备份

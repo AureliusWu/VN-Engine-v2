@@ -51,7 +51,8 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
   project = structuredClone(project.type === 'narrative' && presentation ? { ...project, stage: { ...project.stage, presentation: undefined } } : project);
   if (project.type === 'narrative' && presentation) project.stage = { ...project.stage, presentation };
   const baseURL = options.baseURL ?? new URL('./', root.ownerDocument.baseURI);
-  const { session, assets } = createProject(project, baseURL, { assetURL: options.assetURL });
+  const { session, assets } = createProject(project, baseURL, { assetURL: options.assetURL, initialPause: project.titleScreen ? 'title' : undefined });
+  let started = !project.titleScreen;
   let storage = options.storage;
   if (storage === undefined) try { storage = root.ownerDocument.defaultView?.localStorage; } catch { storage = null; }
   const persistence = bindSessionPersistence(session, createSaveContract({ game: project.game, gameVersion: project.version, storage }));
@@ -69,6 +70,7 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
   let progressVisit = -1, progressMiniGame = -1, countedEnding = false;
   const persistProgress = () => {
     const snapshot = session.getView();
+    if (!started || snapshot.pauseReasons.includes('title')) return;
     if (snapshot.visit === progressVisit) {
       const revision = snapshot.miniGame?.revision ?? -1;
       if (revision !== progressMiniGame && snapshot.reason !== 'rollback') { progressMiniGame = revision; persistence.autoSave(); }
@@ -114,7 +116,9 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
     void media.unlock();
   };
   try { renderer = new DOMRenderer(root, session, assets, { title: project.title, font: project.font, storage, persistence, backup, continuation, meta, collections,
-    beginReplay: (target, saved) => mountReplay(target, project, saved, baseURL, options, session.getView().settings), onUnlockAudio: unlockAudio, onCgPresented: id => { if (session.getView().reason !== 'rollback') meta.unlockCg(id); } }); }
+    startAtTitle: project.titleScreen, onBegin: () => { started = true; },
+    beginReplay: (target, saved) => mountReplay(target, project, saved, baseURL, options, session.getView().settings), onUnlockAudio: unlockAudio,
+    onCgPresented: id => { if (started && !session.getView().pauseReasons.includes('title') && session.getView().reason !== 'rollback') meta.unlockCg(id); } }); }
   catch (error) { disconnectProgress(); session.dispose(); throw error; }
   const view = root.ownerDocument.defaultView;
   const hostVisibility = (event: Event) => { const hidden = (event as CustomEvent<unknown>).detail; if (hidden && typeof hidden === 'object' && 'hidden' in hidden && typeof hidden.hidden === 'boolean') session.pause('native-host', hidden.hidden); };

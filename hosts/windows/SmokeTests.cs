@@ -176,6 +176,15 @@ internal static class SmokeTests
                     resumed=mountGame(root,resumeProject,{baseURL,audio:false});
                     if(localStorage.getItem(resumed.persistence.contract.keyFor('auto'))!==previousAuto) throw Error('Native remount overwrote previous Auto');
                     query('[data-control=continue]').click();if(resumed.session.getView().frame.lineId!=='two') throw Error('Native Continue did not restore previous Auto');
+                    resumed.dispose();resumeProject.titleScreen=true;resumed=mountGame(root,resumeProject,{baseURL,audio:false});
+                    if(query('.vn-engine').dataset.title!=='true'||!resumed.session.getView().paused) throw Error('Native title did not pause reading');
+                    query('[data-control=title-settings]').click();query('.vn-engine').dispatchEvent(new KeyboardEvent('keydown',{key:'Escape',bubbles:true,cancelable:true}));
+                    if(!query('[data-control=title-new]')) throw Error('Native settings did not return to title');
+                    query('[data-control=title-continue]').click();if(resumed.session.getView().frame.lineId!=='two') throw Error('Native title Continue lost prior progress');
+                    query('[data-control=title]').click();clickText('取消');if(query('.vn-engine').dataset.title!=='false') throw Error('Native return-title cancellation changed flow');
+                    query('[data-control=title]').click();clickText('确认返回标题');query('[data-control=title-new]').click();clickText('取消');
+                    if(!query('[data-control=title-resume]')) throw Error('Native cancelled new game did not retain the reading session');
+                    query('[data-control=title-new]').click();clickText('确认开始新游戏');if(resumed.session.getView().frame.lineId!=='one') throw Error('Native new game did not reset the route');
                     resumed.dispose();root.remove(); window.nativeCollectionSmoke = 'passed';
                   }).catch(error => { window.nativeCollectionSmoke = 'failed: ' + error.message; });
                   """);

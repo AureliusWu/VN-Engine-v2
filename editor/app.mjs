@@ -60,10 +60,12 @@ function renderProject() {
   const root = $('project-fields'); root.replaceChildren();
   const project = model.getView().project;
   for (const [key, label] of [['title', '作品名称'], ['game', '作品 ID'], ['version', '故事版本']]) field(root, label, project[key], value => set([key], value));
+  field(root, '启动界面', project.titleScreen ? 'title' : 'story', value => set(['titleScreen'], value === 'title', true), { choices: [['story', '直接阅读'], ['title', '标题菜单']] });
   field(root, '允许回退', project.rollback?.enabled === false ? 'false' : 'true', value => { set(['rollback'], { ...model.getView().project.rollback, enabled: value === 'true' }, true); renderProject(); }, { choices: [['true', '允许'], ['false', '关闭']] });
   field(root, '回退保留步数', project.rollback?.limit ?? 80, value => set(['rollback'], { ...model.getView().project.rollback, limit: Number(value) }, true));
 }
 function update(inspector = false) {
+  const startup = document.querySelector('#project-fields [aria-label="启动界面"]'); if (startup) startup.value = model.getView().project.titleScreen ? 'title' : 'story';
   const graph = model.graph(); if (!graph.nodes.some(n => n.key === selected)) selected = graph.nodes[0]?.key;
   $('project-name').textContent = model.getView().project.title || '未命名作品'; $('save-state').textContent = model.dirty ? '● 未保存' : '已保存';
   document.body.dataset.dirty = String(model.dirty || unappliedSource()); document.body.dataset.projectType = model.getView().project.type;

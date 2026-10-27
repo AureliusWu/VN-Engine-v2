@@ -33,9 +33,9 @@ try {
   await host.locator('[data-control=mini-game-continue]').click();
   assert.equal(await page.evaluate(() => puzzleGame.session.save().state.decisions[0].choiceId), 'yes');
   await host.locator('[data-control=rollback]').click(); assert.match(await host.locator('.vn-minigame').innerText(), /成功/);
-  await host.locator('[data-control=restart]').click(); await host.locator('[data-control=mini-game-start]').click(); await host.locator('[data-control=mini-game-abort]').click();
+  await host.locator('[data-control=restart]').click(); await host.getByRole('button',{name:'确认开始新游戏',exact:true}).click(); await host.locator('[data-control=mini-game-start]').click(); await host.locator('[data-control=mini-game-abort]').click();
   await host.locator('[data-control=mini-game-continue]').click(); assert.equal(await page.evaluate(() => puzzleGame.session.save().state.decisions[0].choiceId), 'no');
-  await host.locator('[data-control=restart]').click(); await host.locator('[data-control=mini-game-start]').click(); await host.locator('[data-control=mini-game-skip]').click();
+  await host.locator('[data-control=restart]').click(); await host.getByRole('button',{name:'确认开始新游戏',exact:true}).click(); await host.locator('[data-control=mini-game-start]').click(); await host.locator('[data-control=mini-game-skip]').click();
   await host.locator('[data-control=mini-game-continue]').click(); assert.equal(await page.evaluate(() => puzzleGame.session.save().state.decisions[0].choiceId), 'yes');
 
   await page.goto(`http://127.0.0.1:${server.address().port}/editor/`); await page.waitForSelector('body[data-editor-ready=true]');

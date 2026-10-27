@@ -17,6 +17,7 @@ test('Continue finds the latest actually reachable save for every driver without
     const before = [...storage.data], view = session.getView();
     assert.equal(continuation.latest().value.slot, 'quick'); assert.equal(session.getView(), view); assert.deepEqual([...storage.data], before);
     assert.equal(continuation.resume().status, 'valid'); assert.equal(session.getView().frame.id, expected); assert.deepEqual([...storage.data], before);
+    contract.saveAuto(session.save(), undefined, new Date(2000)); assert.equal(continuation.latest().value.slot, 'auto');
     session.dispose();
   }
 });
@@ -34,4 +35,13 @@ test('Continue retains corrupt and mismatched slots, reports empty/unavailable, 
   storage.setItem(contract.keyFor('manual-1'), '{changed}'); assert.equal(continuation.resume().status, 'invalid'); assert.equal(session.getView(), before);
   assert.equal(createContinuation(session, createSaveContract({game:project.game,gameVersion:project.version,storage:null}), v=>v).latest().status, 'unavailable');
   session.dispose();
+});
+
+test('explicit initial title pause prevents typing and actions until the host begins reading', () => {
+  const p=readJSON('examples/runtime/campus.json');p.titleScreen=true;let scheduled=0;
+  const clock={now:()=>0,set:()=>++scheduled,clear:()=>{}};
+  const {session}=createProject(p,'https://test.invalid/',{initialPause:'title',settings:{textDelayMs:10},clock});
+  assert.equal(scheduled,0);assert.equal(session.next(),false);assert.ok(session.getView().pauseReasons.includes('title'));
+  session.pause('title',false);assert.equal(scheduled,1);session.dispose();
+  assert.throws(()=>createProject({...p,titleScreen:'true'},'https://test.invalid/'),/titleScreen/);
 });

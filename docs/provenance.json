@@ -64,7 +64,7 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "0e897b80cd721faa7122b5c2e9d25c6d219773451f9e85aedb936d91bf118d9a"
+      "targetSha256": "fd6537fe1fd8015c4496e448b94d8ca7d41c2dca35e6cfaf03ed9aced984ac23"
     },
     {
       "target": "editor/collections.mjs",
@@ -125,7 +125,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "f9fc907a61eea4d86a737b74f92b7da20eff8813fa89593b1257c94595d56f3c"
+      "targetSha256": "9ed6ab5727fa453444528648ca234d08bba2246326c1d7f0228c3748eb15371a"
     },
     {
       "target": "editor/style.css",
@@ -230,7 +230,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "086ed9a9cd93b250bc2ae3f70fba116773d9ff29a3d8edc8d0e21534206b59ce"
+      "targetSha256": "127d77c3a5ec2bef9132cc73be419bcb09d700ab8e1809227220d252bf709a14"
     },
     {
       "target": "examples/runtime/assets/voice-test.wav",
@@ -308,7 +308,7 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "cade2ac658894c5bc8393e48890e21c2e0e65d35354ef843b92b6eb8f2e9fcc7"
+      "targetSha256": "8fc9a9f0ce9f49fc4d45e1801dbe5a2c9429be1e696ac8806ab196bedb949a3e"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
@@ -697,13 +697,13 @@
       "target": "src/render/dom-style.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "51d9b57d95ce88297eccdca9ae3bb6c6a2ad845eb0ba4d000a259c918b53882e"
+      "targetSha256": "a5b2730424ccbcbec145b273583d14b36c946913c083e1b186bc5dab9e90fe39"
     },
     {
       "target": "src/render/dom.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "79416db68f19fd66a357d7254835d45305552064492d0b3cdef60b0b7296248d"
+      "targetSha256": "560c9f37fda126f0a316d615f5a3f34db9b09106f4ab03916e6274a739befe4b"
     },
     {
       "target": "src/render/key-visual.ts",
@@ -715,7 +715,7 @@
       "target": "src/render/mount.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "b09714dce0207edb33eb84bf792d6e7f517b61bacc4748197d9c29645a25947b"
+      "targetSha256": "ea89533fb4e542607b2e66d03341c5e2500c2db049481613f68b7ffdb01e4a5b"
     },
     {
       "target": "src/runtime/drivers.ts",
@@ -733,7 +733,7 @@
       "target": "src/runtime/project.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "583764787ac370cca71759be7aa8d00eed83b983af04df6d33099c44564b6de4"
+      "targetSha256": "57460f7d6074cd98f7c13fe8d387eb1ef2e537d518f48ceea5a1756f1877b019"
     },
     {
       "target": "src/runtime/readonly.ts",
@@ -751,7 +751,7 @@
       "target": "src/runtime/session.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "b466d1ed8eeb60b13ea0159252d12f27c79e52bd08111c914eb60be0e8050c27"
+      "targetSha256": "66b2839a4c3f7ba23cf7e3c284d70a0b0e72e32709dc3ad515c11a595e9c28bd"
     },
     {
       "target": "src/script/engine.ts",

@@ -16,6 +16,7 @@ import { KeyVisualLayer } from './key-visual.js';
 export type DOMRendererOptions = { title?: string; font?: string; storage?: StoragePort | null; persistence?: ReturnType<typeof bindSessionPersistence>;
   backup?: ReturnType<typeof createSaveBackup>;
   continuation?: ReturnType<typeof createContinuation>;
+  startAtTitle?: boolean; onBegin?: () => void;
   meta?: ReturnType<typeof createMetaStateStore>; collections?: ProjectCollections; replayOnly?: boolean;
   beginReplay?: (root: HTMLElement, saved: unknown) => () => void; onUnlockAudio?: () => void; onCgPresented?: (id: string) => void };
 
@@ -60,6 +61,10 @@ export class DOMRenderer {
   private lastFocus?: HTMLElement;
   private panelCleanup?: () => void;
   private replayReturn?: () => void;
+  private panelClose?: () => void;
+  private atTitle = false;
+  private hasStarted: boolean;
+  private videoCgVisit = -1;
   private saveKey: string;
   private settingsKey: string;
   private onVisibility: () => void;
@@ -76,6 +81,7 @@ export class DOMRenderer {
   private keyVisualLayer!: KeyVisualLayer;
   constructor(readonly root: HTMLElement, readonly session: RuntimeSession, readonly assets: AssetCatalog, readonly options: DOMRendererOptions = {}) {
     this.document = root.ownerDocument;
+    this.hasStarted = !options.startAtTitle;
     this.saveKey = `vn-engine:${session.driver.game}:save:1`; this.settingsKey = `vn-engine:${session.driver.game}:settings`;
     try { const value = JSON.parse(options.storage?.getItem(this.settingsKey) ?? 'null'); if (isRecord(value)) {
       // Old music=false also disabled ambience. Preserve it once when loading pre-mixer settings.
@@ -113,11 +119,13 @@ export class DOMRenderer {
       ['gallery', 'CG 图鉴', () => this.collection('cg')], ['endings', '结局收藏', () => this.collection('ending')],
       ['evidence', '证据簿', () => this.evidence()], ['settings', '设置', () => this.settings()],
       ['hide', '隐藏界面', () => session.hide(true)], ['fullscreen', '全屏', () => this.fullscreen()],
-      ['sound', '启用声音', () => options.onUnlockAudio?.()], ['restart', '新游戏', () => { session.restart(); this.notify('已开始新游戏'); }]
+      ['sound', '启用声音', () => options.onUnlockAudio?.()], ['restart', '新游戏', () => this.newGame()],
+      ['title', '返回标题', () => this.confirm('返回标题', '返回标题会暂停当前阅读，未保存的位置可在本次会话继续。', () => this.showTitle())]
     ] as const) {
       const button = this.button(label, handler); button.dataset.control = id;
       if ((!options.persistence && (id === 'quick-save' || id === 'quick-load'))
         || (id === 'continue' && (!options.continuation || options.replayOnly))
+        || (id === 'title' && (!options.startAtTitle || options.replayOnly))
         || (id === 'gallery' && !options.collections?.cgs?.length) || (id === 'endings' && !options.collections?.endings?.length)
         || (options.replayOnly && ['save', 'load', 'quick-save', 'quick-load', 'restart'].includes(id))) button.hidden = true;
       this.buttons.set(id, button); this.toolbar.append(button);
@@ -141,6 +149,7 @@ export class DOMRenderer {
         this.readingSize.observe(this.reading);
       }
       this.disconnect = session.subscribe(() => this.render()); this.onVisibility(); this.render();
+      if (options.startAtTitle) this.showTitle();
     } catch (error) { this.dispose(); throw error; }
   }
   private el<K extends keyof HTMLElementTagNameMap>(tag: K, text?: string, className?: string): HTMLElementTagNameMap[K] {
@@ -223,6 +232,7 @@ export class DOMRenderer {
     }
     this.updateTimeline(snapshot, entered);
     this.updateVideo(snapshot, previous, entered);
+    this.presentVideoCg();
     this.keyVisualLayer.update(snapshot, entered);
     if (entered) this.speaker.textContent = frame.speaker;
     if (entered || snapshot.text !== previous?.text) {
@@ -243,7 +253,7 @@ export class DOMRenderer {
       if (snapshot.ready && frame.ending) this.actions.append(this.el('span', frame.ending === 'failure' ? '调查需要重新核对' : '已到达结局'));
     }
     if (entered || snapshot.paused !== previous?.paused) {
-      for (const id of ['auto', 'skip', 'continue', 'save', 'load', 'quick-save', 'quick-load', 'gallery', 'endings', 'history', 'evidence', 'settings', 'hide', 'restart']) this.buttons.get(id)!.disabled = snapshot.paused;
+      for (const id of ['auto', 'skip', 'continue', 'save', 'load', 'quick-save', 'quick-load', 'gallery', 'endings', 'history', 'evidence', 'settings', 'hide', 'restart', 'title']) this.buttons.get(id)!.disabled = snapshot.paused;
       this.buttons.get('skip')!.disabled ||= !snapshot.supportsSkip;
     }
     if (entered) this.buttons.get('evidence')!.hidden = !frame.evidence;
@@ -283,8 +293,14 @@ export class DOMRenderer {
     this.video.pause(); this.video.hidden = true; this.video.removeAttribute('src'); this.video.load();
     const fallback = active.cue.fallback;
     this.videoFallback.classList.toggle('vn-video-fallback-background', fallback?.kind === 'background');
-    if (fallback) { this.paint(this.videoFallback, fallback.asset, fallback.kind); if (fallback.kind === 'cg') this.options.onCgPresented?.(fallback.asset); }
+    if (fallback) { this.paint(this.videoFallback, fallback.asset, fallback.kind); this.presentVideoCg(); }
     if (failed) this.notify('视频暂时无法播放，剧情可以继续');
+  }
+  private presentVideoCg() {
+    const fallback = this.videoState?.cue.fallback;
+    if (!this.session.getView().paused && fallback?.kind === 'cg' && this.videoState?.finished && this.videoFallback.dataset.asset === fallback.asset && this.videoCgVisit !== this.visit) {
+      this.videoCgVisit = this.visit; this.options.onCgPresented?.(fallback.asset);
+    }
   }
   private playVideo(active: NonNullable<DOMRenderer['videoState']>) {
     const attempt = ++active.attempt;
@@ -398,7 +414,7 @@ export class DOMRenderer {
         row.append(heading, detail);
         const button = this.button(mode === 'save' ? `保存到槽位 ${index}` : `读取槽位 ${index}`, () => {
           if (mode === 'load') {
-            try { const loaded = persistence.loadManual(index); if (loaded.status === 'valid') { this.closePanel(); this.notify(`已读取存档 ${index}`); } else this.notify('存档无法读取，原数据已保留'); }
+            try { const loaded = persistence.loadManual(index); if (loaded.status === 'valid') { this.beginReading(); this.notify(`已读取存档 ${index}`); } else this.notify('存档无法读取，原数据已保留'); }
             catch { this.notify('存档无法使用，原数据已保留'); }
             return;
           }
@@ -422,7 +438,7 @@ export class DOMRenderer {
     if (mode === 'load') {
       const auto = persistence.contract.loadAuto();
       const autoButton = this.button('读取自动存档', () => {
-        try { if (persistence.autoLoad().status === 'valid') { this.closePanel(); this.notify('已读取自动存档'); } else this.notify('自动存档无法读取，原数据已保留'); }
+        try { if (persistence.autoLoad().status === 'valid') { this.beginReading(); this.notify('已读取自动存档'); } else this.notify('自动存档无法读取，原数据已保留'); }
         catch { this.notify('自动存档无法使用，原数据已保留'); }
       });
       autoButton.disabled = auto.status !== 'valid';
@@ -433,6 +449,7 @@ export class DOMRenderer {
   private continueGame() {
     try {
       const result = this.options.continuation?.resume();
+      if (result?.status === 'valid') this.beginReading();
       this.notify(result?.status === 'valid' ? '已继续最近的有效存档' : result?.status === 'empty' ? '还没有可以继续的存档' : result?.status === 'unavailable' ? '存储暂不可用，可以重新尝试或开始新游戏' : '没有可恢复的存档，原数据已保留');
     } catch { this.notify('存档暂时无法恢复，当前进度已保留'); }
   }
@@ -462,22 +479,55 @@ export class DOMRenderer {
     let raw: string | null;
     try { if (!this.options.storage) throw new Error(); raw = this.options.storage.getItem(this.saveKey); } catch { this.notify('存储暂不可用'); return; }
     if (raw === null) { this.notify('还没有存档'); return; }
-    try { if (raw.length > 2_000_000) throw new Error(); this.session.restore(JSON.parse(raw)); if (!this.modal.hidden) this.closePanel(); this.notify('已恢复旧单槽存档'); }
+    try { if (raw.length > 2_000_000) throw new Error(); this.session.restore(JSON.parse(raw)); this.beginReading(); this.notify('已恢复旧单槽存档'); }
     catch { this.notify('存档无法使用，原文件已保留'); }
   }
-  private panel(title: string, onClose: () => void = () => this.closePanel()): HTMLElement {
+  private panel(title: string, onClose?: () => void): HTMLElement {
     if (!this.modal.hidden) this.closePanel();
     this.lastFocus = this.document.activeElement instanceof this.document.defaultView!.HTMLElement ? this.document.activeElement as HTMLElement : undefined;
     this.session.pause('panel', true); this.modal.hidden = false; this.modal.replaceChildren(); this.modal.setAttribute('aria-label', title);
     this.stage.inert = true; this.toolbar.inert = true;
     const panel = this.el('div', undefined, 'vn-panel'), head = this.el('div', undefined, 'vn-panel-head');
-    const close = this.button('关闭', onClose), status = this.el('p', '', 'vn-panel-status'); status.setAttribute('role', 'status');
+    this.panelClose = onClose ?? (() => this.dismissPanel());
+    const close = this.button('关闭', this.panelClose), status = this.el('p', '', 'vn-panel-status'); status.setAttribute('role', 'status');
     head.append(this.el('h2', title), close); panel.append(head, status); this.modal.append(panel); close.focus(); return panel;
   }
   private closePanel() {
-    this.panelCleanup?.(); this.panelCleanup = undefined; this.replayReturn = undefined;
+    this.panelCleanup?.(); this.panelCleanup = undefined; this.replayReturn = undefined; this.panelClose = undefined;
     this.modal.hidden = true; this.modal.replaceChildren(); this.stage.inert = false; this.toolbar.inert = false;
     this.session.pause('panel', false); if (this.lastFocus?.isConnected) this.lastFocus.focus(); else this.element.focus();
+  }
+  private dismissPanel() { if (this.atTitle) this.showTitle(); else this.closePanel(); }
+  private beginReading() {
+    this.atTitle = false; this.hasStarted = true; this.element.dataset.title = 'false'; this.options.onBegin?.();
+    this.session.pause('title', false); this.closePanel();
+  }
+  private confirm(title: string, message: string, accept: () => void) {
+    const panel = this.panel(title); panel.append(this.el('p', message), this.button(`确认${title}`, accept), this.button('取消', () => this.dismissPanel()));
+  }
+  private newGame() {
+    this.confirm('开始新游戏', '将从规定开场重新开始。本次未保存位置将被替换；手动存档、快速存档、收藏和设置保留。', () => {
+      this.session.restart(); this.beginReading(); this.notify('已开始新游戏');
+    });
+  }
+  private showTitle() {
+    this.atTitle = true; this.element.dataset.title = 'true'; this.session.pause('title', true);
+    const panel = this.panel(this.options.title ?? '游戏标题', () => {}); panel.classList.add('vn-title-menu');
+    panel.querySelector<HTMLButtonElement>('.vn-panel-head button')!.hidden = true;
+    const add = (label: string, control: string, action: () => void) => { const button = this.button(label, action); button.dataset.control = control; panel.append(button); return button; };
+    if (this.hasStarted) add('继续当前阅读', 'title-resume', () => this.beginReading());
+    const first = add('开始新游戏', 'title-new', () => this.newGame());
+    if (this.options.continuation) {
+      let found: ReturnType<NonNullable<DOMRendererOptions['continuation']>['latest']>;
+      try { found = this.options.continuation.latest(); } catch { found = {status:'unavailable',reason:'Storage unavailable'}; }
+      const button = add('继续上次进度', 'title-continue', () => this.continueGame()); button.disabled = found.status !== 'valid';
+      panel.append(this.el('p', found.status === 'valid' ? `最近存档：${found.value.savedAt} · ${found.value.summary?.title ?? found.value.summary?.sceneId ?? ''}` : found.status === 'empty' ? '尚无存档，可以开始新游戏。' : '没有可继续的有效存档，原有数据已保留。'));
+    }
+    if (this.options.persistence) add('读取存档', 'title-load', () => this.saveManager('load'));
+    add('阅读设置', 'title-settings', () => this.settings());
+    if (this.options.collections?.cgs?.length) add('CG 图鉴', 'title-gallery', () => this.collection('cg'));
+    if (this.options.collections?.endings?.length) add('结局收藏', 'title-endings', () => this.collection('ending'));
+    (panel.querySelector<HTMLButtonElement>('[data-control=title-resume]') ?? first).focus();
   }
   private collection(kind: 'cg' | 'ending') {
     const meta = this.options.meta, entries = kind === 'cg' ? this.options.collections?.cgs : this.options.collections?.endings;
@@ -549,7 +599,7 @@ export class DOMRenderer {
     const backup = this.el('div', undefined, 'vn-backup'); backup.append(this.button('导出存档', () => this.exportSave()));
     const input = this.el('input'); input.type = 'file'; input.accept = '.json,application/json'; input.hidden = true;
     input.addEventListener('change', () => { const request = ++importRequest, file = input.files?.[0]; if (!file) return; if (file.size > 2_000_000) { this.notify('存档文件过大'); return; }
-      void file.text().then(raw => { if (this.disposed || !panel.isConnected || request !== importRequest) return; try { this.session.restore(JSON.parse(raw)); this.closePanel(); this.notify('已导入存档'); } catch { this.notify('导入失败，当前进度保留'); } }).catch(() => { if (panel.isConnected && request === importRequest) this.notify('无法读取文件'); }); });
+      void file.text().then(raw => { if (this.disposed || !panel.isConnected || request !== importRequest) return; try { this.session.restore(JSON.parse(raw)); this.beginReading(); this.notify('已导入存档'); } catch { this.notify('导入失败，当前进度保留'); } }).catch(() => { if (panel.isConnected && request === importRequest) this.notify('无法读取文件'); }); });
     backup.append(this.button('导入存档', () => input.click()), input); panel.append(backup);
     if (this.options.backup) {
       const all = this.el('div', undefined, 'vn-backup'), file = this.el('input'); file.type = 'file'; file.accept = '.json,application/json'; file.hidden = true; file.dataset.import = 'backup';
@@ -593,7 +643,7 @@ export class DOMRenderer {
       confirm.disabled = true;
       try {
         const result = backup.commit(preview);
-        if (result.status === 'saved') { this.closePanel(); this.notify(`已恢复 ${preview.slots.length} 个存档，请在读档面板选择继续`); }
+        if (result.status === 'saved') { this.dismissPanel(); this.notify(`已恢复 ${preview.slots.length} 个存档，请在读档面板选择继续`); }
         else if (result.status === 'conflict') this.notify('槽位在预览后发生变化，请重新选择备份并预览');
         else this.notify(result.rollbackFailed ? '恢复未完成，部分槽位无法还原，请保留备份并检查存档' : '恢复失败，原有槽位已保留');
       } catch { this.notify('恢复未完成，请重新选择备份并预览'); }
@@ -604,7 +654,7 @@ export class DOMRenderer {
   private key(event: KeyboardEvent) {
     if (event.defaultPrevented || event.repeat || event.isComposing || event.ctrlKey || event.metaKey || event.altKey) return;
     if (!this.modal.hidden) {
-      if (event.key === 'Escape') { event.preventDefault(); if (this.replayReturn) this.replayReturn(); else this.closePanel(); }
+      if (event.key === 'Escape') { event.preventDefault(); if (this.replayReturn) this.replayReturn(); else this.panelClose?.(); }
       if (event.key === 'Tab') {
         const items = [...this.modal.querySelectorAll<HTMLElement>('button:not(:disabled),input:not(:disabled),select:not(:disabled),textarea:not(:disabled),summary,a[href],[tabindex]:not([tabindex="-1"])')]
           .filter(node => !node.closest('[hidden],[inert]') && node.getClientRects().length > 0);

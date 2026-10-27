@@ -68,9 +68,10 @@ export class RuntimeSession {
   private readonly rollbackHistory: RollbackHistory;
   private miniGame?: MiniGameSession;
   private miniGameError?: string;
-  constructor(readonly driver: RuntimeDriver, options: { settings?: Partial<RuntimeSettings>; clock?: Clock; rollback?: RollbackOptions } = {}) {
+  constructor(readonly driver: RuntimeDriver, options: { settings?: Partial<RuntimeSettings>; clock?: Clock; rollback?: RollbackOptions; initialPause?: string } = {}) {
     this.clock = options.clock ?? systemClock; this.settings = Object.freeze(runtimeSettings(options.settings ?? {}));
     this.rollbackHistory = new RollbackHistory(options.rollback);
+    if (options.initialPause) this.pauses.add(options.initialPause);
     this.enter('start');
   }
   private readonly clock: Clock;
