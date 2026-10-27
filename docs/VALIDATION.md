@@ -80,3 +80,5 @@ npm run build:studio -- build/studio
 Windows 构建和原生检查命令见 [WINDOWS.md](WINDOWS.md)。原生实际执行、系统文件对话框人工操作、签名安装发行与实体设备验收分别记录。
 
 保留此前的 [0.2.1](VALIDATION-v0.2.1.md)、[0.2.0](VALIDATION-v0.2.0.md)、[0.1](VALIDATION-v0.1.0.md) 证据。当前时间线支持位移 / 缩放 / 透明度与镜头关键帧；完整 Rollback、收藏专用作者控件及 Key Visual 生命周期约束仍未实现。正式游戏迁移继续等待用户主动提出。
+
+Key Visual 提交 `45e76c4` 的 Windows 工作流成功，浏览器 CI 在作者控件中发现异步 toggle 事件与属性重建竞争：修改资源后面板可能收起。修复在重建前同步读取实际展开状态；该失败保留记录，修复结果以新提交 CI 为准。

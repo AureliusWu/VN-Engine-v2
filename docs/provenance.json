@@ -64,7 +64,7 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "6086f9f28962c53777a45f5c199e6995cfb112e2304a5651991ec2b2541d165c"
+      "targetSha256": "02435160eac4568ff9fa3b294656604d3cd664bf4a6fe0a1ebfa00651e11cb13"
     },
     {
       "target": "editor/collections.mjs",

@@ -170,7 +170,11 @@ function renderCue(parent, path) {
   renderPresentationEditor(parent, path, { element, field, action, valueAt, set, assets, section: inspectorSection });
 }
 function renderInspector() {
-  const root = $('inspector'), node = graphNode(); root.replaceChildren();
+  const root = $('inspector'), node = graphNode();
+  for (const details of root.querySelectorAll('details[data-inspector-section]')) {
+    if (details.open) openInspectorSections.add(details.dataset.inspectorSection); else openInspectorSections.delete(details.dataset.inspectorSection);
+  }
+  root.replaceChildren();
   if (!node) { root.append(element('p', '选择场景节点以编辑。兼容剧本可通过 JSON 面板保留原格式。', { class: 'help' })); return; }
   const project = model.getView().project, path = node.path, data = valueAt(path);
   field(root, '节点 ID', node.id, id => mutate(() => { selected = model.rename(selected, id); }, true));

@@ -46,8 +46,11 @@ try {
   await page.locator('[data-tab=source]').click();
   const source = page.locator('#source'), project = JSON.parse(await source.inputValue()); project.assets.push({ id: 'brand', kind: 'ui', src: 'assets/letter.svg' });
   await source.fill(JSON.stringify(project)); await page.locator('[data-command=apply-source]').click(); await page.locator('[data-tab=story]').click();
-  const section = page.locator('#inspector > details').filter({ hasText: '正式图层与时间线' }); await section.evaluate(node => { node.open = true; });
-  await section.getByLabel('装饰视觉资源', { exact: true }).selectOption('brand');
+  const section = page.locator('#inspector > details').filter({ hasText: '正式图层与时间线' });
+  await section.evaluate(node => {
+    node.open = true; const input = node.querySelector('[aria-label="装饰视觉资源"]'); input.value = 'brand'; input.dispatchEvent(new Event('change'));
+  });
+  assert.equal(await section.evaluate(node => node.open), true, 'a synchronous edit preserves open state before toggle events run');
   await section.getByLabel('装饰视觉时长 ms', { exact: true }).fill('10000'); await section.getByLabel('装饰视觉时长 ms', { exact: true }).blur();
   await page.frameLocator('#preview').locator('.vn-key-visual').waitFor({ state: 'visible' });
   await section.getByLabel('装饰视觉范围', { exact: true }).selectOption('fullscreen'); assert.equal(await page.locator('[data-command=export]').isDisabled(), true);
