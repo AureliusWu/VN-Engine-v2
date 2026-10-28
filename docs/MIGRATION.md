@@ -58,3 +58,7 @@ python -m tools.compare_rain /path/to/snapshots/Rain --out rain-report.json
 ```
 
 比较器会执行显式提供的本地 TypeScript 原码，仅用于受信源码的开发验证。Circuit 的原美术装饰器在比较中替换为恒等函数，检查的是玩法状态；真实 UI 与素材必须另做回归。
+
+## R1 v0.5.0 AI 接口兼容
+
+项目、编辑器与存档 schema 1 保留，vn-agent-v1 是独立开发协议，不是新的存档格式。新项目可从 [AI 入口](AI_DEVELOPMENT.md) 创建；旧项目读取和编辑仍受原 ID、版本、回看及路线保护。SDK 批次不会自动改 game / storyVersion，不重编号既有内容，不改玩家存储。本轮不执行四作和 RESET 迁移。

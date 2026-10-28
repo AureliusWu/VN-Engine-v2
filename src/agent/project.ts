@@ -50,7 +50,16 @@ export function referenceItems(document: EditorDocument, kind: string, id: strin
   }
   if (kind === 'node') {
     const node = selectNode(model, id, chapterId), graph = model.graph();
-    return graph.edges.filter(edge => edge.to === node.key || edge.from === node.key).map(edge => ({ direction: edge.to === node.key ? 'incoming' : 'outgoing', ...edge }));
+    const refs: any[] = graph.edges.filter(edge => edge.to === node.key || edge.from === node.key).map(edge => ({ direction: edge.to === node.key ? 'incoming' : 'outgoing', ...edge }));
+    const add = (path: (string | number)[], role: string) => refs.push({ direction: 'incoming', path, role });
+    if (node.entry) add(project.type === 'script' ? ['program','entry'] : project.type === 'investigation' ? ['chapters',project.chapters.findIndex(c => c.id === node.chapter),'entryNode'] : ['entry'], 'entry');
+    for (const entry of presentationEntries(project)) if (project.type === 'narrative' && entry.path[1] === 'scenes' && entry.id === id || project.type === 'investigation' && entry.id === `${node.chapter}/${id}`) add(entry.path, 'presentation');
+    project.routeTests?.cases.forEach((test,i) => {
+      const line = project.type === 'investigation' ? `${node.chapter}/${id}` : undefined;
+      if (test.expect.sceneId === id && (project.type !== 'investigation' || test.expect.lineId === line || graph.nodes.filter(n => n.id === id).length === 1)) add(['routeTests','cases',i,'expect','sceneId'], 'route');
+      if (line && test.expect.lineId === line) add(['routeTests','cases',i,'expect','lineId'], 'route');
+    });
+    return refs;
   }
   if (!project.assets.some(asset => asset.id === id)) throw new AgentError('NOT_FOUND', 'Asset does not exist', { assetId: id });
   const refs: any[] = [], add = (value: unknown, path: (string | number)[]) => { if (value === id) refs.push({ direction: 'incoming', path }); };
@@ -72,7 +81,7 @@ export function agentProjectDiagnostics(model: EditorModel): AgentDiagnostic[] {
   try {
     for (const item of model.diagnostics()) {
       let node: EditorNode | undefined; if (item.node) node = model.graph().nodes.find(n => n.key === item.node);
-      diagnostics.push({ code: 'PROJECT_' + item.code.toUpperCase().replace(/-/g, '_'), severity: item.severity, message: item.message,
+      diagnostics.push({ code: 'PROJECT_' + item.code.toUpperCase().replace(/-/g, '_'), severity: item.severity, message: item.message, ...(item.path ? { path: item.path } : {}),
         ...(node ? { nodeId: node.id, path: node.path, ...(node.chapter ? { chapterId: node.chapter } : {}) } : {}) });
     }
     if (p.type !== 'rain') {

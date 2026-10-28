@@ -108,3 +108,19 @@ test('agent imports have no browser, storage, audio or filesystem initialization
   const before = globalThis.localStorage; Object.defineProperty(globalThis, 'localStorage', { configurable: true, get() { throw Error('storage accessed on import'); } });
   try { await import('../dist/agent/index.js?isolated-import'); } finally { Object.defineProperty(globalThis, 'localStorage', { configurable: true, value: before }); }
 });
+
+test('agent preserves wrapper extension metadata and rejects orphan presentation targets', async () => {
+  const doc=JSON.parse(new EditorModel(newProject('vn')).serialize());doc.authorTools={notes:['keep me'],revision:8};const source=text(doc);
+  const changed=await apply(source,[{op:'project.patch',value:{title:'Extension retained'}}]);assert.equal(changed.response.status,'PASS');assert.deepEqual(JSON.parse(changed.candidate.sourceText).authorTools,doc.authorTools);
+  const orphan=await apply(source,[{op:'stage.set',scope:'line',id:'missing-line',value:{}}]);assert.equal(orphan.candidate,undefined);assert.ok(orphan.response.diagnostics.some(d=>d.code==='PROJECT_PRESENTATION_TARGET_MISSING'));
+});
+
+test('agent bounds diagnostic-heavy failure responses and retains no write candidate', async () => {
+  const p=newProject('vn');p.assets=Array.from({length:1800},(_,i)=>({id:'asset-'+i,kind:'background',src:'assets/'+i+'.svg'}));
+  const result=await call('validate',{},text(p),{readAsset:async()=>{throw Error('Missing physical file')}});
+  assert.equal(result.response.status,'UNVERIFIED');assert.equal(result.response.diagnostics.at(-1).code,'BUDGET_EXCEEDED');assert.ok(result.response.data.diagnosticsTotal>1000);assert.ok(Buffer.byteLength(JSON.stringify(result.response))<=65536);assert.equal(result.candidate,undefined);
+});
+
+test('agent presentation removal repairs orphan bindings and node refs include entry/routes', async()=>{
+ const p=newProject('vn');p.stage={lines:{orphan:{pauseMs:10}}};const repaired=await apply(text(p),[{op:'stage.remove',scope:'line',id:'orphan'},{op:'route.put',id:'route',value:{steps:[],expect:{sceneId:'start'}}}]);assert.equal(repaired.response.status,'PASS');const refs=(await call('refs',{kind:'node',id:'start'},repaired.candidate.sourceText)).response;assert.ok(refs.data.items.some(r=>r.role==='entry'));assert.ok(refs.data.items.some(r=>r.role==='route'));
+});

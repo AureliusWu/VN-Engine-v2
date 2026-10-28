@@ -112,3 +112,7 @@ test('Studio builds are complete local bundles and exported editor projects buil
   const { writeFile } = await import('node:fs/promises');
   for (const kind of ['vn', 'chat', 'script', 'investigation']) { const model = new EditorModel(newProject(kind)); const source = join(root, kind + '.json'); await writeFile(source, model.serialize(true)); const build = await packageGame(source, join(root, kind)); assert.ok((await readdir(build.output)).includes('project.json')); }
 });
+
+test('shared author validation rejects orphan presentation keys and exposes their field paths',()=>{
+ const model=new EditorModel(newProject('vn'));model.set(['stage','lines','orphan'],{pauseMs:10});const diagnostic=model.diagnostics().find(d=>d.code==='presentation-target-missing');assert.deepEqual(diagnostic.path,['stage','lines','orphan']);
+});

@@ -10,8 +10,9 @@ import { inspectItems, referenceItems, agentProjectDiagnostics } from './project
 
 export function agentCapabilities() {
   return { protocol: AGENT_PROTOCOL, limits: AGENT_LIMITS, commands: Object.keys(COMMAND_SCHEMAS), operations: OPERATION_DEFINITIONS.map(schema => schema.properties.op.const),
-    templates: ['vn', 'chat', 'script', 'investigation'], projectTypes: ['narrative', 'script', 'investigation', 'rain'],
+    templates: ['vn', 'chat', 'script', 'investigation'], templateTypes: { vn: 'narrative', chat: 'narrative', script: 'script', investigation: 'investigation' }, projectTypes: ['narrative', 'script', 'investigation', 'rain'],
     compatibility: { projectSchema: 1, editorSchema: 1, saveSchema: 1, rain: 'native-format-read-validate-test-preview-build' },
+    operationScopes: { variable: ['script'], chapter: ['investigation'], evidence: ['investigation'], action: ['investigation'], line: ['narrative','script'], choice: ['narrative','script'], exit: ['script'], rainNodes: 'native-read-only' },
     hostPorts: ['readAsset', 'preview', 'build'], schemas: Object.fromEntries(['request', 'response', 'operation'].map(name => [name, { id: `urn:vn-agent-v1:${name}`, file: `schemas/vn-agent-v1.${name}.schema.json` }])),
     exitCodes: { PASS: 0, FAIL: 1, BLOCKED: 2, UNVERIFIED: 3 }, batch: { stableIds: true, finalValidation: true, expectedSourceSha256: true, dryRun: true, playerStorageWrites: false } };
 }
@@ -51,12 +52,13 @@ function page(response: AgentResponse, items: any[], request: AgentRequest, sha:
   data.truncated = index < items.length; data.nextCursor = data.truncated ? token(index, 0) : null; response.data = data;
 }
 function differences(before: any, after: any) {
-  const changes: { path: (string | number)[]; change: string }[] = []; let truncated = false;
+  const changes: { path: (string | number)[]; change: string; before?: unknown; after?: unknown }[] = []; let truncated = false;
+  const preview = (value: any) => { if (value === undefined) return undefined; const text = JSON.stringify(value); return text.length > 256 ? { preview: text.slice(0,256), truncated: true } : value; };
   const walk = (a: any, b: any, path: (string | number)[]) => {
     if (JSON.stringify(a) === JSON.stringify(b)) return;
     if (changes.length >= 128) { truncated = true; return; }
     if (a && b && typeof a === 'object' && typeof b === 'object' && Array.isArray(a) === Array.isArray(b)) for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) walk(a[key], b[key], [...path, Array.isArray(a) ? Number(key) : key]);
-    else changes.push({ path, change: a === undefined ? 'added' : b === undefined ? 'removed' : 'changed' });
+    else { const item = { path, change: a === undefined ? 'added' : b === undefined ? 'removed' : 'changed', before: preview(a), after: preview(b) }; if (utf8Bytes(JSON.stringify([...changes, item])) <= 8192) changes.push(item); else truncated = true; }
   }; walk(before, after, []); return { changes, truncated };
 }
 async function resources(project: EngineProject, context: AgentContext, check: () => void): Promise<AgentDiagnostic[]> {
@@ -130,7 +132,7 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
     if (response.diagnostics.some(d => d.severity === 'error')) { response.ok = false; response.status = 'FAIL'; response.data = { validated: false }; return result; }
     if (request.command === 'apply') {
       if (response.diagnostics.some(d => d.code === 'ASSETS_UNVERIFIED')) throw new AgentError('ASSETS_UNVERIFIED', 'Asset bytes must be validated before preparing a write', {}, 'UNVERIFIED');
-      const text = model.serialize(!wrapped), after = await sourceHash(text);
+      const serialized = model.serialize(!wrapped), text = wrapped ? JSON.stringify({ ...JSON.parse(sourceText), ...JSON.parse(serialized) }, null, 2) + '\n' : serialized, after = await sourceHash(text);
       result.candidate = { document: readDocument(text), sourceText: text, beforeSha256: sha, afterSha256: after };
       response.data = { dryRun: !!params.dryRun, applied: false, beforeSha256: sha, afterSha256: after, ...differences(JSON.parse(sourceText), JSON.parse(text)) }; check(); return result;
     }
@@ -154,4 +156,15 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
     if (utf8Bytes(JSON.stringify(response)) > AGENT_LIMITS.outputBytes) throw new AgentError('BUDGET_EXCEEDED', 'Response exceeds byte budget; narrow the request', {}, 'UNVERIFIED');
     return result;
   } catch (error) { delete result.candidate; failAgent(response, error); return result; }
+  finally {
+    // Early validation failures and host errors are subject to the same wire budget as successes.
+    if (utf8Bytes(JSON.stringify(response)) > AGENT_LIMITS.outputBytes) {
+      delete result.candidate;
+      const count = response.diagnostics.length;
+      response.ok = false; response.status = 'UNVERIFIED'; response.data = { truncated: true, diagnosticsTotal: count };
+      response.diagnostics = [{ code: 'BUDGET_EXCEEDED', severity: 'error', message: 'Response exceeds 65536 UTF-8 bytes; narrow the request. No write candidate was retained.', path: [] }];
+      response.artifacts = response.artifacts.slice(0, 4);
+      if (utf8Bytes(JSON.stringify(response)) > AGENT_LIMITS.outputBytes) { response.artifacts = []; response.project = null; }
+    }
+  }
 }

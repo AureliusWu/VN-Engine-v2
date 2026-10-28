@@ -15,3 +15,5 @@ Ren’Py SDK 未包含在仓库内，其自身与所含第三方组件依原许�
 0.2 新增解释器、调度、DOM/媒体宿主与打包器为本仓库自研代码。examples/runtime 的 SVG 和合成测试音是代码生成的技术示例。VN Runtime Sans 同样由上述 OFL 字体子集化并改名，其许可随项目资源一同分发。
 
 0.3 的编辑器、作者命令和 Windows 宿主为本仓库新实现。编辑器字体 VN Studio Sans 由同一 OFL 源字体子集化并改名，许可随 `editor/OFL.txt` 分发。Windows 使用 .NET/WinForms 与 Microsoft.Web.WebView2 SDK；对应代码与组件依其 [Microsoft .NET 许可](https://github.com/dotnet/runtime/blob/main/LICENSE.TXT) 和 [WebView2 SDK 许可](https://www.nuget.org/packages/Microsoft.Web.WebView2/1.0.3537.50/License) 使用。系统 WebView2 Runtime 不存入源码库，遵循 Microsoft 分发条款。
+
+0.5 的 AI SDK、CLI 与技术流程为本仓库新实现。独立接口样例的 VN Agent Sans 同样由固定 Rain 源字体子集化并改名，许可见 `examples/agent/assets/OFL.txt`；不包含正式角色资产或原作剧情。

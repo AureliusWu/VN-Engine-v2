@@ -15,7 +15,7 @@ export type Position = { x: number; y: number };
 export type EditorDocument = { format: 'vn-engine-editor'; schema: 1; project: EngineProject; positions: Record<string, Position> };
 export type EditorNode = { key: string; id: string; title: string; text: string; path: (string | number)[]; chapter?: string; entry: boolean; ending: boolean };
 export type EditorEdge = { from: string; to: string; label: string; path: (string | number)[] };
-export type Diagnostic = { severity: 'error' | 'warning'; code: string; message: string; node?: string };
+export type Diagnostic = { severity: 'error' | 'warning'; code: string; message: string; node?: string; path?: (string | number)[] };
 const keyFor = (id: string, chapter?: string) => JSON.stringify(chapter ? [chapter, id] : [id]);
 const record = (value: unknown): value is Record<string, any> => isRecord(value); // JSON authoring boundary, checked before use.
 
@@ -94,6 +94,11 @@ export function diagnoseProject(project: EngineProject, availableFiles?: Readonl
   const dynamicRouting = project.type === 'narrative' && !!project.adapter && project.scenes.some(scene => scene.resolve);
   if (dynamicRouting) add('warning', 'dynamic-routing', '兼容适配器按数值解析动态结局；静态图不推断这些连线，请通过试玩核对。');
   else for (const node of graph.nodes) if (!visited.has(node.key)) add('warning', 'unreachable', '没有从入口连到此节点：' + node.id, node.key);
+  const presentationTargets = project.type === 'narrative'
+    ? [[project.stage?.scenes, new Set(graph.nodes.map(n => n.id)), 'scenes'], [project.stage?.lines, new Set(project.scenes.flatMap(scene => scene.lines.map((line, i) => line.id ?? `${scene.id}/${i}`))), 'lines']] as const
+    : project.type === 'investigation' ? [[project.stage?.nodes, new Set(graph.nodes.map(n => `${n.chapter}/${n.id}`)), 'nodes']] as const : [];
+  for (const [map, targets, key] of presentationTargets) for (const id of Object.keys(map ?? {})) if (!targets.has(id))
+    result.push({ severity: 'error', code: 'presentation-target-missing', message: '演出目标不存在：' + id, path: ['stage', key, id] });
   const assets = new Map(project.assets.filter(record).map(a => [a.id, a]));
   const binding = (id: unknown, kind: string, label: string, node?: string) => {
     if (id === undefined || id === null || id === '') return;

@@ -52,3 +52,16 @@ test('resource symlinks, missing bytes, invalid encoding and report overwrite ar
  const before=await fs.readFile(file);const report=await runAgentFileRequest(req('test',file,{output:file}));assert.equal(report.diagnostics.at(-1).code,'OUTPUT_EXISTS');assert.deepEqual(await fs.readFile(file),before);
  await fs.writeFile(file,Buffer.from([255]));assert.equal((await runAgentFileRequest(req('inspect',file))).diagnostics.at(-1).code,'INVALID_ENCODING');
 });
+test('interrupted receipt finalization reports actual committed SHA and reconciles once',async t=>{
+ const {file,first}=await fixture(t),request=edit(file,first.project.sourceSha256,'finalize');
+ const partial=await runAgentFileRequestInProcess(request,{onPhase:phase=>{if(phase==='renamed')throw Error('simulated journal finalization failure')}});assert.equal(partial.diagnostics.at(-1).code,'JOURNAL_ERROR');assert.equal(partial.data.applied,true);
+ const inspected=await runAgentFileRequest(req('inspect',file));assert.equal(partial.project.sourceSha256,inspected.project.sourceSha256);assert.notEqual(partial.project.sourceSha256,first.project.sourceSha256);
+ const recovered=await runAgentFileRequest(request);assert.equal(recovered.status,'PASS');assert.equal(recovered.data.replayed,true);assert.equal(recovered.project.sourceSha256,inspected.project.sourceSha256);
+});
+test('invalid large envelopes remain bounded and schema-valid through Node SDK',async()=>{
+ for(const value of [{protocol:'x'.repeat(100000),requestId:'',command:'capabilities',params:{}},{protocol:'vn-agent-v1',requestId:'',command:'x'.repeat(100000),params:{}}]){const response=await runAgentFileRequest(value);assert.equal(response.ok,false);assert.ok(Buffer.byteLength(JSON.stringify(response))<=65536);assert.ok(response.requestId);}
+});
+test('Node SDK works from eval/stdin module hosts without inheriting incompatible process flags',()=>{
+ const module=new URL('../tools/agent-node.mjs',import.meta.url).href;const code=`import {runAgentFileRequest} from ${JSON.stringify(module)};console.log(JSON.stringify(await runAgentFileRequest({protocol:'vn-agent-v1',requestId:'stdin',command:'capabilities',params:{}})));`;
+ const child=spawnSync(process.execPath,['--input-type=module','-e',code],{encoding:'utf8'});assert.equal(child.status,0,child.stderr);assert.equal(JSON.parse(child.stdout).status,'PASS');
+});

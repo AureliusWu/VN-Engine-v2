@@ -56,9 +56,9 @@ PASS 表示该命令声明的技术范围通过。FAIL 表示实际错误；BLOC
 
 ## 有界读取
 
-默认每页 20 项 / 16384 UTF-8 字节，最大 100 项 / 65536 字节，最小预算 4096 字节。`data.truncated` 和 `nextCursor` 明确是否还有数据；下一次保持 kind / id / chapterId，传回 cursor。游标绑定源 SHA 和查询范围，变化后返回 STALE_CURSOR，需重新读取。
+默认每页 20 项 / 16384 UTF-8 字节，最大 100 项 / 65536 字节，最小预算 4096 字节（按 JSON 编码计算，不含 CLI 行尾换行）。`data.truncated` 和 `nextCursor` 明确是否还有数据；下一次保持 kind / id / chapterId，传回 cursor。游标绑定源 SHA 和查询范围，变化后返回 STALE_CURSOR，需重新读取。
 
-单实体大于预算时返回 `fragment: {id,encoding:"json-text",offset,text,complete}`，按游标顺序拼接 text，complete 时对拼接结果 JSON.parse；不截断或丢弃作者文本。普通 items 与片段按顺序消费。refs 只查询真实结构字段，不通过全文模糊匹配推断引用。
+单实体大于预算时返回 `fragment: {id,encoding:"json-text",offset,text,complete}`，按游标顺序拼接 text，complete 时对拼接结果 JSON.parse；不截断或丢弃作者文本。普通 items 与片段按顺序消费。节点 refs 包含连线、入口、演出与路线断言；refs 只查询真实结构字段，不通过全文模糊匹配推断引用。
 
 ## 稳定 ID 批量编辑
 
@@ -75,12 +75,12 @@ PASS 表示该命令声明的技术范围通过。FAIL 表示实际错误；BLOC
 | evidence.put/rename/remove | chapterId + id；同步证据条件、动作与可归属路线期望 |
 | action.put/remove | chapterId + nodeId + id；调查动作 / 证据效果 |
 | asset.put/remove | id；本地 src / kind / sha256 / license 等；资源文件由宿主另行提供，不由 JSON 执行文件代码 |
-| stage.set | scope defaults/node/line；nodeId / chapterId / 台词 id 按项目定位；value 为已有 StageCue |
+| stage.set/remove | scope defaults/node/line；nodeId / chapterId / 台词 id 按项目定位；set 的 value 为已有 StageCue；remove 可清除失效绑定，删除节点前可在同批清理其演出表 |
 | route.put/remove | id；steps / expect 使用现有真实路线协议 |
 
 最多 128 操作；批次内部可暂时缺少出口目标，最终状态必须通过作者模型、运行时与实际资源校验。现有 rename / remove 的引用、回看身份和类型保护不因批次绕过；遇到保护应先在批内显式修改相关引用或拆分意图，不能直接跳过校验。未修改扩展字段与编辑器 positions 保留。
 
-`dryRun:true` 不写工程或回执，返回 before/after SHA、最多 128 个变更字段路径及 truncated 标记。正式写入用相同 expected SHA 与新请求 ID；原文件变化则 SOURCE_CONFLICT，重新 inspect 后重整批次。
+`dryRun:true` 不写工程或回执，返回 before/after SHA、最多 128 个变更字段路径、before / after 值或片段（差异总计最多 8192 字节）及 truncated 标记。正式写入用相同 expected SHA 与新请求 ID；原文件变化则 SOURCE_CONFLICT，重新 inspect 后重整批次。
 
 ## 并发与断点恢复
 
@@ -94,7 +94,7 @@ Node SDK 在同目录创建 `project.json.agent-lock` 和 `project.json.agent-jo
 
 ## 从零到独立包：完整可执行样例
 
-两个独立工程的内容都仅通过接口写入；样例脚本只另行提供一张原创技术 SVG。每轮输出使用新目录。
+两个独立工程的内容都仅通过接口写入；样例脚本另行提供一张原创技术 SVG 和带许可、改名的 OFL 字体子集。每轮输出使用新目录。
 
 ```sh
 npm ci
@@ -149,11 +149,11 @@ for (const [command, params] of [
 | --- | --- | --- |
 | 协议 | MALFORMED_JSON / INVALID_REQUEST / INVALID_ARGUMENT / PROTOCOL_UNSUPPORTED / UNKNOWN_COMMAND / INVALID_ENCODING | 修正请求 / 编码，保留 JSON 结构 |
 | 定位与模型 | PROJECT_REQUIRED / INVALID_PROJECT / PROJECT_SHAPE / NOT_FOUND / REFERENCE_AMBIGUOUS / INVALID_ID / OPERATION_FAILED / INVALID_OPERATION / OPERATION_UNSUPPORTED / REPLAY_RECAPTURE_REQUIRED | 查看 path / operation，修正定位或载荷；模型保护原因在 message |
-| 引用与验证 | AUTHOR_* / VALIDATION_FAILED / ASSET_UNREADABLE / ASSET_PATH_UNSAFE / ASSET_HASH_MISMATCH / ASSETS_UNVERIFIED | 修复结构、类型、引用、资源或注入实际资源端口 |
+| 引用与验证 | PROJECT_* / ROUTE_REFERENCE_MISSING / PROJECT_PRESENTATION_TARGET_MISSING / VALIDATION_FAILED / ASSET_UNREADABLE / ASSET_PATH_UNSAFE / ASSET_HASH_MISMATCH / ASSETS_UNVERIFIED | 修复结构、类型、引用、资源或注入实际资源端口 |
 | 读取 | INVALID_CURSOR / STALE_CURSOR / BUDGET_EXCEEDED | 重新读取、缩小范围或预算内分批 |
 | 文件事务 | SOURCE_CONFLICT / REQUEST_REUSED / REPLAY_CONFLICT / LOCKED / RECOVERY_REQUIRED / JOURNAL_ERROR / JOURNAL_FULL | 按前文核对源字节与请求日志，不盲目重放 |
 | 宿主 | FILE_NOT_FOUND / PROJECT_PATH_UNSAFE / IO_ERROR / OUTPUT_EXISTS / HOST_PORT_REQUIRED | 检查路径、输出或端口；已有内容不覆盖 |
 | 执行 | ROUTE_FAILED / PREVIEW_STATE_MISMATCH / PREVIEW_RENDER_FAILED / PREVIEW_ERROR / BUILD_ERROR / BUILD_IDENTITY_CONFLICT / RELEASE_GATE_BLOCKED | 看实际路线 / 资源 / 门禁原因，不提升人工状态 |
 | 中断 | TIMEOUT / ABORTED / WORKER_ERROR / WORKER_EXIT / INTERNAL_ERROR | 未验证；写入可能已完成时按回执恢复 |
 
-作者模型诊断码保留为 `AUTHOR_` 加原码大写（连字符转下划线）；具体校验原因不被稳定错误码替代。协议 schema 与模型 schema 共同定义有效数据，扩展未声明能力需升级协议或清楚标识兼容扩展。
+作者模型诊断码保留为 `PROJECT_` 加原码大写（连字符转下划线）；具体校验原因不被稳定错误码替代。协议 schema 与模型 schema 共同定义有效数据，扩展未声明能力需升级协议或清楚标识兼容扩展。

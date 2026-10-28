@@ -26,6 +26,7 @@ export const OPERATION_DEFINITIONS: Schema[] = [
   op('action.put', { chapterId: text, nodeId: text, id: text, value: object }, ['chapterId', 'nodeId', 'id', 'value']), op('action.remove', { chapterId: text, nodeId: text, id: text }, ['chapterId', 'nodeId', 'id']),
   op('asset.put', { id: text, value: object }, ['id', 'value']), op('asset.remove', { id: text }, ['id']),
   op('stage.set', { scope: enumOf('defaults', 'node', 'line'), nodeId: text, chapterId: text, id: text, value: object }, ['scope', 'value']),
+  op('stage.remove', { scope: enumOf('defaults', 'node', 'line'), nodeId: text, chapterId: text, id: text }, ['scope']),
   op('route.put', { id: text, value: object }, ['id', 'value']), op('route.remove', { id: text }, ['id'])
 ];
 export const AGENT_OPERATION_SCHEMA: Schema = { $schema: 'https://json-schema.org/draft/2020-12/schema', $id: 'urn:vn-agent-v1:operation', oneOf: OPERATION_DEFINITIONS };
@@ -48,7 +49,7 @@ export const AGENT_RESPONSE_SCHEMA: Schema = { $schema: 'https://json-schema.org
   ...shape({ protocol: { const: AGENT_PROTOCOL }, engineVersion: text, requestId: text, command: text, ok: bool, status: enumOf('PASS', 'FAIL', 'BLOCKED', 'UNVERIFIED'),
     project: { anyOf: [{ type: 'null' }, shape({ game: text, storyVersion: text, sourceSha256: hash }, ['game', 'storyVersion', 'sourceSha256'])] }, data: {},
     diagnostics: { type: 'array', items: shape({ code: text, severity: enumOf('error', 'warning', 'info'), message: { type: 'string' }, path: { type: 'array', items: { anyOf: [{ type: 'string' }, { type: 'integer' }] } }, nodeId: text, chapterId: text, assetId: text, operation: integer(0, 127), expected: {}, actual: {} }, ['code', 'severity', 'message']) },
-    artifacts: { type: 'array', items: shape({ kind: text, path: text, sha256: hash }, ['kind', 'path']) }
+    artifacts: { type: 'array', items: shape({ kind: text, path: { type: 'string', minLength: 1, maxLength: 4096 }, sha256: hash }, ['kind', 'path']) }
   }, ['protocol', 'engineVersion', 'requestId', 'command', 'ok', 'status', 'project', 'data', 'diagnostics', 'artifacts']) };
 
 /** Validator for the JSON Schema vocabulary emitted above; no executable author input. */

@@ -794,6 +794,45 @@
       "type": "object",
       "properties": {
         "op": {
+          "const": "stage.remove"
+        },
+        "scope": {
+          "type": "string",
+          "enum": [
+            "defaults",
+            "node",
+            "line"
+          ]
+        },
+        "nodeId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "pattern": "\\S"
+        },
+        "chapterId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "pattern": "\\S"
+        },
+        "id": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "pattern": "\\S"
+        }
+      },
+      "required": [
+        "op",
+        "scope"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "op": {
           "const": "route.put"
         },
         "id": {

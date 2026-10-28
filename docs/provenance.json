@@ -158,6 +158,32 @@
       "targetSha256": "5f203529cf6bd09b2173bd225ca2352780184e08d2e839309dd010cbd7df6c97"
     },
     {
+      "target": "examples/agent/assets/agent.woff2",
+      "mode": "adapted",
+      "origins": [
+        {
+          "repository": "AureliusWu/Rain",
+          "commit": "d96510fc73ebe6a354bbf638613f8e4483f3366b",
+          "path": "game/fonts/SourceHanSansLite.ttf",
+          "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
+        }
+      ],
+      "targetSha256": "496dfe2f5693a3820450f9e684f737cdd062e36d360e6a30557624349549986a"
+    },
+    {
+      "target": "examples/agent/assets/OFL.txt",
+      "mode": "verbatim",
+      "origins": [
+        {
+          "repository": "AureliusWu/Rain",
+          "commit": "d96510fc73ebe6a354bbf638613f8e4483f3366b",
+          "path": "licenses/SourceHanSans-OFL.txt",
+          "sha256": "fcac737e761ec63dbfbdce11030a1780161920d80315edba9c8beff1c2bac5a2"
+        }
+      ],
+      "targetSha256": "fcac737e761ec63dbfbdce11030a1780161920d80315edba9c8beff1c2bac5a2"
+    },
+    {
       "target": "examples/demo/demo-font.woff2",
       "mode": "adapted",
       "targetSha256": "001072ebb494bfc5b1f9e8e36a07d008ec913da9e3f4f6921f728ea3d452d1ae",
@@ -395,19 +421,19 @@
     {
       "target": "schemas/vn-agent-v1.operation.schema.json",
       "mode": "new",
-      "targetSha256": "21526890ea37604685a31584c0c847dfd970ec284091bd461151e67b1e1ad295",
+      "targetSha256": "7d03a98faf812745a7988782dbeb2daceacf2eff7494db93fc32ab6c5c233dca",
       "origins": []
     },
     {
       "target": "schemas/vn-agent-v1.request.schema.json",
       "mode": "new",
-      "targetSha256": "29823da102c809ebd100a6d1c20f190d3a22633bbdd0327e486631fa7a4d9d25",
+      "targetSha256": "11f122bde3f6e4116cc466ba7fad960a5a3ab470f0bea1317f730f85850b7cc8",
       "origins": []
     },
     {
       "target": "schemas/vn-agent-v1.response.schema.json",
       "mode": "new",
-      "targetSha256": "1e0ef67299ca2753c6e9f64675fbfeb139c8cd92968cb4e421ee4ff0047e2dab",
+      "targetSha256": "8fb1f2849f00b95cac17d790c0e7a33ebca5dc338f8fe323f02bfb17122096c4",
       "origins": []
     },
     {
@@ -507,13 +533,13 @@
     {
       "target": "src/agent/operations.ts",
       "mode": "new",
-      "targetSha256": "15fe8b3611ac0208f5b4dee3df38a037ee37439fc381f0b69478a352293cb12f",
+      "targetSha256": "5071ae14110281b9767701e17a8e4ae036a14dc3a3f784f5c66e16124e808d58",
       "origins": []
     },
     {
       "target": "src/agent/project.ts",
       "mode": "new",
-      "targetSha256": "2c50789651a2113b5b754bede847983b50c5ccddb65a44d3122321c5c6f0160f",
+      "targetSha256": "94dd58039cbebc934fb20b6e01384969d7cafd535734007acec98240445eb642",
       "origins": []
     },
     {
@@ -525,13 +551,13 @@
     {
       "target": "src/agent/schema.ts",
       "mode": "new",
-      "targetSha256": "6eeff2d8e462dfd147fffe6d749140a5aa73a08f710afcdb9eb0166a1d6443cf",
+      "targetSha256": "e699e215afcb1ca840d8f214150a864d568f4964d5288207e79329d0646e5427",
       "origins": []
     },
     {
       "target": "src/agent/sdk.ts",
       "mode": "new",
-      "targetSha256": "5fec0d1b03d9f2044f314bf99565a60d3c6a90587d52676d1a231cf9a2d06c96",
+      "targetSha256": "5d7719cb330dd14b8549133c5c5b3ea9a045e564e44ce7a52298ffdc5af8b4c3",
       "origins": []
     },
     {
@@ -625,7 +651,7 @@
       "target": "src/editor/model.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "27e1ce947751e3e05dade2f681211f895e60e63dae8941ab35f4e4afaa246754"
+      "targetSha256": "b43f0d0aa612753b44662f53ce088808c7a33946852f816cf026d8f029799f88"
     },
     {
       "target": "src/history/search.ts",
@@ -993,13 +1019,13 @@
     {
       "target": "tools/agent-example.mjs",
       "mode": "new",
-      "targetSha256": "2df211ce14ee1109e9747516a7d19f4fa12b26ef2cdec59fe903d450d9a9959c",
+      "targetSha256": "7d7742bb7ca1efa67f74fce447a68719dbb644924d0cac85b8c173717fc0287f",
       "origins": []
     },
     {
       "target": "tools/agent-node.mjs",
       "mode": "new",
-      "targetSha256": "947f693dcd4b2d86068a1988f37816a75e06a7f4a761dce697e07798c1b2130d",
+      "targetSha256": "d3ae888756a069729536c11654ee983d6543d86b5ddfbc12afcec460d111ae7a",
       "origins": []
     },
     {
@@ -1121,6 +1147,12 @@
       "target": "tools/serve.mjs",
       "mode": "new",
       "targetSha256": "1aea27b265233f29cd0b95b130b001c2f49428c41df6d10092f531192be2802d",
+      "origins": []
+    },
+    {
+      "target": "tools/subset_agent_font.py",
+      "mode": "new",
+      "targetSha256": "655bead29446ef2edd9ba189bcc9f18e439c51fdfe071abc27a83b7b922bb244",
       "origins": []
     },
     {

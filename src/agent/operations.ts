@@ -80,7 +80,7 @@ export function applyAgentOperation(model: EditorModel, operation: Record<string
     case 'action.put': case 'action.remove': { const n = node(), value = atPath(p, n.path); if (!Array.isArray(value.actions)) throw new AgentError('OPERATION_UNSUPPORTED', 'Node has no investigation actions'); indexed([...n.path, 'actions'], value.actions, o.value); break; }
     case 'asset.put': case 'asset.remove': indexed(['assets'], p.assets, o.value); break;
     case 'route.put': case 'route.remove': indexed(['routeTests', 'cases'], p.routeTests?.cases ?? [], o.value); model.set(['routeTests', 'schema'], 1); break;
-    case 'stage.set': {
+    case 'stage.set': case 'stage.remove': {
       let path: (string | number)[];
       if (o.scope === 'defaults') path = p.type === 'script' || p.type === 'rain' ? ['defaults'] : ['stage', 'defaults'];
       else if (o.scope === 'line') {
@@ -90,9 +90,14 @@ export function applyAgentOperation(model: EditorModel, operation: Record<string
           if (matches.length !== 1) throw new AgentError('NOT_FOUND', 'Line ID is missing or ambiguous'); path = matches[0];
         } else if (p.type === 'narrative') path = ['stage', 'lines', o.id];
         else throw new AgentError('OPERATION_UNSUPPORTED', 'Line cue is not supported by this project');
+      } else if (o.op === 'stage.remove' && (p.type === 'narrative' || p.type === 'investigation')) {
+        if (!o.nodeId || p.type === 'investigation' && !o.chapterId) throw new AgentError('INVALID_OPERATION', 'Removing a node cue requires nodeId and investigation chapterId');
+        path = p.type === 'narrative' ? ['stage','scenes',o.nodeId] : ['stage','nodes',`${o.chapterId}/${o.nodeId}`];
       } else {
         const n = node(); path = p.type === 'script' ? [...n.path, 'cue'] : p.type === 'investigation' ? ['stage', 'nodes', `${n.chapter}/${n.id}`] : ['stage', 'scenes', n.id];
-      } model.set(path, o.value); break;
+      }
+      if (o.op === 'stage.remove') model.transact(project => { const parent = atPath(project, path.slice(0,-1)), key = path.at(-1)!; if (!parent || !Object.hasOwn(parent,key)) throw new AgentError('NOT_FOUND','Presentation binding does not exist'); delete parent[key]; });
+      else model.set(path, o.value); break;
     }
     default: throw new AgentError('INVALID_OPERATION', 'Operation is not implemented');
   }

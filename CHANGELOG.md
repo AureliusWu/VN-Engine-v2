@@ -3,7 +3,7 @@
 ## 0.5.0 alpha — 2026-10-28 · R1 AI 开发接口
 
 - 新增 vn-agent-v1、请求 / 响应 / 操作 JSON Schema、纯 SDK 与 Node 文件 SDK；统一 CLI 支持 capabilities / init / inspect / refs / apply / validate / test / preview / build。
-- 有界分页与大实体片段、29 种稳定 ID 操作、隔离批次与 dry-run，复用引用 / 删除 / 类型保护，SHA 冲突、协作锁、持久回执、重复请求和崩溃恢复。
+- 有界分页与大实体片段、30 种稳定 ID 操作、隔离批次与 dry-run，复用引用 / 删除 / 类型保护，SHA 冲突、协作锁、持久回执、重复请求和崩溃恢复。
 - 真实路线与存读档、隔离 Chromium 预览截图、现有独立 / 正式打包门禁；技术样例通过接口编写分支 VN 与跨章调查，人工验收状态保留。
 - npm / 锁文件 / 引擎 / Windows 升至 0.5.0；保持 schema 1 与 Rain 兼容，四作和 RESET 未迁移。完整平台结果按确切实现提交另记。
 

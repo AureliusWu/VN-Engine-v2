@@ -60,10 +60,10 @@ async function journalWrite(file, journal) {
 }
 /** Internal host, also useful to embedders that provide their own execution deadline. */
 export async function runAgentFileRequestInProcess(input, options = {}) {
-  let request, lease, response = agentResponse(), committed = false;
+  let request, lease, response = agentResponse(), committed = false, committedSha;
   try {
     if (typeof input === 'string') { if (Buffer.byteLength(input) > AGENT_LIMITS.inputBytes) throw new AgentError('BUDGET_EXCEEDED', 'Request exceeds input budget', {}, 'UNVERIFIED'); try { input = JSON.parse(input); } catch { throw new AgentError('MALFORMED_JSON', 'Request is not valid JSON'); } }
-    response = agentResponse(typeof input?.command === 'string' ? input.command : 'unknown', typeof input?.requestId === 'string' ? input.requestId.slice(0,128) : 'unknown');
+    response = agentResponse(typeof input?.command === 'string' && input.command.trim() ? input.command.slice(0,500) : 'unknown', typeof input?.requestId === 'string' && input.requestId.trim() ? input.requestId.slice(0,128) : 'unknown');
     request = validateAgentRequest(input);
     if (request.command === 'capabilities') return (await executeAgentRequest(request)).response;
     const target = request.command === 'init' ? request.params.output ?? request.project : request.project;
@@ -114,24 +114,24 @@ export async function runAgentFileRequestInProcess(input, options = {}) {
       // All cooperating writers hold the same lease; detect external edits immediately before rename.
       if (await current(file) !== before) throw new AgentError('SOURCE_CONFLICT', 'Source changed during prepare');
       const mode = before ? (await fs.stat(file)).mode & 0o777 : 0o600;
-      await atomic(file, candidate.sourceText, mode); committed = true; await options.onPhase?.('renamed', entry);
+      await atomic(file, candidate.sourceText, mode); committed = true; committedSha = candidate.afterSha256; await options.onPhase?.('renamed', entry);
       entry.state = 'committed'; await journalWrite(journalFile, journal);
     }
     return saved;
   } catch (error) {
-    if (committed) { response.data = { ...(response.data ?? {}), applied: true, recoveryRequired: true }; return failAgent(response, new AgentError('JOURNAL_ERROR', 'Source was committed; retry the identical request to reconcile receipt: ' + error.message)); }
+    if (committed) { if (response.project) response.project.sourceSha256 = committedSha; response.data = { ...(response.data ?? {}), applied: true, recoveryRequired: true }; return failAgent(response, new AgentError('JOURNAL_ERROR', 'Source was committed; retry the identical request to reconcile receipt: ' + error.message)); }
     if (!(error instanceof AgentError)) error = new AgentError(error.code === 'ENOENT' ? 'FILE_NOT_FOUND' : error.code === 'EEXIST' ? 'OUTPUT_EXISTS' : error instanceof TypeError ? 'INVALID_ENCODING' : 'IO_ERROR', error.message);
     return failAgent(response, error);
   } finally { await releaseAgentLease(lease); }
 }
 /** Supervised worker: CPU-bound routes and browsers cannot overrun the caller's deadline. */
 export async function runAgentFileRequest(input, options = {}) {
-  let request; try { request = validateAgentRequest(typeof input === 'string' ? JSON.parse(input) : input); } catch { return runAgentFileRequestInProcess(input, options); }
+  let request; try { if (typeof input === 'string' && Buffer.byteLength(input) > AGENT_LIMITS.inputBytes) return (await executeAgentRequest(input)).response; request = validateAgentRequest(typeof input === 'string' ? JSON.parse(input) : input); } catch { return (await executeAgentRequest(input)).response; }
   const response = agentResponse(request.command, request.requestId);
   if (options.signal?.aborted) return failAgent(response, new AgentError('ABORTED', 'Request cancelled', {}, 'UNVERIFIED'));
   return new Promise(resolve => {
     let done = false, lease;
-    const worker = new Worker(new URL('./agent-worker.mjs', import.meta.url), { workerData: request, stdout: true, stderr: true });
+    const worker = new Worker(new URL('./agent-worker.mjs', import.meta.url), { workerData: request, stdout: true, stderr: true, execArgv: [] });
     worker.stdout.on('data', b => options.onLog?.(b.toString())); worker.stderr.on('data', b => options.onLog?.(b.toString()));
     const finish = async result => { if (done) return; done = true; clearTimeout(timer); options.signal?.removeEventListener('abort', abort); await worker.terminate(); await releaseAgentLease(lease); resolve(result); };
     const cancel = code => { response.data = { applied: ['init','apply'].includes(request.command) && !request.params.dryRun ? 'unknown' : false, recoveryRequired: ['init','apply'].includes(request.command) && !request.params.dryRun }; finish(failAgent(response, new AgentError(code, code === 'TIMEOUT' ? 'Worker deadline exceeded; inspect source and retry identical request' : 'Request cancelled', {}, 'UNVERIFIED'))); };
