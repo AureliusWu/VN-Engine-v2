@@ -1,5 +1,9 @@
 # 引擎验证记录
 
+## R3 v0.7.0 内容迭代与制作审阅
+
+最终实现 `399d8e2991a79dbdb8cfd780d758b39cf0e11465` 的 Engine / Windows CI 均成功：201 项 Node、6 项 Python、172 项来源、完整浏览器 / Studio、SDK / CLI 两轮修订与真实配乐、两个最新包的子目录断网新页、四原有样例路线 / 文件 / 解码 / 包，以及 Windows 编译 / 文件冲突 / 反馈重开 / 试听 / 完整重启均通过。派生 ID / Rain 定位、独立反馈 / 玩家字节隔离及版本 / 素材过期有实际检查。见 [0.7.0 验证](VALIDATION-v0.7.0.md) 和 [机器记录](r3-validation.json)。DRAFT 与正式人工 BLOCKED / UNVERIFIED 保留；收尾文档不冒充新一次实现验收。
+
 ## R2 v0.6.0 AI 内容生产与接入
 
 最终实现 `cfa941cd2afa175a813a9d7a42fa5f6a8148ee01` 的 Engine / Windows CI 均成功：194 项 Node、6 项 Python、165 项来源、完整浏览器（含 R1、R2 和编辑器）、Windows CLI / 实际素材探测 / 编译 / WebView2 首次与完整重启通过。六类创作样例经 SDK / CLI 接入真实插画 / 配乐 / 音效 / 主题 / 文本 / 剧情；实际播放、390px、两个独立包子目录离线重开和原四样例 73 次存读档复核通过。素材保持 DRAFT，正式人工验收仍 BLOCKED / UNVERIFIED。见 [0.6.0 验证](VALIDATION-v0.6.0.md) 和 [机器记录](r2-validation.json)；收尾文档不冒充新一次实现验收。

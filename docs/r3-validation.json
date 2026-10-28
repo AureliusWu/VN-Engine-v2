@@ -1,0 +1,266 @@
+{
+  "schema": 1,
+  "round": "R3",
+  "engineVersion": "0.7.0",
+  "status": "PASS",
+  "validatedImplementationCommit": "399d8e2991a79dbdb8cfd780d758b39cf0e11465",
+  "stages": {
+    "A": "a5fc8db894424dc090921f81e13b010a4d5d1512",
+    "B": "373a0ee41eefdc5e181bcfa936d8e952385646f9",
+    "C": "8b37ce5e183513575152351cdd69b3354f50c85c",
+    "finalFonts": "399d8e2991a79dbdb8cfd780d758b39cf0e11465"
+  },
+  "ci": {
+    "engine": {
+      "run": 40658600876,
+      "status": "success",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40658600876"
+    },
+    "windows": {
+      "run": 40658600840,
+      "status": "success",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40658600840"
+    }
+  },
+  "checks": {
+    "node": 201,
+    "python": 6,
+    "provenanceFiles": 172,
+    "schema": "PASS",
+    "fullBrowser": "PASS",
+    "studioTestsInFullBrowser": "PASS",
+    "nativeReports": 5,
+    "nativeFirstAndRestart": true,
+    "sourceManifestSha256": "de8eef9fcc1791f0fab1f6e4f22acb6746014bc66bdaf7947c217231412fb406"
+  },
+  "sampleQa": [
+    {
+      "sample": "campus",
+      "status": "BLOCKED",
+      "routes": "PASS",
+      "endingCoverage": {
+        "required": [
+          "complete",
+          "letter",
+          "quiet",
+          "together"
+        ],
+        "covered": [
+          "complete",
+          "letter",
+          "quiet",
+          "together"
+        ],
+        "missing": []
+      },
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "humanQa": "BLOCKED"
+    },
+    {
+      "sample": "netlove",
+      "status": "BLOCKED",
+      "routes": "PASS",
+      "endingCoverage": {
+        "required": [
+          "complete"
+        ],
+        "covered": [
+          "complete"
+        ],
+        "missing": []
+      },
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "humanQa": "BLOCKED"
+    },
+    {
+      "sample": "circuit",
+      "status": "BLOCKED",
+      "routes": "PASS",
+      "endingCoverage": {
+        "required": [
+          "chapter-one:complete",
+          "chapter-one:failure",
+          "chapter-two:complete",
+          "chapter-two:failure"
+        ],
+        "covered": [
+          "chapter-one:complete",
+          "chapter-one:failure",
+          "chapter-two:complete",
+          "chapter-two:failure"
+        ],
+        "missing": []
+      },
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "humanQa": "BLOCKED"
+    },
+    {
+      "sample": "rain",
+      "status": "BLOCKED",
+      "routes": "PASS",
+      "endingCoverage": {
+        "required": [
+          "other",
+          "trust"
+        ],
+        "covered": [
+          "other",
+          "trust"
+        ],
+        "missing": []
+      },
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "humanQa": "BLOCKED"
+    }
+  ],
+  "iteration": {
+    "transports": [
+      "sdk",
+      "cli"
+    ],
+    "revisions": 2,
+    "previewWidths": [
+      1280,
+      390
+    ],
+    "nestedOfflineNewPageReopens": 2,
+    "oldImmutableFilesPreserved": true,
+    "oldReportsAndFeedbackInvalidated": true,
+    "windowsCliCalls": 25,
+    "restoreChecksPerFinalRouteSuite": 10,
+    "finalProject": {
+      "game": "vn-iteration-bookshop",
+      "storyVersion": "iteration-draft-1",
+      "sourceSha256": "80a582c0f8ceb5b87042075a519ec00f86c2e50102e89f1c7d396e6b45b34ec9"
+    },
+    "score": {
+      "src": "assets/imported/be67b0b8e44d9896c84f21a6dea90836441a5d9bb08015b148a1bd4272900dee.wav",
+      "sha256": "be67b0b8e44d9896c84f21a6dea90836441a5d9bb08015b148a1bd4272900dee",
+      "seconds": 2,
+      "rate": 44100,
+      "notes": [
+        "C5",
+        "A4",
+        "F4",
+        "E4"
+      ]
+    },
+    "releaseStatus": "BLOCKED",
+    "assetStatus": "DRAFT"
+  },
+  "studio": {
+    "sharedOperations": true,
+    "independentReviewFiles": true,
+    "realImageFontAudio": true,
+    "sourceAndFileFreshness": true,
+    "repairVerifyReopen": true,
+    "undoRedo": true,
+    "actualFileAndDraftReopen": true,
+    "derivedIdLocationWithoutRenumber": true,
+    "rainNativeFieldSelection": true,
+    "identityChangesRetainDetachedReview": true,
+    "pendingReadCancelledOnProjectChange": true,
+    "playerBytesUnchanged": true,
+    "keyboard390": true
+  },
+  "nativeR3Checks": [
+    "R3 CLI-built second revision renders latest source/images/paper theme and verifies new 44100 Hz audio bytes, revised leave branch, save reconstruction and isolated player storage on first launch and restart",
+    "Native review save rejects external file changes without overwriting them, then reopens and saves the observed revision",
+    "R3 native production/task/theme controls share undo/redo; targeted feedback completes addressed/verified/reopened, atomic separate-file save, reopen and source/file freshness; reviewer statements are synthetic fixtures",
+    "R3 native audition plays actual local audio and releases the media element when leaving the panel",
+    "R3 CLI-built second revision renders latest source/images/paper theme and verifies new 44100 Hz audio bytes, revised leave branch, save reconstruction and isolated player storage on first launch and restart",
+    "R3 independent review.json reopens with its history and matching project/file identity after a complete process restart",
+    "Native review save rejects external file changes without overwriting them, then reopens and saves the observed revision",
+    "R3 native production/task/theme controls share undo/redo; targeted feedback completes addressed/verified/reopened, atomic separate-file save, reopen and source/file freshness; reviewer statements are synthetic fixtures",
+    "R3 native audition plays actual local audio and releases the media element when leaving the panel"
+  ],
+  "fonts": {
+    "sourceRepository": "AureliusWu/Rain",
+    "sourceCommit": "d96510fc73ebe6a354bbf638613f8e4483f3366b",
+    "sourceSha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7",
+    "compiler": {
+      "fontTools": "4.68.0",
+      "brotli": "1.2.1"
+    },
+    "run": 40658104130,
+    "files": [
+      {
+        "path": "editor/studio-font.woff2",
+        "bytes": 79188,
+        "sha256": "20c25cdaf6b36281924c4bb1a39b5bdc978a9af6171b3bacab3e59542759587e",
+        "gitSha": "c686d11138d2f354eb6ca77d7e40837982149220"
+      },
+      {
+        "path": "examples/agent/assets/agent.woff2",
+        "bytes": 57908,
+        "sha256": "c56612f34bb74f578294679efa9904eed68becbf55531971b314b77ebf486d08",
+        "gitSha": "6e5065471e71d4a85dcd817c4128f2921f9c04ee"
+      }
+    ],
+    "temporaryWorkflowRemoved": true
+  },
+  "artifacts": [
+    {
+      "id": 12803381063,
+      "name": "alpha-qa-reports",
+      "bytes": 60320,
+      "digest": "sha256:8d1480686df76eed70338b8348d5e4b73c4f9e5cef9d0f179dd5d8ccb0a0a7e7",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40658600876/artifacts/12803381063"
+    },
+    {
+      "id": 12803216133,
+      "name": "vn-engine-standalone-samples",
+      "bytes": 910666,
+      "digest": "sha256:f572f43d1dbf12c29660e52c8c07773593d5687392d4f150ef44a43758cf08fd",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40658600876/artifacts/12803216133"
+    },
+    {
+      "id": 12802198777,
+      "name": "engine-browser-evidence",
+      "bytes": 92171836,
+      "digest": "sha256:c0a90a8d8e0acaa55bbcf93e8379e0e42e78a0b50faaae3fd27650a1a843f0ec",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40658600876/artifacts/12802198777"
+    },
+    {
+      "id": 12803226587,
+      "name": "VNEngine-Studio-win-x64",
+      "bytes": 64193322,
+      "digest": "sha256:a39b2847ce0edc6ca93e4159129fb32ddce2685c883c41f8fa39a883cbfe20a4",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40658600840/artifacts/12803226587"
+    },
+    {
+      "id": 12803146877,
+      "name": "windows-native-evidence",
+      "bytes": 4718595,
+      "digest": "sha256:7333614f1a370d709826764f75a32ea6be44aab6c07a099251780d2a8fd9ad81",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40658600840/artifacts/12803146877"
+    }
+  ],
+  "limitations": {
+    "syntheticReviewerFixtures": true,
+    "humanIdentityAuthenticated": false,
+    "humanLiteraryArtListeningDeviceAcceptance": "UNVERIFIED",
+    "nativeDialogs": "CI preset paths, not manual dialog operation",
+    "staticReachability": "Unknown dynamic/prior-node influence still requires runtime preview and full route suite",
+    "crossFileTransaction": false
+  },
+  "environment": {
+    "localBFullCheckBrowserEditor": "PASS",
+    "localC0_7CoreAndTargetedEditor": "PASS",
+    "remainingLocalRuns": "No completion credited after environment became unavailable; exact-commit CI used instead"
+  },
+  "closure": {
+    "runtimeFrozen": true,
+    "changes": "Documentation and explicit CI coverage for Studio command / Windows feedback crash recovery; results belong to the closure commit workflow, not the implementation runs"
+  },
+  "nextRoundAutomaticallyStarted": false,
+  "gameMigrationPerformed": false
+}
