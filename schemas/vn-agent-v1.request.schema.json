@@ -39,7 +39,8 @@
                 "operation",
                 "production",
                 "ui",
-                "feedback"
+                "feedback",
+                "acceptance"
               ]
             }
           },
@@ -2246,6 +2247,12 @@
                 "development",
                 "release"
               ]
+            },
+            "acceptanceFile": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500,
+              "pattern": "\\S"
             }
           },
           "required": [],
@@ -2588,6 +2595,12 @@
                 "development",
                 "release"
               ]
+            },
+            "acceptanceFile": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500,
+              "pattern": "\\S"
             }
           },
           "required": [
@@ -4814,6 +4827,519 @@
             "actor",
             "state",
             "note"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "protocol",
+        "requestId",
+        "command",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "const": "vn-agent-v1"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "\\S"
+        },
+        "command": {
+          "const": "acceptance.bundle"
+        },
+        "project": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "pattern": "\\S"
+        },
+        "params": {
+          "type": "object",
+          "properties": {
+            "timeoutMs": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60000
+            },
+            "output": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500,
+              "pattern": "\\S"
+            },
+            "inputs": {
+              "type": "array",
+              "maxItems": 32,
+              "items": {
+                "type": "object",
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
+                    "pattern": "\\S"
+                  },
+                  "file": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500,
+                    "pattern": "\\S"
+                  },
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "screenshot",
+                      "test-report",
+                      "image",
+                      "audio"
+                    ]
+                  }
+                },
+                "required": [
+                  "id",
+                  "file",
+                  "kind"
+                ],
+                "additionalProperties": false
+              }
+            }
+          },
+          "required": [
+            "output"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "protocol",
+        "requestId",
+        "command",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "const": "vn-agent-v1"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "\\S"
+        },
+        "command": {
+          "const": "acceptance.inspect"
+        },
+        "project": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "pattern": "\\S"
+        },
+        "params": {
+          "type": "object",
+          "properties": {
+            "timeoutMs": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60000
+            },
+            "acceptanceFile": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500,
+              "pattern": "\\S"
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            },
+            "maxBytes": {
+              "type": "integer",
+              "minimum": 4096,
+              "maximum": 65536
+            },
+            "cursor": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          "required": [],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "protocol",
+        "requestId",
+        "command",
+        "params"
+      ],
+      "additionalProperties": false
+    },
+    {
+      "type": "object",
+      "properties": {
+        "protocol": {
+          "const": "vn-agent-v1"
+        },
+        "requestId": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128,
+          "pattern": "\\S"
+        },
+        "command": {
+          "const": "acceptance.import"
+        },
+        "project": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 500,
+          "pattern": "\\S"
+        },
+        "params": {
+          "type": "object",
+          "properties": {
+            "timeoutMs": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 60000
+            },
+            "acceptanceFile": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 500,
+              "pattern": "\\S"
+            },
+            "expectedSourceSha256": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$"
+            },
+            "expectedReviewSha256": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                {
+                  "type": "null"
+                }
+              ]
+            },
+            "document": {
+              "$schema": "https://json-schema.org/draft/2020-12/schema",
+              "$id": "urn:vn-ai-acceptance-v1:document",
+              "type": "object",
+              "properties": {
+                "contract": {
+                  "const": "vn-ai-acceptance-v1"
+                },
+                "schema": {
+                  "const": 1
+                },
+                "game": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4096
+                },
+                "storyVersion": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4096
+                },
+                "engineVersion": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 4096
+                },
+                "rubricVersion": {
+                  "const": "r4-1"
+                },
+                "binding": {
+                  "type": "object",
+                  "properties": {
+                    "sourceSha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "filesVerified": {
+                      "type": "boolean"
+                    },
+                    "assets": {
+                      "type": "array",
+                      "maxItems": 10000,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 500
+                          },
+                          "sha256": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "pattern": "^[a-f0-9]{64}$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "sha256"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "sourceSha256",
+                    "filesVerified",
+                    "assets"
+                  ],
+                  "additionalProperties": false
+                },
+                "inputs": {
+                  "type": "array",
+                  "minItems": 1,
+                  "maxItems": 2048,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "kind": {
+                        "enum": [
+                          "project",
+                          "image",
+                          "audio",
+                          "screenshot",
+                          "routes",
+                          "test-report"
+                        ]
+                      },
+                      "src": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "sha256": {
+                        "type": "string",
+                        "pattern": "^[a-f0-9]{64}$"
+                      },
+                      "assetId": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "width": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 16384
+                      },
+                      "height": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 16384
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "kind",
+                      "src",
+                      "sha256"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "reviews": {
+                  "type": "array",
+                  "maxItems": 1024,
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "category": {
+                        "enum": [
+                          "story",
+                          "text",
+                          "visualIntegration",
+                          "audio",
+                          "accessibility",
+                          "web",
+                          "pwa",
+                          "windows",
+                          "art",
+                          "master"
+                        ]
+                      },
+                      "target": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "status": {
+                        "enum": [
+                          "PASS",
+                          "FAIL",
+                          "UNVERIFIED"
+                        ]
+                      },
+                      "mode": {
+                        "enum": [
+                          "ai-simulated",
+                          "automated"
+                        ]
+                      },
+                      "model": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "modalities": {
+                        "type": "array",
+                        "maxItems": 3,
+                        "items": {
+                          "enum": [
+                            "text",
+                            "image",
+                            "audio"
+                          ]
+                        }
+                      },
+                      "reviewedAt": {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 4096
+                      },
+                      "coverage": {
+                        "enum": [
+                          "full",
+                          "sampled"
+                        ]
+                      },
+                      "rationale": {
+                        "type": "string",
+                        "minLength": 16,
+                        "maxLength": 8000
+                      },
+                      "evidenceIds": {
+                        "type": "array",
+                        "minItems": 1,
+                        "maxItems": 2048,
+                        "items": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 4096
+                        }
+                      },
+                      "findings": {
+                        "type": "array",
+                        "maxItems": 500,
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "severity": {
+                              "enum": [
+                                "error",
+                                "warning",
+                                "info"
+                              ]
+                            },
+                            "location": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 4096
+                            },
+                            "message": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 4096
+                            },
+                            "resolved": {
+                              "type": "boolean"
+                            }
+                          },
+                          "required": [
+                            "severity",
+                            "location",
+                            "message",
+                            "resolved"
+                          ],
+                          "additionalProperties": false
+                        }
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "category",
+                      "status",
+                      "mode",
+                      "model",
+                      "modalities",
+                      "reviewedAt",
+                      "coverage",
+                      "rationale",
+                      "evidenceIds",
+                      "findings"
+                    ],
+                    "additionalProperties": false
+                  }
+                },
+                "supersedesSha256": {
+                  "type": "string",
+                  "pattern": "^[a-f0-9]{64}$"
+                },
+                "fixture": {
+                  "type": "boolean"
+                }
+              },
+              "required": [
+                "contract",
+                "schema",
+                "game",
+                "storyVersion",
+                "engineVersion",
+                "rubricVersion",
+                "binding",
+                "inputs",
+                "reviews"
+              ],
+              "additionalProperties": false
+            },
+            "dryRun": {
+              "type": "boolean"
+            },
+            "recover": {
+              "type": "boolean"
+            }
+          },
+          "required": [
+            "expectedSourceSha256",
+            "expectedReviewSha256",
+            "document"
           ],
           "additionalProperties": false
         }

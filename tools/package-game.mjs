@@ -1,3 +1,4 @@
+import {loadAcceptanceOptions} from './acceptance-node.mjs';
 import { mkdir, readFile, writeFile, readdir, stat, realpath } from 'node:fs/promises';
 import { resolve, dirname, relative, sep } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
@@ -27,7 +28,8 @@ export async function packageGame(projectFile, output, options = {}) {
   let existing;
   try { existing = await stat(destination); } catch (error) { if (error.code !== 'ENOENT') throw error; }
   if (existing && (!existing.isDirectory() || (await readdir(destination)).length)) throw new Error('Output must be a new or empty directory; existing files are preserved');
-  const project = JSON.parse(await readFile(source, 'utf8'));
+  const sourceBytes=await readFile(source);
+  const project = JSON.parse(sourceBytes);
   const complianceMode = process.env.VN_RELEASE_BUILD === '1' ? 'release' : 'development';
   const instance = createProject(project, pathToFileURL(sourceRoot + sep)); instance.session.dispose();
   if (!/^[a-zA-Z0-9_-]+$/.test(project.game)) throw new Error('Packaged game ID needs a path-safe identifier');
@@ -50,7 +52,11 @@ export async function packageGame(projectFile, output, options = {}) {
     }
   }
   if (project.font && !project.assets.find(asset => asset.id === project.font)?.license) throw new Error('Bundled project font needs its own license record');
-  const compliance = validateProjectCompliance(project, { mode: complianceMode, requiresPwa: complianceMode === 'release' });
+  const acceptanceOptions = complianceMode === 'release' ? (options.acceptanceContext ? options : await loadAcceptanceOptions(source,options)) : {};
+  const compliance = validateProjectCompliance(project, { ...acceptanceOptions, mode: complianceMode, requiresPwa: complianceMode === 'release' });
+  if(complianceMode==='release')for(const asset of project.assets)for(const [id,name]of [[asset.id,asset.src],...(asset.license?[['license:'+asset.id,asset.license.src]]:[])]){
+    if(createHash('sha256').update(files.get(name)).digest('hex')!==acceptanceOptions.acceptanceContext.binding.assets.find(a=>a.id===id)?.sha256)throw Error('Acceptance differs from packaged asset snapshot: '+id);
+  }
   files.set('project.json', Buffer.from(JSON.stringify(project, null, 2) + '\n'));
   for (const path of await modules(resolve(repository, 'dist'))) {
     const name = 'lib/' + relative(resolve(repository, 'dist'), path).split(sep).join('/');
@@ -78,7 +84,7 @@ catch(failure){error.textContent='启动未完成：'+failure.message;}
     game: project.game,
     version: project.version,
     engine: 'VN Engine v2 self runtime ' + ENGINE_VERSION,
-    source: options.sourceIdentity ?? { sourceSha256: createHash('sha256').update(await readFile(source)).digest('hex') },
+    source: options.sourceIdentity ?? { sourceSha256: createHash('sha256').update(sourceBytes).digest('hex') },
     buildIdentity: { gameVersion: project.version, engineVersion: ENGINE_VERSION, commitSha, buildTime: buildTimestamp() },
     compliance: { contract: compliance.contract, mode: compliance.mode, warnings: [...compliance.warnings], ...(compliance.artGate ? { artGate: compliance.artGate } : {}), ...(compliance.qaGate ? { qaGate: compliance.qaGate } : {}),
       ...(compliance.routeGate ? { routes: { contract: compliance.routeGate.contract, status: compliance.routeGate.status, cases: compliance.routeGate.cases.length, restoreChecks: compliance.routeGate.restoreChecks, coverage: compliance.routeGate.coverage } } : {}) },
@@ -86,13 +92,14 @@ catch(failure){error.textContent='启动未完成：'+failure.message;}
     files: [...files].map(([name, bytes]) => ({ name, size: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') }))
   };
   files.set('build-manifest.json', Buffer.from(JSON.stringify(metadata, null, 2) + '\n'));
+  if(!sourceBytes.equals(await readFile(source)))throw Error('SOURCE_CONFLICT: Project changed during build');
   await mkdir(destination, { recursive: true });
   for (const [name, bytes] of files) { const path = resolve(destination, name); if (!path.startsWith(destination + sep)) throw new Error('Unsafe output path'); await mkdir(dirname(path), { recursive: true }); await writeFile(path, bytes); }
   return { output: destination, files: files.size, game: project.game, fingerprint: version };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
-  const source = process.argv[2], output = process.argv[3];
+  const source = process.argv[2], output = process.argv[3], acceptanceFile=process.argv.slice(4).find(a=>a.startsWith('--acceptance='))?.slice(13);
   if (!source || !output) throw new Error('Usage: node tools/package-game.mjs project.json output-directory');
-  try { console.log(JSON.stringify(await packageGame(source, output))); }
+  try { console.log(JSON.stringify(await packageGame(source, output,{acceptanceFile}))); }
   catch (error) { if (error instanceof ReleaseArtGateError) console.error('SPEC_ART_GATE_BLOCKED', JSON.stringify(error.report)); if (error instanceof ReleaseQaGateError) console.error('SPEC_QA_GATE_BLOCKED', JSON.stringify(error.report)); if (error instanceof ReleaseRouteGateError) console.error('SPEC_ROUTE_GATE_BLOCKED', JSON.stringify(error.report)); throw error; }
 }

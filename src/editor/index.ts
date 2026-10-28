@@ -5,3 +5,5 @@ export * from '../creative/impact.js';
 export * from '../creative/feedback.js';
 export * from './authoring.js';
 export * from './catalogs.js';
+
+export * from '../compliance/acceptance.js';

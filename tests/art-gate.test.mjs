@@ -1,3 +1,4 @@
+import {syntheticAcceptance,writeSyntheticAcceptance} from './acceptance-fixture.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
@@ -22,8 +23,8 @@ function fixture() {
     releaseEvidence: { targets: { mobile: true, pwa: true, desktop: true }, keyVisual: { used: false }, mobilePhysicalDevice: { status: 'PASS', kind: 'physical', device: 'test device', reviewer: 'test reviewer', reviewedAt: '2026-10-27', evidence: 'test://physical' }, art: { room: review },
       qa: Object.fromEntries(['story', 'text', 'visualIntegration', 'audio', 'accessibility', 'web', 'pwa', 'windows'].map(category => [category, { status: 'PASS', reviewer: 'synthetic test reviewer', reviewedAt: '2026-10-27', evidence: 'test://synthetic-qa' }])) } };
 }
-function blocked(project, predicate) {
-  assert.throws(() => validateProjectCompliance(project, { mode: 'release' }), error => error instanceof ReleaseArtGateError && predicate(error.report));
+function blocked(project, predicate, options={}) {
+  assert.throws(() => validateProjectCompliance(project, { ...options,mode: 'release' }), error => error instanceof ReleaseArtGateError && predicate(error.report));
 }
 
 test('technical readiness never automatically approves unreviewed art or an unverified physical device', () => {
@@ -35,7 +36,7 @@ test('technical readiness never automatically approves unreviewed art or an unve
   blocked(emulated, report => report.MOBILE_PHYSICAL_DEVICE === 'UNVERIFIED');
 });
 
-test('release blocks placeholders, unverified provenance and incomplete manual visual checks', () => {
+test('release blocks placeholders, unverified provenance and incomplete manual visual checks', async () => {
   const placeholder = fixture(); placeholder.assets.push({ id: 'unused', kind: 'cg', src: 'placeholder.svg', status: 'PLACEHOLDER' });
   blocked(placeholder, report => report.PLACEHOLDER_SCAN === 'FAIL' && report.issues.some(issue => issue.includes('PLACEHOLDER')));
   const source = fixture(); source.releaseEvidence.art.room.source = 'UNVERIFIED';
@@ -43,17 +44,17 @@ test('release blocks placeholders, unverified provenance and incomplete manual v
   const composition = fixture(); composition.releaseEvidence.art.room.COMPOSITION_PASS = 'FAIL';
   blocked(composition, report => report.ART_READY === 'FAIL' && report.assets[0].issues.some(issue => issue.includes('COMPOSITION')));
   const digest = fixture(); digest.releaseEvidence.art.room.runtimeSha256 = 'b'.repeat(64);
-  blocked(digest, report => report.TECH_READY === 'FAIL' && report.ART_READY === 'PASS');
+  blocked(digest, report => report.TECH_READY === 'FAIL' && report.ART_READY === 'PASS',await syntheticAcceptance(digest,picture));
 });
 
-test('decorative Key Visual use requires human lifecycle evidence', () => {
+test('decorative Key Visual use requires human lifecycle evidence', async () => {
   const project = fixture(); project.releaseEvidence.keyVisual = { used: true, status: 'UNVERIFIED' };
   blocked(project, report => report.KEY_VISUAL_LIFECYCLE === 'UNVERIFIED' && report.release === 'BLOCKED');
   project.releaseEvidence.keyVisual = { used: true, status: 'PASS', reviewer: 'test reviewer', reviewedAt: '2026-10-27', evidence: 'test://scene-overlay-review' };
-  assert.equal(validateProjectCompliance(project, { mode: 'release' }).artGate.KEY_VISUAL_LIFECYCLE, 'PASS');
+  assert.equal(validateProjectCompliance(project, { ...await syntheticAcceptance(project,picture),mode: 'release' }).artGate.KEY_VISUAL_LIFECYCLE, 'PASS');
 });
 
-test('dynamic portraits and UI key visuals cannot be omitted from the art review', () => {
+test('dynamic portraits and UI key visuals cannot be omitted from the art review', async () => {
   const project = fixture(); project.stage = { speakers: { A: 'hero' } };
   project.assets.push({ id: 'hero/neutral', kind: 'portrait', src: 'hero.svg', status: 'READY', sha256: hash },
     { id: 'title-visual', kind: 'ui', src: 'title.svg', status: 'READY', sha256: hash });
@@ -64,17 +65,17 @@ test('dynamic portraits and UI key visuals cannot be omitted from the art review
   project.releaseEvidence.art['title-visual'] = { ...project.releaseEvidence.art.room };
   blocked(project, report => report.issues.some(issue => issue.includes('Dynamic presentation')));
   project.releaseEvidence.dynamicPresentation = { status: 'PASS', reviewer: 'test reviewer', reviewedAt: '2026-10-27', evidence: 'test://runtime' };
-  assert.equal(validateProjectCompliance(project, { mode: 'release' }).artGate.release, 'PASS');
+  assert.equal(validateProjectCompliance(project, { ...await syntheticAcceptance(project,picture),mode: 'release' }).artGate.release, 'PASS');
 });
 
-test('failed or unverified Neutral Master review blocks otherwise passed expression variants', () => {
+test('failed or unverified Neutral Master review blocks otherwise passed expression variants', async () => {
   const project = fixture(), review = project.releaseEvidence.art.room;
   project.assets.push({ id: 'hero/neutral', kind: 'portrait', src: 'neutral.svg', status: 'READY', sha256: hash }, { id: 'hero/smile', kind: 'portrait', src: 'smile.svg', status: 'READY', sha256: hash });
   project.stage = { lines: { line: { portrait: 'hero/smile' } } };
   project.releaseEvidence.art['hero/neutral'] = { ...review, masterSha256: hash, characterMaster: { id: 'hero', role: 'neutral' } };
   project.releaseEvidence.art['hero/smile'] = { ...review, masterSha256: hash, characterMaster: { id: 'hero', role: 'variant' } };
   project.releaseEvidence.characterMasters = { hero: { ...review, masterSha256: hash, neutralAsset: 'hero/neutral', evidence: 'test://synthetic-master' } };
-  assert.equal(validateProjectCompliance(project, { mode: 'release' }).artGate.CHARACTER_MASTER_INHERITANCE, 'PASS');
+  assert.equal(validateProjectCompliance(project, { ...await syntheticAcceptance(project,picture),mode: 'release' }).artGate.CHARACTER_MASTER_INHERITANCE, 'PASS');
   project.releaseEvidence.art['hero/neutral'].STYLE_PASS = 'FAIL';
   blocked(project, report => report.CHARACTER_MASTER_INHERITANCE === 'FAIL' && report.assets.find(asset => asset.id === 'hero/smile').ART_READY === 'FAIL');
   project.releaseEvidence.art['hero/neutral'].STYLE_PASS = 'PASS'; project.releaseEvidence.characterMasters.hero.ART_READY = 'UNVERIFIED';
@@ -88,7 +89,7 @@ test('failed or unverified Neutral Master review blocks otherwise passed express
 test('a PWA package requires explicit physical-device evidence and a valid locked build identity', async () => {
   const root = await mkdtemp(join(tmpdir(), 'vn-art-gate-')); await mkdir(join(root, 'assets'));
   const project = fixture(), file = join(root, 'project.json');
-  await writeFile(join(root, 'assets/room.svg'), picture); await writeFile(file, JSON.stringify(project));
+  await writeFile(join(root, 'assets/room.svg'), picture); await writeFile(file, JSON.stringify(project)); await writeSyntheticAcceptance(root,project,picture);
   const old = { release: process.env.VN_RELEASE_BUILD, commit: process.env.VN_ENGINE_COMMIT, github: process.env.GITHUB_SHA };
   try {
     process.env.VN_RELEASE_BUILD = '1'; process.env.VN_ENGINE_COMMIT = 'a'.repeat(40); delete process.env.GITHUB_SHA;
@@ -96,10 +97,10 @@ test('a PWA package requires explicit physical-device evidence and a valid locke
     const manifest = JSON.parse(await readFile(join(result.output, 'build-manifest.json'), 'utf8'));
     assert.equal(manifest.compliance.artGate.ART_READY, 'PASS'); assert.equal(manifest.compliance.artGate.MOBILE_PHYSICAL_DEVICE, 'PASS');
     project.releaseEvidence.targets.pwa = false; project.releaseEvidence.targets.mobile = false; delete project.releaseEvidence.mobilePhysicalDevice;
-    await writeFile(file, JSON.stringify(project));
+    await writeFile(file, JSON.stringify(project)); await writeSyntheticAcceptance(root,project,picture);
     await assert.rejects(packageGame(file, join(root, 'no-pwa-evidence')), error => error instanceof ReleaseArtGateError && error.report.release === 'BLOCKED');
     project.releaseEvidence.targets.pwa = true; project.releaseEvidence.mobilePhysicalDevice = fixture().releaseEvidence.mobilePhysicalDevice;
-    await writeFile(file, JSON.stringify(project)); process.env.VN_ENGINE_COMMIT = 'not-a-commit';
+    await writeFile(file, JSON.stringify(project)); await writeSyntheticAcceptance(root,project,picture); process.env.VN_ENGINE_COMMIT = 'not-a-commit';
     await assert.rejects(packageGame(file, join(root, 'bad-identity')), /valid matching/);
     process.env.VN_ENGINE_COMMIT = 'a'.repeat(40); await writeFile(join(root, 'assets/room.svg'), 'different');
     await assert.rejects(packageGame(file, join(root, 'bad-bytes')), /checksum mismatch/);
@@ -121,12 +122,12 @@ test('CLI prints a machine-readable blocked art report', async () => {
     env: { ...process.env, VN_RELEASE_BUILD: '1', VN_ENGINE_COMMIT: 'a'.repeat(40) } });
   assert.notEqual(build.status, 0); assert.match(build.stderr, /SPEC_ART_GATE_BLOCKED/);
   const desktop = fixture(); desktop.releaseEvidence.targets = { mobile: false, pwa: false, desktop: true }; delete desktop.releaseEvidence.mobilePhysicalDevice;
-  await writeFile(file, JSON.stringify(desktop));
+  await writeFile(file, JSON.stringify(desktop)); await writeSyntheticAcceptance(root,desktop,picture);
   assert.equal(spawnSync(process.execPath, ['tools/validate-project.mjs', '--release', file]).status, 0);
   const pwa = spawnSync(process.execPath, ['tools/validate-project.mjs', '--release', '--pwa-package', file], { encoding: 'utf8' });
   assert.notEqual(pwa.status, 0); assert.match(pwa.stderr, /includes a PWA/);
   assert.match(pwa.stderr, /"MOBILE_PHYSICAL_DEVICE":"UNVERIFIED"/);
   await writeFile(join(root, 'assets/room.svg'), 'changed bytes');
   const badFile = spawnSync(process.execPath, ['tools/validate-project.mjs', '--release', file], { encoding: 'utf8' });
-  assert.notEqual(badFile.status, 0); assert.match(badFile.stderr, /SPEC_FILE_GATE_BLOCKED.*SHA256 mismatch/);
+  assert.notEqual(badFile.status, 0); assert.match(badFile.stderr, /SPEC_ART_GATE_BLOCKED/);
 });

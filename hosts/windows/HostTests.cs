@@ -23,6 +23,9 @@ internal static class HostTests
             HostFiles.ValidateAuthorReview("{\"contract\":\"vn-author-review-v1\",\"schema\":1,\"game\":\"fixture\",\"storyVersion\":\"1\",\"items\":[]}");
             Reject(() => HostFiles.ValidateAuthorReview("{\"schema\":1,\"game\":\"fixture\",\"assets\":[]}"));
             checks.Add("Independent native review files require the versioned author contract and cannot be confused with runtime projects");
+            HostFiles.ValidateAiAcceptance("{\"contract\":\"vn-ai-acceptance-v1\",\"schema\":1,\"game\":\"fixture\",\"storyVersion\":\"1\",\"binding\":{},\"inputs\":[{\"src\":\"$source\"}],\"reviews\":[]}");
+            Reject(() => HostFiles.ValidateAiAcceptance("{\"contract\":\"vn-author-review-v1\",\"schema\":1}"));
+            checks.Add("AI acceptance has its own versioned native document kind and bounded evidence paths");
             var content = "{\"schema\":1,\"game\":\"fixture\",\"title\":\"Fixture\",\"assets\":[{\"id\":\"a\",\"kind\":\"background\",\"src\":\"assets/a.svg\"}]}";
             Directory.CreateDirectory(Path.Combine(root, "assets")); File.WriteAllText(Path.Combine(root, "assets/a.svg"), "<svg/>"); File.WriteAllText(Path.Combine(root, "private.txt"), "private");
             var workspace = new AssetWorkspace(root, content);

@@ -1,3 +1,4 @@
+import type { AcceptanceOptions } from './acceptance.js';
 import { AssetCatalog, type AssetKind } from '../assets/catalog.js';
 import type { RainLine } from '../adapters/rain-runtime.js';
 import { createProject, type EngineProject } from '../runtime/project.js';
@@ -80,7 +81,7 @@ function cueReferences(cue: StageCue | undefined, context: string): AssetReferen
  */
 export function validateProjectCompliance(
   project: EngineProject,
-  options: { mode?: ComplianceMode; requiresPwa?: boolean } = {},
+  options: AcceptanceOptions & { mode?: ComplianceMode; requiresPwa?: boolean } = {},
 ): ProjectComplianceReport {
   const mode = options.mode ?? 'development';
   const runtime = createProject(project, 'https://vn-engine.invalid/');
@@ -185,12 +186,12 @@ export function validateProjectCompliance(
     catch { throw new Error(`Invalid collection replay for current game/version: ${entry.id}`); }
     finally { replay.session.dispose(); }
   }
-  const artGate = mode === 'release' ? assessProductionArt(project, references.map(reference => reference.id), { requiresPwa: options.requiresPwa, keyVisualUsed: usesKeyVisual }) : undefined;
-  if (artGate?.release === 'BLOCKED') throw new ReleaseArtGateError(artGate);
-  const qaGate = mode === 'release' ? assessQaEvidence(project, { requiresPwa: options.requiresPwa }) : undefined;
-  if (qaGate?.release === 'BLOCKED') throw new ReleaseQaGateError(qaGate);
   const routeGate = mode === 'release' ? runRouteSuite(project) : undefined;
   if (routeGate && routeGate.status !== 'PASS') throw new ReleaseRouteGateError(routeGate);
+  const artGate = mode === 'release' ? assessProductionArt(project, references.map(reference => reference.id), { ...options, keyVisualUsed: usesKeyVisual }) : undefined;
+  if (artGate?.release === 'BLOCKED') throw new ReleaseArtGateError(artGate);
+  const qaGate = mode === 'release' ? assessQaEvidence(project, options) : undefined;
+  if (qaGate?.release === 'BLOCKED') throw new ReleaseQaGateError(qaGate);
 
   return Object.freeze({
     contract: GALGAME_SPEC_CONTRACT,

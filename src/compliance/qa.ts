@@ -1,3 +1,4 @@
+import { assessAiAcceptance, type AcceptanceOptions, type AcceptanceAssessment } from './acceptance.js';
 import type { EngineProject } from '../runtime/project.js';
 import { isRecord } from '../storage/save.js';
 
@@ -6,11 +7,12 @@ export type QaCategory = typeof QA_CATEGORIES[number];
 export type QaReview = { status: 'PASS' | 'FAIL' | 'UNVERIFIED'; reviewer: string; reviewedAt: string; evidence: string };
 export type QaEvidence = Partial<Record<QaCategory, QaReview>>;
 export type QaGateReport = { contract: 'GALGAME_SPEC-v0.2-qa-draft'; release: 'PASS' | 'BLOCKED';
+  acceptance?: AcceptanceAssessment; reviewMode?: 'ai-simulated';
   checks: readonly { category: QaCategory; required: boolean; status: 'PASS' | 'FAIL' | 'UNVERIFIED' | 'N/A'; review?: QaReview }[]; issues: readonly string[] };
 const known = (value: unknown): value is string => typeof value === 'string' && !!value.trim() && !/^(?:unverified|unknown|未知|待核实)$/i.test(value.trim());
 
 /** Declared human acceptance, kept separate from file checks and browser probes. */
-export function assessQaEvidence(project: EngineProject, options: { requiresPwa?: boolean } = {}): QaGateReport {
+export function assessDeclaredQaEvidence(project: EngineProject, options: { requiresPwa?: boolean } = {}): QaGateReport {
   const evidence = isRecord(project.releaseEvidence?.qa) ? project.releaseEvidence.qa : {}, targets = project.releaseEvidence?.targets;
   const targetKnown = !!targets && ['mobile', 'pwa', 'desktop'].every(key => typeof (targets as any)[key] === 'boolean');
   const required: Record<QaCategory, boolean> = { story: true, text: true, visualIntegration: true, accessibility: true,
@@ -31,5 +33,16 @@ export function assessQaEvidence(project: EngineProject, options: { requiresPwa?
   return Object.freeze({ contract: 'GALGAME_SPEC-v0.2-qa-draft', release: issues.length ? 'BLOCKED' : 'PASS', checks: Object.freeze(checks), issues: Object.freeze(issues) });
 }
 export class ReleaseQaGateError extends Error {
-  constructor(readonly report: QaGateReport) { super('Release blocked by human QA evidence gate'); this.name = 'ReleaseQaGateError'; }
+  constructor(readonly report: QaGateReport) { super('Release blocked by source-bound AI content or technical QA gate'); this.name = 'ReleaseQaGateError'; }
+}
+
+/** Current release policy. Historical human declarations remain readable, but cannot approve new content. */
+export function assessQaEvidence(project: EngineProject, options: AcceptanceOptions & { requiresPwa?: boolean } = {}): QaGateReport {
+  const acceptance = assessAiAcceptance(project, options);
+  const checks = QA_CATEGORIES.map(category => {
+    const result = acceptance.checks.find(c => c.key === category);
+    return { category, required: !!result, status: result?.status ?? 'N/A' } as const;
+  });
+  return { contract: 'GALGAME_SPEC-v0.2-qa-draft', reviewMode: 'ai-simulated', release: acceptance.status,
+    checks, acceptance, issues: acceptance.issues };
 }

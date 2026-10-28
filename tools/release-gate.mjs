@@ -11,12 +11,12 @@ export async function runReleaseGate(source, options = {}) {
     output = resolve(options.outputDirectory); await mkdir(output, { recursive: true });
     if ((await readdir(output)).length) throw Error('Release gate output must be new or empty; existing files are preserved');
   } else { await mkdir(resolve('build'), { recursive: true }); output = await mkdtemp(resolve('build/release-gate-')); }
-  let report = await buildQaReport(source, { decode: true, requiresPwa: true }), candidate;
+  let report = await buildQaReport(source, { ...options,decode: true, requiresPwa: true }), candidate;
   if (report.status === 'PASS') {
     const old = process.env.VN_RELEASE_BUILD; process.env.VN_RELEASE_BUILD = '1';
     try {
-      const directory = join(output, 'candidate'); await packageGame(source, directory); candidate = directory;
-      report = await buildQaReport(source, { decode: true, buildDirectory: candidate });
+      const directory = join(output, 'candidate'); await packageGame(source, directory,options); candidate = directory;
+      report = await buildQaReport(source, { ...options,decode: true, buildDirectory: candidate });
     } catch (error) { report = { ...report, status: 'BLOCKED', build: { status: 'FAIL', requested: true, reason: error.message } }; }
     finally { if (old === undefined) delete process.env.VN_RELEASE_BUILD; else process.env.VN_RELEASE_BUILD = old; }
   }
@@ -26,7 +26,7 @@ export async function runReleaseGate(source, options = {}) {
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2), source = args.find(arg => !arg.startsWith('--'));
   if (!source) throw Error('Usage: node tools/release-gate.mjs project.json [--output=new-directory]');
-  if (args.filter(arg => !arg.startsWith('--')).length !== 1 || args.some(arg => arg.startsWith('--') && !arg.startsWith('--output='))) throw Error('Unknown release gate argument');
-  const { report, ...result } = await runReleaseGate(source, { outputDirectory: args.find(arg => arg.startsWith('--output='))?.slice(9) });
+  if (args.filter(arg => !arg.startsWith('--')).length !== 1 || args.some(arg => arg.startsWith('--') && !arg.startsWith('--output=') && !arg.startsWith('--acceptance='))) throw Error('Unknown release gate argument');
+  const { report, ...result } = await runReleaseGate(source, { acceptanceFile:args.find(a=>a.startsWith('--acceptance='))?.slice(13),outputDirectory: args.find(arg => arg.startsWith('--output='))?.slice(9) });
   console.log('RELEASE_GATE_REPORT', JSON.stringify(result)); if (result.status !== 'PASS') process.exitCode = 1;
 }

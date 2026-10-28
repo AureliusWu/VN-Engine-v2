@@ -1,3 +1,4 @@
+import {writeSyntheticAcceptance} from './acceptance-fixture.mjs';
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, access, readFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -17,7 +18,7 @@ for (const kind of ['missing', 'failed', 'uncovered']) {
   if (kind === 'missing') delete data.routeTests;
   if (kind === 'failed') data.routeTests.cases[0].expect.ending = 'wrong';
   if (kind === 'uncovered') data.scenes.push({ id: 'second', lines: [{ id: 'second-line', speaker: 'N', text: 'Another declared ending' }], ending: 'second' });
-  await writeFile(source, JSON.stringify(data));
+  await writeFile(source, JSON.stringify(data)); await writeSyntheticAcceptance(root,data,picture);
   const directory = join(root, 'blocked-' + kind), blocked = await runReleaseGate(source, { outputDirectory: directory });
   assert.equal(blocked.status, 'BLOCKED'); assert.equal(blocked.candidate, undefined);
   assert.equal(blocked.report.routes.status, kind === 'failed' ? 'FAIL' : 'UNVERIFIED');
@@ -25,7 +26,7 @@ for (const kind of ['missing', 'failed', 'uncovered']) {
   await assert.rejects(access(join(directory, 'candidate')));
   assert.equal(JSON.parse(await readFile(blocked.reportFile, 'utf8')).status, 'BLOCKED');
 }
-await writeFile(source, JSON.stringify(project));
+await writeFile(source, JSON.stringify(project)); await writeSyntheticAcceptance(root,project,picture);
 const old = { commit: process.env.VN_ENGINE_COMMIT, github: process.env.GITHUB_SHA };
 try {
   process.env.VN_ENGINE_COMMIT = 'a'.repeat(40); delete process.env.GITHUB_SHA;
@@ -41,7 +42,7 @@ try {
   if (old.github === undefined) delete process.env.GITHUB_SHA; else process.env.GITHUB_SHA = old.github;
 }
 const broken = Buffer.from('this is not an image'); project.assets[0].sha256 = createHash('sha256').update(broken).digest('hex'); project.releaseEvidence.art.room.runtimeSha256 = project.assets[0].sha256;
-await writeFile(join(root, 'assets/room.svg'), broken); await writeFile(source, JSON.stringify(project));
+await writeFile(join(root, 'assets/room.svg'), broken); await writeFile(source, JSON.stringify(project)); await writeSyntheticAcceptance(root,project,picture);
 const invalid = await buildQaReport(source, { decode: true }); assert.equal(invalid.files.status, 'PASS'); assert.equal(invalid.art.TECH_READY, 'PASS');
 assert.equal(invalid.decoding.status, 'FAIL'); assert.equal(invalid.status, 'BLOCKED');
 console.log('PASS QA decodes actual bytes; formal gate and packages require executed routes and ending coverage, retain blocked reports and reject undecodable assets');

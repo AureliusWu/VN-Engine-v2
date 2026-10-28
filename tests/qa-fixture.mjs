@@ -1,3 +1,4 @@
+import {writeSyntheticAcceptance} from './acceptance-fixture.mjs';
 import { createHash } from 'node:crypto';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { join } from 'node:path';
@@ -20,5 +21,5 @@ export function qaFixture() {
 }
 export async function writeQaFixture(root, project, picture) {
   await mkdir(join(root, 'assets'), { recursive: true }); await writeFile(join(root, 'assets/room.svg'), picture);
-  const filename = join(root, 'project.json'); await writeFile(filename, JSON.stringify(project)); return filename;
+  const filename = join(root, 'project.json'); await writeFile(filename, JSON.stringify(project)); await writeSyntheticAcceptance(root,project,picture); return filename;
 }

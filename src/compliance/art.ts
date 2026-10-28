@@ -1,3 +1,4 @@
+import { assessAiAcceptance, type AcceptanceOptions } from './acceptance.js';
 import type { Asset } from '../assets/catalog.js';
 import type { EngineProject } from '../runtime/project.js';
 import { isRecord } from '../storage/save.js';
@@ -44,7 +45,9 @@ const dated = (value: unknown) => typeof value === 'string' && Number.isFinite(D
 const digest = (value: unknown) => typeof value === 'string' && /^[a-f0-9]{64}$/.test(value);
 
 /** Checks human-declared evidence, never infers artistic quality from technical success. */
-export function assessProductionArt(project: EngineProject, referencedIds: readonly string[], options: { requiresPwa?: boolean; keyVisualUsed?: boolean } = {}): ArtGateResult {
+export function assessProductionArt(project: EngineProject, referencedIds: readonly string[], options: AcceptanceOptions & { requiresPwa?: boolean; keyVisualUsed?: boolean } = {}): ArtGateResult {
+  const acceptance = assessAiAcceptance(project, options);
+  const approved = (key: string) => acceptance.checks.find(c => c.key === key)?.status === 'PASS';
   const evidence: unknown = project.releaseEvidence, root = isRecord(evidence) ? evidence : {};
   const targets = isRecord(root.targets) ? root.targets : {};
   const targetKnown = ['mobile', 'pwa', 'desktop'].every(key => typeof targets[key] === 'boolean');
@@ -57,12 +60,14 @@ export function assessProductionArt(project: EngineProject, referencedIds: reado
   const placeholders = project.assets.filter(asset => asset.status === 'PLACEHOLDER');
   for (const asset of placeholders) issues.push(`PLACEHOLDER asset is included in the release manifest: ${asset.id}`);
   for (const asset of project.assets) if (/placeholder|占位/i.test(`${asset.id} ${asset.src} ${asset.alt ?? ''}`)) warnings.push(`Potential placeholder requires human review: ${asset.id}`);
-  const keyVisual = isRecord(root.keyVisual) ? root.keyVisual : {};
+  const visualReview = acceptance.checks.find(c => c.key === 'visualIntegration');
+  const originalKeyVisual = isRecord(root.keyVisual) ? root.keyVisual : {};
+  const keyVisual = approved('visualIntegration') && originalKeyVisual.used === true ? { ...originalKeyVisual, status: 'PASS', reviewer: visualReview?.model, reviewedAt: visualReview?.reviewedAt, evidence: 'vn-ai-acceptance-v1:visualIntegration' } : originalKeyVisual;
   let keyVisualStatus: ArtGateResult['KEY_VISUAL_LIFECYCLE'] = 'UNVERIFIED';
   if (keyVisual.used === false) keyVisualStatus = 'N/A';
   else if (keyVisual.used === true && keyVisual.status === 'FAIL') keyVisualStatus = 'FAIL';
   else if (keyVisual.used === true && keyVisual.status === 'PASS' && known(keyVisual.reviewer) && dated(keyVisual.reviewedAt) && known(keyVisual.evidence)) keyVisualStatus = 'PASS';
-  if (keyVisualStatus === 'UNVERIFIED' || keyVisualStatus === 'FAIL') issues.push('Key Visual use and lifecycle require an explicit declaration and, when used, human evidence.');
+  if (keyVisualStatus === 'UNVERIFIED' || keyVisualStatus === 'FAIL') issues.push('Key Visual use and lifecycle require an explicit declaration and, when used, AI runtime evidence.');
   if (options.keyVisualUsed && keyVisual.used !== true) { keyVisualStatus = 'FAIL'; issues.push('Key Visual is authored in runtime cues but declared unused.'); }
   let mobile: ArtGateResult['MOBILE_PHYSICAL_DEVICE'] = targetKnown && !needsMobile ? 'N/A' : 'UNVERIFIED';
   if (targetKnown && needsMobile) {
@@ -79,24 +84,37 @@ export function assessProductionArt(project: EngineProject, referencedIds: reado
   const dynamicVisuals = project.type === 'narrative' && (!!project.adapter || !!project.stage?.presentation
     || !!Object.keys(project.stage?.speakers ?? {}).length || project.scenes.some(scene => !!scene.character));
   if (dynamicVisuals) {
-    const dynamic = isRecord(root.dynamicPresentation) ? root.dynamicPresentation : {};
+    const dynamic = approved('visualIntegration') ? { status: 'PASS', reviewer: visualReview?.model, reviewedAt: visualReview?.reviewedAt, evidence: 'vn-ai-acceptance-v1:visualIntegration' } : isRecord(root.dynamicPresentation) ? root.dynamicPresentation : {};
     if (dynamic.status !== 'PASS' || !known(dynamic.reviewer) || !dated(dynamic.reviewedAt) || !known(dynamic.evidence))
-      issues.push('Dynamic presentation references require passed human runtime evidence.');
+      issues.push('Dynamic presentation references require passed AI runtime evidence.');
   }
   for (const asset of project.assets) if (asset.kind === 'ui' || (dynamicVisuals && visualKinds.has(asset.kind))) required.add(asset.id);
-  const records = isRecord(root.art) ? root.art : {};
-  const masters = isRecord(root.characterMasters) ? root.characterMasters : {};
+  const projectReview = (value: unknown, key: string) => {
+    const original = isRecord(value) ? value : {}, review = acceptance.checks.find(c => c.key === key);
+    return approved(key) ? { ...original, ART_READY: 'PASS', ...Object.fromEntries(gates.map(g => [g, 'PASS'])),
+      reviewer: review!.model, reviewedAt: review!.reviewedAt,
+      evidence: key.startsWith('master:') ? 'vn-ai-acceptance-v1:' + key : { desktop: 'vn-ai-acceptance-v1:' + key, mobile: 'vn-ai-acceptance-v1:' + key, provenance: 'vn-ai-acceptance-v1:' + key } } : original;
+  };
+  const records = Object.fromEntries(Object.entries(isRecord(root.art) ? root.art : {}).map(([id, value]) => [id, projectReview(value, 'art:' + id)]));
+  const masters = Object.fromEntries(Object.entries(isRecord(root.characterMasters) ? root.characterMasters : {}).map(([id, value]) => [id, projectReview(value, 'master:' + id)]));
+  for (const id of [...required]) {
+    const value = records[id], link = isRecord(value?.characterMaster) ? value.characterMaster : {};
+    const master = typeof link.id === 'string' ? masters[link.id] : undefined;
+    if (byId.get(id)?.kind === 'portrait' && typeof master?.neutralAsset === 'string') required.add(master.neutralAsset);
+  }
   const masterPassed = (value: Record<string, unknown>): boolean => {
     const link = isRecord(value.characterMaster) ? value.characterMaster : {}, masterValue = known(link.id) ? masters[link.id] : undefined;
     const master: Record<string, unknown> = isRecord(masterValue) ? masterValue : {};
-    if (!known(link.id) || !['neutral', 'variant'].includes(String(link.role)) || !digest(value.masterSha256) || value.masterSha256 !== master.masterSha256
+    if (!known(link.id) || !approved('master:' + link.id) || !['neutral', 'variant'].includes(String(link.role)) || !digest(value.masterSha256) || value.masterSha256 !== master.masterSha256
       || master.ART_READY !== 'PASS' || !gates.every(gate => master[gate] === 'PASS') || !known(master.reviewer) || !dated(master.reviewedAt) || !known(master.evidence)) return false;
     if (master.neutralAsset !== undefined) {
       const neutralValue = typeof master.neutralAsset === 'string' ? records[master.neutralAsset] : undefined;
       const neutral: Record<string, unknown> = isRecord(neutralValue) ? neutralValue : {};
       const origin = isRecord(neutral.characterMaster) ? neutral.characterMaster : {};
       const links = isRecord(neutral.evidence) ? neutral.evidence : {};
-      if (byId.get(String(master.neutralAsset))?.kind !== 'portrait' || neutral.ART_READY !== 'PASS' || !gates.every(gate => neutral[gate] === 'PASS')
+      const neutralAsset = byId.get(String(master.neutralAsset));
+      if (neutralAsset?.kind !== 'portrait' || neutralAsset.status !== 'READY' || !digest(neutralAsset.sha256)
+        || neutral.runtimeSha256 !== neutralAsset.sha256 || neutral.TECH_READY !== 'PASS' || !approved('art:' + master.neutralAsset) || neutral.ART_READY !== 'PASS' || !gates.every(gate => neutral[gate] === 'PASS')
         || !known(neutral.reviewer) || !dated(neutral.reviewedAt) || !known(neutral.source) || !known(links.desktop) || !known(links.mobile) || !known(links.provenance)
         || origin.id !== link.id || origin.role !== 'neutral' || neutral.masterSha256 !== master.masterSha256) return false;
     }
@@ -110,10 +128,11 @@ export function assessProductionArt(project: EngineProject, referencedIds: reado
     if (!digest(asset.sha256) || value.runtimeSha256 !== asset.sha256) itemIssues.push('Runtime SHA256 is missing or differs from the asset manifest.');
     const tech = itemIssues.length === 0 ? 'PASS' : 'FAIL';
     const artStart = itemIssues.length;
+    if (!approved('art:' + id)) itemIssues.push('Current source-bound AI art review is missing, stale, failed or incomplete.');
     if (asset.status === 'PLACEHOLDER') itemIssues.push('PLACEHOLDER cannot be ART_READY.');
     if (value.ART_READY !== 'PASS') itemIssues.push('ART_READY is not explicitly PASS.');
     for (const gate of gates) if (value[gate] !== 'PASS') itemIssues.push(`${gate} is not PASS.`);
-    if (!known(value.reviewer) || !dated(value.reviewedAt)) itemIssues.push('Human reviewer or review date is missing.');
+    if (!known(value.reviewer) || !dated(value.reviewedAt)) itemIssues.push('Review model or date is missing.');
     if (!known(value.source)) itemIssues.push('Asset source is UNVERIFIED.');
     if (typeof value.source === 'string' && /procedural|generator|template|程序化|模板/i.test(value.source)) warnings.push(`Procedural or template source requires final-style review: ${id}`);
     const links = isRecord(value.evidence) ? value.evidence : {};

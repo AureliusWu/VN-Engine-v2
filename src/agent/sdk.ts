@@ -1,3 +1,4 @@
+import { AI_ACCEPTANCE_SCHEMA, readAiAcceptance, assessAiAcceptance, captureAcceptanceContext } from '../compliance/acceptance.js';
 import { CREATIVE_EXTENSION, PRODUCTION_SCHEMA, UI_SCHEMA } from '../creative/schema.js';
 import { reviewCreativeProject } from '../creative/project.js';
 import { FEEDBACK_DOCUMENT_SCHEMA,FeedbackError,readAuthorReview,captureReviewBinding,assessAuthorReview,editAuthorReview } from '../creative/feedback.js';
@@ -13,14 +14,14 @@ import { applyAgentOperation } from './operations.js';
 import { inspectItems, referenceItems, agentProjectDiagnostics } from './project.js';
 
 export function agentCapabilities() {
-  return { protocol: AGENT_PROTOCOL, extensions:[CREATIVE_EXTENSION,'vn-author-review-v1','vn-content-impact-v1'], limits: AGENT_LIMITS, commands: Object.keys(COMMAND_SCHEMAS), operations: OPERATION_DEFINITIONS.map(schema => schema.properties.op.const),
+  return { protocol: AGENT_PROTOCOL, extensions:[CREATIVE_EXTENSION,'vn-author-review-v1','vn-content-impact-v1','vn-ai-acceptance-v1'], limits: AGENT_LIMITS, commands: Object.keys(COMMAND_SCHEMAS), operations: OPERATION_DEFINITIONS.map(schema => schema.properties.op.const),
     templates: ['vn', 'chat', 'script', 'investigation'], templateTypes: { vn: 'narrative', chat: 'narrative', script: 'script', investigation: 'investigation' }, projectTypes: ['narrative', 'script', 'investigation', 'rain'],
     compatibility: { projectSchema: 1, editorSchema: 1, saveSchema: 1, rain: 'native-format-read-validate-test-preview-build' },
     operationScopes: { variable: ['script'], chapter: ['investigation'], evidence: ['investigation'], action: ['investigation'], line: ['narrative','script'], choice: ['narrative','script'], exit: ['script'], rainNodes: 'native-read-only' },
-    hostPorts: ['readAsset', 'preview', 'build', 'probe', 'importsPrepared'],
+    hostPorts: ['readAsset', 'preview', 'build', 'probe', 'importsPrepared','readEvidence','acceptanceBundle'],
     schemas: {
       ...Object.fromEntries(['request','response','operation'].map(name=>[name,{id:`urn:vn-agent-v1:${name}`,file:`schemas/vn-agent-v1.${name}.schema.json`}])),
-      ...Object.fromEntries(['production','ui'].map(name=>[name,{id:`urn:vn-creative-v1:${name}`,file:`schemas/vn-creative-v1.${name}.schema.json`}])),feedback:{id:'urn:vn-author-review-v1:document',file:'schemas/vn-author-review-v1.document.schema.json'}
+      ...Object.fromEntries(['production','ui'].map(name=>[name,{id:`urn:vn-creative-v1:${name}`,file:`schemas/vn-creative-v1.${name}.schema.json`}])),acceptance:{id:'urn:vn-ai-acceptance-v1:document',file:'schemas/vn-ai-acceptance-v1.document.schema.json'},feedback:{id:'urn:vn-author-review-v1:document',file:'schemas/vn-author-review-v1.document.schema.json'}
     },
     exitCodes: { PASS: 0, FAIL: 1, BLOCKED: 2, UNVERIFIED: 3 }, batch: { stableIds: true, finalValidation: true, expectedSourceSha256: true, dryRun: true, playerStorageWrites: false } };
 }
@@ -106,7 +107,7 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
     request = validateAgentRequest(input); response.command = request.command; response.requestId = request.requestId;
     if (utf8Bytes(JSON.stringify(request)) > AGENT_LIMITS.inputBytes) throw new AgentError('BUDGET_EXCEEDED', 'Request exceeds byte budget', {}, 'UNVERIFIED');
     const params = request.params; check();
-    if (request.command === 'capabilities') { response.data = params.schema ? { schema: ({ request: AGENT_REQUEST_SCHEMA, response: AGENT_RESPONSE_SCHEMA, operation: AGENT_OPERATION_SCHEMA, production:PRODUCTION_SCHEMA, ui:UI_SCHEMA,feedback:FEEDBACK_DOCUMENT_SCHEMA } as any)[params.schema] } : agentCapabilities(); return result; }
+    if (request.command === 'capabilities') { response.data = params.schema ? { schema: ({ request: AGENT_REQUEST_SCHEMA, response: AGENT_RESPONSE_SCHEMA, operation: AGENT_OPERATION_SCHEMA, production:PRODUCTION_SCHEMA, ui:UI_SCHEMA,feedback:FEEDBACK_DOCUMENT_SCHEMA,acceptance:AI_ACCEPTANCE_SCHEMA } as any)[params.schema] } : agentCapabilities(); return result; }
     if(request.command==='probe'){if(!context.probe)throw new AgentError('HOST_PORT_REQUIRED','Probe requires the Node host or an injected decoder',{},'UNVERIFIED');const output=await context.probe(request);response.data=output.data;response.artifacts=output.artifacts;response.status=output.status;response.ok=output.status==='PASS';response.diagnostics=output.diagnostics;result.report=output.data;check();return result;}
     if (request.command === 'init') {
       const project = newProject(params.type); project.game = params.game; project.version = params.storyVersion; project.title = params.title;
@@ -122,6 +123,27 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
     let model: EditorModel; try { model = new EditorModel(sourceText, 1); } catch (error) { throw new AgentError('INVALID_PROJECT', error instanceof Error ? error.message : String(error)); }
     const before = readDocument(sourceText), project = before.project, sha = await sourceHash(sourceText), wrapped = JSON.parse(sourceText).format === 'vn-engine-editor';
     response.project = { game: project.game, storyVersion: project.version, sourceSha256: sha }; check();
+    if(request.command==='acceptance.bundle'){
+      if(!context.acceptanceBundle)throw new AgentError('HOST_PORT_REQUIRED','Acceptance bundle needs the file host',{},'UNVERIFIED');
+      response.data=await context.acceptanceBundle(request);if(response.data.binding.sourceSha256!==sha)throw new AgentError('SOURCE_CONFLICT','Project changed before bundle');response.artifacts.push({kind:'acceptance-draft',path:response.data.draftFile});check();return result;
+    }
+    if(request.command.startsWith('acceptance.')){
+      const raw=context.reviewSource??null,reviewText=raw===null?null:typeof raw==='string'?raw:JSON.stringify(raw,null,2)+'\n';
+      const reviewSha=reviewText===null?null:await sourceHash(reviewText);
+      const doc=request.command==='acceptance.import'?readAiAcceptance(params.document):raw===null?undefined:readAiAcceptance(raw);
+      const acceptanceContext=await captureAcceptanceContext(project,sourceText,doc,context.readAsset,context.readEvidence);check();
+      const report=assessAiAcceptance(project,{acceptance:doc,acceptanceContext});
+      if(request.command==='acceptance.inspect'){
+        page(response,[{id:'acceptance-summary',reviewSha256:reviewSha,status:report.status,scope:report.scope},...report.checks],request,sha+':'+reviewSha+':'+await sourceHash(JSON.stringify(acceptanceContext)));return result;
+      }
+      if(params.expectedSourceSha256!==sha)throw new AgentError('SOURCE_CONFLICT','Project changed before acceptance import');
+      if(params.expectedReviewSha256!==reviewSha)throw new AgentError('REVIEW_CONFLICT','Acceptance file changed before import');
+      if(!report.scope.sourceBound||!report.scope.actualFiles||!report.scope.evidenceBound)throw new AgentError('REVIEW_STALE','Acceptance source, media or evidence is stale or unverified',{actual:report.issues});
+      if(reviewSha&&doc?.supersedesSha256!==reviewSha)throw new AgentError('REVIEW_CONFLICT','Re-review must identify the previous acceptance SHA');
+      const text=JSON.stringify(doc,null,2)+'\n',after=await sourceHash(text);
+      result.reviewCandidate={document:doc!,sourceText:text,beforeSha256:reviewSha,afterSha256:after};
+      response.data={applied:false,reviewSha256:reviewSha,candidateReviewSha256:after,status:report.status,checksTotal:report.checks.length};return result;
+    }
     if(request.command.startsWith('feedback.')){
       const raw=context.reviewSource??null;
       const reviewText=raw===null?null:typeof raw==='string'?raw:JSON.stringify(raw,null,2)+'\n';
@@ -173,7 +195,7 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
       response.data = { dryRun: request.command==='impact'||!!params.dryRun, applied: false, beforeSha256: sha, afterSha256: after, ...differences(JSON.parse(sourceText), JSON.parse(text)),impact }; check(); return result;
     }
     if (request.command === 'validate') {
-      try { response.data = { structure: validateProjectCompliance(project, { mode: params.mode ?? 'development' }), files: context.readAsset || !project.assets.length ? 'PASS' : 'UNVERIFIED' }; }
+      try { response.data = { structure: validateProjectCompliance(project, { mode: params.mode ?? 'development', acceptance:context.acceptance,acceptanceContext:context.acceptanceContext }), files: context.readAsset || !project.assets.length ? 'PASS' : 'UNVERIFIED' }; }
       catch (error) { response.data = { report: (error as any).report ?? null }; throw new AgentError((error as Error).name.startsWith('Release') ? 'RELEASE_GATE_BLOCKED' : 'VALIDATION_FAILED', (error as Error).message, {}, (error as Error).name.startsWith('Release') ? 'BLOCKED' : 'FAIL'); }
       if (response.diagnostics.some(d => d.code === 'ASSETS_UNVERIFIED')) { response.ok = false; response.status = 'UNVERIFIED'; }
     } else if (request.command === 'test') {

@@ -1,9 +1,12 @@
+import {loadAcceptanceOptions} from './acceptance-node.mjs';
+import {fingerprintFiles} from './pwa.mjs';
+import {posix} from 'node:path';
 import { readFile, writeFile, mkdir, realpath } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { dirname, resolve, sep, extname } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
-import { validateProjectCompliance, assessProductionArt, assessQaEvidence, ReleaseArtGateError, ReleaseQaGateError, runRouteSuite, ReleaseRouteGateError, localAssetPath, isRecord, ENGINE_VERSION } from '../dist/index.js';
+import { validateProjectCompliance, assessProductionArt, assessQaEvidence, assessDeclaredQaEvidence, ReleaseArtGateError, ReleaseQaGateError, runRouteSuite, ReleaseRouteGateError, localAssetPath, isRecord, ENGINE_VERSION } from '../dist/index.js';
 import { probeAssets } from './probe-assets.mjs';
 
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -30,22 +33,32 @@ async function inspectFiles(project, root) {
   }
   return { report: { status: checks.some(check => check.status === 'FAIL') ? 'FAIL' : 'PASS', assetsChecked: checks.length, checks }, inputs };
 }
-async function inspectBuild(directory, project) {
+async function inspectBuild(directory, project, sourceSha256) {
   if (!directory) return { status: 'UNVERIFIED', requested: false, reason: 'No built artifact was supplied.' };
   const checks = [];
   try {
     const root = await realpath(resolve(directory)), manifest = JSON.parse(await readFile(resolve(root, 'build-manifest.json'), 'utf8'));
     if (manifest.game !== project.game || manifest.version !== project.version || manifest.buildIdentity?.gameVersion !== project.version
-      || !/^[a-f0-9]{40}$/i.test(manifest.buildIdentity?.commitSha ?? '') || !Array.isArray(manifest.files)) throw Error('Build identity does not match the project or has no commit lock');
-    const names = new Set();
+      || manifest.buildIdentity?.engineVersion !== ENGINE_VERSION || manifest.source?.sourceSha256 !== sourceSha256
+      || !/^[a-f0-9]{40}$/i.test(manifest.buildIdentity?.commitSha ?? '') || !Array.isArray(manifest.files)) throw Error('Build identity differs from current source/engine or has no commit lock');
+    const names = new Set(), decodedFiles=new Map();
+    const required=['index.html','app.mjs','project.json','lib/index.js','sw.js','manifest.webmanifest','icon.svg','LICENSE.txt',...project.assets.flatMap(a=>[a.src,...(a.license?[a.license.src]:[])])];
+    const entries=new Set(manifest.files.map(e=>e.name));
+    for(const name of required)if(!entries.has(name))throw Error('Required build file missing from manifest: '+name);
     for (const entry of manifest.files) {
       try {
         if (names.has(entry.name)) throw Error('Duplicate build file'); names.add(entry.name);
         const bytes = await localBytes(root, entry.name);
         if (bytes.length !== entry.size || digest(bytes) !== entry.sha256) throw Error('Build checksum or size mismatch');
+        decodedFiles.set(entry.name,bytes);
         checks.push({ name: entry.name, status: 'PASS', bytes: bytes.length, actualSha256: digest(bytes) });
       } catch (error) { checks.push({ name: entry.name, status: 'FAIL', reason: errorText(error) }); }
     }
+    for(const [name,bytes]of decodedFiles)if(name.endsWith('.js')||name.endsWith('.mjs')){
+      const imports=bytes.toString('utf8').matchAll(/(?:\bfrom\s*|\bimport\s*(?:\(\s*)?)['"](\.[^'"]+)['"]/g);
+      for(const match of imports){const dependency=posix.normalize(posix.join(posix.dirname(name),match[1]));if(!entries.has(dependency))throw Error('Required runtime dependency missing: '+dependency);}
+    }
+    if(checks.every(c=>c.status==='PASS')&&fingerprintFiles([...decodedFiles].filter(([name])=>name!=='sw.js').map(([name,bytes])=>({name,bytes})))!==manifest.contentFingerprint)throw Error('Build content fingerprint mismatch');
     if (!names.has('project.json') || !isDeepStrictEqual(JSON.parse(await localBytes(root, 'project.json')), project)) throw Error('Packaged project differs from the current source');
     return { status: checks.some(check => check.status === 'FAIL') ? 'FAIL' : 'PASS', requested: true, identity: manifest.buildIdentity,
       contentFingerprint: manifest.contentFingerprint, filesChecked: checks.length, checks };
@@ -57,39 +70,42 @@ export async function buildQaReport(filename, options = {}) {
   const source = resolve(filename), sourceBytes = await readFile(source), project = JSON.parse(sourceBytes), root = await realpath(dirname(source));
   if (!isRecord(project)) throw Error('QA report requires a JSON project object');
   const requiresPwa = options.requiresPwa === true || !!options.buildDirectory;
-  let structure, formalStructure, routes;
+  let structure, formalStructure, routes, acceptanceOptions={},acceptanceError;
+  try{acceptanceOptions=await loadAcceptanceOptions(source,options);}catch(error){acceptanceError=errorText(error);}
   try { structure = { status: 'PASS', report: validateProjectCompliance(project) }; } catch (error) { structure = { status: 'FAIL', reason: errorText(error) }; }
-  try { routes = validateProjectCompliance(project, { mode: 'release', requiresPwa }).routeGate; formalStructure = { status: 'PASS' }; }
+  try { routes = validateProjectCompliance(project, { ...acceptanceOptions,mode: 'release', requiresPwa }).routeGate; formalStructure = { status: 'PASS' }; }
   catch (error) {
     if (error instanceof ReleaseRouteGateError) routes = error.report;
     formalStructure = error instanceof ReleaseArtGateError || error instanceof ReleaseQaGateError || error instanceof ReleaseRouteGateError ? { status: 'PASS' } : { status: 'FAIL', reason: errorText(error) };
   }
   try { routes ??= runRouteSuite(project); }
   catch (error) { routes = { status: 'FAIL', error: errorText(error), cases: [], coverage: { required: [], covered: [], missing: [] } }; }
-  let art, humanQa;
-  try { art = assessProductionArt(project, project.assets.map(asset => asset.id), { requiresPwa, keyVisualUsed: structure.report?.keyVisualUsed }); }
+  let art, contentReview;
+  try { art = assessProductionArt(project, project.assets.map(asset => asset.id), { ...acceptanceOptions, requiresPwa, keyVisualUsed: structure.report?.keyVisualUsed }); }
   catch (error) { art = { release: 'BLOCKED', issues: [errorText(error)] }; }
-  try { humanQa = assessQaEvidence(project, { requiresPwa }); } catch (error) { humanQa = { release: 'BLOCKED', issues: [errorText(error)] }; }
+  try { contentReview = assessQaEvidence(project, { ...acceptanceOptions,requiresPwa }); } catch (error) { contentReview = { release: 'BLOCKED', issues: [errorText(error)] }; }
+  const humanQa={...assessDeclaredQaEvidence(project,{requiresPwa}),scope:'legacy-declared; historical only; not current release approval'};
+  if(acceptanceError)contentReview={...contentReview,release:'BLOCKED',issues:[...contentReview.issues,acceptanceError]};
   const { report: files, inputs } = await inspectFiles(project, root);
   const decoding = options.decode ? await probeAssets(inputs) : { status: 'UNVERIFIED', reason: 'Run with --decode to probe local asset bytes in Chromium.', checks: [] };
-  const build = await inspectBuild(options.buildDirectory, project);
-  const blocked = structure.status === 'FAIL' || formalStructure.status === 'FAIL' || art.release !== 'PASS' || humanQa.release !== 'PASS'
+  const build = await inspectBuild(options.buildDirectory, project,digest(sourceBytes));
+  const blocked = structure.status === 'FAIL' || formalStructure.status === 'FAIL' || art.release !== 'PASS' || contentReview.release !== 'PASS'
     || routes.status !== 'PASS' || files.status === 'FAIL' || decoding.status === 'FAIL' || (build.requested && build.status === 'FAIL');
   const status = blocked ? 'BLOCKED' : decoding.status === 'UNVERIFIED' ? 'UNVERIFIED' : 'PASS';
   return { schema: 1, contract: 'GALGAME_SPEC-v0.2-qa-draft', checkedAt: new Date().toISOString(), status,
-    scope: { source: true, routeExecution: true, declaredHumanEvidence: true, localBytes: true, decodingRequested: !!options.decode, buildRequested: !!options.buildDirectory, fullSpecCertification: false },
+    scope: { source: true, routeExecution: true, declaredHumanEvidence: false,aiSimulatedAcceptance:true, localBytes: true, decodingRequested: !!options.decode, buildRequested: !!options.buildDirectory, fullSpecCertification: false },
     project: { game: project.game, version: project.version, title: project.title, sourceSha256: digest(sourceBytes) }, engine: ENGINE_VERSION,
-    structure, formalStructure, routes, art, humanQa, files, decoding, build,
-    limitations: ['Human evidence, provenance and physical-device claims are not authenticated automatically.', 'File/decode success does not establish art quality or listening experience.',
+    structure, formalStructure, routes, art, contentReview, humanQa, files, decoding, build,
+    limitations: ['AI/model identity declarations, provenance and physical-device claims are not authenticated automatically.', 'File/decode success does not establish art quality or listening experience.',
       'Route execution covers authored cases and declared endings, not all branch combinations or narrative quality.',
       'Video probing covers the first decoded frame only. Full playback and target-platform acceptance need separate evidence.', 'This report covers the declared scope and is not full GALGAME SPEC v0.2 certification.'] };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2), source = args.find(arg => !arg.startsWith('--'));
   if (!source) throw Error('Usage: node tools/qa-report.mjs project.json [--decode] [--release] [--pwa-package] [--build=directory] [--output=report.json]');
-  if (args.filter(arg => !arg.startsWith('--')).length !== 1 || args.some(arg => arg.startsWith('--') && !['--decode', '--release', '--pwa-package'].includes(arg) && !arg.startsWith('--build=') && !arg.startsWith('--output='))) throw Error('Unknown QA report argument');
+  if (args.filter(arg => !arg.startsWith('--')).length !== 1 || args.some(arg => arg.startsWith('--') && !['--decode', '--release', '--pwa-package'].includes(arg) && !arg.startsWith('--build=') && !arg.startsWith('--output=') && !arg.startsWith('--acceptance='))) throw Error('Unknown QA report argument');
   const output = args.find(arg => arg.startsWith('--output='))?.slice(9);
-  const report = await buildQaReport(source, { decode: args.includes('--decode') || args.includes('--release'), requiresPwa: args.includes('--pwa-package'), buildDirectory: args.find(arg => arg.startsWith('--build='))?.slice(8) });
+  const report = await buildQaReport(source, { acceptanceFile:args.find(arg=>arg.startsWith('--acceptance='))?.slice(13), decode: args.includes('--decode') || args.includes('--release'), requiresPwa: args.includes('--pwa-package'), buildDirectory: args.find(arg => arg.startsWith('--build='))?.slice(8) });
   if (output) { await mkdir(dirname(resolve(output)), { recursive: true }); await writeFile(resolve(output), JSON.stringify(report, null, 2) + '\n'); console.log('QA_REPORT_WRITTEN', JSON.stringify({ file: output, status: report.status })); }
   else console.log(JSON.stringify(report, null, 2));
   if (args.includes('--release') && report.status !== 'PASS') process.exitCode = 1;

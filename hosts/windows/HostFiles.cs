@@ -55,6 +55,19 @@ internal static partial class HostFiles
         foreach (var item in doc.GetProperty("items").EnumerateArray())
             if (item.GetProperty("events").ValueKind != JsonValueKind.Array || item.GetProperty("events").GetArrayLength() is < 1 or > 64) throw new InvalidDataException("审阅操作记录无效");
     }
+    internal static void ValidateAiAcceptance(string content)
+    {
+        if (Encoding.UTF8.GetByteCount(content) > MaxJson) throw new InvalidDataException("终审超过 8 MB");
+        using var parsed = JsonDocument.Parse(content, new JsonDocumentOptions { MaxDepth = 64 });
+        var doc = parsed.RootElement;
+        if (doc.ValueKind != JsonValueKind.Object || doc.GetProperty("contract").GetString() != "vn-ai-acceptance-v1" || doc.GetProperty("schema").GetInt32() != 1
+            || string.IsNullOrWhiteSpace(doc.GetProperty("game").GetString()) || string.IsNullOrWhiteSpace(doc.GetProperty("storyVersion").GetString())
+            || doc.GetProperty("binding").ValueKind != JsonValueKind.Object || doc.GetProperty("inputs").ValueKind != JsonValueKind.Array
+            || doc.GetProperty("inputs").GetArrayLength() is < 1 or > 2048 || doc.GetProperty("reviews").ValueKind != JsonValueKind.Array || doc.GetProperty("reviews").GetArrayLength() > 1024)
+            throw new InvalidDataException("不是受支持的 AI 模拟终审文档");
+        foreach (var input in doc.GetProperty("inputs").EnumerateArray())
+            if (input.GetProperty("src").GetString() is not string src || (src != "$source" && !LocalPath(src))) throw new InvalidDataException("终审证据路径无效");
+    }
     internal static void WriteJson(string path, string content)
     {
         if (Encoding.UTF8.GetByteCount(content) > MaxJson) throw new InvalidDataException("工程超过 8 MB");

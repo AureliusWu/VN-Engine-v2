@@ -1,3 +1,4 @@
+import { AI_ACCEPTANCE_SCHEMA } from '../compliance/acceptance.js';
 import { UI_SCHEMA, PRODUCTION_SCHEMA, CHARACTER_SCHEMA, BEAT_SCHEMA, TASK_SCHEMA } from '../creative/schema.js';
 import { schemaErrors } from '../schema/validate.js';
 import { AGENT_LIMITS, AGENT_PROTOCOL, AgentError, type AgentRequest } from './protocol.js';
@@ -37,17 +38,17 @@ export const AGENT_OPERATION_SCHEMA: Schema = { $schema: 'https://json-schema.or
 const common = { timeoutMs: integer(1, AGENT_LIMITS.requestMs) };
 const paging = { kind: text, id: text, chapterId: text, limit: integer(1, 100), maxBytes: integer(4096, AGENT_LIMITS.outputBytes), cursor: { type: 'string', maxLength: 4096 } };
 export const COMMAND_SCHEMAS: Record<string, Schema> = {
-  capabilities: shape({ ...common, schema: enumOf('request', 'response', 'operation', 'production', 'ui','feedback') }),
+  capabilities: shape({ ...common, schema: enumOf('request', 'response', 'operation', 'production', 'ui','feedback','acceptance') }),
   init: shape({ ...common, type: enumOf('vn', 'chat', 'script', 'investigation'), game: { ...text, pattern: '^[a-zA-Z0-9_-]+$' }, storyVersion: text, title: text, format: enumOf('project', 'editor'), output: text, recover: bool }, ['type', 'game', 'storyVersion', 'title']),
   inspect: shape({ ...common, ...paging, query:text,characterId:text,taskKind:enumOf('art','music','ui','sfx','text','story'),kind: enumOf('overview', 'nodes', 'chapters', 'variables', 'assets', 'presentation', 'routes', 'text', 'content','production', 'characters', 'beats', 'tasks', 'ui') }),
   refs: shape({ ...common, ...paging, kind: enumOf('node', 'variable', 'chapter', 'asset', 'evidence', 'character', 'task', 'line','content') }, ['kind', 'id']),
   apply: shape({ ...common, expectedSourceSha256: hash, operations: { type: 'array', minItems: 1, maxItems: AGENT_LIMITS.operations, items: { oneOf: OPERATION_DEFINITIONS } }, dryRun: bool, recover: bool, imports:{type:'array',maxItems:32,items:shape({source:{type:'string',minLength:1,maxLength:4096},sha256:hash,extension:enumOf('png','jpg','jpeg','webp','svg','wav','mp3','ogg','woff2','txt','webm','mp4')},['source','sha256','extension'])} }, ['expectedSourceSha256', 'operations']),
-  validate: shape({ ...common, mode: enumOf('development', 'release') }),
+  validate: shape({ ...common, mode: enumOf('development', 'release'), acceptanceFile:text }),
   probe: shape({...common,probeMs:integer(1,30000),files:{type:'array',minItems:1,maxItems:16,items:shape({id:text,file:{type:'string',minLength:1,maxLength:4096},kind:enumOf('background','portrait','cg','ui','audio','font','video','license')},['id','file','kind'])},output:text},['files']),
   review: shape({ ...common, limit:paging.limit,maxBytes:paging.maxBytes,cursor:paging.cursor }),
   test: shape({ ...common, maxOperations: integer(1, AGENT_LIMITS.routeOperations), caseId: text, output: text }),
   preview: shape({ ...common, caseId: text, output: text, maxOperations: integer(1, AGENT_LIMITS.routeOperations), previewMs: integer(1, AGENT_LIMITS.previewMs), width: integer(320, 3840), height: integer(240, 2160) }, ['caseId', 'output']),
-  build: shape({ ...common, output: text, mode: enumOf('development', 'release') }, ['output'])
+  build: shape({ ...common, output: text, mode: enumOf('development', 'release'), acceptanceFile:text }, ['output'])
 };
 COMMAND_SCHEMAS.impact=shape({...COMMAND_SCHEMAS.apply.properties,limit:integer(1,100),output:text},['expectedSourceSha256','operations']);
 const feedbackRead={...common,reviewFile:text,limit:paging.limit,maxBytes:paging.maxBytes,cursor:paging.cursor,id:text};
@@ -55,6 +56,9 @@ const feedbackWrite={...common,reviewFile:text,expectedSourceSha256:hash,expecte
 COMMAND_SCHEMAS['feedback.inspect']=shape(feedbackRead);
 COMMAND_SCHEMAS['feedback.put']=shape({...feedbackWrite,value:{...object,properties:{category:enumOf('story','text','art','music','sfx','ui','other'),target:FEEDBACK_TARGET_SCHEMA,comment:{type:'string',minLength:1,maxLength:8000}},additionalProperties:true}},['expectedSourceSha256','expectedReviewSha256','id','actor','value']);
 COMMAND_SCHEMAS['feedback.transition']=shape({...feedbackWrite,state:enumOf('addressed','verified','reopened'),evidence:{type:'string',minLength:1,maxLength:8000}},['expectedSourceSha256','expectedReviewSha256','id','actor','state','note']);
+COMMAND_SCHEMAS['acceptance.bundle']=shape({...common,output:text,inputs:{type:'array',maxItems:32,items:shape({id:text,file:text,kind:enumOf('screenshot','test-report','image','audio')},['id','file','kind'])}},['output']);
+COMMAND_SCHEMAS['acceptance.inspect']=shape({...common,acceptanceFile:text,limit:paging.limit,maxBytes:paging.maxBytes,cursor:paging.cursor});
+COMMAND_SCHEMAS['acceptance.import']=shape({...common,acceptanceFile:text,expectedSourceSha256:hash,expectedReviewSha256:{anyOf:[hash,{type:'null'}]},document:AI_ACCEPTANCE_SCHEMA,dryRun:bool,recover:bool},['expectedSourceSha256','expectedReviewSha256','document']);
 export const AGENT_REQUEST_SCHEMA: Schema = { $schema: 'https://json-schema.org/draft/2020-12/schema', $id: 'urn:vn-agent-v1:request', oneOf: Object.entries(COMMAND_SCHEMAS).map(([command, params]) =>
   shape({ protocol: { const: AGENT_PROTOCOL }, requestId: { ...text, maxLength: 128 }, command: { const: command }, project: text, params }, ['protocol', 'requestId', 'command', 'params'])) };
 export const AGENT_RESPONSE_SCHEMA: Schema = { $schema: 'https://json-schema.org/draft/2020-12/schema', $id: 'urn:vn-agent-v1:response',

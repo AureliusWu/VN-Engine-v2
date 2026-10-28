@@ -1,5 +1,7 @@
 # R3 内容迭代与作者审阅 · 0.7.0
 
+> R4 政策更新：文案、美术和听感终审改为有实际输入绑定的 AI 模拟审核；技术与实体设备检查保留。当前接口见 [AI_ACCEPTANCE.md](AI_ACCEPTANCE.md)。以下旧人工声明属于旧契约 / 历史范围，不再单独批准当前内容。
+
 R3 复用 R1 / R2 的作者模型、解释器、路线与打包。新增内容目录、修改影响与独立审阅文件；vn-agent-v1、vn-creative-v1、Project / EditorDocument / Save schema 1 保持兼容。基础调用见 [AI 入口](AI_DEVELOPMENT.md)。
 
 ## 内容目录与影响

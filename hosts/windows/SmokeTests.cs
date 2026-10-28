@@ -135,6 +135,37 @@ internal static class SmokeTests
             await JS("document.querySelector('[data-tab=story]').click()");
             await Wait("!document.querySelector('[data-audition]')");
             checks.Add("R3 native audition plays actual local audio and releases the media element when leaving the panel");
+            var acceptanceFile = Path.Combine(window.SmokeFolder, "acceptance.json");
+            if (!window.Options.VerifyPersistence)
+            {
+                File.WriteAllText(Path.Combine(window.SmokeFolder, "acceptance-input.txt"), "R4 bounded evidence");
+                await JS("""
+                  window.nativeR4File='pending';
+                  (async()=>{try{const {nativeRequest}=await import('/editor/native.mjs');const {ENGINE_VERSION}=await import('/lib/index.js');
+                    const h='a'.repeat(64),doc={contract:'vn-ai-acceptance-v1',schema:1,game:document.querySelector('[aria-label="作品 ID"]').value,storyVersion:document.querySelector('[aria-label="故事版本"]').value,engineVersion:ENGINE_VERSION,rubricVersion:'r4-1',binding:{sourceSha256:h,filesVerified:false,assets:[]},inputs:[{id:'project',kind:'project',src:'$source',sha256:h},{id:'bounded',kind:'image',src:'acceptance-input.txt',sha256:h}],reviews:[],fixture:true};
+                    await nativeRequest('save-ai-acceptance',{content:JSON.stringify(doc)});window.nativeR4File='saved';
+                  }catch(e){window.nativeR4File='failed: '+e.message;}})();
+                  """);
+                await Wait("window.nativeR4File!=='pending'");
+                if(await JS("window.nativeR4File==='saved'")!="true")throw new InvalidDataException("Native R4 save failed: "+await JS("window.nativeR4File"));
+            }
+            HostFiles.ValidateAiAcceptance(HostFiles.ReadJson(acceptanceFile));
+            await JS("""
+              window.nativeR4File='pending';(async()=>{try{const {nativeRequest}=await import('/editor/native.mjs');const opened=await nativeRequest('open-ai-acceptance');const d=JSON.parse(opened.content);if(d.contract!=='vn-ai-acceptance-v1'||d.fixture!==true)throw Error('Acceptance identity missing');
+                const input=await nativeRequest('read-ai-acceptance-input',{inputId:'bounded'});if(atob(input.base64)!=='R4 bounded evidence')throw Error('Evidence bytes differ');
+                try{await nativeRequest('read-ai-acceptance-input',{inputId:'not-declared'});throw Error('Undeclared evidence allowed');}catch(e){if(e.message==='Undeclared evidence allowed')throw e;}
+                window.nativeR4File='opened';window.nativeR4Content=opened.content;
+              }catch(e){window.nativeR4File='failed: '+e.message;}})();
+              """);
+            await Wait("window.nativeR4File!=='pending'");
+            if(await JS("window.nativeR4File==='opened'")!="true")throw new InvalidDataException("Native R4 reopen failed: "+await JS("window.nativeR4File"));
+            var beforeAcceptanceConflict=File.ReadAllText(acceptanceFile);File.AppendAllText(acceptanceFile,"\n");
+            await JS("window.nativeR4File='pending';import('/editor/native.mjs').then(m=>m.nativeRequest('save-ai-acceptance',{content:window.nativeR4Content})).then(()=>window.nativeR4File='unexpected save',e=>window.nativeR4File=e.message)");
+            await Wait("window.nativeR4File!=='pending'");
+            if(File.ReadAllText(acceptanceFile)!=beforeAcceptanceConflict+"\n"||await JS("window.nativeR4File.includes('外部修改')")!="true")throw new IOException("Native R4 conflict overwrote acceptance");
+            await JS("document.querySelector('[data-tab=production]').click();nativeR3Click('验证状态');nativeR3Click('打开 AI 终审文档')");
+            await Wait("document.querySelector('[data-ai-acceptance-report]')?.textContent.includes('AI 模拟终审：BLOCKED') && document.querySelector('#status')?.textContent.includes('AI 模拟终审核对完成')");
+            checks.Add("R4 native AI acceptance separate save/open, declared bounded evidence, conflict preservation and unverified fixture refusal execute on first launch and full restart");
             await JS("""
               window.nativePresentationAuthor = 'pending';
               try {

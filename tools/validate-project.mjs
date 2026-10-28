@@ -1,3 +1,4 @@
+import {loadAcceptanceOptions} from './acceptance-node.mjs';
 import { readFile, realpath } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { dirname, resolve, sep } from 'node:path';
@@ -10,7 +11,7 @@ class ReleaseFileGateError extends Error {
 
 export async function validateProjectFile(filename, options = {}) {
   const source = resolve(filename), project = JSON.parse(await readFile(source, 'utf8'));
-  const report = validateProjectCompliance(project, options);
+  const report = validateProjectCompliance(project, { ...(options.mode==='release'?await loadAcceptanceOptions(source,options):{}),...options });
   if (options.mode !== 'release') return report;
   const root = await realpath(dirname(source)); let checked = 0;
   const local = async (assetId, path) => {
@@ -31,11 +32,11 @@ export async function validateProjectFile(filename, options = {}) {
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
   const args = process.argv.slice(2), release = args.includes('--release'), requiresPwa = args.includes('--pwa-package');
-  const files = args.filter(arg => arg !== '--release' && arg !== '--pwa-package');
+  const files = args.filter(arg => arg !== '--release' && arg !== '--pwa-package' && !arg.startsWith('--acceptance='));
   if (!files.length) throw new Error('Usage: node tools/validate-project.mjs [--release] [--pwa-package] project.json [...]');
   for (const file of files) {
     try {
-      const report = await validateProjectFile(file, { mode: release ? 'release' : 'development', requiresPwa });
+      const report = await validateProjectFile(file, { mode: release ? 'release' : 'development', requiresPwa,acceptanceFile:args.find(a=>a.startsWith('--acceptance='))?.slice(13) });
       console.log('SPEC_PROJECT_OK', JSON.stringify({ file, ...report }));
     } catch (error) {
       if (error instanceof ReleaseArtGateError) console.error('SPEC_ART_GATE_BLOCKED', JSON.stringify({ file, ...error.report }));

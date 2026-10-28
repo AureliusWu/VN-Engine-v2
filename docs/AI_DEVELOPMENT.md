@@ -1,5 +1,7 @@
 # AI 开发接口 · v0.7.0
 
+> R4 政策更新：文案、美术和听感终审改为有实际输入绑定的 AI 模拟审核；技术与实体设备检查保留。当前接口见 [AI_ACCEPTANCE.md](AI_ACCEPTANCE.md)。以下旧人工声明属于旧契约 / 历史范围，不再单独批准当前内容。
+
 开发 Agent 是 SDK / CLI 的主要使用者；人提出创作要求、试玩、审阅与修正。Studio 继续打开相同工程。本地依赖 Node 22+；预览需要 Playwright Chromium。仓库为 public，本轮没有发布 npm 包或远程 HTTP / MCP 服务。
 
 新增的 vn-creative-v1 创作上下文、素材探测 / 导入、主题和机械审查见 [R2 内容生产约定](CREATIVE_DEVELOPMENT.md)；R1 调用继续兼容。R3 content / impact / 独立反馈见 [迭代与审阅约定](ITERATION_DEVELOPMENT.md)。

@@ -61,6 +61,12 @@
       ]
     },
     {
+      "target": "editor/acceptance.mjs",
+      "mode": "new",
+      "targetSha256": "11b7cb6555e1be42667c90ea618dce558b73620bb2783fafad58ae29501d156a",
+      "origins": []
+    },
+    {
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
@@ -123,7 +129,7 @@
     {
       "target": "editor/production.mjs",
       "mode": "new",
-      "targetSha256": "12975e8132d55952b3e28a7749582a0f85a391e05bd2c381970d6ec38124d8a5",
+      "targetSha256": "5a45303c3216b559efe4dc94e2958027e76b1db57c832a06e722a9217919d857",
       "origins": []
     },
     {
@@ -370,19 +376,19 @@
       "target": "hosts/windows/HostFiles.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "f0da4e9715dec736fffb5d0117e42b48ab8b41f52e787b5ee70ffbd13a3c3e7c"
+      "targetSha256": "79d00d364c75df3672e130b2b7459e49ce0b88ac270e882f49245eeab186f9e2"
     },
     {
       "target": "hosts/windows/HostTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "84720959e76781c74b24e7db05946c9e33e2257acaaf63ad191d74d73ec19499"
+      "targetSha256": "f042cffc6eff0507349e8088d70b9eb77b282af07fda28f69ef6a3ec170c3c9e"
     },
     {
       "target": "hosts/windows/HostWindow.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "83c4f82d31dfce6d953e860f24b9aa2d5d35f12878dc471b6cfb7eb91cc00c05"
+      "targetSha256": "dfecbbd818705568ea77f0daa6e19d5157b1a590fd2620794927d59da5dccf6d"
     },
     {
       "target": "hosts/windows/Program.cs",
@@ -394,7 +400,7 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "00fae82c2f5fbb824981642901b6dc8a0ffaf243c9a78d6aed9cd920fdf878c9"
+      "targetSha256": "bc815d462a9c30c05e510167d2926f904b00f74770acdb77460cecf1604b7a8d"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
@@ -463,13 +469,19 @@
     {
       "target": "schemas/vn-agent-v1.request.schema.json",
       "mode": "new",
-      "targetSha256": "26fea04b21aea189f11f29d40edc65308a9d9820aaeb419d196600dcb55469ee",
+      "targetSha256": "5323bbd9dd1d9a9c1458fd97f6164bcbddf3563e7dd5ae66ea2ec684e99ea33a",
       "origins": []
     },
     {
       "target": "schemas/vn-agent-v1.response.schema.json",
       "mode": "new",
       "targetSha256": "8fb1f2849f00b95cac17d790c0e7a33ebca5dc338f8fe323f02bfb17122096c4",
+      "origins": []
+    },
+    {
+      "target": "schemas/vn-ai-acceptance-v1.document.schema.json",
+      "mode": "new",
+      "targetSha256": "fd6213ad0872b5a5f27a9493716e8eb29a2df98461dffec3f724ff1ddf9285a5",
       "origins": []
     },
     {
@@ -605,19 +617,19 @@
     {
       "target": "src/agent/protocol.ts",
       "mode": "new",
-      "targetSha256": "0db437b20a7b4a6bd79e365b1a59755d0b4bd53212c9e27d4adba0ff67e7bc75",
+      "targetSha256": "29ff79db39fefe48ead04e889caf4a43866332c71bdefe61082cf99315ca50cf",
       "origins": []
     },
     {
       "target": "src/agent/schema.ts",
       "mode": "new",
-      "targetSha256": "03b796122b01ebc27a216e54e6d9b0d0548a552d07f418542835056823a92618",
+      "targetSha256": "acbc21412b364a07d9ef3a793fa196fc6d99b56743bb3d31bbe3e9b2eb60ef73",
       "origins": []
     },
     {
       "target": "src/agent/sdk.ts",
       "mode": "new",
-      "targetSha256": "dd3e51a2877127e39802d498e64a79a82c9994ed475a05db6b10a1cd01dfd11f",
+      "targetSha256": "de0e49dd65ec0d980ba34965319d9f18d472fc8b0b4ce42b3f2e92204f5145f0",
       "origins": []
     },
     {
@@ -672,21 +684,27 @@
       ]
     },
     {
+      "target": "src/compliance/acceptance.ts",
+      "mode": "new",
+      "targetSha256": "a21490571fd5fc4b36f0ed87bd4595a5f26212a5abf2302e7c1a69ff9b53285f",
+      "origins": []
+    },
+    {
       "target": "src/compliance/art.ts",
       "mode": "new",
-      "targetSha256": "d848a612ed08480d6c3edafbd73433e54d8deb932bba9c714e8e6d846c59056b",
+      "targetSha256": "80b5ddb52953cb5aac560f2502466f59a7acda8dbedfacc174d3514964fb2913",
       "origins": []
     },
     {
       "target": "src/compliance/project.ts",
       "mode": "new",
-      "targetSha256": "41a9cea4f028f5efff02f85d4048d422fd0e3be23152b037e5e98db71e04bda9",
+      "targetSha256": "4a949d7ef072a186776522553e44117ac1dc123d10cc68571fdad49d44ee37b1",
       "origins": []
     },
     {
       "target": "src/compliance/qa.ts",
       "mode": "new",
-      "targetSha256": "1354646040cff79a8730d43333183fed42eb1855bbd925639ccac582ababdf98",
+      "targetSha256": "2455c8b7c1e33471dde92abe8f422936e1fda928f00e5fa9b01522157c8beea0",
       "origins": []
     },
     {
@@ -735,7 +753,7 @@
       "target": "src/editor/index.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "4de86e14e80a53cbf648150b1dff03f58112b6256856ca28b6a2cd7b2acca4fa"
+      "targetSha256": "4d02d19d62debdc3e739d9a996120655bf074ce6105a7851788fc71014b5c026"
     },
     {
       "target": "src/editor/model.ts",
@@ -759,7 +777,7 @@
     {
       "target": "src/index.ts",
       "mode": "new",
-      "targetSha256": "c82d70e814689241c3d0894041c103fb9a76d6e1ed951e2dde0b60aa0a63e180",
+      "targetSha256": "71abe3d4e006c6697df1704bc30a0c356c7aae891d56fd0e9c5aacafc2a446f7",
       "origins": []
     },
     {
@@ -1119,6 +1137,12 @@
       "targetSha256": "0492e023687f405e961d36c0331c3bd2d40d603c637a13db0cba9f89825d9434"
     },
     {
+      "target": "tools/acceptance-node.mjs",
+      "mode": "new",
+      "targetSha256": "7200a4b26b87242982eddfea0f1e34141565c0612e192b72d9ab3906c93ff44c",
+      "origins": []
+    },
+    {
       "target": "tools/agent-example.mjs",
       "mode": "new",
       "targetSha256": "7d7742bb7ca1efa67f74fce447a68719dbb644924d0cac85b8c173717fc0287f",
@@ -1133,13 +1157,13 @@
     {
       "target": "tools/agent-node.mjs",
       "mode": "new",
-      "targetSha256": "0cbfb00e8290d4cd8b3c8853de9e91c80e68f854f87b5630640b9062862fecce",
+      "targetSha256": "f6357db42291238778f16f0e68e66a5bfa30e9593b4bb55443583aa8ae68c0c8",
       "origins": []
     },
     {
       "target": "tools/agent-ports.mjs",
       "mode": "new",
-      "targetSha256": "585fe29d55d657b45ecd4cd1069385bf8587715712442386ed3366c5660e7a04",
+      "targetSha256": "d9448027b4e4030803085a431eaca87aaf488d04f36b7d5394bcf322507012c3",
       "origins": []
     },
     {
@@ -1199,7 +1223,7 @@
     {
       "target": "tools/feedback-node.mjs",
       "mode": "new",
-      "targetSha256": "85f4a302262148d70ba0e12a1949ac79f0dd4f21631178ac36a594199afcf372",
+      "targetSha256": "8396cd9e37bb98e23dc3a0e5b34f42ca77ca8ce88f1687aa89f43e80b1461ebb",
       "origins": []
     },
     {
@@ -1230,7 +1254,7 @@
       "target": "tools/package-game.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "33853049854899a1328eca1d6d57980d67489bac3f1b4702c7716bef0a138b9a"
+      "targetSha256": "050a26225e6a97cfaf37c137dcfaf3e76d0930e35d45107998a3ee85dfdd59c1"
     },
     {
       "target": "tools/package-studio.mjs",
@@ -1260,7 +1284,7 @@
     {
       "target": "tools/qa-report.mjs",
       "mode": "new",
-      "targetSha256": "418742c66e2d53f65c26814f051d906dc43cd27db724e748346dbdcb25c1541e",
+      "targetSha256": "fdf7e99c43af58e5284e5aeb3c21e360533d5707b47e6b81f150115e0346e9c0",
       "origins": []
     },
     {
@@ -1278,7 +1302,7 @@
     {
       "target": "tools/release-gate.mjs",
       "mode": "new",
-      "targetSha256": "781da6132998d440758028d31c9e9db594b8fd7b43c46e5cbbcd529a230e239d",
+      "targetSha256": "f712aa6dc400e03b68893f449b8e90c689c475199e37ef1d5107cc1b4451a8d3",
       "origins": []
     },
     {
@@ -1345,13 +1369,13 @@
     {
       "target": "tools/validate-project.mjs",
       "mode": "new",
-      "targetSha256": "5e9dfc18d9298edffd82430c689fb8d29c2e108e8e57d69e296344faa686d1be",
+      "targetSha256": "5ce06ba2aea1207f0c0d7a252ec4000f024cb9b0c2649f0fc43007dd940e9ae2",
       "origins": []
     },
     {
       "target": "tools/write-agent-schemas.mjs",
       "mode": "new",
-      "targetSha256": "c23e70c973e2010e89e8c64fdf4a6b9d7ede9ac64f20b5632e248f07b8ba11c2",
+      "targetSha256": "6e172f5abf95c14c6081d765bb13faea6db367b257dd215237c7b3012cd0cd52",
       "origins": []
     }
   ]

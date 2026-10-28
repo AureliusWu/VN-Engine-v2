@@ -1,5 +1,7 @@
 # R2 AI 内容生产与接入 · v0.6.0
 
+> R4 政策更新：文案、美术和听感终审改为有实际输入绑定的 AI 模拟审核；技术与实体设备检查保留。当前接口见 [AI_ACCEPTANCE.md](AI_ACCEPTANCE.md)。以下旧人工声明属于旧契约 / 历史范围，不再单独批准当前内容。
+
 `vn-creative-v1` 是 `vn-agent-v1` 的兼容扩展。工程、EditorDocument 与玩家存档继续使用 schema 1。创作简报、角色、节拍、任务和 UI 写在同一 EngineProject，Studio、Agent 预览和独立作品使用同一自研播放器。四作与 RESET 未迁移。
 
 ## 可复制的完整流程

@@ -1,3 +1,4 @@
+import {AI_ACCEPTANCE_SCHEMA} from '../dist/compliance/acceptance.js';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
@@ -15,3 +16,5 @@ for (const [name, schema] of Object.entries({ request: AGENT_REQUEST_SCHEMA, res
 for(const [name,schema]of Object.entries({production:PRODUCTION_SCHEMA,ui:UI_SCHEMA})){const file=resolve(root,`schemas/vn-creative-v1.${name}.schema.json`),text=JSON.stringify(schema,null,2)+'\n';if(check){if(await readFile(file,'utf8')!==text)throw Error('Creative schema drift: '+name);}else await writeFile(file,text);}
 {const file=resolve(root,'schemas/vn-author-review-v1.document.schema.json'),text=JSON.stringify(FEEDBACK_DOCUMENT_SCHEMA,null,2)+'\n';if(check){if(await readFile(file,'utf8')!==text)throw Error('Feedback schema drift');}else await writeFile(file,text);}
 console.log(check ? 'Agent schemas match executable contracts' : 'Agent schemas generated');
+
+{const file=resolve(root,'schemas/vn-ai-acceptance-v1.document.schema.json'),text=JSON.stringify(AI_ACCEPTANCE_SCHEMA,null,2)+'\n';if(check){if(await readFile(file,'utf8')!==text)throw Error('Acceptance schema drift');}else await writeFile(file,text);}

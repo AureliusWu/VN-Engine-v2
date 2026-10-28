@@ -51,3 +51,5 @@ export type { DeepReadonly } from './runtime/readonly.js';
 export * from './creative/project.js';
 export * from './creative/schema.js';
 export * from './ui/theme.js';
+
+export * from './compliance/acceptance.js';

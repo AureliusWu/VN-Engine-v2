@@ -15,7 +15,7 @@ internal sealed class HostWindow : Form
     private readonly string profile;
     private readonly string host;
     private readonly string startURL;
-    private string? reviewPath, reviewSha;
+    private string? reviewPath, reviewSha, acceptancePath, acceptanceSha;
     private bool allowClose, closePending, fullScreen, bridgeBusy;
     private Rectangle normalBounds;
     private FormWindowState normalState;
@@ -152,6 +152,9 @@ internal sealed class HostWindow : Form
                     "bind-assets" => BindAssets(value),
                     "open-author-review" => OpenAuthorReview(),
                     "save-author-review" => SaveAuthorReview(value),
+                    "open-ai-acceptance" => OpenAuthorReview(true),
+                    "save-ai-acceptance" => SaveAuthorReview(value, true),
+                    "read-ai-acceptance-input" => ReadAcceptanceInput(value),
                     _ => throw new InvalidDataException("不支持的桌面命令")
                 };
                 Reply(new { id, ok = true, result });
@@ -208,28 +211,28 @@ internal sealed class HostWindow : Form
         return new { cancelled = false };
     }
     private static string FileSha(string path) { using var stream = File.OpenRead(path); return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant(); }
-    private object OpenAuthorReview()
+    private object OpenAuthorReview(bool acceptance = false)
     {
         string path;
-        if (options.Smoke) path = Path.Combine(SmokeFolder, "review.json");
+        if (options.Smoke) path = Path.Combine(SmokeFolder, acceptance ? "acceptance.json" : "review.json");
         else
         {
             using var picker = new OpenFileDialog { Filter = "作者审阅 (*.json)|*.json", CheckFileExists = true, Multiselect = false };
             if (picker.ShowDialog(this) != DialogResult.OK) return new { cancelled = true }; path = picker.FileName;
         }
-        var content = HostFiles.ReadJson(path); HostFiles.ValidateAuthorReview(content);
-        reviewPath = Path.GetFullPath(path); reviewSha = FileSha(path);
+        var content = HostFiles.ReadJson(path); if (acceptance) HostFiles.ValidateAiAcceptance(content); else HostFiles.ValidateAuthorReview(content);
+        if (acceptance) { acceptancePath = Path.GetFullPath(path); acceptanceSha = FileSha(path); } else { reviewPath = Path.GetFullPath(path); reviewSha = FileSha(path); }
         return new { cancelled = false, content };
     }
-    private object SaveAuthorReview(JsonElement message)
+    private object SaveAuthorReview(JsonElement message, bool acceptance = false)
     {
         var content = message.GetProperty("content").GetString() ?? throw new InvalidDataException("缺少审阅内容");
-        HostFiles.ValidateAuthorReview(content);
+        if (acceptance) HostFiles.ValidateAiAcceptance(content); else HostFiles.ValidateAuthorReview(content);
         string path;
-        if (options.Smoke) path = Path.Combine(SmokeFolder, "review.json");
+        if (options.Smoke) path = Path.Combine(SmokeFolder, acceptance ? "acceptance.json" : "review.json");
         else
         {
-            using var picker = new SaveFileDialog { Filter = "作者审阅 (*.json)|*.json", FileName = "review.json", AddExtension = true, OverwritePrompt = true };
+            using var picker = new SaveFileDialog { Filter = "作者审阅 (*.json)|*.json", FileName = acceptance ? "acceptance.json" : "review.json", AddExtension = true, OverwritePrompt = true };
             if (picker.ShowDialog(this) != DialogResult.OK) return new { cancelled = true }; path = picker.FileName;
         }
         path = Path.GetFullPath(path);
@@ -237,12 +240,24 @@ internal sealed class HostWindow : Form
         using var lease = new FileStream(path + ".vnreview.lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 1, FileOptions.DeleteOnClose);
         if (File.Exists(path))
         {
-            HostFiles.ValidateAuthorReview(HostFiles.ReadJson(path));
-            if (string.Equals(reviewPath, path, StringComparison.OrdinalIgnoreCase) && reviewSha != FileSha(path)) throw new IOException("审阅文件已被外部修改，请重新打开后再保存");
+            if (acceptance) HostFiles.ValidateAiAcceptance(HostFiles.ReadJson(path)); else HostFiles.ValidateAuthorReview(HostFiles.ReadJson(path));
+            if (string.Equals(acceptance ? acceptancePath : reviewPath, path, StringComparison.OrdinalIgnoreCase) && (acceptance ? acceptanceSha : reviewSha) != FileSha(path)) throw new IOException("审阅文件已被外部修改，请重新打开后再保存");
         }
-        else if (string.Equals(reviewPath, path, StringComparison.OrdinalIgnoreCase) && reviewSha != null) throw new IOException("审阅文件已被移除，请重新打开或另存");
-        HostFiles.WriteJson(path, content); reviewPath = path; reviewSha = FileSha(path);
+        else if (string.Equals(acceptance ? acceptancePath : reviewPath, path, StringComparison.OrdinalIgnoreCase) && (acceptance ? acceptanceSha : reviewSha) != null) throw new IOException("审阅文件已被移除，请重新打开或另存");
+        HostFiles.WriteJson(path, content); if (acceptance) { acceptancePath = path; acceptanceSha = FileSha(path); } else { reviewPath = path; reviewSha = FileSha(path); }
         return new { cancelled = false };
+    }
+    private object ReadAcceptanceInput(JsonElement message)
+    {
+        if (acceptancePath == null) throw new InvalidOperationException("请先打开 AI 终审文档");
+        var content = HostFiles.ReadJson(acceptancePath); HostFiles.ValidateAiAcceptance(content);
+        if (FileSha(acceptancePath) != acceptanceSha) throw new IOException("终审文件已被外部修改，请重新打开");
+        using var parsed = JsonDocument.Parse(content);
+        var inputId = message.GetProperty("inputId").GetString();
+        var input = parsed.RootElement.GetProperty("inputs").EnumerateArray().Single(i => i.GetProperty("id").GetString() == inputId);
+        var file = HostFiles.LocalFile(Path.GetDirectoryName(acceptancePath)!, input.GetProperty("src").GetString()!);
+        if (new FileInfo(file).Length > 67_108_864) throw new InvalidDataException("终审输入超过 64 MiB");
+        return new { base64 = Convert.ToBase64String(File.ReadAllBytes(file)) };
     }
     private object BindAssets(JsonElement message)
     {

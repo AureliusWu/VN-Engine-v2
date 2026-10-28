@@ -1,3 +1,4 @@
+import {syntheticAcceptance} from './acceptance-fixture.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { mkdtemp, writeFile, readFile } from 'node:fs/promises';
@@ -9,13 +10,17 @@ import { buildQaReport } from '../tools/qa-report.mjs';
 import { packageGame } from '../tools/package-game.mjs';
 import { qaFixture, writeQaFixture } from './qa-fixture.mjs';
 
-test('human QA evidence is mandatory only for applicable categories and cannot be inferred from build success', () => {
-  const { project } = qaFixture(); assert.equal(assessQaEvidence(project).release, 'PASS');
-  assert.equal(assessQaEvidence(project).checks.find(check => check.category === 'audio').status, 'N/A');
-  delete project.releaseEvidence.qa.story;
-  assert.throws(() => validateProjectCompliance(project, { mode: 'release' }), error => error instanceof ReleaseQaGateError && error.report.checks.find(check => check.category === 'story').status === 'UNVERIFIED');
-  project.releaseEvidence.qa.story = { status: 'PASS', reviewer: 'UNVERIFIED', reviewedAt: '2026-10-27', evidence: 'test://synthetic' };
-  assert.equal(assessQaEvidence(project).release, 'BLOCKED');
+test('current AI acceptance replaces human signatures, binds source, and requires only applicable scopes', async () => {
+  const {project,picture}=qaFixture(),options=await syntheticAcceptance(project,picture);
+  assert.equal(assessQaEvidence(project,options).release,'PASS');
+  assert.equal(assessQaEvidence(project,options).checks.find(c=>c.category==='audio').status,'N/A');
+  delete project.releaseEvidence.qa;
+  assert.equal(assessQaEvidence(project,options).release,'BLOCKED');
+  const fresh=await syntheticAcceptance(project,picture);
+  assert.equal(assessQaEvidence(project,fresh).release,'PASS');
+  project.scenes[0].lines[0].text='Changed content without a story version bump';
+  assert.equal(assessQaEvidence(project,fresh).release,'BLOCKED');
+  assert.equal(assessQaEvidence(project).release,'BLOCKED');
 });
 
 test('QA aggregation retains independent art, human QA and actual byte failures', async () => {

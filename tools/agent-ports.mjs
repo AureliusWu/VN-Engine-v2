@@ -17,7 +17,7 @@ export function commitIdentity() {
  return commit;
 }
 async function listen(server) { await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve)}); return `http://127.0.0.1:${server.address().port}/`; }
-export function createAgentPorts({sourceFile,readAsset}) {
+export function createAgentPorts({sourceFile,readAsset,acceptanceOptions={}}) {
  return {
   async build(document,request,identity) {
    const output=await newOutput(request.params.output), staging=await fs.mkdtemp(path.join(os.tmpdir(),'vn-agent-build-'));
@@ -26,7 +26,7 @@ export function createAgentPorts({sourceFile,readAsset}) {
     const project=document.project, source=path.join(staging,'project.json');await fs.writeFile(source,JSON.stringify(project,null,2)+'\n');
     for(const asset of project.assets)for(const relative of [asset.src,...(asset.license?[asset.license.src]:[])]){const dest=path.resolve(staging,relative);if(!dest.startsWith(staging+path.sep))throw new AgentError('ASSET_PATH_UNSAFE','Asset escapes staging');await fs.mkdir(path.dirname(dest),{recursive:true});await fs.writeFile(dest,await readAsset(relative));}
     process.env.VN_RELEASE_BUILD=request.params.mode==='release'?'1':'0';process.env.VN_ENGINE_COMMIT=commitIdentity();
-    const built=await packageGame(source,output,{sourceIdentity:{...identity,file:sourceFile}});
+    const built=await packageGame(source,output,{...acceptanceOptions,sourceIdentity:{...identity,file:sourceFile}});
     const manifestFile=path.join(output,'build-manifest.json'),bytes=await fs.readFile(manifestFile),manifest=JSON.parse(bytes);
     return {data:{...built,mode:request.params.mode??'development',buildIdentity:manifest.buildIdentity,source:identity,compliance:manifest.compliance,files:manifest.files.map(f=>f.name).concat('build-manifest.json'),manifestSha256:sha(bytes)},artifacts:[{kind:'build-manifest',path:manifestFile,sha256:sha(bytes)},{kind:'game-directory',path:output}]};
    }catch(error){if(error.name?.startsWith('Release'))throw new AgentError('RELEASE_GATE_BLOCKED',error.message,{actual:error.report},'BLOCKED');throw error instanceof AgentError?error:new AgentError('BUILD_ERROR',error.message);}

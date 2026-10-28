@@ -29,7 +29,7 @@
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test tests/*.test.mjs",
     "test:renpy": "python -m unittest discover -s tests/renpy -v",
-    "test:browser": "npm run build && node tests/browser.mjs && node tests/runtime-browser.mjs && node tests/runtime-stability-browser.mjs && node tests/collections-browser.mjs && node tests/timeline-browser.mjs && node tests/video-browser.mjs && node tests/editor-browser.mjs && node tests/presentation-editor-browser.mjs && node tests/collections-editor-browser.mjs && node tests/key-visual-browser.mjs && node tests/rollback-browser.mjs && node tests/minigame-browser.mjs && node tests/qa-report-browser.mjs && node tests/settings-browser.mjs && node tests/backup-browser.mjs && node tests/player-lifecycle-browser.mjs && node tests/read-progress-browser.mjs && node tests/routes-browser.mjs && node tests/routes-editor-browser.mjs && node tests/authoring-browser.mjs && node tests/workbench-browser.mjs && node tests/agent-browser.mjs && node tests/creative-ui-browser.mjs && node tests/creative-browser.mjs && node tests/production-editor-browser.mjs && node tests/iteration-browser.mjs",
+    "test:browser": "npm run build && node tests/browser.mjs && node tests/runtime-browser.mjs && node tests/runtime-stability-browser.mjs && node tests/collections-browser.mjs && node tests/timeline-browser.mjs && node tests/video-browser.mjs && node tests/editor-browser.mjs && node tests/presentation-editor-browser.mjs && node tests/collections-editor-browser.mjs && node tests/key-visual-browser.mjs && node tests/rollback-browser.mjs && node tests/minigame-browser.mjs && node tests/qa-report-browser.mjs && node tests/settings-browser.mjs && node tests/backup-browser.mjs && node tests/player-lifecycle-browser.mjs && node tests/read-progress-browser.mjs && node tests/routes-browser.mjs && node tests/routes-editor-browser.mjs && node tests/authoring-browser.mjs && node tests/workbench-browser.mjs && node tests/agent-browser.mjs && node tests/creative-ui-browser.mjs && node tests/creative-browser.mjs && node tests/production-editor-browser.mjs && node tests/iteration-browser.mjs && node tests/acceptance-browser.mjs",
     "demo": "npm run build && node tools/serve.mjs",
     "validate:spec": "npm run build && node tools/validate-project.mjs examples/runtime/campus.json examples/runtime/netlove.json examples/runtime/circuit.json examples/runtime/rain.json",
     "validate:spec:release": "npm run build && node tools/validate-project.mjs --release",
@@ -41,7 +41,7 @@
     "verify:rain": "npm run build && node tools/compare-rain-runtime.mjs",
     "benchmark": "npm run build && node tools/benchmark-runtime.mjs",
     "build:studio": "npm run build && node tools/package-studio.mjs",
-    "test:editor": "npm run build && node tests/editor-browser.mjs && node tests/presentation-editor-browser.mjs && node tests/collections-editor-browser.mjs && node tests/key-visual-browser.mjs && node tests/rollback-browser.mjs && node tests/minigame-browser.mjs && node tests/routes-editor-browser.mjs && node tests/authoring-browser.mjs && node tests/workbench-browser.mjs && node tests/creative-ui-browser.mjs && node tests/production-editor-browser.mjs",
+    "test:editor": "npm run build && node tests/editor-browser.mjs && node tests/presentation-editor-browser.mjs && node tests/collections-editor-browser.mjs && node tests/key-visual-browser.mjs && node tests/rollback-browser.mjs && node tests/minigame-browser.mjs && node tests/routes-editor-browser.mjs && node tests/authoring-browser.mjs && node tests/workbench-browser.mjs && node tests/creative-ui-browser.mjs && node tests/production-editor-browser.mjs && node tests/acceptance-browser.mjs",
     "qa:report": "npm run build && node tools/qa-report.mjs",
     "qa:samples": "npm run build && node tools/qa-samples.mjs",
     "test:routes": "npm run build && node tools/test-routes.mjs",
@@ -49,7 +49,8 @@
     "agent": "node tools/agent.mjs",
     "test:agent": "npm run build && node --test tests/agent.test.mjs tests/agent-node.test.mjs && node tests/agent-browser.mjs",
     "test:creative": "npm run build && node --test tests/creative.test.mjs tests/agent-imports.test.mjs && node tests/creative-ui-browser.mjs && node tests/creative-browser.mjs",
-    "test:iteration": "npm run build && node --test tests/iteration.test.mjs && node tests/production-editor-browser.mjs && node tests/iteration-browser.mjs"
+    "test:iteration": "npm run build && node --test tests/iteration.test.mjs && node tests/production-editor-browser.mjs && node tests/iteration-browser.mjs",
+    "test:acceptance": "npm run build && node --test tests/acceptance.test.mjs && node tests/acceptance-browser.mjs"
   },
   "devDependencies": {
     "typescript": "5.9.3",

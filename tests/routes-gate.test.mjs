@@ -1,3 +1,4 @@
+import {syntheticAcceptance} from './acceptance-fixture.mjs';
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {mkdtemp,readFile,writeFile,access} from 'node:fs/promises';
@@ -15,8 +16,8 @@ const mutations=[
   ['uncovered',p=>{p.scenes.push({id:'second',lines:[{id:'second-line',speaker:'N',text:'Another declared ending'}],ending:'second'});},'UNVERIFIED']
 ];
 
-test('release requires real passing cases and every declared ending while development playback stays compatible',()=>{
-  assert.equal(validateProjectCompliance(qaFixture().project,{mode:'release'}).routeGate.status,'PASS');
+test('release requires real passing cases and every declared ending while development playback stays compatible',async()=>{
+  const good=qaFixture();assert.equal(validateProjectCompliance(good.project,{...await syntheticAcceptance(good.project,good.picture),mode:'release'}).routeGate.status,'PASS');
   for(const [name,mutate,status] of mutations){
     const {project}=qaFixture();mutate(project);
     const instance=createProject(project,'https://test.invalid/');assert.equal(instance.session.getView().frame.sceneId,'start');instance.session.dispose();

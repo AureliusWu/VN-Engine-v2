@@ -1,3 +1,4 @@
+import type { AiAcceptanceDocument, AcceptanceOptions, AcceptanceInput } from '../compliance/acceptance.js';
 import { ENGINE_VERSION } from '../version.js';
 import type { EditorDocument } from '../editor/model.js';
 import type { AuthorReviewDocument } from '../creative/feedback.js';
@@ -14,8 +15,8 @@ export type AgentArtifact = { kind: string; path: string; sha256?: string };
 export type AgentResponse = { protocol: typeof AGENT_PROTOCOL; engineVersion: string; requestId: string; command: string; ok: boolean;
   status: AgentStatus; project: AgentIdentity | null; data: any; diagnostics: AgentDiagnostic[]; artifacts: AgentArtifact[] };
 export type AgentCandidate = { document: EditorDocument; sourceText: string; beforeSha256: string | null; afterSha256: string };
-export type AgentResult = { response: AgentResponse; candidate?: AgentCandidate; reviewCandidate?: {document:AuthorReviewDocument;sourceText:string;beforeSha256:string|null;afterSha256:string}; report?: unknown };
-export type AgentContext = { source?: string | unknown; reviewSource?:string|unknown; signal?: AbortSignal; now?: () => number;
+export type AgentResult = { response: AgentResponse; candidate?: AgentCandidate; reviewCandidate?: {document:AuthorReviewDocument|AiAcceptanceDocument;sourceText:string;beforeSha256:string|null;afterSha256:string}; report?: unknown };
+export type AgentContext = AcceptanceOptions & { acceptanceBundle?: (request:AgentRequest)=>Promise<any>; readEvidence?: (input:AcceptanceInput)=>Promise<Uint8Array>; source?: string | unknown; reviewSource?:string|unknown; signal?: AbortSignal; now?: () => number;
   readAsset?: (path: string) => Promise<Uint8Array>; importsPrepared?: boolean;
   probe?: (request:AgentRequest)=>Promise<{data:any;artifacts:AgentArtifact[];status:AgentStatus;diagnostics:AgentDiagnostic[]}>;
   preview?: (document: EditorDocument, request: AgentRequest, identity: AgentIdentity) => Promise<{ data: any; artifacts: AgentArtifact[] }>;
