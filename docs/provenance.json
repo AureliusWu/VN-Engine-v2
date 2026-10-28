@@ -155,7 +155,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "99ba10dd438d6def2dd90d616addf22d977e35f5984c45618635759a1cea4841"
+      "targetSha256": "20c25cdaf6b36281924c4bb1a39b5bdc978a9af6171b3bacab3e59542759587e"
     },
     {
       "target": "editor/style.css",
@@ -174,7 +174,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "496dfe2f5693a3820450f9e684f737cdd062e36d360e6a30557624349549986a"
+      "targetSha256": "c56612f34bb74f578294679efa9904eed68becbf55531971b314b77ebf486d08"
     },
     {
       "target": "examples/agent/assets/OFL.txt",

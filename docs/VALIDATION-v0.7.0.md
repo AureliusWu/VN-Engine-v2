@@ -11,3 +11,5 @@ SDK 与真实 CLI 各完成两轮台词 / 分支、真实配乐字节 / 主题�
 所有“人工复验者”为合成夹具，不认证文学、美术、人耳或实体设备终审。素材保持 DRAFT，正式 release BLOCKED。原生文件对话框使用 CI 预设路径，不代表人工点击系统对话框。未知静态范围仍要求试玩与完整路线。
 
 四作与 RESET 的内容、宿主、依赖和玩家数据未迁移。R3 收尾后停止，不自动开始下一轮。接口和限制见 [R3 使用约定](ITERATION_DEVELOPMENT.md)。
+
+字体按固定 Rain d96510fc73ebe6a354bbf638613f8e4483f3366b / SourceHanSansLite SHA256 b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7，在 [R3 字体重建](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40658104130) 成功生成。fontTools 4.68.0、Brotli 1.2.1；两个改名 OFL 子集的精确 SHA256 写入 provenance，上传 Git blob 与生成 Git SHA 一致。临时重建工作流在收取产物后移除，不修改用户作品。
