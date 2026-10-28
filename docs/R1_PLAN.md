@@ -8,7 +8,7 @@
 | --- | --- | --- | --- |
 | A | vn-agent-v1、JSON Schema、纯数据 SDK、有限读取与稳定 ID 批次 | capabilities / init / inspect / refs / apply / validate / test；类型和引用诊断、SHA 冲突、dry-run、最终原子验证、无导入副作用 | 完成：180 Node、6 Python、149 来源；schema、分页 / 片段、批次与预算边界通过 |
 | B | Node 文件 SDK 与统一 CLI | JSON stdout、退出码、协作锁、预期源哈希、prepared / committed 回执、崩溃恢复和重复请求；实际文件与子进程测试 | 完成：文件 SDK / CLI、真实崩溃与回执恢复、失败 / 冲突 / 重放、JSON 与退出码通过 |
-| C | 真实 preview / build、样例、0.5.0 与整体验收 | CLI 独立完成分支 VN 和多章调查；真实 Chromium 截图、子目录离线包、四类 / Rain、Windows CLI 和原生 CI | SDK / CLI 两流程、四模板与 Rain、四包子目录断网重开通过；收尾修复等待确切提交 CI |
+| C | 真实 preview / build、样例、0.5.0 与整体验收 | CLI 独立完成分支 VN 和多章调查；真实 Chromium 截图、子目录离线包、四类 / Rain、Windows CLI 和原生 CI | 完成：SDK / CLI 两流程、四模板 / Rain、实际预览 / 构建 / 四包断网；最终实现 CI 和 Windows 原生通过 |
 
 ## 协议与实现边界
 
@@ -29,3 +29,7 @@
 6. npm / 锁文件 / 引擎 / 原生程序 / 产物 manifest 一致为 0.5.0。
 
 各阶段小步提交并推送 main，不强推；构建检查顺序运行，保留实际失败与恢复记录。完成 R1 后停止，不自动开展 R2。
+
+## 收尾
+
+最终实现：`e7035bc38abe3554babf9a4c1518d7a80d82a7ac`。完整证据与实际边界见 [VALIDATION-v0.5.0.md](VALIDATION-v0.5.0.md)，请求与恢复入口见 [AI_DEVELOPMENT.md](AI_DEVELOPMENT.md)。R1 技术交付完成，停止本轮；人工验收和原作迁移未被自动提升或执行。

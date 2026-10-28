@@ -1,0 +1,736 @@
+{
+  "contract": "VN_ENGINE_R1_VALIDATION-v1",
+  "status": "PASS",
+  "scope": "R1 AI development interface technical acceptance",
+  "date": "2026-10-28",
+  "engineVersion": "0.5.0",
+  "protocol": "vn-agent-v1",
+  "baseline": "6480041646ee9e277db9d9f3ad842ac9a27bd296",
+  "implementation": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac",
+  "checks": {
+    "core": {
+      "status": "PASS",
+      "nodeTests": 180,
+      "pythonTests": 6,
+      "provenanceFiles": 149,
+      "schemas": "PASS"
+    },
+    "browser": {
+      "status": "PASS",
+      "fullSuite": true,
+      "editorSuiteIncluded": true
+    },
+    "windows": {
+      "compilation": "PASS",
+      "cli": "PASS",
+      "nativeWebView2": "PASS",
+      "fullProcessRestart": "PASS",
+      "programManifestSemver": "0.5.0",
+      "nativeReportsPassed": 5
+    }
+  },
+  "ci": {
+    "implementation": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac",
+    "runs": [
+      {
+        "name": "Engine checks",
+        "id": 40620862330,
+        "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40620862330",
+        "commit": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Windows native host",
+        "id": 40620862119,
+        "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40620862119",
+        "commit": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "artifacts": [
+      {
+        "name": "alpha-qa-reports",
+        "id": 12787008415,
+        "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40620862330/artifacts/12787008415",
+        "digest": "sha256:e1c2de3b59469721ffa3837bb3398770e7ef2fbb9862e8213281a1800736e894",
+        "sizeBytes": 56157,
+        "expiresAt": "2027-01-26T02:25:39Z",
+        "implementation": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac"
+      },
+      {
+        "name": "engine-browser-evidence",
+        "id": 12786754570,
+        "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40620862330/artifacts/12786754570",
+        "digest": "sha256:0b4798e5e3fa30b831ac24dbd680cacd0b1fb7213ae2783acb81564be0526d05",
+        "sizeBytes": 7601397,
+        "expiresAt": "2027-01-26T02:25:39Z",
+        "implementation": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac"
+      },
+      {
+        "name": "vn-engine-standalone-samples",
+        "id": 12786424304,
+        "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40620862330/artifacts/12786424304",
+        "digest": "sha256:25fff077727171bd300941ba196207cddcf24cab777a442e603cedba1ebdb0e9",
+        "sizeBytes": 853778,
+        "expiresAt": "2027-01-26T02:25:39Z",
+        "implementation": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac"
+      },
+      {
+        "name": "VNEngine-Studio-win-x64",
+        "id": 12786859364,
+        "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40620862119/artifacts/12786859364",
+        "digest": "sha256:9bb78c042b1286fcd2c7931a101d8e871767f7053cc3dd9310204415810498de",
+        "sizeBytes": 49700808,
+        "expiresAt": "2027-01-26T02:25:39Z",
+        "implementation": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac"
+      },
+      {
+        "name": "windows-native-evidence",
+        "id": 12786844321,
+        "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40620862119/artifacts/12786844321",
+        "digest": "sha256:67c28acaca3c770e7e98076b2eaee088ce07b6b7f9f56038ea3fbe925d2574f6",
+        "sizeBytes": 928007,
+        "expiresAt": "2027-01-26T02:25:39Z",
+        "implementation": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac"
+      }
+    ],
+    "windowsCli": {
+      "status": "PASS",
+      "platform": "win32",
+      "node": "v22.23.4",
+      "engineVersion": "0.5.0",
+      "commit": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac",
+      "flows": [
+        {
+          "game": "r1-script",
+          "storyVersion": "sample-v1",
+          "sourceSha256": "194d8186106c8a72257ee680a07213058f825b3d589f4a9ed69a56793dec9351"
+        },
+        {
+          "game": "r1-investigation",
+          "storyVersion": "sample-v1",
+          "sourceSha256": "028726615f19164857f5d2c285f32d0da45368fe29156f0e11de3ac0381c3d4d"
+        }
+      ],
+      "calls": 26,
+      "diagnostics": [
+        "MALFORMED_JSON",
+        "UNKNOWN_COMMAND",
+        "INVALID_REQUEST",
+        "TIMEOUT",
+        "SOURCE_CONFLICT"
+      ],
+      "replay": true,
+      "failedBatchPreserved": true
+    },
+    "nativeReportsPassed": 5,
+    "versionCheckLines": [
+      "2026-10-28T02:27:17.4184330Z     \"Native executable and bundled engine report the same version: 0.5.0\",\r",
+      "2026-10-28T02:27:21.0873819Z     \"Native executable and bundled engine report the same version: 0.5.0\",\r"
+    ],
+    "coreLines": [
+      "2026-10-28T02:25:58.7094757Z # tests 180",
+      "2026-10-28T02:25:58.7095394Z # pass 180",
+      "2026-10-28T02:25:59.6138041Z Ran 6 tests in 0.051s",
+      "2026-10-28T02:25:59.6848912Z Agent schemas match executable contracts",
+      "2026-10-28T02:25:59.7344528Z Provenance verified: 149 files, four pinned source snapshots"
+    ]
+  },
+  "flows": [
+    {
+      "transport": "sdk",
+      "type": "script",
+      "sourceSha256": "194d8186106c8a72257ee680a07213058f825b3d589f4a9ed69a56793dec9351",
+      "routeStatus": "PASS",
+      "restoreChecks": 7,
+      "endingCoverage": {
+        "required": [
+          "完成",
+          "约定"
+        ],
+        "covered": [
+          "完成",
+          "约定"
+        ],
+        "missing": []
+      },
+      "preview": {
+        "realRenderer": true,
+        "legalEntry": true,
+        "isolatedStorage": true,
+        "audioDevice": false,
+        "humanAcceptance": "UNVERIFIED"
+      },
+      "screenshotSha256": "83acaf25332340659cedd7d3c18a1413bd3bab42b1d6b16d7981d89951ca7a5c",
+      "fingerprint": "1b5c0dab556cfd",
+      "manifestSha256": "1c16fb80b0b548be07d61a0a2ca867a01f93b2cab26fcb70a74de40d15de16a2",
+      "buildIdentity": {
+        "gameVersion": "sample-v1",
+        "engineVersion": "0.5.0",
+        "commitSha": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac",
+        "buildTime": "2026-10-28T02:26:12.932Z"
+      }
+    },
+    {
+      "transport": "sdk",
+      "type": "investigation",
+      "sourceSha256": "028726615f19164857f5d2c285f32d0da45368fe29156f0e11de3ac0381c3d4d",
+      "routeStatus": "PASS",
+      "restoreChecks": 10,
+      "endingCoverage": {
+        "required": [
+          "chapter-1:complete",
+          "final:complete"
+        ],
+        "covered": [
+          "chapter-1:complete",
+          "final:complete"
+        ],
+        "missing": []
+      },
+      "preview": {
+        "realRenderer": true,
+        "legalEntry": true,
+        "isolatedStorage": true,
+        "audioDevice": false,
+        "humanAcceptance": "UNVERIFIED"
+      },
+      "screenshotSha256": "64dbd513c056f7900975c10c06e8a7301ca0f3bb41124978618bf8aa122ae964",
+      "fingerprint": "994071f2109bfd",
+      "manifestSha256": "08213ce04e2713f9ad66aa8674f682bda33b458ce33bffacf486449301c29213",
+      "buildIdentity": {
+        "gameVersion": "sample-v1",
+        "engineVersion": "0.5.0",
+        "commitSha": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac",
+        "buildTime": "2026-10-28T02:26:14.470Z"
+      }
+    },
+    {
+      "transport": "cli",
+      "type": "script",
+      "sourceSha256": "194d8186106c8a72257ee680a07213058f825b3d589f4a9ed69a56793dec9351",
+      "routeStatus": "PASS",
+      "restoreChecks": 7,
+      "endingCoverage": {
+        "required": [
+          "完成",
+          "约定"
+        ],
+        "covered": [
+          "完成",
+          "约定"
+        ],
+        "missing": []
+      },
+      "preview": {
+        "realRenderer": true,
+        "legalEntry": true,
+        "isolatedStorage": true,
+        "audioDevice": false,
+        "humanAcceptance": "UNVERIFIED"
+      },
+      "screenshotSha256": "83acaf25332340659cedd7d3c18a1413bd3bab42b1d6b16d7981d89951ca7a5c",
+      "fingerprint": "1b5c0dab556cfd",
+      "manifestSha256": "bf14d5bdb1a0ddbd4fd1e18793764c368029cb856da54318e1d12a891d273172",
+      "buildIdentity": {
+        "gameVersion": "sample-v1",
+        "engineVersion": "0.5.0",
+        "commitSha": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac",
+        "buildTime": "2026-10-28T02:26:18.571Z"
+      }
+    },
+    {
+      "transport": "cli",
+      "type": "investigation",
+      "sourceSha256": "028726615f19164857f5d2c285f32d0da45368fe29156f0e11de3ac0381c3d4d",
+      "routeStatus": "PASS",
+      "restoreChecks": 10,
+      "endingCoverage": {
+        "required": [
+          "chapter-1:complete",
+          "final:complete"
+        ],
+        "covered": [
+          "chapter-1:complete",
+          "final:complete"
+        ],
+        "missing": []
+      },
+      "preview": {
+        "realRenderer": true,
+        "legalEntry": true,
+        "isolatedStorage": true,
+        "audioDevice": false,
+        "humanAcceptance": "UNVERIFIED"
+      },
+      "screenshotSha256": "64dbd513c056f7900975c10c06e8a7301ca0f3bb41124978618bf8aa122ae964",
+      "fingerprint": "994071f2109bfd",
+      "manifestSha256": "759cbe302ba7407e6b2f07123a91b09e3dc6b38c86bd7135fc86a0b6a0f8f653",
+      "buildIdentity": {
+        "gameVersion": "sample-v1",
+        "engineVersion": "0.5.0",
+        "commitSha": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac",
+        "buildTime": "2026-10-28T02:26:21.300Z"
+      }
+    }
+  ],
+  "nestedOffline": [
+    {
+      "name": "sdk-script",
+      "path": "/stories/sdk-script/",
+      "status": "PASS",
+      "reopened": true
+    },
+    {
+      "name": "sdk-investigation",
+      "path": "/stories/sdk-investigation/",
+      "status": "PASS",
+      "reopened": true
+    },
+    {
+      "name": "cli-script",
+      "path": "/stories/cli-script/",
+      "status": "PASS",
+      "reopened": true
+    },
+    {
+      "name": "cli-investigation",
+      "path": "/stories/cli-investigation/",
+      "status": "PASS",
+      "reopened": true
+    }
+  ],
+  "alphaSamples": [
+    {
+      "sample": "campus",
+      "status": "BLOCKED",
+      "routes": "PASS",
+      "coverage": {
+        "required": [
+          "complete",
+          "letter",
+          "quiet",
+          "together"
+        ],
+        "covered": [
+          "complete",
+          "letter",
+          "quiet",
+          "together"
+        ],
+        "missing": []
+      },
+      "restoreChecks": 21,
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "humanQa": "BLOCKED",
+      "sourceSha256": "c11e064726fe2425bca631f23db115647b08d5978467d7a72aa6f455551c0422",
+      "buildIdentity": {
+        "gameVersion": "self-demo-v1",
+        "engineVersion": "0.5.0",
+        "commitSha": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac",
+        "buildTime": "2026-10-28T02:26:09.059Z"
+      }
+    },
+    {
+      "sample": "netlove",
+      "status": "BLOCKED",
+      "routes": "PASS",
+      "coverage": {
+        "required": [
+          "complete"
+        ],
+        "covered": [
+          "complete"
+        ],
+        "missing": []
+      },
+      "restoreChecks": 10,
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "humanQa": "BLOCKED",
+      "sourceSha256": "23942f2ebac2bdd1b57088ed5b7c2f9b9343386990099beaf19d882c9294e4f8",
+      "buildIdentity": {
+        "gameVersion": "self-demo-v1",
+        "engineVersion": "0.5.0",
+        "commitSha": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac",
+        "buildTime": "2026-10-28T02:26:09.475Z"
+      }
+    },
+    {
+      "sample": "circuit",
+      "status": "BLOCKED",
+      "routes": "PASS",
+      "coverage": {
+        "required": [
+          "chapter-one:complete",
+          "chapter-one:failure",
+          "chapter-two:complete",
+          "chapter-two:failure"
+        ],
+        "covered": [
+          "chapter-one:complete",
+          "chapter-one:failure",
+          "chapter-two:complete",
+          "chapter-two:failure"
+        ],
+        "missing": []
+      },
+      "restoreChecks": 35,
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "humanQa": "BLOCKED",
+      "sourceSha256": "846a8063cb7b26b033bbda9cd962aaa9dffef9cd9238b3ddaf85828b30e71b0f",
+      "buildIdentity": {
+        "gameVersion": "self-demo-v1",
+        "engineVersion": "0.5.0",
+        "commitSha": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac",
+        "buildTime": "2026-10-28T02:26:09.773Z"
+      }
+    },
+    {
+      "sample": "rain",
+      "status": "BLOCKED",
+      "routes": "PASS",
+      "coverage": {
+        "required": [
+          "other",
+          "trust"
+        ],
+        "covered": [
+          "other",
+          "trust"
+        ],
+        "missing": []
+      },
+      "restoreChecks": 7,
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "humanQa": "BLOCKED",
+      "sourceSha256": "13d585ed1dda3d7b6da72eb9f90cd78bc6d071a9d4f5c6cb13eea90f4e811993",
+      "buildIdentity": {
+        "gameVersion": "self-demo-v1",
+        "engineVersion": "0.5.0",
+        "commitSha": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac",
+        "buildTime": "2026-10-28T02:26:10.143Z"
+      }
+    }
+  ],
+  "capabilities": {
+    "protocol": "vn-agent-v1",
+    "limits": {
+      "inputBytes": 8000000,
+      "operations": 128,
+      "outputBytes": 65536,
+      "defaultOutputBytes": 16384,
+      "routeOperations": 20000,
+      "requestMs": 60000,
+      "previewMs": 30000,
+      "assetBytes": 67108864,
+      "assetTotalBytes": 268435456
+    },
+    "commands": [
+      "capabilities",
+      "init",
+      "inspect",
+      "refs",
+      "apply",
+      "validate",
+      "test",
+      "preview",
+      "build"
+    ],
+    "operations": [
+      "project.patch",
+      "entry.set",
+      "node.put",
+      "node.patch",
+      "node.rename",
+      "node.remove",
+      "line.put",
+      "line.remove",
+      "choice.put",
+      "choice.remove",
+      "exit.set",
+      "variable.put",
+      "variable.rename",
+      "variable.remove",
+      "chapter.add",
+      "chapter.patch",
+      "chapter.rename",
+      "chapter.move",
+      "chapter.remove",
+      "evidence.put",
+      "evidence.rename",
+      "evidence.remove",
+      "action.put",
+      "action.remove",
+      "asset.put",
+      "asset.remove",
+      "stage.set",
+      "stage.remove",
+      "route.put",
+      "route.remove"
+    ],
+    "templates": [
+      "vn",
+      "chat",
+      "script",
+      "investigation"
+    ],
+    "templateTypes": {
+      "vn": "narrative",
+      "chat": "narrative",
+      "script": "script",
+      "investigation": "investigation"
+    },
+    "projectTypes": [
+      "narrative",
+      "script",
+      "investigation",
+      "rain"
+    ],
+    "compatibility": {
+      "projectSchema": 1,
+      "editorSchema": 1,
+      "saveSchema": 1,
+      "rain": "native-format-read-validate-test-preview-build"
+    },
+    "operationScopes": {
+      "variable": [
+        "script"
+      ],
+      "chapter": [
+        "investigation"
+      ],
+      "evidence": [
+        "investigation"
+      ],
+      "action": [
+        "investigation"
+      ],
+      "line": [
+        "narrative",
+        "script"
+      ],
+      "choice": [
+        "narrative",
+        "script"
+      ],
+      "exit": [
+        "script"
+      ],
+      "rainNodes": "native-read-only"
+    },
+    "hostPorts": [
+      "readAsset",
+      "preview",
+      "build"
+    ],
+    "schemas": {
+      "request": {
+        "id": "urn:vn-agent-v1:request",
+        "file": "schemas/vn-agent-v1.request.schema.json"
+      },
+      "response": {
+        "id": "urn:vn-agent-v1:response",
+        "file": "schemas/vn-agent-v1.response.schema.json"
+      },
+      "operation": {
+        "id": "urn:vn-agent-v1:operation",
+        "file": "schemas/vn-agent-v1.operation.schema.json"
+      }
+    },
+    "exitCodes": {
+      "PASS": 0,
+      "FAIL": 1,
+      "BLOCKED": 2,
+      "UNVERIFIED": 3
+    },
+    "batch": {
+      "stableIds": true,
+      "finalValidation": true,
+      "expectedSourceSha256": true,
+      "dryRun": true,
+      "playerStorageWrites": false
+    }
+  },
+  "negativeBrowser": [
+    "TIMEOUT",
+    "BUDGET_EXCEEDED",
+    "RELEASE_GATE_BLOCKED",
+    "OUTPUT_EXISTS",
+    "ASSET_UNREADABLE"
+  ],
+  "localCli": {
+    "status": "PASS",
+    "platform": "linux",
+    "node": "v24.22.1",
+    "engineVersion": "0.5.0",
+    "commit": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac",
+    "flows": [
+      {
+        "game": "r1-script",
+        "storyVersion": "sample-v1",
+        "sourceSha256": "194d8186106c8a72257ee680a07213058f825b3d589f4a9ed69a56793dec9351"
+      },
+      {
+        "game": "r1-investigation",
+        "storyVersion": "sample-v1",
+        "sourceSha256": "028726615f19164857f5d2c285f32d0da45368fe29156f0e11de3ac0381c3d4d"
+      }
+    ],
+    "calls": 26,
+    "diagnostics": [
+      {
+        "protocol": "vn-agent-v1",
+        "engineVersion": "0.5.0",
+        "command": "unknown",
+        "requestId": "unknown",
+        "ok": false,
+        "status": "FAIL",
+        "project": null,
+        "data": null,
+        "diagnostics": [
+          {
+            "code": "MALFORMED_JSON",
+            "severity": "error",
+            "message": "Request is not valid JSON"
+          }
+        ],
+        "artifacts": []
+      },
+      {
+        "protocol": "vn-agent-v1",
+        "engineVersion": "0.5.0",
+        "command": "bad",
+        "requestId": "negative-bad",
+        "ok": false,
+        "status": "FAIL",
+        "project": null,
+        "data": null,
+        "diagnostics": [
+          {
+            "path": [
+              "command"
+            ],
+            "code": "UNKNOWN_COMMAND",
+            "severity": "error",
+            "message": "Unknown command"
+          }
+        ],
+        "artifacts": []
+      },
+      {
+        "protocol": "vn-agent-v1",
+        "engineVersion": "0.5.0",
+        "command": "inspect",
+        "requestId": "negative-inspect",
+        "ok": false,
+        "status": "FAIL",
+        "project": null,
+        "data": null,
+        "diagnostics": [
+          {
+            "path": [
+              "params",
+              "limit"
+            ],
+            "code": "INVALID_REQUEST",
+            "severity": "error",
+            "message": "Number is outside bounds"
+          }
+        ],
+        "artifacts": []
+      },
+      {
+        "protocol": "vn-agent-v1",
+        "engineVersion": "0.5.0",
+        "command": "test",
+        "requestId": "negative-test",
+        "ok": false,
+        "status": "UNVERIFIED",
+        "project": null,
+        "data": {
+          "applied": false,
+          "recoveryRequired": false
+        },
+        "diagnostics": [
+          {
+            "code": "TIMEOUT",
+            "severity": "error",
+            "message": "Worker deadline exceeded; inspect source and retry identical request"
+          }
+        ],
+        "artifacts": []
+      },
+      {
+        "protocol": "vn-agent-v1",
+        "engineVersion": "0.5.0",
+        "command": "apply",
+        "requestId": "negative-apply",
+        "ok": false,
+        "status": "FAIL",
+        "project": {
+          "game": "r1-script",
+          "storyVersion": "sample-v1",
+          "sourceSha256": "194d8186106c8a72257ee680a07213058f825b3d589f4a9ed69a56793dec9351"
+        },
+        "data": null,
+        "diagnostics": [
+          {
+            "expected": "0000000000000000000000000000000000000000000000000000000000000000",
+            "actual": "194d8186106c8a72257ee680a07213058f825b3d589f4a9ed69a56793dec9351",
+            "code": "SOURCE_CONFLICT",
+            "severity": "error",
+            "message": "Project changed; inspect and rebase the request"
+          }
+        ],
+        "artifacts": []
+      }
+    ],
+    "replay": true,
+    "failedBatchPreserved": true
+  },
+  "screenshots": [
+    {
+      "path": "docs/previews/r1-script.png",
+      "sha256": "83acaf25332340659cedd7d3c18a1413bd3bab42b1d6b16d7981d89951ca7a5c",
+      "implementation": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac"
+    },
+    {
+      "path": "docs/previews/r1-investigation.png",
+      "sha256": "64dbd513c056f7900975c10c06e8a7301ca0f3bb41124978618bf8aa122ae964",
+      "implementation": "e7035bc38abe3554babf9a4c1518d7a80d82a7ac"
+    }
+  ],
+  "compatibility": {
+    "projectSchema": 1,
+    "editorSchema": 1,
+    "saveSchema": 1,
+    "rain": "PASS",
+    "playerStorageWrites": false,
+    "originalGamesMigrated": false,
+    "resetMigrated": false
+  },
+  "humanQa": "BLOCKED",
+  "limitations": [
+    "Repository-local SDK / CLI; npm package and remote service are not published.",
+    "Project and journal files require UTF-8 without BOM; invalid encoding is refused without rewriting.",
+    "Cooperative file locks and same-directory fsync/rename do not guarantee database durability against power loss or non-cooperating writers.",
+    "Receipts retain at most 128 batches / 8 MB; archival ends retained-request deduplication guarantees.",
+    "Preview uses reduced motion and no audio device; art, listening, story quality and physical devices require human acceptance.",
+    "Windows system dialogs use CI preset paths; manual OS dialog interaction remains UNVERIFIED."
+  ],
+  "resume": {
+    "journalSuffix": ".agent-journal.json",
+    "leaseSuffix": ".agent-lock",
+    "retry": "Use the identical requestId and semantic input; add recover=true only for a dead lease. Compare actual source with before/after SHA; conflicts require explicit repair with a new request ID."
+  }
+}
