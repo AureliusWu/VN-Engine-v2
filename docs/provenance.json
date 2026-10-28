@@ -550,16 +550,22 @@
       "origins": []
     },
     {
+      "target": "src/editor/catalogs.ts",
+      "mode": "new",
+      "targetSha256": "efc6752956db1d2c56fdf5e73a56311698a977bd34aca6716b0f8ef65c8b116e",
+      "origins": []
+    },
+    {
       "target": "src/editor/index.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "33f8d4090a8e5e61ae777925ec15d3b45f10e4e7ebbf61aafc8841e65af40e28"
+      "targetSha256": "0b6e86fb067b85777e3af490a0d26db64fb3d9b294bf27092033352e6bc42615"
     },
     {
       "target": "src/editor/model.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "4362e2683e774af4ddca0a2a00d0a9d753558e2304af7373f2af65773f09b662"
+      "targetSha256": "759c1bef8100a3ddec966d18c881ffc58834056adeab3dc75db28d58169f19d0"
     },
     {
       "target": "src/history/search.ts",

@@ -6,6 +6,8 @@ import { validatePresentationTimeline } from '../stage/timeline.js';
 import { validateKeyVisual } from '../stage/key-visual.js';
 import { freezeData, type DeepReadonly } from '../runtime/readonly.js';
 import { assertAuthorID, evidenceReferences } from './authoring.js';
+import { validateVariable, validateEffects, variableReferences, chapterReferences, hasAuthoredReplay } from './catalogs.js';
+import type { Variable, Effect } from '../script/types.js';
 
 type Mutable<T> = { -readonly [P in keyof T]: T[P] extends object ? Mutable<T[P]> : T[P] };
 export type AuthorProject = Mutable<EngineProject>;
@@ -162,6 +164,20 @@ export function diagnoseProject(project: EngineProject, availableFiles?: Readonl
       }
     }
   }
+  if (project.type === 'script' && record(project.program.variables)) {
+    for (const [id, definition] of Object.entries(project.program.variables)) {
+      try { validateVariable(definition); } catch (error) { add('error', 'variable-definition', `变量 ${id}：${String(error)}`); }
+    }
+    for (const block of project.program.blocks) {
+      const key = keyFor(block.id);
+      if (block.exit.type === 'choice') for (const choice of block.exit.choices) {
+        try { validateEffects(project.program.variables, choice.effects ?? []); } catch (error) { add('error', 'variable-effect', `选择 ${choice.id}：${String(error)}`, key); }
+      }
+      if (block.exit.type === 'branch') for (const route of block.exit.routes) for (const id of Object.keys(route.when ?? {})) {
+        if (!Object.hasOwn(project.program.variables, id)) add('error', 'variable-reference', `条件引用不存在的变量：${id}`, key);
+      }
+    }
+  }
   try { const instance = createProject(project, 'https://preview.invalid/'); instance.session.dispose(); }
   catch (error) { add('error', 'runtime', '运行校验：' + (error instanceof Error ? error.message : String(error))); }
   for (const entry of [...(Array.isArray(project.collections?.cgs) ? project.collections.cgs : []), ...(Array.isArray(project.collections?.endings) ? project.collections.endings : [])]) {
@@ -314,6 +330,114 @@ export class EditorModel {
     const references = evidenceReferences(project, chapterId, id);
     if (references.length) throw new Error(`证据仍有 ${references.length} 处引用，请先修改引用再删除`);
     return this.transact(p => { if (p.type === 'investigation') delete p.chapters.find(c => c.id === chapterId)!.evidence[id]; });
+  }
+  addVariable(kind: 'number' | 'boolean' = 'number') {
+    const project = this.document.project; if (project.type !== 'script') throw new Error('当前工程不是条件剧本');
+    if (!['number', 'boolean'].includes(kind)) throw new Error('变量类型无效');
+    let id = 'variable-1'; for (let i = 2; Object.hasOwn(project.program.variables, id); i++) id = 'variable-' + i;
+    this.set(['program', 'variables', id], { initial: kind === 'boolean' ? false : 0 }); return id;
+  }
+  updateVariable(id: string, definition: Variable) {
+    const project = this.document.project; if (project.type !== 'script' || !Object.hasOwn(project.program.variables, id)) throw new Error('变量不存在');
+    validateVariable(definition);
+    if (typeof project.program.variables[id].initial !== typeof definition.initial && variableReferences(project, id).length) throw new Error('变量仍被引用，不能直接改变类型');
+    return this.transact(p => {
+      if (p.type !== 'script') return;
+      const { initial: _initial, min: _min, max: _max, ...metadata } = p.program.variables[id];
+      p.program.variables[id] = { ...metadata, ...structuredClone(definition) };
+    });
+  }
+  renameVariable(oldId: string, id: string) {
+    assertAuthorID(id);
+    const project = this.document.project; if (project.type !== 'script' || !Object.hasOwn(project.program.variables, oldId)) throw new Error('变量不存在');
+    if (id === oldId) return false;
+    if (Object.hasOwn(project.program.variables, id)) throw new Error('变量 ID 已使用');
+    const refs = variableReferences(project, oldId);
+    for (const ref of refs) if (ref.key && Object.hasOwn(locate(project, ref.path), id)) throw new Error('目标变量名与现有条件或路线期望冲突');
+    return this.transact(p => {
+      if (p.type !== 'script') return;
+      p.program.variables = Object.fromEntries(Object.entries(p.program.variables).map(([key, value]) => [key === oldId ? id : key, value]));
+      for (const ref of refs) {
+        if (ref.key) {
+          const parent = locate(p, ref.path.slice(0, -1));
+          parent[ref.path.at(-1)!] = Object.fromEntries(Object.entries(locate(p, ref.path)).map(([key, value]) => [key === oldId ? id : key, value]));
+        } else locate(p, ref.path.slice(0, -1))[ref.path.at(-1)!] = id;
+      }
+    });
+  }
+  removeVariable(id: string) {
+    const project = this.document.project; if (project.type !== 'script' || !Object.hasOwn(project.program.variables, id)) throw new Error('变量不存在');
+    const refs = variableReferences(project, id); if (refs.length) throw new Error(`变量仍有 ${refs.length} 处引用，请先修改引用再删除`);
+    return this.transact(p => { if (p.type === 'script') delete p.program.variables[id]; });
+  }
+  setChoiceEffects(blockId: string, choiceId: string, effects: readonly Effect[]) {
+    const project = this.document.project; if (project.type !== 'script') throw new Error('当前工程不是条件剧本');
+    const blockIndex = project.program.blocks.findIndex(block => block.id === blockId), block = project.program.blocks[blockIndex];
+    if (block?.exit.type !== 'choice') throw new Error('选择不存在');
+    const choiceIndex = block.exit.choices.findIndex(choice => choice.id === choiceId); if (choiceIndex < 0) throw new Error('选择不存在');
+    validateEffects(project.program.variables, effects);
+    return this.set(['program', 'blocks', blockIndex, 'exit', 'choices', choiceIndex, 'effects'], effects);
+  }
+  addChapter() {
+    const project = this.document.project; if (project.type !== 'investigation') throw new Error('当前工程不是调查类型');
+    let id = 'chapter-1'; for (let i = 2; project.chapters.some(chapter => chapter.id === id); i++) id = 'chapter-' + i;
+    this.transact(p => {
+      if (p.type !== 'investigation') return;
+      p.chapters.push({ id, title: '新章节', order: p.chapters.length, entryNode: 'start', requiredEvidence: [], evidence: {}, nodes: {
+        start: { kind: 'dialogue', text: '新章节的开场。', location: '', time: '', progress: 0, actions: [{ id: 'finish', label: '完成本章', next: 'end' }] },
+        end: { kind: 'ending', text: '本章结束。', location: '', time: '', progress: 100, outcome: 'complete', actions: [] }
+      } });
+    }); return id;
+  }
+  renameChapter(oldId: string, id: string) {
+    assertAuthorID(id); if (/[/:]/.test(id)) throw new Error('章节 ID 不能包含 / 或 :');
+    const project = this.document.project; if (project.type !== 'investigation' || !project.chapters.some(chapter => chapter.id === oldId)) throw new Error('章节不存在');
+    if (id === oldId) return false;
+    if (project.chapters.some(chapter => chapter.id === id)) throw new Error('章节 ID 已使用');
+    if (hasAuthoredReplay(project)) throw new Error('工程含回看存档，请先移除并在章节修改后重新录制');
+    const chapter = project.chapters.find(chapter => chapter.id === oldId)!, refs = chapterReferences(project, oldId);
+    const replacements = new Map<string, string>([[`@chapter:${oldId}`, `@chapter:${id}`], [`${oldId}:complete`, `${id}:complete`], [`${oldId}:failure`, `${id}:failure`], ...Object.keys(chapter.nodes).map(node => [`${oldId}/${node}`, `${id}/${node}`] as [string, string])]);
+    this.transact((p, positions) => {
+      if (p.type !== 'investigation') return;
+      for (const node of Object.keys(chapter.nodes)) {
+        const oldKey = keyFor(node, oldId), nextKey = keyFor(node, id), oldStage = `${oldId}/${node}`, nextStage = `${id}/${node}`;
+        if (Object.hasOwn(positions, nextKey) || (p.stage?.nodes && Object.hasOwn(p.stage.nodes, nextStage))) throw new Error('目标章节的布局或演出键已存在，请先处理冲突');
+        if (Object.hasOwn(positions, oldKey)) { positions[nextKey] = positions[oldKey]; delete positions[oldKey]; }
+        if (p.stage?.nodes && Object.hasOwn(p.stage.nodes, oldStage)) { p.stage.nodes[nextStage] = p.stage.nodes[oldStage]; delete p.stage.nodes[oldStage]; }
+      }
+      for (const ref of refs) {
+        // Stage paths are read before their keys change; external stage keys stay stable.
+        const parent = locate(p, ref.path.slice(0, -1)), key = ref.path.at(-1)!;
+        parent[key] = replacements.get(parent[key]) ?? parent[key];
+      }
+      p.chapters.find(chapter => chapter.id === oldId)!.id = id;
+    }); return id;
+  }
+  moveChapter(id: string, direction: -1 | 1) {
+    const project = this.document.project; if (project.type !== 'investigation') throw new Error('当前工程不是调查类型');
+    if (direction !== -1 && direction !== 1) throw new Error('章节移动方向无效');
+    const sorted = [...project.chapters].sort((a, b) => a.order - b.order), index = sorted.findIndex(chapter => chapter.id === id);
+    if (index < 0) throw new Error('章节不存在'); if (!sorted[index + direction]) return false;
+    if (hasAuthoredReplay(project)) throw new Error('工程含回看存档，请先移除并在章节排序后重新录制');
+    return this.transact(p => {
+      if (p.type !== 'investigation') return;
+      const chapters = [...p.chapters].sort((a, b) => a.order - b.order);
+      [chapters[index], chapters[index + direction]] = [chapters[index + direction], chapters[index]];
+      chapters.forEach((chapter, order) => { chapter.order = order; }); p.chapters = chapters;
+    });
+  }
+  removeChapter(id: string) {
+    const project = this.document.project; if (project.type !== 'investigation' || !project.chapters.some(chapter => chapter.id === id)) throw new Error('章节不存在');
+    if (project.chapters.length === 1) throw new Error('必须保留至少一个章节');
+    if (hasAuthoredReplay(project)) throw new Error('工程含回看存档，请先移除并在章节修改后重新录制');
+    const refs = chapterReferences(project, id); if (refs.length) throw new Error(`章节仍有 ${refs.length} 处外部引用，请先修改引用再删除`);
+    return this.transact((p, positions) => {
+      if (p.type !== 'investigation') return;
+      const chapter = p.chapters.find(chapter => chapter.id === id)!;
+      for (const node of Object.keys(chapter.nodes)) { delete positions[keyFor(node, id)]; if (p.stage?.nodes) delete p.stage.nodes[`${id}/${node}`]; }
+      p.chapters = p.chapters.filter(chapter => chapter.id !== id).sort((a, b) => a.order - b.order);
+      p.chapters.forEach((chapter, order) => { chapter.order = order; });
+    });
   }
 }
 
