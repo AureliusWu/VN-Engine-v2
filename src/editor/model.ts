@@ -1,3 +1,6 @@
+import { creativeDiagnostics, rewriteCreativeTargets } from '../creative/project.js';
+import { schemaErrors } from '../schema/validate.js';
+import { UI_SCHEMA } from '../creative/schema.js';
 import type { EngineProject } from '../runtime/project.js';
 import { createProject } from '../runtime/project.js';
 import { isRecord } from '../storage/save.js';
@@ -99,6 +102,8 @@ export function diagnoseProject(project: EngineProject, availableFiles?: Readonl
     : project.type === 'investigation' ? [[project.stage?.nodes, new Set(graph.nodes.map(n => `${n.chapter}/${n.id}`)), 'nodes']] as const : [];
   for (const [map, targets, key] of presentationTargets) for (const id of Object.keys(map ?? {})) if (!targets.has(id))
     result.push({ severity: 'error', code: 'presentation-target-missing', message: '演出目标不存在：' + id, path: ['stage', key, id] });
+  result.push(...creativeDiagnostics(project));
+  if (project.ui !== undefined) for (const issue of schemaErrors(UI_SCHEMA,project.ui,['ui'])) result.push({severity:'error',code:'ui-schema',message:issue.message,path:issue.path});
   const assets = new Map(project.assets.filter(record).map(a => [a.id, a]));
   const binding = (id: unknown, kind: string, label: string, node?: string) => {
     if (id === undefined || id === null || id === '') return;
@@ -257,6 +262,7 @@ export class EditorModel {
     if (!node || graph.nodes.some(n => n.id === id && n.chapter === node.chapter)) throw new Error('节点不存在或 ID 已使用');
     const nextKey = keyFor(id, node.chapter);
     this.transact((project, positions) => {
+      rewriteCreativeTargets(project, 'node', node.id, id, node.chapter);
       for (const edge of graph.edges.filter(e => e.to === key)) { const parent = locate(project, edge.path.slice(0, -1)); parent[edge.path.at(-1)!] = id; }
       if (project.type === 'investigation') {
         const chapter = project.chapters.find(c => c.id === node.chapter)!;
@@ -417,6 +423,7 @@ export class EditorModel {
         const parent = locate(p, ref.path.slice(0, -1)), key = ref.path.at(-1)!;
         parent[key] = replacements.get(parent[key]) ?? parent[key];
       }
+      rewriteCreativeTargets(p, 'chapter', oldId, id);
       p.chapters.find(chapter => chapter.id === oldId)!.id = id;
     }); return id;
   }

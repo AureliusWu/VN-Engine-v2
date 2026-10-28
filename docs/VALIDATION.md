@@ -1,5 +1,9 @@
 # 引擎验证记录
 
+## R2 v0.6.0 AI 内容生产与接入
+
+本地核心 194 项 Node、6 项 Python、schema 和四样例检查通过；完整浏览器包括 R1 兼容和 R2 SDK / CLI 创作、真实音频播放 / 暂停恢复、390px 与两个独立包子目录离线新页重开通过。Windows 原生与最终提交绑定结果待本轮 CI 确认，见 [0.6.0 验证](VALIDATION-v0.6.0.md)。生成素材仍为 DRAFT，正式人工验收保持 BLOCKED / UNVERIFIED。
+
 ## R1 v0.5.0 AI 开发接口
 
 最终实现 `e7035bc38abe3554babf9a4c1518d7a80d82a7ac` 的核心、完整浏览器（含编辑器）、Windows CLI / 编译 / WebView2 首次启动与重启通过。180 项 Node、6 项 Python、149 项来源；SDK 与 CLI 两条完整开发流程、四模板与 Rain、四包子目录断网重开，以及四样例 10 条用例 / 11 个结局 / 73 次存读档检查通过。正式美术与人工 QA 保持 BLOCKED。见 [0.5.0 验证](VALIDATION-v0.5.0.md) 与 [机器记录](r1-validation.json)。收尾文档不冒充新一次实现验收。

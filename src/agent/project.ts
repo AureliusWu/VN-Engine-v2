@@ -1,3 +1,4 @@
+import { textCatalogue, creativeReferences } from '../creative/project.js';
 import { EditorModel, projectGraph, type EditorDocument, type EditorNode } from '../editor/model.js';
 import { variableReferences, chapterReferences, hasAuthoredReplay } from '../editor/catalogs.js';
 import { evidenceReferences, assertAuthorID } from '../editor/authoring.js';
@@ -37,11 +38,16 @@ export function inspectItems(project: EngineProject, kind: string, id?: string, 
   else if (kind === 'variables') items = Object.entries(project.type === 'script' ? project.program.variables : project.type === 'narrative' ? project.stats ?? {} : {}).map(([id, value]) => ({ id, value }));
   else if (kind === 'assets') items = project.assets.map(value => ({ id: value.id, value }));
   else if (kind === 'presentation') items = presentationEntries(project);
+  else if (kind === 'text') items=textCatalogue(project).filter(line=>!chapterId||line.chapterId===chapterId);
+  else if (kind === 'production') items=project.production?[{id:'production',value:project.production}]:[];
+  else if (kind === 'ui') items=project.ui?[{id:'ui',value:project.ui}]:[];
+  else if (kind === 'characters'||kind==='beats'||kind==='tasks') items=(project.production?.[kind]??[]).map(value=>({id:value.id,value}));
   else if (kind === 'routes') items = (project.routeTests?.cases ?? []).map(value => ({ id: value.id, value }));
   return id === undefined ? items : items.filter(item => item.id === id);
 }
 export function referenceItems(document: EditorDocument, kind: string, id: string, chapterId?: string): any[] {
   const project = document.project, model = new EditorModel(document, 1);
+  if (kind === 'character'||kind==='task'||kind==='line') return creativeReferences(project,kind,id,chapterId).map(ref=>({direction:'incoming',...ref}));
   if (kind === 'variable') return variableReferences(project, id).map(ref => ({ direction: 'incoming', ...ref }));
   if (kind === 'chapter') return [...chapterReferences(project, id).map(ref => ({ direction: 'incoming', ...ref })), ...projectGraph(project).nodes.filter(n => n.chapter === id).map(n => ({ direction: 'owns', id: n.id, path: n.path }))];
   if (kind === 'evidence') {
@@ -59,7 +65,7 @@ export function referenceItems(document: EditorDocument, kind: string, id: strin
       if (test.expect.sceneId === id && (project.type !== 'investigation' || test.expect.lineId === line || graph.nodes.filter(n => n.id === id).length === 1)) add(['routeTests','cases',i,'expect','sceneId'], 'route');
       if (line && test.expect.lineId === line) add(['routeTests','cases',i,'expect','lineId'], 'route');
     });
-    return refs;
+    return [...refs,...creativeReferences(project,'node',id,node.chapter).map(ref=>({direction:'incoming',...ref}))];
   }
   if (!project.assets.some(asset => asset.id === id)) throw new AgentError('NOT_FOUND', 'Asset does not exist', { assetId: id });
   const refs: any[] = [], add = (value: unknown, path: (string | number)[]) => { if (value === id) refs.push({ direction: 'incoming', path }); };
@@ -73,7 +79,7 @@ export function referenceItems(document: EditorDocument, kind: string, id: strin
     add(cue?.video?.asset, [...entry.path, 'video', 'asset']); add(cue?.video?.fallback?.asset, [...entry.path, 'video', 'fallback', 'asset']); add(cue?.keyVisual?.asset, [...entry.path, 'keyVisual', 'asset']);
     for (const [layer, asset] of Object.entries(cue?.layers ?? {}) as [string, any][]) add(asset?.asset, [...entry.path, 'layers', layer, 'asset']);
     cue?.timeline?.animations?.forEach((track: any, i: number) => add(track.target, [...entry.path, 'timeline', 'animations', i, 'target']));
-  } return refs;
+  } return [...refs,...creativeReferences(project,'asset',id).map(ref=>({direction:'incoming',...ref}))];
 }
 
 export function agentProjectDiagnostics(model: EditorModel): AgentDiagnostic[] {

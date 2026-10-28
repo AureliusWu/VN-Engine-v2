@@ -1,0 +1,9 @@
+{
+  "tool": "built-in image_gen.imagegen",
+  "created": "2026-10-28",
+  "status": "DRAFT",
+  "prompts": {
+    "bookshop": "Use case: illustration-story. Asset type: background illustration for the original VN Engine technical sample 'The Last Returned Book'. Create a detailed 16:9 anime visual novel background, an independent small bookshop on a quiet residential street just after rain at blue hour. View from inside toward broad windows and a glass entrance, wooden shelves of books on both sides, a reading table, amber pendant lights reflected in the wet floor near the entrance, soft blue evening beyond the window. Painterly, finely observed architecture, calm intimate mood, amber and deep teal palette. Clear central floor area for a character sprite, lower quarter visually calm for a dialogue overlay. No people, no lettering, no UI, no logos, no watermark. Fully opaque scene.",
+    "an": "Use case: illustration-story. Asset type: transparent character sprite for the original VN Engine technical sample 'The Last Returned Book'. One original adult East Asian woman, age 26, a thoughtful bookseller named An. Full body including shoes, facing viewer with a gentle questioning smile; short dark brown bob, small ivory flower hairpin, muted teal knit cardigan over a cream blouse, long dark brown plaid skirt and brown loafers, holding a closed brown book loosely in one hand. Refined anime visual novel illustration, delicate linework and painterly shading, subtle warm shop light, calm natural proportions, clean readable silhouette, centered with generous empty margin. Entire character is cut out on a genuinely transparent background. No scenery, floor, shadow halo, props outside the book, text, UI, logos or watermark."
+  }
+}

@@ -5,7 +5,7 @@ import { runAgentFileRequest } from './agent-node.mjs';
 import { AGENT_PROTOCOL, AGENT_LIMITS, AgentError, agentResponse, failAgent, exitCodeFor } from '../dist/agent/index.js';
 export async function agentCLI(argv = process.argv.slice(2), stdin = process.stdin) {
   try {
-    if (argv[0] === '--help' || argv[0] === 'help') return { ...agentResponse('help'), data: { usage: 'npm run --silent agent -- <command> --project=FILE --params=JSON [--request-id=ID] | --request=FILE | --request=-', commands: ['capabilities','init','inspect','refs','apply','validate','test','preview','build'], params: 'Command params are JSON; capabilities --params=\'{"schema":"request"}\' returns the executable schema. All stdout is one JSON response.' } };
+    if (argv[0] === '--help' || argv[0] === 'help') return { ...agentResponse('help'), data: { usage: 'npm run --silent agent -- <command> --project=FILE --params=JSON [--request-id=ID] | --request=FILE | --request=-', commands: ['capabilities','init','inspect','refs','apply','validate','test','preview','build','review','probe'], params: 'Command params are JSON; capabilities --params=\'{"schema":"request"}\' returns the executable schema. All stdout is one JSON response.' } };
     const args = new Map(); let command;
     for (const arg of argv) {
       if (!arg.startsWith('--')) { if (command) throw new AgentError('INVALID_ARGUMENT', 'Unexpected argument ' + arg); command = arg; continue; }

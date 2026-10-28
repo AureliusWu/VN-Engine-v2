@@ -1,12 +1,17 @@
+import { applyCreativeOperation } from './creative.js';
 import { EditorModel } from '../editor/model.js';
 import { validateVariable } from '../editor/catalogs.js';
 import { AgentError } from './protocol.js';
 import { atPath, selectNode, renameAgentNode, checkedId } from './project.js';
+import { creativeReferences } from '../creative/project.js';
+import { hasAuthoredReplay } from '../editor/catalogs.js';
 
 const copy = (value: any) => structuredClone(value);
 export function applyAgentOperation(model: EditorModel, operation: Record<string, any>): void {
   const o = operation, p = model.getView().project;
   if (o.id !== undefined) checkedId(o.id);
+  if(o.newId!==undefined)checkedId(o.newId);
+  if(/^(ui\.set|production\.patch|character\.|beat\.|task\.)/.test(o.op)){applyCreativeOperation(model,o);return;}
   const node = () => selectNode(model, o.nodeId ?? o.id, o.chapterId);
   const chapter = () => {
     if (p.type !== 'investigation') throw new AgentError('OPERATION_UNSUPPORTED', 'Operation requires investigation project');
@@ -50,8 +55,24 @@ export function applyAgentOperation(model: EditorModel, operation: Record<string
     }
     case 'node.rename': renameAgentNode(model, node(), checkedId(o.newId)); break;
     case 'node.remove': model.removeNode(node().key); break;
+    case 'line.rename': {
+      const n=node(),value=atPath(p,n.path);
+      if(!Array.isArray(value.lines))throw new AgentError('OPERATION_UNSUPPORTED','Node has no line array');
+      if(!value.lines.some((l:any)=>l.id===o.id))throw new AgentError('NOT_FOUND','Explicit stable line ID does not exist');
+      if(o.id===o.newId)break;
+      if(hasAuthoredReplay(p as any))throw new AgentError('REPLAY_RECAPTURE_REQUIRED','Recapture authored replay before renaming lines');
+      const all=p.type==='script'?p.program.blocks:p.type==='narrative'?p.scenes:[];
+      if(all.some(b=>b.lines.some(l=>l.id===o.newId)))throw new AgentError('INVALID_OPERATION','Line ID already exists');
+      model.transact(project=>{
+        atPath(project,n.path).lines.find((l:any)=>l.id===o.id).id=o.newId;
+        if(project.type==='narrative'&&project.stage?.lines&&Object.hasOwn(project.stage.lines,o.id)){project.stage.lines[o.newId]=project.stage.lines[o.id];delete project.stage.lines[o.id];}
+        for(const group of [project.production?.beats??[],project.production?.tasks??[]])for(const item of group)for(const target of item.targets??[])if(target.lineId===o.id&&target.nodeId===n.id)target.lineId=o.newId;
+        for(const test of project.routeTests?.cases??[])if(test.expect.lineId===o.id)test.expect.lineId=o.newId;
+      });break;
+    }
     case 'line.put': case 'line.remove': {
       const n = node(), value = atPath(p, n.path); if (!Array.isArray(value.lines)) throw new AgentError('OPERATION_UNSUPPORTED', 'Node has no line array');
+      if(o.op==='line.remove'&&creativeReferences(p as any,'line',o.id).length)throw new AgentError('CREATIVE_REFERENCED','Line still has production references');
       indexed([...n.path, 'lines'], value.lines, o.value); break;
     }
     case 'choice.put': case 'choice.remove': {
@@ -78,7 +99,9 @@ export function applyAgentOperation(model: EditorModel, operation: Record<string
     case 'evidence.rename': model.renameEvidence(o.chapterId, o.id, checkedId(o.newId)); break;
     case 'evidence.remove': model.removeEvidence(o.chapterId, o.id); break;
     case 'action.put': case 'action.remove': { const n = node(), value = atPath(p, n.path); if (!Array.isArray(value.actions)) throw new AgentError('OPERATION_UNSUPPORTED', 'Node has no investigation actions'); indexed([...n.path, 'actions'], value.actions, o.value); break; }
-    case 'asset.put': case 'asset.remove': indexed(['assets'], p.assets, o.value); break;
+    case 'asset.put': case 'asset.remove':
+      if(o.op==='asset.remove'&&creativeReferences(p as any,'asset',o.id).length)throw new AgentError('CREATIVE_REFERENCED','Asset still has production references');
+      indexed(['assets'], p.assets, o.value); break;
     case 'route.put': case 'route.remove': indexed(['routeTests', 'cases'], p.routeTests?.cases ?? [], o.value); model.set(['routeTests', 'schema'], 1); break;
     case 'stage.set': case 'stage.remove': {
       let path: (string | number)[];

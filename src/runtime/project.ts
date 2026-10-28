@@ -1,3 +1,5 @@
+import { validateCreativeProject, type ProductionPlan } from '../creative/project.js';
+import { validateProjectUI, type ProjectUI } from '../ui/theme.js';
 import { AssetCatalog, type Asset } from '../assets/catalog.js';
 import { NarrativeEngine } from '../narrative/engine.js';
 import type { NarrativeConfig, Scene } from '../narrative/types.js';
@@ -21,7 +23,7 @@ import type { ReadProgressPort } from './read.js';
 import type { RouteSuite } from '../regression/types.js';
 import { validateRouteSuite } from '../regression/schema.js';
 
-type ProjectBase = { schema: 1; game: string; version: string; title: string; titleScreen?: boolean; routeTests?: RouteSuite; assets: readonly Asset[]; font?: string; settings?: Partial<RuntimeSettings>; rollback?: RollbackOptions; collections?: ProjectCollections; releaseEvidence?: ReleaseEvidence };
+type ProjectBase = { production?: ProductionPlan; ui?: ProjectUI; schema: 1; game: string; version: string; title: string; titleScreen?: boolean; routeTests?: RouteSuite; assets: readonly Asset[]; font?: string; settings?: Partial<RuntimeSettings>; rollback?: RollbackOptions; collections?: ProjectCollections; releaseEvidence?: ReleaseEvidence };
 export type EngineProject = ProjectBase & (
   { type: 'narrative'; adapter?: 'healing' | 'netlove'; entry?: string; stats?: Record<string, number>; scenes: readonly Scene[]; stage?: NarrativeStage }
   | { type: 'script'; program: ScriptProgram; defaults?: StageCue }
@@ -30,6 +32,7 @@ export type EngineProject = ProjectBase & (
 );
 export function createProject(project: EngineProject, baseURL: string | URL, options: { clock?: Clock; settings?: Partial<RuntimeSettings>; assetURL?: (path: string) => string; initialPause?: string; readProgress?: ReadProgressPort } = {}) {
   if (project.schema !== 1 || !project.game || !project.version || !project.title || !Array.isArray(project.assets)) throw new Error('Invalid engine project');
+  validateProjectUI(project.ui); validateCreativeProject(project);
   if (project.titleScreen !== undefined && typeof project.titleScreen !== 'boolean') throw new Error('titleScreen must be boolean');
   if (project.routeTests !== undefined) validateRouteSuite(project.routeTests);
   const assets = new AssetCatalog(project.assets, baseURL, options.assetURL);

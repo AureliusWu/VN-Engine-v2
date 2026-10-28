@@ -1,6 +1,9 @@
+import { ASSET_PROVENANCE_SCHEMA } from '../creative/schema.js';
+import { schemaErrors } from '../schema/validate.js';
 export type AssetKind = 'background' | 'portrait' | 'cg' | 'ui' | 'audio' | 'font' | 'video';
 export type AssetStatus = 'PLACEHOLDER' | 'DRAFT' | 'REVIEW' | 'READY' | 'DEPRECATED';
-export type Asset = { id: string; kind: AssetKind; src: string; alt?: string; sha256?: string; status?: AssetStatus; license?: { name: string; src: string } };
+export type AssetProvenance = { method:'generated'|'composed'|'procedural'|'licensed'|'recorded'|'authored'; tool:string; prompt?:string; sourceSha256:string; notes?:string };
+export type Asset = { provenance?:AssetProvenance; id: string; kind: AssetKind; src: string; alt?: string; sha256?: string; status?: AssetStatus; license?: { name: string; src: string } };
 
 export function localAssetPath(path: string): boolean {
   return typeof path === 'string' && !!path && !/^[a-z][a-z0-9+.-]*:/i.test(path)
@@ -21,12 +24,13 @@ export class AssetCatalog {
       if (!asset.id || this.entries.has(asset.id) || !['background', 'portrait', 'cg', 'ui', 'audio', 'font', 'video'].includes(asset.kind)
         || !localAssetPath(asset.src) || (asset.license && (!asset.license.name || !localAssetPath(asset.license.src)))
         || (asset.sha256 !== undefined && !/^[a-f0-9]{64}$/.test(asset.sha256))) throw new Error('Invalid asset manifest');
+      if (asset.provenance && schemaErrors(ASSET_PROVENANCE_SCHEMA,asset.provenance).length) throw Error('Invalid asset provenance: '+asset.id);
       const url = new URL(resolveURL ? resolveURL(asset.src) : new URL(asset.src, base).href);
       if (!['http:', 'https:', 'file:', 'blob:'].includes(url.protocol)) throw new Error('Unsupported resolved asset URL');
       this.entries.set(asset.id, this.copy(asset)); this.urls.set(asset.id, url.href);
     }
   }
-  private copy(asset: Asset): Asset { return { ...asset, ...(asset.license ? { license: { ...asset.license } } : {}) }; }
+  private copy(asset: Asset): Asset { return structuredClone(asset); }
   private require(id: string, kind?: AssetKind): Asset {
     const asset = this.entries.get(id);
     if (!asset || (kind && asset.kind !== kind)) throw new Error(`Unknown or mismatched asset: ${id}`);

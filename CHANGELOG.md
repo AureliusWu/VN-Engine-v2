@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.6.0 alpha — 2026-10-28 · R2 AI 内容生产与接入
+
+- 新增 vn-creative-v1 简报、角色、剧情节拍和 art / music / ui / sfx / text / story 制作任务；共享校验、准确引用、身份同步、删除保护和保留扩展的 SDK 操作。
+- 新增有界文本 / 制作目录与机械审查、显式台词重命名，以及有限 UI 主题；真实应用到播放器、Studio、Agent 预览和独立包，保留玩家高对比和字号设置。
+- 新增实际字节 / SHA / 图像 / 字体 / 音频探测，音频技术事实与有限解码预算；Node / CLI 导入不可变内容寻址资源，保留 dry-run、回执、冲突复核、中断恢复和残留文件说明。
+- 新增可复制的 SDK / CLI 六类创作样例：实际生成插画、原创程序配乐 / 雨声 / 门铃、条件分支、两条路线、真实声音播放 / 暂停恢复、390px 和子目录离线重开；DRAFT 与正式人工门禁不自动提升。
+- npm / 锁文件 / 引擎 / Windows 版本统一 0.6.0；保持 R1、四模板、Rain 与 schema 1。跨平台结果按实际提交记录，完成本轮后不自动开展 R3。
+
 ## 0.5.0 alpha — 2026-10-28 · R1 AI 开发接口
 
 - 新增 vn-agent-v1、请求 / 响应 / 操作 JSON Schema、纯 SDK 与 Node 文件 SDK；统一 CLI 支持 capabilities / init / inspect / refs / apply / validate / test / preview / build。

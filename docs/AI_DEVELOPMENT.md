@@ -1,6 +1,8 @@
-# R1 AI 开发接口 · v0.5.0
+# AI 开发接口 · v0.6.0
 
-开发 Agent 是 SDK / CLI 的主要使用者；人提出创作要求、试玩、审阅与修正。Studio 继续打开相同工程。本地依赖 Node 22+；预览需要 Playwright Chromium。仓库为 private，本轮没有发布 npm 包或远程 HTTP / MCP 服务。
+开发 Agent 是 SDK / CLI 的主要使用者；人提出创作要求、试玩、审阅与修正。Studio 继续打开相同工程。本地依赖 Node 22+；预览需要 Playwright Chromium。仓库为 public，本轮没有发布 npm 包或远程 HTTP / MCP 服务。
+
+新增的 vn-creative-v1 创作上下文、素材探测 / 导入、主题和机械审查见 [R2 内容生产约定](CREATIVE_DEVELOPMENT.md)；R1 调用继续兼容。
 
 ```sh
 npm ci
@@ -30,7 +32,7 @@ Rain 既有 `type: rain` 工程支持读取、引用、校验、真实路线、�
 
 ## 请求与命令
 
-协议固定 `vn-agent-v1`；引擎版本 0.5.0 与作品 `version` 分开维护。所有请求必须有 `protocol / requestId / command / params`，工程命令另带 `project` 文件路径。工程与回执文件使用无 BOM 的 UTF-8，SHA256 绑定原始字节；BOM / 非法编码明确拒绝并保留文件。JSON 字段不能包含可执行数据。完整可执行开发样例见后文。
+协议固定 `vn-agent-v1`；引擎版本 0.6.0 与作品 `version` 分开维护。所有请求必须有 `protocol / requestId / command / params`，工程命令另带 `project` 文件路径。工程与回执文件使用无 BOM 的 UTF-8，SHA256 绑定原始字节；BOM / 非法编码明确拒绝并保留文件。JSON 字段不能包含可执行数据。完整可执行开发样例见后文。
 
 ```json
 {"protocol":"vn-agent-v1","requestId":"inspect-001","command":"inspect","project":"build/my-game/project.json","params":{"kind":"nodes","limit":5,"maxBytes":8192}}
@@ -56,7 +58,7 @@ PASS 表示该命令声明的技术范围通过。FAIL 表示实际错误；BLOC
 
 ## 有界读取
 
-默认每页 20 项 / 16384 UTF-8 字节，最大 100 项 / 65536 字节，最小预算 4096 字节（按 JSON 编码计算，不含 CLI 行尾换行）。`data.truncated` 和 `nextCursor` 明确是否还有数据；下一次保持 kind / id / chapterId，传回 cursor。游标绑定源 SHA 和查询范围，变化后返回 STALE_CURSOR，需重新读取。
+默认每页 20 项 / 16384 UTF-8 字节，最大 100 项 / 65536 字节，最小预算 4096 字节（按 JSON 编码计算，不含 CLI 行尾换行）。`data.truncated` 和 `nextCursor` 明确是否还有数据；下一次保持 kind / id / chapterId / query / characterId / taskKind，传回 cursor。游标绑定源 SHA 和查询范围，变化后返回 STALE_CURSOR，需重新读取。
 
 单实体大于预算时返回 `fragment: {id,encoding:"json-text",offset,text,complete}`，按游标顺序拼接 text，complete 时对拼接结果 JSON.parse；不截断或丢弃作者文本。普通 items 与片段按顺序消费。节点 refs 包含连线、入口、演出与路线断言；refs 只查询真实结构字段，不通过全文模糊匹配推断引用。
 
@@ -68,7 +70,7 @@ PASS 表示该命令声明的技术范围通过。FAIL 表示实际错误；BLOC
 | --- | --- |
 | project.patch / entry.set | 项目设置 / 真实入口；不在普通补丁中改变 game 和故事版本 |
 | node.put/patch/rename/remove | id，调查需 chapterId；重命名复用原子引用更新，删除有保护 |
-| line.put/remove | nodeId + id；put 可用 afterId 插入或移动；台词文本、发言人、cue 等由 value 提供 |
+| line.put/remove/rename | nodeId + id；put 可用 afterId 插入或移动；台词文本、发言人、cue 等由 value 提供 |
 | choice.put/remove / exit.set | nodeId + id / nodeId；exit 使用 native 项目对应结构，支持 next、条件路由与选择效果 |
 | variable.put/rename/remove | id；value 为 initial / min / max；复用类型校验、引用同步和删除保护 |
 | chapter.add/patch/rename/move/remove | id；add 可给 title；patch 给 title / entryNode / requiredEvidence；move direction 为 -1 或 1 |

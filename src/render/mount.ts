@@ -37,7 +37,7 @@ function mountReplay(root: HTMLElement, project: EngineProject, saved: unknown, 
   };
   try {
     session.restore(saved);
-    renderer = new DOMRenderer(root, session, assets, { title: project.title, font: project.font, storage: null, replayOnly: true, onUnlockAudio: unlockAudio });
+    renderer = new DOMRenderer(root, session, assets, { ui: project.ui, title: project.title, font: project.font, storage: null, replayOnly: true, onUnlockAudio: unlockAudio });
     view?.addEventListener('vn-engine-host-visibility', hostVisibility);
   } catch (error) { session.dispose(); throw error; }
   return () => {
@@ -127,7 +127,7 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
     }
     void media.unlock();
   };
-  try { renderer = new DOMRenderer(root, session, assets, { title: project.title, font: project.font, storage, persistence, backup, continuation, meta, collections,
+  try { renderer = new DOMRenderer(root, session, assets, { ui: project.ui, title: project.title, font: project.font, storage, persistence, backup, continuation, meta, collections,
     startAtTitle: project.titleScreen, onBegin: () => { started = true; },
     beginReplay: (target, saved) => mountReplay(target, project, saved, baseURL, options, session.getView().settings), onUnlockAudio: unlockAudio,
     onCgPresented: id => { if (started && !session.getView().pauseReasons.includes('title') && session.getView().reason !== 'rollback') meta.unlockCg(id); } }); }

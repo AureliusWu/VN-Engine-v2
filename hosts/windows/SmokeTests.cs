@@ -33,6 +33,30 @@ internal static class SmokeTests
             await Wait("document.body.dataset.projectType === 'narrative' && document.querySelector('#preview').contentDocument?.querySelector('.vn-portrait')?.naturalWidth > 0");
             checks.Add("Trusted editor RPC opens JSON through native file IO and loads manifest-only local assets");
             await JS("""
+              window.nativeR2='pending';
+              (async()=>{let game,root;try{
+                const p=await(await fetch('/creative-game/project.json')).json();
+                const {mountGame,ENGINE_VERSION}=await import('/creative-game/lib/index.js');
+                if(ENGINE_VERSION!==document.querySelector('#version').textContent)throw Error('Creative runtime version mismatch');
+                if(new Set(p.production.tasks.map(t=>t.kind)).size!==6||p.assets.some(a=>a.status!=='DRAFT'))throw Error('Creative production or draft status mismatch');
+                const snapshot=()=>Object.entries(localStorage).filter(([k])=>k.includes(p.game));const before=JSON.stringify(snapshot());
+                root=document.createElement('main');root.style='position:fixed;inset:0;z-index:99999;background:#111820;overflow:auto';document.body.append(root);
+                game=mountGame(root,p,{baseURL:new URL('/creative-game/',location.href),storage:null,audio:false});
+                await Promise.all([...root.querySelectorAll('img')].filter(i=>i.getAttribute('src')).map(i=>i.decode()));await document.fonts.ready;
+                if(root.querySelector('.vn-engine').dataset.uiTheme!=='dusk'||getComputedStyle(root.querySelector('.vn-engine')).getPropertyValue('--vn-ui-accent')!=='#edc98f')throw Error('Creative theme mismatch');
+                window.nativeR2Continue=()=>{try{const save=game.session.save();if(!game.session.next()||!game.session.act('stay')||game.session.getView().frame.ending!=='One more page')throw Error('Creative branch mismatch');game.session.restore(save);if(game.session.getView().frame.lineId!=='arrival-1'||JSON.stringify(snapshot())!==before)throw Error('Creative save or isolated storage mismatch');window.nativeR2='passed';}catch(e){window.nativeR2='failed: '+e.message;}finally{game.dispose();root.remove();}};
+                window.nativeR2='ready';
+              }catch(e){game?.dispose();root?.remove();window.nativeR2='failed: '+e.message;}})();
+              """);
+            await Wait("window.nativeR2 !== 'pending'");
+            if(await JS("window.nativeR2 === 'ready'")!="true")throw new InvalidDataException("Native R2 preview: "+await JS("window.nativeR2"));
+            var creativeImage = Path.Combine(Path.GetDirectoryName(window.Options.Report)!, "creative-" + Path.GetFileNameWithoutExtension(window.Options.Report) + ".png");
+            Directory.CreateDirectory(Path.GetDirectoryName(creativeImage)!);
+            await using (var image = File.Create(creativeImage)) await window.Browser.CoreWebView2.CapturePreviewAsync(Microsoft.Web.WebView2.Core.CoreWebView2CapturePreviewImageFormat.Png, image);
+            await JS("window.nativeR2Continue()");
+            if(await JS("window.nativeR2 === 'passed'")!="true")throw new InvalidDataException("Native R2 flow: "+await JS("window.nativeR2"));
+            checks.Add("R2 six-discipline CLI sample renders actual generated illustrations and dusk theme, executes its branch and save reconstruction, preserves DRAFT and player storage, on first launch and restart");
+            await JS("""
               window.nativePresentationAuthor = 'pending';
               try {
                 const section = () => [...document.querySelectorAll('#inspector > details')].find(node => node.querySelector('summary')?.textContent === '正式图层与时间线');

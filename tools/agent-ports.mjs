@@ -11,7 +11,7 @@ import { packageGame } from './package-game.mjs';
 const repository = fileURLToPath(new URL('..',import.meta.url));
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 async function newOutput(value) { const output = path.resolve(value); try { const stat = await fs.lstat(output); if (!stat.isDirectory() || stat.isSymbolicLink() || (await fs.readdir(output)).length) throw new AgentError('OUTPUT_EXISTS','Output must be new or empty'); } catch(e) { if(e.code!=='ENOENT')throw e; } await fs.mkdir(output,{recursive:true}); return output; }
-function commitIdentity() {
+export function commitIdentity() {
  let commit; try { commit=execFileSync('git',['rev-parse','HEAD'],{cwd:repository,encoding:'utf8',stdio:['ignore','pipe','ignore']}).trim(); }catch{commit=process.env.VN_ENGINE_COMMIT??process.env.GITHUB_SHA??'UNVERIFIED';}
  for(const value of [process.env.VN_ENGINE_COMMIT,process.env.GITHUB_SHA])if(value && value!==commit)throw new AgentError('BUILD_IDENTITY_CONFLICT','Environment commit differs from checked-out engine');
  return commit;
@@ -58,7 +58,7 @@ export function createAgentPorts({sourceFile,readAsset}) {
       Object.defineProperty(window,'localStorage',{get(){throw Error('Preview accessed player storage')}});
       const {createProject}=await import('/lib/runtime/project.js'),{DOMRenderer}=await import('/lib/render/dom.js'),{RouteClock,observeRoute}=await import('/lib/regression/suite.js');
       const clock=new RouteClock(),{session,assets}=createProject(project,location.href,{clock,settings:{textDelayMs:0,reducedMotion:true},assetURL:relative=>new URL('/assets/'+relative,location.href).href});
-      const renderer=new DOMRenderer(document.getElementById('game'),session,assets,{title:project.title,font:project.font,storage:null});window.agentPreview={session,renderer};
+      const renderer=new DOMRenderer(document.getElementById('game'),session,assets,{ui:project.ui,title:project.title,font:project.font,storage:null});window.agentPreview={session,renderer};
       let operations=0;const consume=()=>{if(++operations>maxOperations)throw Error('Preview operation budget exhausted')};const settle=()=>{while(!session.getView().ready){consume();clock.tick()}};
       const saves=new Map();settle();for(const step of route.steps){consume();settle();let accepted=true;switch(step.type){case'next':accepted=session.next();break;case'action':accepted=session.act(step.id);break;case'mini-start':accepted=session.startMiniGame();break;case'mini-input':accepted=session.playMiniGame(step.index);break;case'mini-skip':accepted=session.skipMiniGame();break;case'mini-abort':accepted=session.abortMiniGame();break;case'mini-finish':accepted=session.finishMiniGame();break;case'checkpoint':saves.set(step.id,session.save());break;case'restore':if(!saves.has(step.id))throw Error('Unknown checkpoint');session.restore(saves.get(step.id));break;}if(!accepted)throw Error('Rejected route action');settle();}
       await Promise.all(project.assets.filter(asset=>['background','portrait','cg','ui'].includes(asset.kind)).map(async asset=>{const img=new Image();img.src=assets.url(asset.id);await img.decode()}));await document.fonts.ready;await Promise.all([...document.images].filter(img=>img.getAttribute('src')).map(img=>img.decode()));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));

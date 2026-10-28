@@ -1,3 +1,5 @@
+import { CREATIVE_EXTENSION, PRODUCTION_SCHEMA, UI_SCHEMA } from '../creative/schema.js';
+import { reviewCreativeProject } from '../creative/project.js';
 import { EditorModel, newProject, readDocument } from '../editor/model.js';
 import type { EngineProject } from '../runtime/project.js';
 import { runRouteSuite } from '../regression/suite.js';
@@ -9,16 +11,20 @@ import { applyAgentOperation } from './operations.js';
 import { inspectItems, referenceItems, agentProjectDiagnostics } from './project.js';
 
 export function agentCapabilities() {
-  return { protocol: AGENT_PROTOCOL, limits: AGENT_LIMITS, commands: Object.keys(COMMAND_SCHEMAS), operations: OPERATION_DEFINITIONS.map(schema => schema.properties.op.const),
+  return { protocol: AGENT_PROTOCOL, extensions:[CREATIVE_EXTENSION], limits: AGENT_LIMITS, commands: Object.keys(COMMAND_SCHEMAS), operations: OPERATION_DEFINITIONS.map(schema => schema.properties.op.const),
     templates: ['vn', 'chat', 'script', 'investigation'], templateTypes: { vn: 'narrative', chat: 'narrative', script: 'script', investigation: 'investigation' }, projectTypes: ['narrative', 'script', 'investigation', 'rain'],
     compatibility: { projectSchema: 1, editorSchema: 1, saveSchema: 1, rain: 'native-format-read-validate-test-preview-build' },
     operationScopes: { variable: ['script'], chapter: ['investigation'], evidence: ['investigation'], action: ['investigation'], line: ['narrative','script'], choice: ['narrative','script'], exit: ['script'], rainNodes: 'native-read-only' },
-    hostPorts: ['readAsset', 'preview', 'build'], schemas: Object.fromEntries(['request', 'response', 'operation'].map(name => [name, { id: `urn:vn-agent-v1:${name}`, file: `schemas/vn-agent-v1.${name}.schema.json` }])),
+    hostPorts: ['readAsset', 'preview', 'build', 'probe', 'importsPrepared'],
+    schemas: {
+      ...Object.fromEntries(['request','response','operation'].map(name=>[name,{id:`urn:vn-agent-v1:${name}`,file:`schemas/vn-agent-v1.${name}.schema.json`}])),
+      ...Object.fromEntries(['production','ui'].map(name=>[name,{id:`urn:vn-creative-v1:${name}`,file:`schemas/vn-creative-v1.${name}.schema.json`}]))
+    },
     exitCodes: { PASS: 0, FAIL: 1, BLOCKED: 2, UNVERIFIED: 3 }, batch: { stableIds: true, finalValidation: true, expectedSourceSha256: true, dryRun: true, playerStorageWrites: false } };
 }
 function page(response: AgentResponse, items: any[], request: AgentRequest, sha: string) {
   const p = request.params, limit = p.limit ?? 20, maxBytes = p.maxBytes ?? AGENT_LIMITS.defaultOutputBytes;
-  const query = JSON.stringify([request.command, p.kind ?? 'overview', p.id ?? null, p.chapterId ?? null]);
+  const query = JSON.stringify([request.command, p.kind ?? 'overview', p.id ?? null, p.chapterId ?? null,p.query??null,p.characterId??null,p.taskKind??null]);
   let index = 0, offset = 0;
   if (p.cursor) {
     let cursor: any; try { cursor = JSON.parse(decodeURIComponent(p.cursor)); } catch { throw new AgentError('INVALID_CURSOR', 'Cursor is not valid'); }
@@ -98,7 +104,8 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
     request = validateAgentRequest(input); response.command = request.command; response.requestId = request.requestId;
     if (utf8Bytes(JSON.stringify(request)) > AGENT_LIMITS.inputBytes) throw new AgentError('BUDGET_EXCEEDED', 'Request exceeds byte budget', {}, 'UNVERIFIED');
     const params = request.params; check();
-    if (request.command === 'capabilities') { response.data = params.schema ? { schema: ({ request: AGENT_REQUEST_SCHEMA, response: AGENT_RESPONSE_SCHEMA, operation: AGENT_OPERATION_SCHEMA } as any)[params.schema] } : agentCapabilities(); return result; }
+    if (request.command === 'capabilities') { response.data = params.schema ? { schema: ({ request: AGENT_REQUEST_SCHEMA, response: AGENT_RESPONSE_SCHEMA, operation: AGENT_OPERATION_SCHEMA, production:PRODUCTION_SCHEMA, ui:UI_SCHEMA } as any)[params.schema] } : agentCapabilities(); return result; }
+    if(request.command==='probe'){if(!context.probe)throw new AgentError('HOST_PORT_REQUIRED','Probe requires the Node host or an injected decoder',{},'UNVERIFIED');const output=await context.probe(request);response.data=output.data;response.artifacts=output.artifacts;response.status=output.status;response.ok=output.status==='PASS';response.diagnostics=output.diagnostics;result.report=output.data;check();return result;}
     if (request.command === 'init') {
       const project = newProject(params.type); project.game = params.game; project.version = params.storyVersion; project.title = params.title;
       if (project.type === 'script') { project.program.game = project.game; project.program.version = project.version; }
@@ -114,12 +121,19 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
     const before = readDocument(sourceText), project = before.project, sha = await sourceHash(sourceText), wrapped = JSON.parse(sourceText).format === 'vn-engine-editor';
     response.project = { game: project.game, storyVersion: project.version, sourceSha256: sha }; check();
     if (request.command === 'inspect' || request.command === 'refs') {
-      const items = request.command === 'inspect' ? inspectItems(project, params.kind ?? 'overview', params.id, params.chapterId) : referenceItems(before, params.kind, params.id, params.chapterId);
+      let items = request.command === 'inspect' ? inspectItems(project, params.kind ?? 'overview', params.id, params.chapterId) : referenceItems(before, params.kind, params.id, params.chapterId);
+      if(request.command==='inspect') {
+        if(params.characterId){const character=project.production?.characters?.find(c=>c.id===params.characterId);if(!character)throw new AgentError('NOT_FOUND','Character does not exist');items=items.filter(item=>params.kind==='characters'?item.id===character.id:params.kind==='text'?item.speaker===character.name:item.value?.characters?.includes(character.id));}
+        if(params.taskKind)items=items.filter(item=>item.value?.kind===params.taskKind);
+        if(params.query)items=items.filter(item=>JSON.stringify(item).toLocaleLowerCase().includes(params.query.toLocaleLowerCase()));
+      }
       if (params.id && !items.length && request.command === 'inspect') throw new AgentError('NOT_FOUND', 'No matching item');
       page(response, items, request, sha); check(); return result;
     }
+    if(request.command==='review'){const report=reviewCreativeProject(project);response.status=report.status as AgentResponse['status'];response.ok=report.status==='PASS';const items=[{id:'review-summary',summary:report.summary,scope:report.scope},...report.issues];page(response,items,request,sha);check();return result;}
     if (request.command === 'apply') {
       if (params.expectedSourceSha256 !== sha) throw new AgentError('SOURCE_CONFLICT', 'Project changed; inspect and rebase the request', { expected: params.expectedSourceSha256, actual: sha });
+      if(params.imports?.length&&!context.importsPrepared)throw new AgentError('HOST_PORT_REQUIRED','Imports need a prepared immutable file host',{},'UNVERIFIED');
       for (const [index, operation] of params.operations.entries()) {
         check(); try { applyAgentOperation(model, operation); } catch (error) {
           if (error instanceof AgentError) throw new AgentError(error.code, error.message, { ...error.details, operation: index, path: ['params', 'operations', index] }, error.status);

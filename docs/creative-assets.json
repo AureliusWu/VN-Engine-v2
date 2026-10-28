@@ -1,0 +1,61 @@
+{
+  "schema": 1,
+  "game": "vn-creative-bookshop",
+  "assets": [
+    {
+      "path": "examples/creative/assets/an-r2.png",
+      "sha256": "9f705a6757b7a5d09085253e0066aebd088d81745257ee8a2c24dffae58cc079",
+      "bytes": 1715470,
+      "status": "DRAFT",
+      "method": "generated",
+      "tool": "built-in image_gen.imagegen",
+      "promptReference": "examples/creative/prompts.json#prompts.an",
+      "humanAcceptance": "UNVERIFIED"
+    },
+    {
+      "path": "examples/creative/assets/bell.wav",
+      "sha256": "36170b2e90efbd18ac13d1b55f3ba7253427a88389ec7b3f356655d1c77411ed",
+      "bytes": 115244,
+      "status": "DRAFT",
+      "method": "procedural",
+      "tool": "tools/generate-creative-audio.py",
+      "promptReference": "tools/generate-creative-audio.py (score and synthesis parameters)",
+      "humanAcceptance": "UNVERIFIED"
+    },
+    {
+      "path": "examples/creative/assets/bookshop-r2.png",
+      "sha256": "629a0da16c83a1588ee1a2fb90ef0b772234b6de231913a18af564961624e368",
+      "bytes": 2598260,
+      "status": "DRAFT",
+      "method": "generated",
+      "tool": "built-in image_gen.imagegen",
+      "promptReference": "examples/creative/prompts.json#prompts.bookshop",
+      "humanAcceptance": "UNVERIFIED"
+    },
+    {
+      "path": "examples/creative/assets/memory.wav",
+      "sha256": "bb856e62208846d5ece2c98230291e2c52e651714f5463f21ae2c27d61632622",
+      "bytes": 960044,
+      "status": "DRAFT",
+      "method": "composed",
+      "tool": "tools/generate-creative-audio.py",
+      "promptReference": "tools/generate-creative-audio.py (score and synthesis parameters)",
+      "humanAcceptance": "UNVERIFIED"
+    },
+    {
+      "path": "examples/creative/assets/rain.wav",
+      "sha256": "5df43b57167629752c2dee994b5dfa525383fc1248e30e4e7a3183e6503b7916",
+      "bytes": 960044,
+      "status": "DRAFT",
+      "method": "procedural",
+      "tool": "tools/generate-creative-audio.py",
+      "promptReference": "tools/generate-creative-audio.py (score and synthesis parameters)",
+      "humanAcceptance": "UNVERIFIED"
+    }
+  ],
+  "font": {
+    "path": "examples/agent/assets/agent.woff2",
+    "license": "examples/agent/assets/OFL.txt"
+  },
+  "notes": "Independent original technical sample. Generation and technical checks do not grant READY or human approval."
+}

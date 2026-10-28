@@ -1,3 +1,4 @@
+import { creativeReferences } from '../creative/project.js';
 import type { EngineProject } from '../runtime/project.js';
 import type { Effect, Variable } from '../script/types.js';
 import { isRecord } from '../storage/save.js';
@@ -72,5 +73,5 @@ export function chapterReferences(project: EngineProject, id: string): AuthorRef
   };
   cue(project.stage?.defaults, ['stage', 'defaults']);
   for (const [key, value] of Object.entries(project.stage?.nodes ?? {})) if (!lineIds.has(key)) cue(value, ['stage', 'nodes', key]);
-  return refs;
+  return [...refs,...creativeReferences(project,'chapter',id)];
 }

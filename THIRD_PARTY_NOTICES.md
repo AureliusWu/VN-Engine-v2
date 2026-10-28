@@ -17,3 +17,5 @@ Ren’Py SDK 未包含在仓库内，其自身与所含第三方组件依原许�
 0.3 的编辑器、作者命令和 Windows 宿主为本仓库新实现。编辑器字体 VN Studio Sans 由同一 OFL 源字体子集化并改名，许可随 `editor/OFL.txt` 分发。Windows 使用 .NET/WinForms 与 Microsoft.Web.WebView2 SDK；对应代码与组件依其 [Microsoft .NET 许可](https://github.com/dotnet/runtime/blob/main/LICENSE.TXT) 和 [WebView2 SDK 许可](https://www.nuget.org/packages/Microsoft.Web.WebView2/1.0.3537.50/License) 使用。系统 WebView2 Runtime 不存入源码库，遵循 Microsoft 分发条款。
 
 0.5 的 AI SDK、CLI 与技术流程为本仓库新实现。独立接口样例的 VN Agent Sans 同样由固定 Rain 源字体子集化并改名，许可见 `examples/agent/assets/OFL.txt`；不包含正式角色资产或原作剧情。
+
+0.6 的书店 / An 插画通过内置 image_gen.imagegen 生成，精确提示词与字节来源见 examples/creative/prompts.json 和 docs/creative-assets.json，保持 DRAFT；未采用四作或 RESET 美术。配乐、雨声与门铃由 tools/generate-creative-audio.py 原创程序合成，含乐谱与固定参数。创作样例通过统一导入复用上述 VN Agent Sans 和 OFL 文本，不改变其许可。

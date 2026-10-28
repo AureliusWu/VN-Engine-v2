@@ -24,12 +24,18 @@ jobs:
           dotnet-version: '10.0.x'
       - run: npm ci
       - run: npm run build
+      - run: npx playwright install chromium
       - name: Execute AI CLI flows and machine error checks on Windows
         run: node tools/test-agent-cli.mjs test-results/agent-cli
+      - name: Execute six-discipline creative CLI flow with actual media probes and draft release gate
+        run: node tools/creative-example.mjs test-results/creative-cli --cli --no-preview
       - name: Bundle local editor and independent engine sample
         run: |
           node tools/package-studio.mjs build/windows/site
           node tools/package-game.mjs examples/runtime/campus.json build/windows/demo-game
+      - name: Include source-bound creative sample for native WebView2 checks
+        shell: pwsh
+        run: Copy-Item test-results/creative-cli/game build/windows/site/creative-game -Recurse
       - name: Publish self-contained Windows host
         run: dotnet publish hosts/windows/VNEngine.Windows.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=None -p:DebugSymbols=false -o build/windows/app
       - name: Assemble portable folder
@@ -72,3 +78,8 @@ jobs:
             test-results/windows/*.json
             test-results/windows/*.png
             test-results/agent-cli/
+            test-results/creative-cli/CREATIVE_REPORT.json
+            test-results/creative-cli/MEDIA_REPORT.json
+            test-results/creative-cli/ROUTE_REPORT.json
+            test-results/creative-cli/TRANSCRIPT.json
+            test-results/creative-cli/game/build-manifest.json

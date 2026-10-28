@@ -1,0 +1,64 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:vn-creative-v1:ui",
+  "type": "object",
+  "properties": {
+    "schema": {
+      "const": 1
+    },
+    "preset": {
+      "enum": [
+        "night",
+        "paper",
+        "dusk"
+      ]
+    },
+    "colors": {
+      "type": "object",
+      "properties": {
+        "surface": {
+          "type": "string",
+          "pattern": "^#[a-fA-F0-9]{6}$"
+        },
+        "panel": {
+          "type": "string",
+          "pattern": "^#[a-fA-F0-9]{6}$"
+        },
+        "text": {
+          "type": "string",
+          "pattern": "^#[a-fA-F0-9]{6}$"
+        },
+        "muted": {
+          "type": "string",
+          "pattern": "^#[a-fA-F0-9]{6}$"
+        },
+        "accent": {
+          "type": "string",
+          "pattern": "^#[a-fA-F0-9]{6}$"
+        },
+        "border": {
+          "type": "string",
+          "pattern": "^#[a-fA-F0-9]{6}$"
+        }
+      },
+      "required": [],
+      "additionalProperties": false
+    },
+    "density": {
+      "enum": [
+        "comfortable",
+        "compact"
+      ]
+    },
+    "dialogue": {
+      "enum": [
+        "solid",
+        "glass"
+      ]
+    }
+  },
+  "required": [
+    "schema"
+  ],
+  "additionalProperties": false
+}

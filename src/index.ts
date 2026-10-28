@@ -47,3 +47,7 @@ export * from './render/dom.js';
 export * from './render/mount.js';
 export * from './version.js';
 export type { DeepReadonly } from './runtime/readonly.js';
+
+export * from './creative/project.js';
+export * from './creative/schema.js';
+export * from './ui/theme.js';

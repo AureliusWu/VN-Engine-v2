@@ -1,3 +1,4 @@
+import { uiDeclarations, resolveProjectUI, type ProjectUI } from '../ui/theme.js';
 import { filterHistory } from '../history/search.js';
 import { isRecord } from '../storage/save.js';
 import type { StoragePort } from '../storage/store.js';
@@ -13,7 +14,7 @@ import { resolvePresentationTimeline } from '../stage/timeline.js';
 import { DOM_STYLE } from './dom-style.js';
 import { KeyVisualLayer } from './key-visual.js';
 
-export type DOMRendererOptions = { title?: string; font?: string; storage?: StoragePort | null; persistence?: ReturnType<typeof bindSessionPersistence>;
+export type DOMRendererOptions = { ui?: ProjectUI; title?: string; font?: string; storage?: StoragePort | null; persistence?: ReturnType<typeof bindSessionPersistence>;
   backup?: ReturnType<typeof createSaveBackup>;
   continuation?: ReturnType<typeof createContinuation>;
   startAtTitle?: boolean; onBegin?: () => void;
@@ -89,6 +90,7 @@ export class DOMRenderer {
       session.configure(value);
     } } catch { /* Keep playable defaults. */ }
     const host = this.el('section', undefined, 'vn-engine'); this.element = host; host.tabIndex = 0; host.setAttribute('aria-label', options.title ?? '自研叙事引擎');
+    if (options.ui) { const ui=resolveProjectUI(options.ui); host.dataset.uiTheme=ui.preset;host.dataset.uiDensity=ui.density;host.dataset.uiDialogue=ui.dialogue;for(const [key,value]of Object.entries(uiDeclarations(options.ui)))host.style.setProperty(key,value); }
     const style = this.el('style'); style.textContent = DOM_STYLE;
     if (options.font) style.textContent += `\n@font-face{font-family:VNRuntime;src:url(${JSON.stringify(assets.url(options.font, 'font'))}) format('woff2');font-display:swap}.vn-engine{font-family:VNRuntime,system-ui,sans-serif}`;
     host.append(style); this.stage = this.el('div', undefined, 'vn-stage'); this.camera = this.el('div', undefined, 'vn-camera');
