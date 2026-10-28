@@ -1,8 +1,8 @@
-# AI 开发接口 · v0.6.0
+# AI 开发接口 · v0.7.0
 
 开发 Agent 是 SDK / CLI 的主要使用者；人提出创作要求、试玩、审阅与修正。Studio 继续打开相同工程。本地依赖 Node 22+；预览需要 Playwright Chromium。仓库为 public，本轮没有发布 npm 包或远程 HTTP / MCP 服务。
 
-新增的 vn-creative-v1 创作上下文、素材探测 / 导入、主题和机械审查见 [R2 内容生产约定](CREATIVE_DEVELOPMENT.md)；R1 调用继续兼容。
+新增的 vn-creative-v1 创作上下文、素材探测 / 导入、主题和机械审查见 [R2 内容生产约定](CREATIVE_DEVELOPMENT.md)；R1 调用继续兼容。R3 content / impact / 独立反馈见 [迭代与审阅约定](ITERATION_DEVELOPMENT.md)。
 
 ```sh
 npm ci
@@ -16,7 +16,7 @@ npm run --silent agent -- capabilities --params='{"schema":"request"}'
 
 ## 入口与项目选择
 
-- 纯 SDK：`@aureliuswu/vn-engine-v2/agent`，仓库内 `dist/agent/index.js`；`executeAgentRequest(request, context)` 返回 `{ response, candidate?, report? }`。它不写文件、不操作设备；候选文本与响应分开。资源验证需注入 `readAsset`，preview / build 需注入相应端口。
+- 纯 SDK：`@aureliuswu/vn-engine-v2/agent`，仓库内 `dist/agent/index.js`；`executeAgentRequest(request, context)` 返回 `{ response, candidate?, reviewCandidate?, report? }`。它不写文件、不操作设备；候选文本与响应分开。资源验证需注入 `readAsset`，preview / build 需注入相应端口。
 - Node 文件 SDK：`@aureliuswu/vn-engine-v2/agent/node`，仓库内 `tools/agent-node.mjs`；`runAgentFileRequest(request, { signal?, onLog? })` 返回机器响应，监督独立 Worker 的硬超时。
 - CLI：`tools/agent.mjs`。传完整请求使用 `--request=request.json` 或 `--request=-` 从 stdin 读取。便利入口为 `<command> --project=FILE --params=JSON --request-id=ID`；参数使用等号，未知参数拒绝。
 - Schema：[request](../schemas/vn-agent-v1.request.schema.json)、[response](../schemas/vn-agent-v1.response.schema.json)、[operation](../schemas/vn-agent-v1.operation.schema.json)，由 `src/agent/schema.ts` 生成，`npm run check` 校验一致性。
@@ -32,7 +32,7 @@ Rain 既有 `type: rain` 工程支持读取、引用、校验、真实路线、�
 
 ## 请求与命令
 
-协议固定 `vn-agent-v1`；引擎版本 0.6.0 与作品 `version` 分开维护。所有请求必须有 `protocol / requestId / command / params`，工程命令另带 `project` 文件路径。工程与回执文件使用无 BOM 的 UTF-8，SHA256 绑定原始字节；BOM / 非法编码明确拒绝并保留文件。JSON 字段不能包含可执行数据。完整可执行开发样例见后文。
+协议固定 `vn-agent-v1`；引擎版本 0.7.0 与作品 `version` 分开维护。所有请求必须有 `protocol / requestId / command / params`，工程命令另带 `project` 文件路径。工程与回执文件使用无 BOM 的 UTF-8，SHA256 绑定原始字节；BOM / 非法编码明确拒绝并保留文件。JSON 字段不能包含可执行数据。完整可执行开发样例见后文。
 
 ```json
 {"protocol":"vn-agent-v1","requestId":"inspect-001","command":"inspect","project":"build/my-game/project.json","params":{"kind":"nodes","limit":5,"maxBytes":8192}}
@@ -40,10 +40,12 @@ Rain 既有 `type: rain` 工程支持读取、引用、校验、真实路线、�
 
 | 命令 | params 与结果 |
 | --- | --- |
-| capabilities | 无参数得到操作 / 类型 / 预算 / 兼容 / 退出码；`schema: request/response/operation` 返回具体 schema |
+| capabilities | 无参数得到操作 / 类型 / 预算 / 兼容 / 退出码；`schema: request/response/operation/feedback` 返回具体 schema |
 | init | 必填 `type, game, storyVersion, title`；`project` 或 `output` 指定新文件；`format: project/editor`，默认运行工程；不覆盖既有文件 |
 | inspect | `kind: overview/nodes/chapters/variables/assets/presentation/routes`；可筛 `id,chapterId`，可设 `limit,maxBytes,cursor` |
 | refs | `kind: node/variable/chapter/asset/evidence` 和 `id`；调查节点 / 证据可指定 `chapterId`；分页规则相同 |
+| impact | 与 apply 相同操作与预期哈希，但只读分析；limit / output 可选，报告直接修改、资源消费者、任务 / 语音和未知范围 |
+| feedback.inspect / put / transition | 独立 reviewFile、源 / 审阅哈希、目标 / 意见 / 状态历史；见 [R3 契约](ITERATION_DEVELOPMENT.md) |
 | apply | `expectedSourceSha256,operations` 必填，`dryRun,recover` 可选；隔离副本最终校验通过后提交 |
 | validate | `mode: development/release`，默认 development；结构 / 引用 / 类型 / 资源实际字节校验与现有发布规则 |
 | test | 从真实入口运行所有作者用例或指定 `caseId`；`maxOperations`；`output` 可写新的详细报告文件 |

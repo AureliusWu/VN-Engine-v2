@@ -1,4 +1,4 @@
-import { EditorModel, newProject, readAuthorReview } from '../lib/editor/index.js';
+import { EditorModel, newProject, readAuthorReview, contentCatalogue } from '../lib/editor/index.js';
 import { renderPresentationEditor } from './presentation.mjs';
 import { renderCollectionsEditor } from './collections.mjs';
 import { createRoutesPanel } from './routes.mjs';
@@ -53,7 +53,20 @@ const routes = createRoutesPanel($('route-list'), {element,action,field,project:
   },download,navigate:state=>{const node=model.graph().nodes.find(n=>n.id===state.sceneId&&(!n.chapter||state.lineId.startsWith(n.chapter+'/')));if(!node)throw Error('此运行节点没有对应的可编辑节点');selected=node.key;switchTab('story');renderGraph(model.graph());renderInspector();}});
 const production = createProductionPanel($('production-list'), {element,action,field,run,project:()=>model.getView().project,model:()=>model,source:projectSource,
   assetURL:relative=>resourceURLs.get(relative)??new URL(relative,baseURL).href,edit:fn=>mutate(fn,true),changed:()=>{scheduleDraft();document.body.dataset.dirty=String(model.dirty||production.dirty||unappliedSource());},status,download,preview,routes:()=>switchTab('routes'),
-  navigate:target=>{const node=model.graph().nodes.find(n=>n.id===(target.nodeId??target.id)&&n.chapter===target.chapterId);if(!node)throw Error('此目标没有可编辑节点；可在内容目录与原工程中查看');selected=node.key;switchTab('story');renderGraph(model.graph());renderInspector();const input=[...$('inspector').querySelectorAll('input,textarea')].find(n=>n.value===target.id);input?.scrollIntoView({block:'center'});input?.focus();}
+  navigate:target=>{
+    const content=contentCatalogue(model.getView().project).find(c=>c.kind===target.kind&&c.id===target.id&&c.nodeId===target.nodeId&&c.chapterId===target.chapterId);
+    const node=model.graph().nodes.find(n=>n.id===(content?.nodeId??target.nodeId??target.id)&&n.chapter===target.chapterId);
+    if(!node){
+      if(!content)throw Error('目标字段已不存在，请先重开并调整反馈目标');
+      switchTab('source');const copy=JSON.parse(model.serialize(true)),path=content.path,parent=path.slice(0,-1).reduce((v,k)=>v[k],copy),key=path.at(-1),value=parent[key],marker='VN-review-location-'+crypto.randomUUID();parent[key]=marker;
+      const offset=JSON.stringify(copy,null,2).indexOf(JSON.stringify(marker)),length=JSON.stringify(value,null,2).replaceAll('\n','\n'+' '.repeat(path.length*2)).length;
+      $('source').focus();$('source').setSelectionRange(offset,offset+length);status('原格式内容字段：'+JSON.stringify(path));return;
+    }
+    selected=node.key;switchTab('story');renderGraph(model.graph());renderInspector();
+    let input=[...$('inspector').querySelectorAll('input,textarea')].find(n=>n.value===target.id);
+    if(!input&&content){const at=content.path.lastIndexOf('lines'),i=content.path[at+1];if(at>=0&&typeof i==='number')input=$('inspector').querySelector('[aria-label="台词 '+(i+1)+' ID"]');else input=$('inspector').querySelector('[aria-label="正文"]');}
+    input??=$('inspector').querySelector('[aria-label="节点 ID"]');input?.scrollIntoView({block:'center'});input?.focus();
+  }
 });
 function mutate(fn, inspector = false) { fn(); update(inspector); status('更改已记录，可撤销'); }
 function set(path, value, inspector = false) { mutate(() => model.set(path, value), inspector); }
@@ -72,10 +85,10 @@ function clearResources(nextBase = new URL('./', location.href).href) {
 function replace(input, options = {}) {
   const next = new EditorModel(input);
   const incomingReview = options.authorReview;
-  if(incomingReview) readAuthorReview(incomingReview,next.getView().project);
+  if(incomingReview) readAuthorReview(incomingReview,options.draft?{...next.getView().project,game:incomingReview.game,version:incomingReview.storyVersion}:next.getView().project);
   // Fully parse before touching the current editor or its resources.
   clearResources(options.baseURL); if (options.files) resourceFiles = new Set(options.files); model = next;
-  identityProject=model.serialize(true);identitySource=typeof input==='string'&&!JSON.parse(input).format?input:identityProject;production.reset(incomingReview);selected = model.graph().nodes[0]?.key;
+  identityProject=model.serialize(true);identitySource=typeof input==='string'&&!JSON.parse(input).format?input:identityProject;production.reset(incomingReview,{detached:options.draft});selected = model.graph().nodes[0]?.key;
   savedSource = ''; tab = 'story'; renderProject(); update(true); switchTab('story');
   if (options.draft) { model.markUnsaved(); document.body.dataset.dirty = 'true'; $('save-state').textContent = '● 未保存'; status('草稿已恢复；请重新绑定本地资源目录'); }
   else status('工程已打开');

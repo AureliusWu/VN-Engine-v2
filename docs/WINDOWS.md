@@ -46,3 +46,7 @@ Windows CI 包含宿主策略/文件 I/O、实际 WebView2 启动、工程资源
 本轮 Windows 实际结果以 [VALIDATION.md](VALIDATION.md) 和对应 Actions 报告为准；源码与构建配置存在不等同于原生执行成功。四个游戏的迁移仍只在用户主动、明确提出后执行。
 
 API 依据：[WebView2 本地内容](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/working-with-local-content)、[宿主安全边界](https://learn.microsoft.com/en-us/microsoft-edge/webview2/concepts/security)、[dotnet publish](https://learn.microsoft.com/en-us/dotnet/core/tools/dotnet-publish)。
+
+## 0.7 独立作者审阅
+
+Studio 通过受限文件桥分别打开 / 原子保存 review.json，检查外部修改并保护工程 / 清单资源，反馈不混入 .vnproj 或玩家数据。原生 CI 使用预设路径，覆盖修复 / 合成复验 / 重开、文件再打开、外部冲突、完整进程重启及最新 CLI 修订包 / 实际字节 / 试听。系统对话框人工操作、人耳与实体设备终审仍单列未验收，见 [0.7.0](VALIDATION-v0.7.0.md)。

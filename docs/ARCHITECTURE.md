@@ -1,6 +1,6 @@
 # 架构与接口
 
-v0.6.0 主链由本仓库自研模块承担。解释器/状态机 → 玩法驱动 → 播放调度 → DOM/媒体宿主 → 独立离线构建，均能在没有外部游戏引擎的情况下工作。
+v0.7.0 主链由本仓库自研模块承担。解释器/状态机 → 玩法驱动 → 播放调度 → DOM/媒体宿主 → 独立离线构建，均能在没有外部游戏引擎的情况下工作。
 
 | 层 | 入口 | 责任 |
 | --- | --- | --- |
@@ -52,3 +52,9 @@ MediaDirector 消费 visit 和阅读条件，使用注入的 AudioContext/Audio 
 ## R2 内容生产扩展（0.6.0）
 
 `src/creative` 定义 vn-creative-v1 生产模型 / schema 与机械审查，`src/ui` 只接受有限主题令牌，`src/schema` 提供共享数据校验。production / UI 随同一 EngineProject 保留；制作数据不改变玩家状态和存档权威。`tools/agent-probe.mjs` 在显式调用时使用隔离 Chromium 解码；`tools/agent-imports.mjs` 发布不可变资源，文件 SDK 保留回执并最后原子替换工程。外部生成器不嵌入引擎，模块导入不执行设备或网络 IO。独立构建、Studio 和 Agent 均复用同一 DOM / 媒体链，见 [创作约定](CREATIVE_DEVELOPMENT.md)。
+
+## R3 迭代与独立审阅（0.7.0）
+
+creative/content.ts 共享字段 / 静态 cue，impact.ts 分开直接变动、资源消费者 / 依赖任务与未知范围，仍要求完整路线。feedback.ts 定义版本化文档、精确源 / 文件身份、历史与过期判断。Node 的 feedback-node.mjs 复用工程文件原语，两个文件分别提交，不虚构数据库事务。
+
+Studio production.mjs 在隔离 EditorModel 上复用作者操作和最终校验，单次可撤销提交；反馈独立维护。媒体 / FontFace 由取消身份约束，离开 / 隐藏 / 换项目 / dispose 清理。原生新命令仍限可信顶层，文件有外部修改检测。见 [R3 约定](ITERATION_DEVELOPMENT.md)。

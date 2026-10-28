@@ -64,7 +64,7 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "a15b9debd4394af56c5a1ca07e689aac8fe2500f90f82900cd601a98f8b80a5a"
+      "targetSha256": "9a0ff506a0808f4dc0b63377ee10e714ca0020fe32dd91cb3c247d788a6c5fdd"
     },
     {
       "target": "editor/collections.mjs",
@@ -123,7 +123,7 @@
     {
       "target": "editor/production.mjs",
       "mode": "new",
-      "targetSha256": "b41d8fca1c76a9a42729110b7401fa88b906cdbf3306d8aba7e80046b712ff23",
+      "targetSha256": "12975e8132d55952b3e28a7749582a0f85a391e05bd2c381970d6ec38124d8a5",
       "origins": []
     },
     {
@@ -394,13 +394,13 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "d1e764212cbba09873cb6da9a7fe41ff34b4fe719a8dab76e0cfeae346b4481b"
+      "targetSha256": "00fae82c2f5fbb824981642901b6dc8a0ffaf243c9a78d6aed9cd920fdf878c9"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
       "mode": "new",
       "origins": [],
-      "targetSha256": "b8291da8660814f64a66f4c5bef73217e38d43f2a8abc11aaf253ba80d09ec06"
+      "targetSha256": "1a01cdfe602692f6e4aa9aa5d5cb51f4105f63026f077f01c03d255acf8b3f10"
     },
     {
       "target": "licenses/Healing-LICENSE.txt",
@@ -1116,7 +1116,7 @@
       "target": "src/version.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "a7a96e6ef75aa976a9cec9adbbb6d6ef3f4533589d37161827d021dacd49be27"
+      "targetSha256": "0492e023687f405e961d36c0331c3bd2d40d603c637a13db0cba9f89825d9434"
     },
     {
       "target": "tools/agent-example.mjs",
@@ -1230,7 +1230,7 @@
       "target": "tools/package-game.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "b213d90196727792cc085aa4b1eab6ef9b9f19eeaddc3125ca7e6fd368ce6828"
+      "targetSha256": "33853049854899a1328eca1d6d57980d67489bac3f1b4702c7716bef0a138b9a"
     },
     {
       "target": "tools/package-studio.mjs",
@@ -1290,7 +1290,7 @@
     {
       "target": "tools/subset_agent_font.py",
       "mode": "new",
-      "targetSha256": "655bead29446ef2edd9ba189bcc9f18e439c51fdfe071abc27a83b7b922bb244",
+      "targetSha256": "997c13e88fb615fcb97c07ad355b1cb3d7d5efec6e7cfbd1a95e7477ca31da79",
       "origins": []
     },
     {

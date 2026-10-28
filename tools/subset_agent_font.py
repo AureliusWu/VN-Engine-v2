@@ -7,7 +7,7 @@ parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument('font', type=Path)
 args = parser.parse_args()
 root = Path(__file__).resolve().parents[1]
-paths = list((root / 'src').rglob('*.ts')) + [root / 'tools/agent-example.mjs']
+paths = list((root / 'src').rglob('*.ts')) + [root / 'tools/agent-example.mjs', root / 'tools/package-game.mjs']
 text = ''.join(p.read_text(encoding='utf-8') for p in paths)
 font = TTFont(args.font)
 missing = {c for c in text if ord(c) > 127 and ord(c) not in font.getBestCmap()}

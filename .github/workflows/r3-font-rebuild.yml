@@ -1,0 +1,37 @@
+name: R3 font rebuild evidence
+on:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  fonts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install fonttools brotli
+      - name: Rebuild renamed OFL subsets from the pinned original
+        shell: bash
+        run: |
+          python - <<'PY'
+          import urllib.request,hashlib
+          from pathlib import Path
+          source=urllib.request.urlopen('https://raw.githubusercontent.com/AureliusWu/Rain/d96510fc73ebe6a354bbf638613f8e4483f3366b/game/fonts/SourceHanSansLite.ttf').read()
+          assert hashlib.sha256(source).hexdigest()=='b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7'
+          Path('/tmp/r3-font.ttf').write_bytes(source)
+          PY
+          python tools/subset_studio_font.py /tmp/r3-font.ttf
+          python tools/subset_agent_font.py /tmp/r3-font.ttf
+          python - <<'PY'
+          import base64,hashlib,json,fontTools,brotli
+          from pathlib import Path
+          print('VN_FONT_INFO:'+json.dumps({'fontTools':fontTools.__version__,'brotli':brotli.__version__}))
+          for path in ['editor/studio-font.woff2','examples/agent/assets/agent.woff2']:
+              b=Path(path).read_bytes()
+              info={'path':path,'bytes':len(b),'sha256':hashlib.sha256(b).hexdigest(),'gitSha':hashlib.sha1(b'blob '+str(len(b)).encode()+b'\0'+b).hexdigest()}
+              print('VN_FONT_FILE:'+json.dumps(info))
+              for i in range(0,len(b),6000): print('VN_FONT_CHUNK:'+path+':'+base64.b64encode(b[i:i+6000]).decode())
+          PY

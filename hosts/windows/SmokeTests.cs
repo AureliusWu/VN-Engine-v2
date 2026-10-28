@@ -57,6 +57,28 @@ internal static class SmokeTests
             if(await JS("window.nativeR2 === 'passed'")!="true")throw new InvalidDataException("Native R2 flow: "+await JS("window.nativeR2"));
             checks.Add("R2 six-discipline CLI sample renders actual generated illustrations and dusk theme, executes its branch and save reconstruction, preserves DRAFT and player storage, on first launch and restart");
             await JS("""
+              window.nativeR3Sample='pending';
+              (async()=>{let game,root;try{
+                const p=await(await fetch('/iteration-game/project.json')).json(),{mountGame,ENGINE_VERSION}=await import('/iteration-game/lib/index.js');
+                if(ENGINE_VERSION!==document.querySelector('#version').textContent||p.game!=='vn-iteration-bookshop'||p.ui.preset!=='paper'||p.assets.some(a=>a.status!=='DRAFT'))throw Error('R3 identity/theme/draft mismatch');
+                if(p.program.blocks[0].lines[0].text!=='You found the note. Shall we read it before I close?'||p.program.blocks[0].exit.choices.find(c=>c.id==='leave').next!=='end')throw Error('R3 latest source/branch missing');
+                const asset=p.assets.find(a=>a.id==='memory'),bytes=await(await fetch('/iteration-game/'+asset.src)).arrayBuffer();
+                const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',bytes))].map(v=>v.toString(16).padStart(2,'0')).join('');if(hash!==asset.sha256||new DataView(bytes).getUint32(24,true)!==44100||bytes.byteLength!==176444)throw Error('R3 replacement audio differs from manifest');
+                const before=JSON.stringify(Object.entries(localStorage).filter(([k])=>k.includes(p.game)));root=document.createElement('main');root.style='position:fixed;inset:0;z-index:99999;background:#111820;overflow:auto';document.body.append(root);
+                game=mountGame(root,p,{baseURL:new URL('/iteration-game/',location.href),storage:null,audio:false});await Promise.all([...root.querySelectorAll('img')].filter(i=>i.getAttribute('src')).map(i=>i.decode()));await document.fonts.ready;
+                if(root.querySelector('.vn-engine').dataset.uiTheme!=='paper')throw Error('R3 latest theme not rendered');
+                window.nativeR3SampleContinue=()=>{try{const saved=game.session.save();game.session.next();game.session.act('leave');if(game.session.getView().frame.ending!=='Tomorrow')throw Error('R3 revised branch failed');game.session.restore(saved);if(game.session.getView().frame.lineId!=='arrival-1'||before!==JSON.stringify(Object.entries(localStorage).filter(([k])=>k.includes(p.game))))throw Error('R3 restore/storage isolation failed');window.nativeR3Sample='passed';}catch(e){window.nativeR3Sample='failed: '+e.message;}finally{game.dispose();root.remove();}};
+                window.nativeR3Sample='ready';
+              }catch(e){game?.dispose();root?.remove();window.nativeR3Sample='failed: '+e.message;}})();
+              """);
+            await Wait("window.nativeR3Sample!=='pending'");
+            if(await JS("window.nativeR3Sample==='ready'")!="true")throw new InvalidDataException("Native R3 revised sample: "+await JS("window.nativeR3Sample"));
+            var iterationImage=Path.Combine(Path.GetDirectoryName(window.Options.Report)!, "iteration-"+Path.GetFileNameWithoutExtension(window.Options.Report)+".png");
+            await using(var image=File.Create(iterationImage))await window.Browser.CoreWebView2.CapturePreviewAsync(Microsoft.Web.WebView2.Core.CoreWebView2CapturePreviewImageFormat.Png,image);
+            await JS("window.nativeR3SampleContinue()");
+            if(await JS("window.nativeR3Sample==='passed'")!="true")throw new InvalidDataException("Native R3 revised flow: "+await JS("window.nativeR3Sample"));
+            checks.Add("R3 CLI-built second revision renders latest source/images/paper theme and verifies new 44100 Hz audio bytes, revised leave branch, save reconstruction and isolated player storage on first launch and restart");
+            await JS("""
               document.querySelector('[data-tab=production]').click();
               window.nativeR3Change=(label,value)=>{const input=document.querySelector('[aria-label="'+label+'"]');if(!input)throw Error('Missing R3 field '+label);input.value=value;input.dispatchEvent(new Event('change'));};
               window.nativeR3Click=label=>{const button=[...document.querySelectorAll('#production-list button')].find(b=>b.textContent===label);if(!button||button.disabled)throw Error('Missing R3 control '+label);button.click();};
@@ -93,12 +115,22 @@ internal static class SmokeTests
             HostFiles.ValidateAuthorReview(HostFiles.ReadJson(reviewFile));
             await JS("nativeR3Click('打开审阅文档')");
             await Wait("document.querySelector('#status')?.textContent.includes('审阅文档已打开') && document.querySelector('[data-feedback-id=\"native-r3\"] [data-freshness]')?.dataset.freshness==='fresh'");
+            var beforeReviewConflict = HostFiles.ReadJson(reviewFile); File.AppendAllText(reviewFile, "\n");
+            await JS("nativeR3Click('保存审阅文档')");
+            await Wait("document.querySelector('#status')?.textContent.includes('外部修改')");
+            if (File.ReadAllText(reviewFile) != beforeReviewConflict + "\n") throw new IOException("Native review conflict overwrote external bytes");
+            await JS("nativeR3Click('打开审阅文档')");
+            await Wait("document.querySelector('#status')?.textContent.includes('审阅文档已打开')");
+            await JS("nativeR3Click('保存审阅文档')");
+            await Wait("document.querySelector('#status')?.textContent.includes('审阅文档已保存')");
+            checks.Add("Native review save rejects external file changes without overwriting them, then reopens and saves the observed revision");
             var reviewImage = Path.Combine(Path.GetDirectoryName(window.Options.Report)!, "review-" + Path.GetFileNameWithoutExtension(window.Options.Report) + ".png");
             await using (var image = File.Create(reviewImage)) await window.Browser.CoreWebView2.CapturePreviewAsync(Microsoft.Web.WebView2.Core.CoreWebView2CapturePreviewImageFormat.Png, image);
             await JS("nativeR3Click('定位问题 native-r3')");
             await Wait("document.querySelector('[data-tab=story]').getAttribute('aria-pressed')==='true' && document.activeElement?.getAttribute('aria-label')?.includes('ID')");
             checks.Add("R3 native production/task/theme controls share undo/redo; targeted feedback completes addressed/verified/reopened, atomic separate-file save, reopen and source/file freshness; reviewer statements are synthetic fixtures");
-            await JS("document.querySelector('[data-tab=production]').click();nativeR3Click('素材与试听');nativeR3Change('素材种类','audio');[...document.querySelectorAll('#production-list button')].find(b=>b.textContent.startsWith('试听 ')).click()");
+            await JS("document.querySelector('[data-tab=production]').click();nativeR3Click('素材与试听');nativeR3Change('素材种类','audio')");
+            await window.Browser.CoreWebView2.CallDevToolsProtocolMethodAsync("Runtime.evaluate", JsonSerializer.Serialize(new { expression = "[...document.querySelectorAll('#production-list button')].find(b=>b.textContent.startsWith('试听 ')).click()", userGesture = true }));
             await Wait("document.querySelector('[data-audition]')?.currentTime > .03 && !document.querySelector('[data-audition]').paused");
             await JS("document.querySelector('[data-tab=story]').click()");
             await Wait("!document.querySelector('[data-audition]')");
