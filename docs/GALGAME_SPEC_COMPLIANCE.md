@@ -12,13 +12,17 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 
 ## 当前基线
 
-- Engine baseline: `0.3.0 alpha`
+- Engine baseline: `0.6.0 alpha`
 - SPEC: `GALGAME SPEC v0.1`
 - 自动契约：`GALGAME_SPEC-v0.1`
 - 主入口：`validateProjectCompliance()`
 - CLI：`node tools/validate-project.mjs [--release] project.json [...]`
 - CI：`npm run check`
 - 正式总 Gate：`npm run gate:release -- /path/to/project.json`
+
+## R2 AI 内容生产扩展
+
+`vn-creative-v1` 技术验收 PASS：六类生产任务、共享引用 / schema、字节与媒体探测、内容寻址导入 / 中断恢复、有限 UI 主题、机械审查，以及 SDK / CLI 到真实可玩样例的完整流程。实现提交 `cfa941cd2afa175a813a9d7a42fa5f6a8148ee01` 的完整浏览器与 Windows 原生 / 重启均通过，见 [0.6.0 验收](VALIDATION-v0.6.0.md)。生产数据不成为玩家状态权威；任务 review 或机械 PASS 不提升 DRAFT / READY 与人工 QA。正式作品门禁及 v0.2 的适用性仍分别判断，不因本扩展宣称完成全部 v0.2。
 
 ## 已落地的规范化能力
 

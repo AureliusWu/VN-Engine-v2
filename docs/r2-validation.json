@@ -1,0 +1,810 @@
+{
+  "contract": "VN_ENGINE_R2_VALIDATION-v1",
+  "status": "PASS",
+  "scope": "R2 technical acceptance; human art, listening and literary acceptance excluded",
+  "date": "2026-10-28",
+  "engineVersion": "0.6.0",
+  "protocol": "vn-agent-v1",
+  "extension": "vn-creative-v1",
+  "baseline": "8d89be92c53981a3675842eccaf668e5a18f8651",
+  "implementation": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+  "tree": "2290b74c4828f61323592bba3cf8ba6e82883d4b",
+  "checks": {
+    "core": {
+      "status": "PASS",
+      "nodeTests": 194,
+      "pythonTests": 6,
+      "provenanceFiles": 165,
+      "schemas": "PASS"
+    },
+    "browser": {
+      "status": "PASS",
+      "fullSuite": true,
+      "editorSuiteIncluded": true
+    },
+    "windows": {
+      "compilation": "PASS",
+      "cli": "PASS",
+      "nativeWebView2": "PASS",
+      "fullProcessRestart": "PASS",
+      "programManifestSemver": "0.6.0",
+      "nativeReportsPassed": 5
+    }
+  },
+  "ci": {
+    "implementation": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+    "runs": [
+      {
+        "name": "Windows native host",
+        "id": 40641903899,
+        "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40641903899",
+        "commit": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+        "status": "completed",
+        "conclusion": "success"
+      },
+      {
+        "name": "Engine checks",
+        "id": 40641903851,
+        "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40641903851",
+        "commit": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+        "status": "completed",
+        "conclusion": "success"
+      }
+    ],
+    "artifacts": [
+      {
+        "name": "VNEngine-Studio-win-x64",
+        "id": 12795572740,
+        "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40641903899/artifacts/12795572740",
+        "digest": "sha256:6ccfc94b6e250e4c4aa0646e221df2b09f4becd1e0baf12eb59dc300d5b65522",
+        "sizeBytes": 57887954,
+        "expiresAt": "2027-01-26T06:06:59Z",
+        "implementation": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01"
+      },
+      {
+        "name": "windows-native-evidence",
+        "id": 12795492974,
+        "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40641903899/artifacts/12795492974",
+        "digest": "sha256:ef33c9ff6e28a3de40eb5c9922d04d3408a63e4ec3f96af46c23d154481348ab",
+        "sizeBytes": 2527079,
+        "expiresAt": "2027-01-26T06:06:59Z",
+        "implementation": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01"
+      },
+      {
+        "name": "engine-browser-evidence",
+        "id": 12796032627,
+        "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40641903851/artifacts/12796032627",
+        "digest": "sha256:6243cfda20e9df646cc9bfda3b151557c13b0057d13b3607911459ed1935a955",
+        "sizeBytes": 39510286,
+        "expiresAt": "2027-01-26T06:06:59Z",
+        "implementation": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01"
+      },
+      {
+        "name": "vn-engine-standalone-samples",
+        "id": 12796002428,
+        "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40641903851/artifacts/12796002428",
+        "digest": "sha256:fdf3ae1ffc113190bf0010809172c0889fe291583d24139934b7b6bd16fb94ed",
+        "sizeBytes": 882109,
+        "expiresAt": "2027-01-26T06:06:59Z",
+        "implementation": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01"
+      },
+      {
+        "name": "alpha-qa-reports",
+        "id": 12795548868,
+        "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40641903851/artifacts/12795548868",
+        "digest": "sha256:4c175ef4e8419fbc9d6dd577e6f156004fe67b511940853c7d612e8c6baaad23",
+        "sizeBytes": 59099,
+        "expiresAt": "2027-01-26T06:06:59Z",
+        "implementation": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01"
+      }
+    ]
+  },
+  "creativeBrowser": {
+    "status": "PASS",
+    "engineCommit": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+    "engineVersion": "0.6.0",
+    "flows": [
+      {
+        "status": "PASS",
+        "transport": "sdk",
+        "engineVersion": "0.6.0",
+        "engineCommit": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+        "project": {
+          "game": "vn-creative-bookshop",
+          "storyVersion": "creative-draft-1",
+          "sourceSha256": "912c8b1bff81101fd0b00ca3ea70f197503c4944f9a92bc9446fe00838770c37"
+        },
+        "calls": 15,
+        "disciplines": [
+          "art",
+          "music",
+          "ui",
+          "sfx",
+          "text",
+          "story"
+        ],
+        "restoreChecks": 10,
+        "build": {
+          "gameVersion": "creative-draft-1",
+          "engineVersion": "0.6.0",
+          "commitSha": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+          "buildTime": "2026-10-28T06:08:59.090Z"
+        },
+        "releaseStatus": "BLOCKED",
+        "humanAcceptance": "UNVERIFIED",
+        "assetStatus": "DRAFT",
+        "root": "/home/runner/work/VN-Engine-v2/VN-Engine-v2/test-results/creative-r3Fw0E/sdk"
+      },
+      {
+        "status": "PASS",
+        "transport": "cli",
+        "engineVersion": "0.6.0",
+        "engineCommit": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+        "project": {
+          "game": "vn-creative-bookshop",
+          "storyVersion": "creative-draft-1",
+          "sourceSha256": "912c8b1bff81101fd0b00ca3ea70f197503c4944f9a92bc9446fe00838770c37"
+        },
+        "calls": 15,
+        "disciplines": [
+          "art",
+          "music",
+          "ui",
+          "sfx",
+          "text",
+          "story"
+        ],
+        "restoreChecks": 10,
+        "build": {
+          "gameVersion": "creative-draft-1",
+          "engineVersion": "0.6.0",
+          "commitSha": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+          "buildTime": "2026-10-28T06:09:04.173Z"
+        },
+        "releaseStatus": "BLOCKED",
+        "humanAcceptance": "UNVERIFIED",
+        "assetStatus": "DRAFT",
+        "root": "/home/runner/work/VN-Engine-v2/VN-Engine-v2/test-results/creative-r3Fw0E/cli"
+      }
+    ],
+    "playback": {
+      "initial": {
+        "state": "running",
+        "peak": 0.0013384069316089153,
+        "loops": 2
+      },
+      "pauseResume": {
+        "suspendedClockStopped": true,
+        "resumed": true
+      },
+      "oneShot": {
+        "actualPlayingEvents": 1,
+        "noReplayOnSettingsOrRestore": true
+      }
+    },
+    "offline": [
+      {
+        "transport": "sdk",
+        "path": "/stories/sdk/",
+        "reopened": true,
+        "images": true,
+        "status": "PASS"
+      },
+      {
+        "transport": "cli",
+        "path": "/stories/cli/",
+        "reopened": true,
+        "images": true,
+        "status": "PASS"
+      }
+    ],
+    "negative": [
+      {
+        "protocol": "vn-agent-v1",
+        "engineVersion": "0.6.0",
+        "command": "probe",
+        "requestId": "negative-probe-bad",
+        "ok": false,
+        "status": "FAIL",
+        "project": null,
+        "data": {
+          "files": [
+            {
+              "id": "bad",
+              "file": "/home/runner/work/VN-Engine-v2/VN-Engine-v2/test-results/creative-r3Fw0E/bad.wav",
+              "kind": "audio",
+              "bytes": 19,
+              "sha256": "98dae267caf4d0f91719c3cbee8f472661abf594802a0c9da1d79aedab76d20e",
+              "extension": "wav",
+              "assetPath": "assets/imported/98dae267caf4d0f91719c3cbee8f472661abf594802a0c9da1d79aedab76d20e.wav",
+              "decode": {
+                "id": "bad",
+                "status": "FAIL",
+                "reason": "Unable to decode audio data"
+              }
+            }
+          ],
+          "bytes": 19,
+          "browser": "153.0.8010.12",
+          "engineCommit": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+          "scope": {
+            "actualBytes": true,
+            "decoding": true,
+            "listening": "UNVERIFIED",
+            "humanAcceptance": "UNVERIFIED"
+          }
+        },
+        "diagnostics": [
+          {
+            "code": "MEDIA_DECODE_FAILED",
+            "severity": "error",
+            "message": "Unable to decode audio data",
+            "path": [
+              "params",
+              "files",
+              0
+            ],
+            "assetId": "bad"
+          }
+        ],
+        "artifacts": []
+      },
+      {
+        "protocol": "vn-agent-v1",
+        "engineVersion": "0.6.0",
+        "command": "probe",
+        "requestId": "negative-probe-missing",
+        "ok": false,
+        "status": "FAIL",
+        "project": null,
+        "data": {
+          "files": [
+            {
+              "id": "missing",
+              "kind": "portrait",
+              "file": "/home/runner/work/VN-Engine-v2/VN-Engine-v2/test-results/creative-r3Fw0E/absent.png",
+              "decode": {
+                "status": "FAIL",
+                "reason": "ENOENT: no such file or directory, realpath '/home/runner/work/VN-Engine-v2/VN-Engine-v2/test-results/creative-r3Fw0E/absent.png'"
+              }
+            }
+          ],
+          "bytes": 0,
+          "browser": null,
+          "engineCommit": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+          "scope": {
+            "actualBytes": true,
+            "decoding": true,
+            "listening": "UNVERIFIED",
+            "humanAcceptance": "UNVERIFIED"
+          }
+        },
+        "diagnostics": [
+          {
+            "code": "MEDIA_UNREADABLE",
+            "severity": "error",
+            "message": "ENOENT: no such file or directory, realpath '/home/runner/work/VN-Engine-v2/VN-Engine-v2/test-results/creative-r3Fw0E/absent.png'",
+            "path": [
+              "params",
+              "files",
+              0,
+              "file"
+            ]
+          },
+          {
+            "code": "MEDIA_DECODE_FAILED",
+            "severity": "error",
+            "message": "ENOENT: no such file or directory, realpath '/home/runner/work/VN-Engine-v2/VN-Engine-v2/test-results/creative-r3Fw0E/absent.png'",
+            "path": [
+              "params",
+              "files",
+              0
+            ],
+            "assetId": "missing"
+          }
+        ],
+        "artifacts": []
+      },
+      {
+        "protocol": "vn-agent-v1",
+        "engineVersion": "0.6.0",
+        "command": "probe",
+        "requestId": "negative-probe-budget",
+        "ok": false,
+        "status": "UNVERIFIED",
+        "project": null,
+        "data": {
+          "files": [
+            {
+              "id": "image",
+              "file": "/home/runner/work/VN-Engine-v2/VN-Engine-v2/examples/creative/assets/bookshop-r2.png",
+              "kind": "background",
+              "bytes": 2598260,
+              "sha256": "629a0da16c83a1588ee1a2fb90ef0b772234b6de231913a18af564961624e368",
+              "extension": "png",
+              "assetPath": "assets/imported/629a0da16c83a1588ee1a2fb90ef0b772234b6de231913a18af564961624e368.png",
+              "decode": {
+                "status": "UNVERIFIED",
+                "reason": "Decode budget exhausted before browser launch"
+              }
+            }
+          ],
+          "bytes": 2598260,
+          "browser": null,
+          "engineCommit": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+          "scope": {
+            "actualBytes": true,
+            "decoding": true,
+            "listening": "UNVERIFIED",
+            "humanAcceptance": "UNVERIFIED"
+          }
+        },
+        "diagnostics": [
+          {
+            "code": "MEDIA_UNVERIFIED",
+            "severity": "error",
+            "message": "Decode budget exhausted before browser launch",
+            "path": [
+              "params",
+              "files",
+              0
+            ],
+            "assetId": "image"
+          }
+        ],
+        "artifacts": []
+      }
+    ],
+    "humanAcceptance": "UNVERIFIED",
+    "artStatus": "DRAFT",
+    "studio": {
+      "theme": true,
+      "exportRetainedMetadata": true,
+      "playerBytesUnchanged": true
+    }
+  },
+  "windowsCreative": {
+    "status": "PASS",
+    "transport": "cli",
+    "engineVersion": "0.6.0",
+    "engineCommit": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+    "project": {
+      "game": "vn-creative-bookshop",
+      "storyVersion": "creative-draft-1",
+      "sourceSha256": "912c8b1bff81101fd0b00ca3ea70f197503c4944f9a92bc9446fe00838770c37"
+    },
+    "calls": 13,
+    "disciplines": [
+      "art",
+      "music",
+      "ui",
+      "sfx",
+      "text",
+      "story"
+    ],
+    "media": {
+      "files": [
+        {
+          "id": "room",
+          "file": "D:\\a\\VN-Engine-v2\\VN-Engine-v2\\examples\\creative\\assets\\bookshop-r2.png",
+          "kind": "background",
+          "bytes": 2598260,
+          "sha256": "629a0da16c83a1588ee1a2fb90ef0b772234b6de231913a18af564961624e368",
+          "extension": "png",
+          "assetPath": "assets/imported/629a0da16c83a1588ee1a2fb90ef0b772234b6de231913a18af564961624e368.png",
+          "decode": {
+            "id": "room",
+            "status": "PASS",
+            "format": "image",
+            "width": 1672,
+            "height": 941,
+            "hasTransparency": false,
+            "transparentFraction": 0,
+            "alphaSampleStride": 1
+          }
+        },
+        {
+          "id": "an",
+          "file": "D:\\a\\VN-Engine-v2\\VN-Engine-v2\\examples\\creative\\assets\\an-r2.png",
+          "kind": "portrait",
+          "bytes": 1715470,
+          "sha256": "9f705a6757b7a5d09085253e0066aebd088d81745257ee8a2c24dffae58cc079",
+          "extension": "png",
+          "assetPath": "assets/imported/9f705a6757b7a5d09085253e0066aebd088d81745257ee8a2c24dffae58cc079.png",
+          "decode": {
+            "id": "an",
+            "status": "PASS",
+            "format": "image",
+            "width": 1024,
+            "height": 1536,
+            "hasTransparency": true,
+            "transparentFraction": 0.7191861470540365,
+            "alphaSampleStride": 1
+          }
+        },
+        {
+          "id": "memory",
+          "file": "D:\\a\\VN-Engine-v2\\VN-Engine-v2\\examples\\creative\\assets\\memory.wav",
+          "kind": "audio",
+          "bytes": 960044,
+          "sha256": "bb856e62208846d5ece2c98230291e2c52e651714f5463f21ae2c27d61632622",
+          "extension": "wav",
+          "assetPath": "assets/imported/bb856e62208846d5ece2c98230291e2c52e651714f5463f21ae2c27d61632622.wav",
+          "container": {
+            "format": "WAVE",
+            "encoding": 1,
+            "channels": 1,
+            "sampleRate": 48000,
+            "bitsPerSample": 16
+          },
+          "decode": {
+            "id": "memory",
+            "status": "PASS",
+            "format": "audio",
+            "duration": 10,
+            "channels": 1,
+            "sampleRate": 48000,
+            "sampleRateBasis": "Web Audio analysis resampled to 48000 Hz; original WAVE rate is in container",
+            "frames": 480000,
+            "peak": 0.34409618377685547,
+            "rms": 0.08013102801332864,
+            "silentFraction": 0.0010229166666666668,
+            "clippedFraction": 0,
+            "boundaryDelta": 0
+          }
+        },
+        {
+          "id": "rain",
+          "file": "D:\\a\\VN-Engine-v2\\VN-Engine-v2\\examples\\creative\\assets\\rain.wav",
+          "kind": "audio",
+          "bytes": 960044,
+          "sha256": "5df43b57167629752c2dee994b5dfa525383fc1248e30e4e7a3183e6503b7916",
+          "extension": "wav",
+          "assetPath": "assets/imported/5df43b57167629752c2dee994b5dfa525383fc1248e30e4e7a3183e6503b7916.wav",
+          "container": {
+            "format": "WAVE",
+            "encoding": 1,
+            "channels": 1,
+            "sampleRate": 48000,
+            "bitsPerSample": 16
+          },
+          "decode": {
+            "id": "rain",
+            "status": "PASS",
+            "format": "audio",
+            "duration": 10,
+            "channels": 1,
+            "sampleRate": 48000,
+            "sampleRateBasis": "Web Audio analysis resampled to 48000 Hz; original WAVE rate is in container",
+            "frames": 480000,
+            "peak": 0.086761474609375,
+            "rms": 0.019898702378140176,
+            "silentFraction": 0.004472916666666667,
+            "clippedFraction": 0,
+            "boundaryDelta": 0
+          }
+        },
+        {
+          "id": "bell",
+          "file": "D:\\a\\VN-Engine-v2\\VN-Engine-v2\\examples\\creative\\assets\\bell.wav",
+          "kind": "audio",
+          "bytes": 115244,
+          "sha256": "36170b2e90efbd18ac13d1b55f3ba7253427a88389ec7b3f356655d1c77411ed",
+          "extension": "wav",
+          "assetPath": "assets/imported/36170b2e90efbd18ac13d1b55f3ba7253427a88389ec7b3f356655d1c77411ed.wav",
+          "container": {
+            "format": "WAVE",
+            "encoding": 1,
+            "channels": 1,
+            "sampleRate": 48000,
+            "bitsPerSample": 16
+          },
+          "decode": {
+            "id": "bell",
+            "status": "PASS",
+            "format": "audio",
+            "duration": 1.2,
+            "channels": 1,
+            "sampleRate": 48000,
+            "sampleRateBasis": "Web Audio analysis resampled to 48000 Hz; original WAVE rate is in container",
+            "frames": 57600,
+            "peak": 0.379425048828125,
+            "rms": 0.06224496042610896,
+            "silentFraction": 0.0128125,
+            "clippedFraction": 0,
+            "boundaryDelta": 0
+          }
+        },
+        {
+          "id": "font",
+          "file": "D:\\a\\VN-Engine-v2\\VN-Engine-v2\\examples\\agent\\assets\\agent.woff2",
+          "kind": "font",
+          "bytes": 57716,
+          "sha256": "496dfe2f5693a3820450f9e684f737cdd062e36d360e6a30557624349549986a",
+          "extension": "woff2",
+          "assetPath": "assets/imported/496dfe2f5693a3820450f9e684f737cdd062e36d360e6a30557624349549986a.woff2",
+          "decode": {
+            "id": "font",
+            "status": "PASS",
+            "format": "font"
+          }
+        },
+        {
+          "id": "license",
+          "file": "D:\\a\\VN-Engine-v2\\VN-Engine-v2\\examples\\agent\\assets\\OFL.txt",
+          "kind": "license",
+          "bytes": 4463,
+          "sha256": "fcac737e761ec63dbfbdce11030a1780161920d80315edba9c8beff1c2bac5a2",
+          "extension": "txt",
+          "assetPath": "assets/imported/fcac737e761ec63dbfbdce11030a1780161920d80315edba9c8beff1c2bac5a2.txt",
+          "decode": {
+            "status": "PASS",
+            "format": "text",
+            "characters": 4463
+          }
+        }
+      ],
+      "bytes": 6411241,
+      "browser": "153.0.8010.12",
+      "engineCommit": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+      "scope": {
+        "actualBytes": true,
+        "decoding": true,
+        "listening": "UNVERIFIED",
+        "humanAcceptance": "UNVERIFIED"
+      }
+    },
+    "restoreChecks": 10,
+    "build": {
+      "gameVersion": "creative-draft-1",
+      "engineVersion": "0.6.0",
+      "commitSha": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+      "buildTime": "2026-10-28T06:08:39.329Z"
+    },
+    "releaseStatus": "BLOCKED",
+    "humanAcceptance": "UNVERIFIED",
+    "assetStatus": "DRAFT"
+  },
+  "nativeReports": {
+    "game-first": {
+      "schema": 1,
+      "platform": "Microsoft Windows NT 10.0.26100.0",
+      "webView": "155.0.4283.62",
+      "mode": "game",
+      "restart": false,
+      "result": "passed",
+      "checks": [
+        "Standalone packaged game runs in a native window with local graphics",
+        "Game windows disable the privileged editor bridge",
+        "Real choices and engine saves execute in the Windows player",
+        "Native WebView2 validates sound/readability settings, multi-slot backup preview/restore, video, scoped Key Visual, isolated replay, state rollback and mini-game lifecycle",
+        "Minimising and restoring the native window pauses and resumes its actual engine session",
+        "Native fullscreen restores the original window",
+        "Editor/player startup uses local resources without external network requests"
+      ],
+      "notes": [
+        "CI presets file picker paths; actual native file IO and WebView2 RPC are exercised. Manual interaction with OS file/folder dialogs is not claimed."
+      ]
+    },
+    "studio-first": {
+      "schema": 1,
+      "platform": "Microsoft Windows NT 10.0.26100.0",
+      "webView": "155.0.4283.62",
+      "mode": "studio",
+      "restart": false,
+      "result": "passed",
+      "checks": [
+        "Native WinForms/WebView2 window starts the bundled editor and own runtime preview",
+        "Native executable and bundled engine report the same version: 0.6.0",
+        "Trusted editor RPC opens JSON through native file IO and loads manifest-only local assets",
+        "R2 six-discipline CLI sample renders actual generated illustrations and dusk theme, executes its branch and save reconstruction, preserves DRAFT and player storage, on first launch and restart",
+        "Native Studio authors a formal layer and timeline through visual controls and renders its final pose in WebView2",
+        "Native Studio configures a CG collection and captures a real driver replay save from WebView2 preview",
+        "Native Studio records actual preview actions and runs the captured case plus all declared sample ending routes in an isolated Worker",
+        "Native save writes the edited workspace atomically and copies referenced local assets",
+        "Native export produces engine project JSON without editor metadata",
+        "Saved workspace reopens from its new directory with its copied assets",
+        "Native Studio authors numeric and boolean conditions through actual controls and the shared runtime selects the expected branch",
+        "Native evidence controls atomically rename real constraints and route assertions, protect deletion and complete the investigation in WebView2",
+        "Native workbench renames a variable, creates a boolean, authors and reorders typed effects and executes the asserted real route",
+        "Native chapter workbench adds and renames a chapter, preserves route references, undoes reordering and completes actual cross-chapter play",
+        "The native bridge rejects undeclared commands",
+        "Minimising and restoring the native window pauses and resumes its actual engine session",
+        "Native fullscreen restores the original window",
+        "Editor/player startup uses local resources without external network requests"
+      ],
+      "notes": [
+        "CI presets file picker paths; actual native file IO and WebView2 RPC are exercised. Manual interaction with OS file/folder dialogs is not claimed."
+      ]
+    },
+    "studio-restart": {
+      "schema": 1,
+      "platform": "Microsoft Windows NT 10.0.26100.0",
+      "webView": "155.0.4283.62",
+      "mode": "studio",
+      "restart": true,
+      "result": "passed",
+      "checks": [
+        "Native WinForms/WebView2 window starts the bundled editor and own runtime preview",
+        "Native executable and bundled engine report the same version: 0.6.0",
+        "Editor profile survives a complete process restart",
+        "Trusted editor RPC opens JSON through native file IO and loads manifest-only local assets",
+        "R2 six-discipline CLI sample renders actual generated illustrations and dusk theme, executes its branch and save reconstruction, preserves DRAFT and player storage, on first launch and restart",
+        "Native Studio authors a formal layer and timeline through visual controls and renders its final pose in WebView2",
+        "Native Studio configures a CG collection and captures a real driver replay save from WebView2 preview",
+        "Native Studio records actual preview actions and runs the captured case plus all declared sample ending routes in an isolated Worker",
+        "Native save writes the edited workspace atomically and copies referenced local assets",
+        "Native export produces engine project JSON without editor metadata",
+        "Saved workspace reopens from its new directory with its copied assets",
+        "Native Studio authors numeric and boolean conditions through actual controls and the shared runtime selects the expected branch",
+        "Native evidence controls atomically rename real constraints and route assertions, protect deletion and complete the investigation in WebView2",
+        "Native workbench renames a variable, creates a boolean, authors and reorders typed effects and executes the asserted real route",
+        "Native chapter workbench adds and renames a chapter, preserves route references, undoes reordering and completes actual cross-chapter play",
+        "The native bridge rejects undeclared commands",
+        "Minimising and restoring the native window pauses and resumes its actual engine session",
+        "Native fullscreen restores the original window",
+        "Editor/player startup uses local resources without external network requests"
+      ],
+      "notes": [
+        "CI presets file picker paths; actual native file IO and WebView2 RPC are exercised. Manual interaction with OS file/folder dialogs is not claimed."
+      ]
+    },
+    "host-policy": {
+      "schema": 1,
+      "result": "passed",
+      "checks": [
+        "Relative paths reject traversal, encodings, drive paths and Windows device aliases",
+        "Only the exact trusted top-level editor document may use native commands",
+        "Atomic UTF-8 JSON saves preserve existing bytes when parsing fails",
+        "Asset IO is bound to an authorised root, token and declared manifest files",
+        "Save-as copies referenced assets and refuses conflicting destination resources",
+        "Missing resources block runtime export before writing JSON",
+        "The native player verifies every build-manifest size/hash before launch",
+        "Player save profiles are stable per game and isolated from each other"
+      ]
+    },
+    "game-restart": {
+      "schema": 1,
+      "platform": "Microsoft Windows NT 10.0.26100.0",
+      "webView": "155.0.4283.62",
+      "mode": "game",
+      "restart": true,
+      "result": "passed",
+      "checks": [
+        "Standalone packaged game runs in a native window with local graphics",
+        "Game windows disable the privileged editor bridge",
+        "A full native process restart restores the previously chosen game route",
+        "Completed read markers survive a full native process restart",
+        "Minimising and restoring the native window pauses and resumes its actual engine session",
+        "Native fullscreen restores the original window",
+        "Editor/player startup uses local resources without external network requests"
+      ],
+      "notes": [
+        "CI presets file picker paths; actual native file IO and WebView2 RPC are exercised. Manual interaction with OS file/folder dialogs is not claimed."
+      ]
+    },
+    "version-identity": {
+      "commit": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+      "programVersion": "0.6.0+cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+      "gameIdentity": {
+        "gameVersion": "self-demo-v1",
+        "engineVersion": "0.6.0",
+        "commitSha": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+        "buildTime": "2026-10-28T06:08:40.608Z"
+      },
+      "result": "passed",
+      "engineVersion": "0.6.0"
+    }
+  },
+  "originalSamples": [
+    {
+      "sample": "campus",
+      "status": "BLOCKED",
+      "sourceSha256": "c11e064726fe2425bca631f23db115647b08d5978467d7a72aa6f455551c0422",
+      "routes": "PASS",
+      "cases": 3,
+      "restoreChecks": 21,
+      "coveredEndings": [
+        "complete",
+        "letter",
+        "quiet",
+        "together"
+      ],
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "buildIdentity": {
+        "gameVersion": "self-demo-v1",
+        "engineVersion": "0.6.0",
+        "commitSha": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+        "buildTime": "2026-10-28T06:08:14.864Z"
+      },
+      "humanQa": "BLOCKED"
+    },
+    {
+      "sample": "circuit",
+      "status": "BLOCKED",
+      "sourceSha256": "846a8063cb7b26b033bbda9cd962aaa9dffef9cd9238b3ddaf85828b30e71b0f",
+      "routes": "PASS",
+      "cases": 3,
+      "restoreChecks": 35,
+      "coveredEndings": [
+        "chapter-one:complete",
+        "chapter-one:failure",
+        "chapter-two:complete",
+        "chapter-two:failure"
+      ],
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "buildIdentity": {
+        "gameVersion": "self-demo-v1",
+        "engineVersion": "0.6.0",
+        "commitSha": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+        "buildTime": "2026-10-28T06:08:16.066Z"
+      },
+      "humanQa": "BLOCKED"
+    },
+    {
+      "sample": "netlove",
+      "status": "BLOCKED",
+      "sourceSha256": "23942f2ebac2bdd1b57088ed5b7c2f9b9343386990099beaf19d882c9294e4f8",
+      "routes": "PASS",
+      "cases": 2,
+      "restoreChecks": 10,
+      "coveredEndings": [
+        "complete"
+      ],
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "buildIdentity": {
+        "gameVersion": "self-demo-v1",
+        "engineVersion": "0.6.0",
+        "commitSha": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+        "buildTime": "2026-10-28T06:08:15.529Z"
+      },
+      "humanQa": "BLOCKED"
+    },
+    {
+      "sample": "rain",
+      "status": "BLOCKED",
+      "sourceSha256": "13d585ed1dda3d7b6da72eb9f90cd78bc6d071a9d4f5c6cb13eea90f4e811993",
+      "routes": "PASS",
+      "cases": 2,
+      "restoreChecks": 7,
+      "coveredEndings": [
+        "other",
+        "trust"
+      ],
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "buildIdentity": {
+        "gameVersion": "self-demo-v1",
+        "engineVersion": "0.6.0",
+        "commitSha": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01",
+        "buildTime": "2026-10-28T06:08:16.622Z"
+      },
+      "humanQa": "BLOCKED"
+    }
+  ],
+  "humanAcceptance": {
+    "status": "UNVERIFIED",
+    "assetStatus": "DRAFT",
+    "listening": "UNVERIFIED",
+    "literaryQuality": "UNVERIFIED",
+    "formalRelease": "BLOCKED"
+  },
+  "boundary": {
+    "fourOriginalGamesMigrated": false,
+    "resetMigrated": false,
+    "r3Started": false
+  },
+  "nativeScreenshot": {
+    "path": "docs/previews/r2-windows.png",
+    "sha256": "477c260d9cc2467b9fcf13360473d4a0dc23b649a0ddf86a76efbb5bb10ebe49",
+    "artifactId": 12795492974,
+    "implementation": "cfa941cd2afa175a813a9d7a42fa5f6a8148ee01"
+  }
+}

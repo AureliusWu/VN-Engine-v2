@@ -1,6 +1,6 @@
 # 架构与接口
 
-v0.4.0 主链由本仓库自研模块承担。解释器/状态机 → 玩法驱动 → 播放调度 → DOM/媒体宿主 → 独立离线构建，均能在没有外部游戏引擎的情况下工作。
+v0.6.0 主链由本仓库自研模块承担。解释器/状态机 → 玩法驱动 → 播放调度 → DOM/媒体宿主 → 独立离线构建，均能在没有外部游戏引擎的情况下工作。
 
 | 层 | 入口 | 责任 |
 | --- | --- | --- |
@@ -48,3 +48,7 @@ MediaDirector 消费 visit 和阅读条件，使用注入的 AudioContext/Audio 
 ## R1 AI 开发入口（0.5.0）
 
 `src/agent` 定义 vn-agent-v1 schema 与纯数据 SDK，复用 EditorModel、RuntimeSession、runRouteSuite 和 compliance。`tools/agent-node.mjs` 注入本地资源、事务日志与真实 preview / package 端口，CLI 使用相同 Worker 入口；纯模块导入不访问设备。预览使用同一 createProject / DOMRenderer，沿作者路线从真实入口执行，逐步存档重建由现有回归器核对。独立作品排除 agent / editor 模块，Studio 仍复用作者与运行核心。详见 [AI 开发约定](AI_DEVELOPMENT.md)。
+
+## R2 内容生产扩展（0.6.0）
+
+`src/creative` 定义 vn-creative-v1 生产模型 / schema 与机械审查，`src/ui` 只接受有限主题令牌，`src/schema` 提供共享数据校验。production / UI 随同一 EngineProject 保留；制作数据不改变玩家状态和存档权威。`tools/agent-probe.mjs` 在显式调用时使用隔离 Chromium 解码；`tools/agent-imports.mjs` 发布不可变资源，文件 SDK 保留回执并最后原子替换工程。外部生成器不嵌入引擎，模块导入不执行设备或网络 IO。独立构建、Studio 和 Agent 均复用同一 DOM / 媒体链，见 [创作约定](CREATIVE_DEVELOPMENT.md)。
