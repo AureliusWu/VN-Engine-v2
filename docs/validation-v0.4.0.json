@@ -1,0 +1,65 @@
+{
+  "schema": 1,
+  "version": "0.4.0",
+  "status": "LOCAL_PASS",
+  "baseline": "2d78b0c58b5aa44fab75c7b1c73c4c7a623f2df9",
+  "coreCommit": "5a983036ba6bca2571b08e3566e1fbc5b5a12939",
+  "local": {
+    "core": {
+      "status": "PASS",
+      "node": 155,
+      "python": 6,
+      "provenance": 130
+    },
+    "browser": {
+      "status": "PASS",
+      "browser": "153.0.8010.12",
+      "workbenchChecks": [
+        "Variable catalog rename, typed ordered effects and bounded input produce a real passing runtime/Worker route without JSON authoring",
+        "Invalid edits retain exact data; workspace export and actual draft restoration preserve variables, effects and metadata",
+        "Chapter creation, rename, entry validation, reorder/undo and deletion protection preserve actual cross-chapter play and regression cases",
+        "390px workbench has no page overflow and replay-bearing chapter identity/order controls are explicitly protected",
+        "Versioned standalone Studio contains the new modules and executes the workbench from a nested deployment"
+      ]
+    },
+    "editor": {
+      "status": "PASS"
+    }
+  },
+  "native": {
+    "status": "UNVERIFIED",
+    "reason": "Await implementation commit Windows workflow"
+  },
+  "compatibility": {
+    "projectSchema": 1,
+    "editorSchema": 1,
+    "saveSchema": 1,
+    "pureVariableRenameOldScriptSave": "PASS",
+    "publishedGamesMigrated": false
+  },
+  "sourceSha256": {
+    "src/version.ts": "0b2a7060c3b38e80d4b96e55af73979d2bf67d2ef33f23f4f16d1c3253104d94",
+    "src/editor/model.ts": "759c1bef8100a3ddec966d18c881ffc58834056adeab3dc75db28d58169f19d0",
+    "src/editor/catalogs.ts": "efc6752956db1d2c56fdf5e73a56311698a977bd34aca6716b0f8ef65c8b116e",
+    "src/editor/authoring.ts": "1e0e6c8fe4057afd3243e93d9f32d751ce6b12bdea148e6e1c30f379fbf74054",
+    "src/editor/index.ts": "0b6e86fb067b85777e3af490a0d26db64fb3d9b294bf27092033352e6bc42615",
+    "editor/app.mjs": "1c32852e03fcbadd2328455898a1f0d1d1acddb80d9ab23029b3145e05efe612",
+    "editor/index.html": "b177333a462e18e80b2e12dfae64d2facb80e77bb538a742a5d703168982dd0c",
+    "editor/logic.mjs": "a95f6d398a470a0fd8bd8c1245ffc9bc1a3dd58a1195b2e145ef5a6b3115a63b",
+    "editor/structure.mjs": "feb59b7e9694be8c40e564e99eec3df39626bc489abbdc77a2a38eb1623e1a7f",
+    "editor/style.css": "5f203529cf6bd09b2173bd225ca2352780184e08d2e839309dd010cbd7df6c97",
+    "editor/studio-font.woff2": "0fe899b0dcf6064d048723829a02fcf3db486d4661aefcb5f766e64cafecf01d",
+    "hosts/windows/SmokeTests.cs": "1c0a0c6ce04ef19f89a36e4b22bac6dd0edd03fbcc7b43c8774da407866c0773",
+    "hosts/windows/VNEngine.Windows.csproj": "717d8cc25c1666313c25fbbdc76fd0c3d30278df1b965f8889a2eca2ed967ec1",
+    "package.json": "95ee6b1400b113242ac69653d651ea6e9674c79afcbc8c405a9f74bb2e6f4d9a",
+    "package-lock.json": "6a3c3581202c046daa9b3f09ecc0c59f3e7773ede81cc45396782be1351c49e7",
+    "tests/catalogs.test.mjs": "f9859f72ba459aca555ce5e1efc700f4c0cb26d48492e80c65db0cb01c5a21b4",
+    "tests/version.test.mjs": "038b57e5309dd417f46ea653cbf4ca7d36af1f474fbd05f953420d0f4ed9589c",
+    "tests/workbench-browser.mjs": "1f8de70d9663d6a6cd13144db2febaf8f932bee9c8041705ed3bbf67ae3024e2"
+  },
+  "limitations": [
+    "Alpha; formal artwork, listening and physical devices require separate evidence",
+    "Chapter identity/order changes with authored replay snapshots are protected until snapshots are removed and recaptured",
+    "Changes to published story identity or semantics require a separate storyVersion/save migration plan"
+  ]
+}

@@ -2,7 +2,8 @@ import { EditorModel, newProject } from '../lib/editor/index.js';
 import { renderPresentationEditor } from './presentation.mjs';
 import { renderCollectionsEditor } from './collections.mjs';
 import { createRoutesPanel } from './routes.mjs';
-import { renderBranchEditor, renderEvidenceCatalog, evidenceChecklist } from './logic.mjs';
+import { renderBranchEditor, renderEvidenceCatalog, evidenceChecklist, renderEffectsEditor } from './logic.mjs';
+import { renderStructureEditor } from './structure.mjs';
 import { ENGINE_VERSION } from '../lib/index.js';
 import { nativeHost, nativeRequest } from './native.mjs';
 
@@ -93,6 +94,7 @@ function update(inspector = false) {
   }
   if (tab === 'assets' && inspector) renderAssets();
   if (tab === 'collections' && inspector) renderCollections();
+  if (tab === 'structure' && inspector) renderStructure();
   if (tab === 'routes') routes.render();
   if (tab === 'source' && savedSource === $('source').value) { $('source').value = model.serialize(true); savedSource = $('source').value; }
   if (model.dirty) scheduleDraft();
@@ -276,7 +278,10 @@ function renderInspector() {
       nodeField(card, `选择 ${i + 1} ID`, [...choicePath, 'id']); nodeField(card, `选择 ${i + 1} 文本`, [...choicePath, 'text']);
       const current = exit.choices[i].next, choices = targets.some(t => t[0] === current) ? targets : [[current, current + '（缺失）'], ...targets];
       nodeField(card, `选择 ${i + 1} 目标`, [...choicePath, 'next'], { choices });
-      jsonField(card, `选择 ${i + 1} 数值变化`, [...choicePath, project.type === 'script' ? 'effects' : 'effect'], project.type === 'script' ? [] : {});
+      if (project.type === 'script') {
+        renderEffectsEditor(card, node.id, exit.choices[i], `选择 ${i + 1}`, { element, field, action, model, mutate, project });
+        jsonField(inspectorSection(card, `${node.key}:${i}:effects-json`, '高级效果 JSON'), `选择 ${i + 1} 数值变化`, [...choicePath, 'effects'], []);
+      } else jsonField(card, `选择 ${i + 1} 数值变化`, [...choicePath, 'effect'], {});
       card.append(action('删除选择', () => { const choices = structuredClone(valueAt([...exitPath, 'choices'])); choices.splice(i, 1); set([...exitPath, 'choices'], choices, true); }, 'small-button danger'));
     }
     root.append(action('添加选择', () => {
@@ -285,7 +290,10 @@ function renderInspector() {
     }));
   }
   renderCue(root, project.type === 'script' ? [...path, 'cue'] : ['stage', 'scenes', node.id]);
-  if (project.type === 'script') jsonField(root, '变量声明', ['program', 'variables'], {});
+  if (project.type === 'script') {
+    root.append(action('管理变量目录', () => switchTab('structure')));
+    jsonField(inspectorSection(root, 'variables-json', '高级变量 JSON'), '变量声明', ['program', 'variables'], {});
+  }
   if (project.type === 'narrative') jsonField(root, '初始数值', ['stats'], {});
 }
 function renderAssets() {
@@ -302,10 +310,17 @@ function renderAssets() {
 }
 function switchTab(next) {
   if (tab === 'source' && next !== 'source' && $('source').value !== savedSource && !confirm('JSON 面板有尚未应用的文本，仍要切换吗？')) return;
-  tab = next; for (const name of ['story', 'assets', 'collections', 'routes', 'source']) { $(name + '-panel').hidden = name !== tab; document.querySelector(`[data-tab=${name}]`).setAttribute('aria-pressed', String(name === tab)); }
+  tab = next; for (const name of ['story', 'structure', 'assets', 'collections', 'routes', 'source']) { $(name + '-panel').hidden = name !== tab; document.querySelector(`[data-tab=${name}]`).setAttribute('aria-pressed', String(name === tab)); }
   if (tab === 'assets') renderAssets(); if (tab === 'source') { $('source').value = model.serialize(true); savedSource = $('source').value; }
   if (tab === 'collections') renderCollections();
+  if (tab === 'structure') renderStructure();
   if (tab === 'routes') routes.render();
+}
+function renderStructure() {
+  renderStructureEditor($('structure-list'), { element, field, action, model, project: model.getView().project, mutate, set,
+    navigate: key => { selected = key; switchTab('story'); renderGraph(model.graph()); renderInspector(); },
+    renameChapter: (oldId, id) => { const node = graphNode(); const result = model.renameChapter(oldId, id); if (result && node?.chapter === oldId) selected = JSON.stringify([id, node.id]); }
+  });
 }
 function renderCollections() {
   renderCollectionsEditor($('collection-list'), { project: model.getView().project, element, field, action, set, captureReplay: () => {

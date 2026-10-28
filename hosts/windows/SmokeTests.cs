@@ -20,6 +20,9 @@ internal static class SmokeTests
         {
             await Wait("document.body.dataset.editorReady === 'true' && !!document.querySelector('#preview').contentDocument?.querySelector('.vn-engine')");
             checks.Add("Native WinForms/WebView2 window starts the bundled editor and own runtime preview");
+            var assemblyVersion = typeof(SmokeTests).Assembly.GetName().Version?.ToString(3) ?? throw new InvalidDataException("Missing assembly version");
+            if (await JS("document.querySelector('#version').textContent === " + JsonSerializer.Serialize(assemblyVersion)) != "true") throw new InvalidDataException("Native executable and bundled engine versions differ");
+            checks.Add("Native executable and bundled engine report the same version: " + assemblyVersion);
             if (window.Options.VerifyPersistence)
             {
                 if (await JS("localStorage.getItem('vn-native-smoke:studio') === 'retained'") != "true") throw new InvalidDataException("编辑器本地配置未持久化");
@@ -125,6 +128,48 @@ internal static class SmokeTests
             await JS("document.querySelector('#preview').contentDocument.querySelector('[data-action=read]').click();document.querySelector('#preview').contentDocument.querySelector('[data-action=back]').click();document.querySelector('#preview').contentDocument.querySelector('[data-action=reason]').click()");
             await Wait("document.querySelector('#preview').contentDocument?.querySelector('.vn-text')?.textContent === '记录已核对。'");
             checks.Add("Native evidence controls atomically rename real constraints and route assertions, protect deletion and complete the investigation in WebView2");
+            await JS("""
+              window.nativeWorkbench='pending';
+              (async()=>{try{
+                const {newProject}=await import('/lib/editor/index.js');const {runRouteSuite}=await import('/lib/index.js');
+                const load=p=>{document.querySelector('[data-tab=source]').click();document.querySelector('#source').value=JSON.stringify(p);document.querySelector('[data-command=apply-source]').click();document.querySelector('[data-tab=story]').click();};
+                const change=(label,value)=>{const input=document.querySelector('[aria-label="'+label+'"]');if(!input)throw Error('Missing field '+label);input.value=value;input.dispatchEvent(new Event('change'));};
+                const click=label=>{const button=[...document.querySelectorAll('#structure-list button,#inspector button')].find(b=>b.textContent===label);if(!button||button.disabled)throw Error('Unavailable '+label);button.click();};
+                const p=newProject('script');p.settings={textDelayMs:0};p.routeTests={schema:1,cases:[{id:'native-workbench',steps:[{type:'action',id:'yes'}],expect:{ending:'完成',variables:{trust:3,flag:true}}}]};
+                load(p);document.querySelector('[data-tab=structure]').click();change('变量 trust ID','affinity');click('添加布尔变量');change('变量 variable-1 ID','flag');
+                if(![...document.querySelectorAll('#structure-list button')].find(b=>b.textContent==='删除变量 affinity').disabled)throw Error('Referenced variable deletion unprotected');
+                document.querySelector('[data-tab=story]').click();change('选择 1 效果 1 运算','set');change('选择 1 效果 1 值','3');click('选择 1 添加效果');change('选择 1 效果 2 变量','flag');change('选择 1 效果 2 值','true');
+                click('选择 1 添加效果');change('选择 1 效果 3 值','2');click('选择 1 效果 3 上移');click('选择 1 效果 2 上移');
+                document.querySelector('[data-tab=source]').click();const edited=JSON.parse(document.querySelector('#source').value);if(runRouteSuite(edited).status!=='PASS')throw Error('Typed effects route failed');
+                document.querySelector('[data-tab=story]').click();document.querySelector('[data-command=preview]').click();window.nativeWorkbench='variables-ready';
+              }catch(e){window.nativeWorkbench='failed: '+e.message;}})();
+              """);
+            await Wait("window.nativeWorkbench !== 'pending'");
+            if(await JS("window.nativeWorkbench === 'variables-ready'")!="true")throw new InvalidDataException("Native variable workbench: "+await JS("window.nativeWorkbench"));
+            await Wait("!!document.querySelector('#preview').contentDocument?.querySelector('[data-action=yes]')");
+            await JS("document.querySelector('#preview').contentDocument.querySelector('[data-action=yes]').click()");
+            await Wait("document.querySelector('#preview').contentDocument?.querySelector('.vn-text')?.textContent === '这里等待你的故事。'");
+            checks.Add("Native workbench renames a variable, creates a boolean, authors and reorders typed effects and executes the asserted real route");
+            await JS("""
+              window.nativeChapterWorkbench='pending';
+              (async()=>{try{
+                const {newProject}=await import('/lib/editor/index.js');const {runRouteSuite}=await import('/lib/index.js');const p=newProject('investigation');p.settings={textDelayMs:0};
+                const steps=['read','back','reason'].map(id=>({type:'action',id}));p.routeTests={schema:1,cases:[{id:'one',steps,expect:{ending:'chapter-1:complete'}},{id:'two',steps:[...steps,{type:'action',id:'@chapter:chapter-2'},{type:'next'}],expect:{ending:'chapter-2:complete',lineId:'chapter-2/end'}}]};
+                document.querySelector('[data-tab=source]').click();document.querySelector('#source').value=JSON.stringify(p);document.querySelector('[data-command=apply-source]').click();document.querySelector('[data-tab=structure]').click();
+                const click=label=>{const button=[...document.querySelectorAll('#structure-list button')].find(b=>b.textContent===label);if(!button||button.disabled)throw Error('Unavailable '+label);button.click();};
+                const change=(label,value)=>{const input=document.querySelector('[aria-label="'+label+'"]');input.value=value;input.dispatchEvent(new Event('change'));};
+                click('添加章节');change('章节 chapter-2 ID','final');change('章节 final 标题','原生终章');click('章节 final 上移');document.querySelector('[data-command=undo]').click();
+                if(![...document.querySelectorAll('#structure-list button')].find(b=>b.textContent==='删除章节 final').disabled)throw Error('Referenced chapter deletion unprotected');
+                document.querySelector('[data-tab=source]').click();const edited=JSON.parse(document.querySelector('#source').value);if(runRouteSuite(edited).status!=='PASS'||edited.routeTests.cases[1].steps[3].id!=='@chapter:final')throw Error('Cross-chapter references or route regression failed');
+                document.querySelector('[data-tab=story]').click();document.querySelector('[data-command=preview]').click();window.nativeChapterWorkbench='ready';
+              }catch(e){window.nativeChapterWorkbench='failed: '+e.message;}})();
+              """);
+            await Wait("window.nativeChapterWorkbench !== 'pending'");
+            if(await JS("window.nativeChapterWorkbench === 'ready'")!="true")throw new InvalidDataException("Native chapter workbench: "+await JS("window.nativeChapterWorkbench"));
+            await Wait("!!document.querySelector('#preview').contentDocument?.querySelector('[data-action=read]')");
+            await JS("const root=document.querySelector('#preview').contentDocument;for(const id of ['read','back','reason','@chapter:final'])root.querySelector('[data-action=\"'+id+'\"]').click();root.querySelector('[data-control=next]').click()");
+            await Wait("document.querySelector('#preview').contentDocument?.querySelector('.vn-text')?.textContent === '本章结束。'");
+            checks.Add("Native chapter workbench adds and renames a chapter, preserves route references, undoes reordering and completes actual cross-chapter play");
             await JS("window.nativeDenied=false; const onDenied=e=>{if(e.data?.id==='smoke-invalid'){window.nativeDenied=e.data.ok===false;chrome.webview.removeEventListener('message',onDenied)}};chrome.webview.addEventListener('message',onDenied);chrome.webview.postMessage({id:'smoke-invalid',command:'read-any-file',path:'C:/Windows/win.ini'})");
             await Wait("window.nativeDenied === true");
             checks.Add("The native bridge rejects undeclared commands");

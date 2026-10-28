@@ -1,6 +1,6 @@
 import { conditionFromTerms, evidenceReferences } from '../lib/editor/index.js';
 
-function guardedFields(field) {
+export function guardedFields(field) {
   return (parent, label, value, change, options) => {
     const input = field(parent, label, value, next => {
       try { change(next); } catch (error) { input.value = value ?? ''; throw error; }
@@ -8,7 +8,7 @@ function guardedFields(field) {
     return input;
   };
 }
-function numeric(text) {
+export function numeric(text) {
   if (!/^[+-]?(?:\d+(?:\.\d*)?|\.\d+)(?:e[+-]?\d+)?$/i.test(text.trim()) || !Number.isFinite(Number(text))) throw Error('请输入有限数值');
   return Number(text);
 }
@@ -101,4 +101,29 @@ export function renderEvidenceCatalog(parent, chapter, index, api) {
   }
   parent.append(action('添加证据', () => mutate(() => model.addEvidence(chapter.id), true)));
   parent.append(element('p', '重命名同步同章引用和明确归属的路线断言。已有发行作品修改 ID 前需安排存档兼容。', { class: 'help' }));
+}
+
+export function renderEffectsEditor(parent, blockId, choice, prefix, api) {
+  const { element, action, model, mutate, project } = api, field = guardedFields(api.field);
+  const effects = choice.effects ?? [], variables = project.program.variables, keys = Object.keys(variables);
+  if (!Array.isArray(effects)) { parent.append(element('p', '效果列表无效，请使用高级 JSON 修复。', { class: 'help' })); return; }
+  const write = next => mutate(() => model.setChoiceEffects(blockId, choice.id, next), true);
+  effects.forEach((effect, index) => {
+    const row = element('div', undefined, { class: 'condition-term' }), label = `${prefix} 效果 ${index + 1}`; parent.append(row);
+    const change = patch => { const next = structuredClone(effects); next[index] = { ...next[index], ...patch }; write(next); };
+    field(row, `${label} 变量`, effect.key, key => {
+      const definition = variables[key]; if (!definition) throw Error('效果变量不存在');
+      const op = typeof definition.initial === 'boolean' ? 'set' : effect.op;
+      change({ key, op, value: op === 'add' ? 0 : definition.initial });
+    }, { choices: keys.includes(effect.key) ? keys : [effect.key, ...keys] });
+    const boolean = typeof variables[effect.key]?.initial === 'boolean';
+    field(row, `${label} 运算`, effect.op, op => change({ op }), { choices: boolean ? [['set', '赋值']] : [['add', '累加'], ['set', '赋值']] });
+    field(row, `${label} 值`, String(effect.value), value => change({ value: boolean ? value === 'true' : numeric(value) }), boolean ? { choices: [['true', '是'], ['false', '否']] } : {});
+    const move = delta => { const next = structuredClone(effects); [next[index], next[index + delta]] = [next[index + delta], next[index]]; write(next); };
+    const up = action(`${label} 上移`, () => move(-1)), down = action(`${label} 下移`, () => move(1)); up.disabled = !index; down.disabled = index === effects.length - 1;
+    row.append(up, down, action(`${label} 删除`, () => write(effects.filter((_, i) => i !== index)), 'small-button danger'));
+  });
+  const add = action(`${prefix} 添加效果`, () => { const key = keys[0], definition = variables[key]; write([...effects, { key, op: typeof definition.initial === 'number' ? 'add' : 'set', value: typeof definition.initial === 'number' ? 0 : definition.initial }]); });
+  add.disabled = !keys.length; parent.append(add);
+  parent.append(element('p', '效果按列表顺序执行。边界和类型即时检查；整条路线仍需实际回归。', { class: 'help' }));
 }
