@@ -1,5 +1,7 @@
 import { CREATIVE_EXTENSION, PRODUCTION_SCHEMA, UI_SCHEMA } from '../creative/schema.js';
 import { reviewCreativeProject } from '../creative/project.js';
+import { FEEDBACK_DOCUMENT_SCHEMA,FeedbackError,readAuthorReview,captureReviewBinding,assessAuthorReview,editAuthorReview } from '../creative/feedback.js';
+import { analyseContentImpact } from '../creative/impact.js';
 import { EditorModel, newProject, readDocument } from '../editor/model.js';
 import type { EngineProject } from '../runtime/project.js';
 import { runRouteSuite } from '../regression/suite.js';
@@ -11,14 +13,14 @@ import { applyAgentOperation } from './operations.js';
 import { inspectItems, referenceItems, agentProjectDiagnostics } from './project.js';
 
 export function agentCapabilities() {
-  return { protocol: AGENT_PROTOCOL, extensions:[CREATIVE_EXTENSION], limits: AGENT_LIMITS, commands: Object.keys(COMMAND_SCHEMAS), operations: OPERATION_DEFINITIONS.map(schema => schema.properties.op.const),
+  return { protocol: AGENT_PROTOCOL, extensions:[CREATIVE_EXTENSION,'vn-author-review-v1','vn-content-impact-v1'], limits: AGENT_LIMITS, commands: Object.keys(COMMAND_SCHEMAS), operations: OPERATION_DEFINITIONS.map(schema => schema.properties.op.const),
     templates: ['vn', 'chat', 'script', 'investigation'], templateTypes: { vn: 'narrative', chat: 'narrative', script: 'script', investigation: 'investigation' }, projectTypes: ['narrative', 'script', 'investigation', 'rain'],
     compatibility: { projectSchema: 1, editorSchema: 1, saveSchema: 1, rain: 'native-format-read-validate-test-preview-build' },
     operationScopes: { variable: ['script'], chapter: ['investigation'], evidence: ['investigation'], action: ['investigation'], line: ['narrative','script'], choice: ['narrative','script'], exit: ['script'], rainNodes: 'native-read-only' },
     hostPorts: ['readAsset', 'preview', 'build', 'probe', 'importsPrepared'],
     schemas: {
       ...Object.fromEntries(['request','response','operation'].map(name=>[name,{id:`urn:vn-agent-v1:${name}`,file:`schemas/vn-agent-v1.${name}.schema.json`}])),
-      ...Object.fromEntries(['production','ui'].map(name=>[name,{id:`urn:vn-creative-v1:${name}`,file:`schemas/vn-creative-v1.${name}.schema.json`}]))
+      ...Object.fromEntries(['production','ui'].map(name=>[name,{id:`urn:vn-creative-v1:${name}`,file:`schemas/vn-creative-v1.${name}.schema.json`}])),feedback:{id:'urn:vn-author-review-v1:document',file:'schemas/vn-author-review-v1.document.schema.json'}
     },
     exitCodes: { PASS: 0, FAIL: 1, BLOCKED: 2, UNVERIFIED: 3 }, batch: { stableIds: true, finalValidation: true, expectedSourceSha256: true, dryRun: true, playerStorageWrites: false } };
 }
@@ -104,7 +106,7 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
     request = validateAgentRequest(input); response.command = request.command; response.requestId = request.requestId;
     if (utf8Bytes(JSON.stringify(request)) > AGENT_LIMITS.inputBytes) throw new AgentError('BUDGET_EXCEEDED', 'Request exceeds byte budget', {}, 'UNVERIFIED');
     const params = request.params; check();
-    if (request.command === 'capabilities') { response.data = params.schema ? { schema: ({ request: AGENT_REQUEST_SCHEMA, response: AGENT_RESPONSE_SCHEMA, operation: AGENT_OPERATION_SCHEMA, production:PRODUCTION_SCHEMA, ui:UI_SCHEMA } as any)[params.schema] } : agentCapabilities(); return result; }
+    if (request.command === 'capabilities') { response.data = params.schema ? { schema: ({ request: AGENT_REQUEST_SCHEMA, response: AGENT_RESPONSE_SCHEMA, operation: AGENT_OPERATION_SCHEMA, production:PRODUCTION_SCHEMA, ui:UI_SCHEMA,feedback:FEEDBACK_DOCUMENT_SCHEMA } as any)[params.schema] } : agentCapabilities(); return result; }
     if(request.command==='probe'){if(!context.probe)throw new AgentError('HOST_PORT_REQUIRED','Probe requires the Node host or an injected decoder',{},'UNVERIFIED');const output=await context.probe(request);response.data=output.data;response.artifacts=output.artifacts;response.status=output.status;response.ok=output.status==='PASS';response.diagnostics=output.diagnostics;result.report=output.data;check();return result;}
     if (request.command === 'init') {
       const project = newProject(params.type); project.game = params.game; project.version = params.storyVersion; project.title = params.title;
@@ -120,10 +122,28 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
     let model: EditorModel; try { model = new EditorModel(sourceText, 1); } catch (error) { throw new AgentError('INVALID_PROJECT', error instanceof Error ? error.message : String(error)); }
     const before = readDocument(sourceText), project = before.project, sha = await sourceHash(sourceText), wrapped = JSON.parse(sourceText).format === 'vn-engine-editor';
     response.project = { game: project.game, storyVersion: project.version, sourceSha256: sha }; check();
+    if(request.command.startsWith('feedback.')){
+      const raw=context.reviewSource??null;
+      const reviewText=raw===null?null:typeof raw==='string'?raw:JSON.stringify(raw,null,2)+'\n';
+      if(reviewText&&utf8Bytes(reviewText)>AGENT_LIMITS.inputBytes)throw new AgentError('BUDGET_EXCEEDED','Review exceeds input budget',{},'UNVERIFIED');
+      if(reviewText){let parsed;try{parsed=JSON.parse(reviewText);}catch{throw new AgentError('INVALID_REVIEW','Review document is not valid JSON');}assertAgentJSON(parsed);}
+      const reviewSha=reviewText===null?null:await sourceHash(reviewText);
+      const doc=readAuthorReview(raw,project),binding=await captureReviewBinding(project,sourceText,context.readAsset);check();
+      if(request.command==='feedback.inspect'){
+        const report=assessAuthorReview(doc,project,binding);page(response,[{id:'feedback-summary',status:report.status,reviewSha256:reviewSha,scope:report.scope,filesVerified:binding.filesVerified},...report.items.filter(i=>!params.id||i.id===params.id)],request,sha+':'+reviewSha+':'+await sourceHash(JSON.stringify(binding)));return result;
+      }
+      if(params.expectedSourceSha256!==sha)throw new AgentError('SOURCE_CONFLICT','Project changed before feedback edit',{expected:params.expectedSourceSha256,actual:sha});
+      if(params.expectedReviewSha256!==reviewSha)throw new AgentError('REVIEW_CONFLICT','Review changed before edit',{expected:params.expectedReviewSha256,actual:reviewSha});
+      const next=editAuthorReview(doc,project,binding,{...params,op:request.command==='feedback.put'?'put':'transition',id:params.id,actor:params.actor});
+      const text=JSON.stringify(next,null,2)+'\n',after=await sourceHash(text);check();
+      if(utf8Bytes(text)>AGENT_LIMITS.inputBytes)throw new AgentError('BUDGET_EXCEEDED','Review candidate exceeds byte budget',{},'UNVERIFIED');
+      result.reviewCandidate={document:next,sourceText:text,beforeSha256:reviewSha,afterSha256:after};
+      response.data={applied:false,dryRun:!!params.dryRun,reviewSha256:reviewSha,candidateReviewSha256:after,item:next.items.find(i=>i.id===params.id),filesVerified:binding.filesVerified,scope:{releaseApproval:false,humanIdentityAuthenticated:false}};return result;
+    }
     if (request.command === 'inspect' || request.command === 'refs') {
       let items = request.command === 'inspect' ? inspectItems(project, params.kind ?? 'overview', params.id, params.chapterId) : referenceItems(before, params.kind, params.id, params.chapterId);
       if(request.command==='inspect') {
-        if(params.characterId){const character=project.production?.characters?.find(c=>c.id===params.characterId);if(!character)throw new AgentError('NOT_FOUND','Character does not exist');items=items.filter(item=>params.kind==='characters'?item.id===character.id:params.kind==='text'?item.speaker===character.name:item.value?.characters?.includes(character.id));}
+        if(params.characterId){const character=project.production?.characters?.find(c=>c.id===params.characterId);if(!character)throw new AgentError('NOT_FOUND','Character does not exist');items=items.filter(item=>params.kind==='characters'?item.id===character.id:['text','content'].includes(params.kind)?item.speaker===character.name:item.value?.characters?.includes(character.id));}
         if(params.taskKind)items=items.filter(item=>item.value?.kind===params.taskKind);
         if(params.query)items=items.filter(item=>JSON.stringify(item).toLocaleLowerCase().includes(params.query.toLocaleLowerCase()));
       }
@@ -131,7 +151,7 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
       page(response, items, request, sha); check(); return result;
     }
     if(request.command==='review'){const report=reviewCreativeProject(project);response.status=report.status as AgentResponse['status'];response.ok=report.status==='PASS';const items=[{id:'review-summary',summary:report.summary,scope:report.scope},...report.issues];page(response,items,request,sha);check();return result;}
-    if (request.command === 'apply') {
+    if (request.command === 'apply'||request.command==='impact') {
       if (params.expectedSourceSha256 !== sha) throw new AgentError('SOURCE_CONFLICT', 'Project changed; inspect and rebase the request', { expected: params.expectedSourceSha256, actual: sha });
       if(params.imports?.length&&!context.importsPrepared)throw new AgentError('HOST_PORT_REQUIRED','Imports need a prepared immutable file host',{},'UNVERIFIED');
       for (const [index, operation] of params.operations.entries()) {
@@ -144,11 +164,13 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
     response.diagnostics = agentProjectDiagnostics(model); check();
     response.diagnostics.push(...await resources(model.getView().project as EngineProject, context, check));
     if (response.diagnostics.some(d => d.severity === 'error')) { response.ok = false; response.status = 'FAIL'; response.data = { validated: false }; return result; }
-    if (request.command === 'apply') {
+    if (request.command === 'apply'||request.command==='impact') {
       if (response.diagnostics.some(d => d.code === 'ASSETS_UNVERIFIED')) throw new AgentError('ASSETS_UNVERIFIED', 'Asset bytes must be validated before preparing a write', {}, 'UNVERIFIED');
       const serialized = model.serialize(!wrapped), text = wrapped ? JSON.stringify({ ...JSON.parse(sourceText), ...JSON.parse(serialized) }, null, 2) + '\n' : serialized, after = await sourceHash(text);
-      result.candidate = { document: readDocument(text), sourceText: text, beforeSha256: sha, afterSha256: after };
-      response.data = { dryRun: !!params.dryRun, applied: false, beforeSha256: sha, afterSha256: after, ...differences(JSON.parse(sourceText), JSON.parse(text)) }; check(); return result;
+      const impact=analyseContentImpact(project,readDocument(text).project,sha,after,params.limit??20);
+      if(request.command==='apply')result.candidate = { document: readDocument(text), sourceText: text, beforeSha256: sha, afterSha256: after };
+      else result.report=impact;
+      response.data = { dryRun: request.command==='impact'||!!params.dryRun, applied: false, beforeSha256: sha, afterSha256: after, ...differences(JSON.parse(sourceText), JSON.parse(text)),impact }; check(); return result;
     }
     if (request.command === 'validate') {
       try { response.data = { structure: validateProjectCompliance(project, { mode: params.mode ?? 'development' }), files: context.readAsset || !project.assets.length ? 'PASS' : 'UNVERIFIED' }; }
@@ -169,11 +191,12 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
     check();
     if (utf8Bytes(JSON.stringify(response)) > AGENT_LIMITS.outputBytes) throw new AgentError('BUDGET_EXCEEDED', 'Response exceeds byte budget; narrow the request', {}, 'UNVERIFIED');
     return result;
-  } catch (error) { delete result.candidate; failAgent(response, error); return result; }
+  } catch (error) { delete result.candidate;delete result.reviewCandidate; failAgent(response, error instanceof FeedbackError?new AgentError(error.code,error.message,{},error.code==='BUDGET_EXCEEDED'?'UNVERIFIED':'FAIL'):error); return result; }
   finally {
     // Early validation failures and host errors are subject to the same wire budget as successes.
     if (utf8Bytes(JSON.stringify(response)) > AGENT_LIMITS.outputBytes) {
       delete result.candidate;
+      delete result.reviewCandidate;
       const count = response.diagnostics.length;
       response.ok = false; response.status = 'UNVERIFIED'; response.data = { truncated: true, diagnosticsTotal: count };
       response.diagnostics = [{ code: 'BUDGET_EXCEEDED', severity: 'error', message: 'Response exceeds 65536 UTF-8 bytes; narrow the request. No write candidate was retained.', path: [] }];

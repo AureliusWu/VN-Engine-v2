@@ -2,6 +2,7 @@ import type { EngineProject } from '../runtime/project.js';
 import { PRODUCTION_SCHEMA } from './schema.js';
 import { schemaErrors } from '../schema/validate.js';
 import { uiContrast } from '../ui/theme.js';
+import { contentCatalogue } from './content.js';
 export type CreativeTarget={nodeId:string;chapterId?:string;lineId?:string};
 export type CreativeSource={method:'generated'|'composed'|'procedural'|'licensed'|'recorded'|'authored';tool:string;prompt?:string;sourceSha256?:string;notes?:string;text?:string;speaker?:string};
 export type CreativeCharacter={id:string;name:string;description:string;visualPrompt?:string;voiceNotes?:string};
@@ -11,10 +12,7 @@ export type ProductionPlan={schema:1;brief?:{premise?:string;tone?:string;visual
 export type CreativeDiagnostic={code:string;severity:'error'|'warning';message:string;path:(string|number)[]};
 export type TextEntry={id:string;nodeId:string;chapterId?:string;speaker:string;text:string;medium?:string;path:(string|number)[];voice?:string};
 export function textCatalogue(p:EngineProject):TextEntry[] {
-  if(p.type==='script')return p.program.blocks.flatMap((b,i)=>b.lines.map((l,j)=>({id:l.id,nodeId:b.id,speaker:l.speaker,text:l.text,medium:l.medium,voice:(l.cue?.voice!==undefined?l.cue.voice:b.cue?.voice!==undefined?b.cue.voice:p.defaults?.voice)??undefined,path:['program','blocks',i,'lines',j]})));
-  if(p.type==='narrative')return p.scenes.flatMap((s,i)=>s.lines.map((l,j)=>({id:l.id??`${s.id}/${j}`,nodeId:s.id,speaker:l.speaker??'',text:l.text,medium:l.medium,voice:p.stage?.lines?.[l.id??`${s.id}/${j}`]?.voice,path:['scenes',i,'lines',j]})));
-  if(p.type==='investigation')return p.chapters.flatMap((c,i)=>Object.entries(c.nodes).map(([id,n])=>({id:`${c.id}/${id}`,nodeId:id,chapterId:c.id,speaker:'',text:n.text,path:['chapters',i,'nodes',id]})));
-  return p.story.nodes.flatMap((n,i)=>[...(n.lines??[]).map((l,j)=>({id:l.id,nodeId:n.id,speaker:l.speaker,text:l.text,voice:l.voice,path:['story','nodes',i,'lines',j]})),...(n.choices??[]).flatMap((c,j)=>(c.response??[]).map((l,k)=>({id:l.id,nodeId:n.id,speaker:l.speaker,text:l.text,voice:l.voice,path:['story','nodes',i,'choices',j,'response',k]})))]);
+  return contentCatalogue(p).filter(c=>c.kind==='line').map(c=>({id:c.id,nodeId:c.nodeId,...(c.chapterId?{chapterId:c.chapterId}:{}),speaker:c.speaker,text:c.text,medium:c.medium,path:c.path,voice:c.voice}));
 }
 export function creativeNodes(p:EngineProject):CreativeTarget[] {
   return p.type==='script'?p.program.blocks.map(b=>({nodeId:b.id})):p.type==='narrative'?p.scenes.map(s=>({nodeId:s.id})):p.type==='investigation'?p.chapters.flatMap(c=>Object.keys(c.nodes).map(nodeId=>({nodeId,chapterId:c.id}))):p.story.nodes.map(n=>({nodeId:n.id}));
@@ -52,12 +50,12 @@ export function creativeReferences(p:EngineProject,kind:'task'|'character'|'asse
 }
 /** Mechanical editorial checks; never a claim of literary quality or approval. */
 export function reviewCreativeProject(p:EngineProject) {
-  const issues:CreativeDiagnostic[]=[...creativeDiagnostics(p)],texts=textCatalogue(p),plan=p.production;
+  const issues:CreativeDiagnostic[]=[...creativeDiagnostics(p)],texts=contentCatalogue(p),plan=p.production;
   const add=(code:string,message:string,path:(string|number)[])=>issues.push({code,severity:'warning',message,path});
   if(!plan)add('CREATIVE_PLAN_MISSING','No creative brief or production tasks',['production']);
   if(!plan?.brief?.premise)add('CREATIVE_BRIEF_MISSING','Creative premise is not recorded',['production','brief','premise']);
   for(const line of texts){if(!line.text.trim())add('TEXT_EMPTY','Empty authored text',[...line.path,'text']);if([...line.text].length>280)add('TEXT_LONG','Text exceeds 280 code points; review pacing and narrow layout',[...line.path,'text']);if(/\b(?:TODO|FIXME|PLACEHOLDER)\b/i.test(line.text))add('TEXT_PLACEHOLDER','Placeholder marker in authored text',[...line.path,'text']);}
-  for (const line of texts) if (line.voice && !plan?.tasks?.some(task=>task.assets?.includes(line.voice!) && task.targets?.some(t=>t.lineId===line.id&&t.nodeId===line.nodeId&&t.chapterId===line.chapterId) && task.source?.text===line.text && task.source?.speaker===line.speaker)) add('VOICE_REVIEW_REQUIRED','Voice has no matching recorded text / speaker source',[...line.path,'text']);
+  for (const line of texts) if (line.voice && !plan?.tasks?.some(task=>task.assets?.includes(line.voice!) && task.targets?.some(t=>t.lineId===line.lineId&&t.nodeId===line.nodeId&&t.chapterId===line.chapterId) && task.source?.text===line.text && task.source?.speaker===line.speaker)) add('VOICE_REVIEW_REQUIRED','Voice has no matching recorded text / speaker source',[...line.path,'text']);
   plan?.tasks?.forEach((task,i)=>{if(task.state!=='review')add('TASK_UNFINISHED','Task still needs review: '+task.id,['production','tasks',i,'state']);if(!task.targets?.length&&!task.assets?.length&&task.kind!=='ui')add('TASK_OUTPUT_MISSING','Task has no bound target or asset: '+task.id,['production','tasks',i]);});
   plan?.beats?.forEach((beat,i)=>{if(!beat.targets.length)add('BEAT_UNBOUND','Beat has no runtime target: '+beat.id,['production','beats',i,'targets']);});
   if(p.ui&&uiContrast(p.ui)<4.5)add('UI_CONTRAST','Theme text/panel contrast is below 4.5:1',['ui','colors']);

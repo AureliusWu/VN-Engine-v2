@@ -67,6 +67,7 @@ export async function runAgentFileRequestInProcess(input, options = {}) {
     if (typeof input === 'string') { if (Buffer.byteLength(input) > AGENT_LIMITS.inputBytes) throw new AgentError('BUDGET_EXCEEDED', 'Request exceeds input budget', {}, 'UNVERIFIED'); try { input = JSON.parse(input); } catch { throw new AgentError('MALFORMED_JSON', 'Request is not valid JSON'); } }
     response = agentResponse(typeof input?.command === 'string' && input.command.trim() ? input.command.slice(0,500) : 'unknown', typeof input?.requestId === 'string' && input.requestId.trim() ? input.requestId.slice(0,128) : 'unknown');
     request = validateAgentRequest(input);
+    if(request.command.startsWith('feedback.'))return await (await import('./feedback-node.mjs')).runFeedbackFileRequest(request,options);
     if(request.command==='probe'){const {probeAgentFiles}=await import('./agent-probe.mjs');const result=await executeAgentRequest(request,{probe:probeAgentFiles});if(request.params.output&&result.report){const output=path.resolve(request.params.output);await fs.mkdir(path.dirname(output),{recursive:true});const handle=await fs.open(output,'wx',0o600);try{await handle.writeFile(JSON.stringify({...result.report,protocol:result.response.protocol,engineVersion:result.response.engineVersion,requestId:request.requestId},null,2)+'\n');await handle.sync();}finally{await handle.close();}result.response.artifacts.push({kind:'media-probe-report',path:output,sha256:await current(output)});}return result.response;}
     if (request.command === 'capabilities') return (await executeAgentRequest(request)).response;
     const target = request.command === 'init' ? request.params.output ?? request.project : request.project;
@@ -97,16 +98,16 @@ export async function runAgentFileRequestInProcess(input, options = {}) {
       if (request.command === 'init' && sha !== null) throw new AgentError('OUTPUT_EXISTS', 'Init does not overwrite existing files');
     }
     const source = request.command === 'init' ? undefined : await readText(file);
-    const imports=request.command==='apply'&&request.params.expectedSourceSha256===hash(source)?await prepareImports(root,request.params.imports,budget):[];
+    const imports=['apply','impact'].includes(request.command)&&request.params.expectedSourceSha256===hash(source)?await prepareImports(root,request.params.imports,budget):[];
     const importedBytes=new Map(imports.map(entry=>[entry.relative,entry.bytes]));const readAsset=relative=>importedBytes.has(relative)?Promise.resolve(importedBytes.get(relative)):readExistingAsset(relative);
     const ports = request.command === 'preview' || request.command === 'build' ? await import('./agent-ports.mjs') : null;
     const result = await executeAgentRequest(request, { source, readAsset, importsPrepared:!!imports.length,
       ...(ports ? ports.createAgentPorts({ sourceFile: file, readAsset, onPhase: options.onPhase }) : {}) });
     response = result.response;
     if(result.candidate&&imports.length){assertImportsUsed(imports,result.candidate.document.project);response.data={...response.data,imports:imports.map(({relative,sha256,size})=>({path:relative,sha256,bytes:size})),unreferencedFilesPossible:false};}
-    if (request.command === 'test' && request.params.output && result.report) {
+    if (['test','impact'].includes(request.command) && request.params.output && result.report) {
       const output = path.resolve(request.params.output); await fs.mkdir(path.dirname(output), { recursive: true });
-      const handle = await fs.open(output, 'wx', 0o600); try { await handle.writeFile(JSON.stringify({ ...result.report, source: response.project }, null, 2) + '\n'); await handle.sync(); } finally { await handle.close(); } response.artifacts.push({ kind: 'route-report', path: output, sha256: await current(output) });
+      const handle = await fs.open(output, 'wx', 0o600); try { await handle.writeFile(JSON.stringify({ ...result.report, source: response.project }, null, 2) + '\n'); await handle.sync(); } finally { await handle.close(); } response.artifacts.push({ kind: request.command==='impact'?'impact-report':'route-report', path: output, sha256: await current(output) });
     }
     if (!write) return response;
     const before = source === undefined ? null : hash(source);
@@ -150,7 +151,7 @@ export async function runAgentFileRequest(input, options = {}) {
         if(imported.length)result.data={...result.data,unreferencedFilesPossible:true,importedFiles:imported.map(a=>a.path)};
       }
       await releaseAgentLease(lease); resolve(result); };
-    const cancel = code => {response.artifacts.push(...imported); response.data = { applied: ['init','apply'].includes(request.command) && !request.params.dryRun ? 'unknown' : false, recoveryRequired: ['init','apply'].includes(request.command) && !request.params.dryRun }; finish(failAgent(response, new AgentError(code, code === 'TIMEOUT' ? 'Worker deadline exceeded; inspect source and retry identical request' : 'Request cancelled', {}, 'UNVERIFIED'))); };
+    const cancel = code => {const write=['init','apply','feedback.put','feedback.transition'].includes(request.command)&&!request.params.dryRun;response.artifacts.push(...imported); response.data = { applied: write ? 'unknown' : false, recoveryRequired: write }; finish(failAgent(response, new AgentError(code, code === 'TIMEOUT' ? 'Worker deadline exceeded; inspect source and retry identical request' : 'Request cancelled', {}, 'UNVERIFIED'))); };
     const abort = () => cancel('ABORTED');
     const timer = setTimeout(() => cancel('TIMEOUT'), request.params.timeoutMs ?? AGENT_LIMITS.requestMs);
     options.signal?.addEventListener('abort', abort, { once: true });
@@ -159,3 +160,5 @@ export async function runAgentFileRequest(input, options = {}) {
     worker.on('exit', code => { if (!done) finish(failAgent(response, new AgentError('WORKER_EXIT', 'Worker exited before responding: ' + code, {}, 'UNVERIFIED'))); });
   });
 }
+/** Internal primitives shared by project and independent author-review transactions. */
+export const agentFileIO=Object.freeze({filePath,readText,current,atomic,acquire,releaseAgentLease,journalRead,journalWrite,assetReader,hash,canonical});

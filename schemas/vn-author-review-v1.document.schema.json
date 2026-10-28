@@ -1,0 +1,260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:vn-author-review-v1:document",
+  "type": "object",
+  "properties": {
+    "contract": {
+      "const": "vn-author-review-v1"
+    },
+    "schema": {
+      "const": 1
+    },
+    "game": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "storyVersion": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 500
+    },
+    "items": {
+      "type": "array",
+      "maxItems": 500,
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          },
+          "category": {
+            "enum": [
+              "story",
+              "text",
+              "art",
+              "music",
+              "sfx",
+              "ui",
+              "other"
+            ]
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "kind": {
+                "enum": [
+                  "project",
+                  "node",
+                  "line",
+                  "variant",
+                  "choice",
+                  "action",
+                  "asset",
+                  "task",
+                  "character",
+                  "beat"
+                ]
+              },
+              "id": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "nodeId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              "chapterId": {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              }
+            },
+            "required": [
+              "kind",
+              "id"
+            ],
+            "additionalProperties": false
+          },
+          "comment": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 8000
+          },
+          "state": {
+            "enum": [
+              "open",
+              "addressed",
+              "verified",
+              "reopened"
+            ]
+          },
+          "binding": {
+            "type": "object",
+            "properties": {
+              "sourceSha256": {
+                "type": "string",
+                "pattern": "^[a-f0-9]{64}$"
+              },
+              "filesVerified": {
+                "type": "boolean"
+              },
+              "assets": {
+                "type": "array",
+                "maxItems": 10000,
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 500
+                    },
+                    "sha256": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "pattern": "^[a-f0-9]{64}$"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "sha256"
+                  ],
+                  "additionalProperties": false
+                }
+              }
+            },
+            "required": [
+              "sourceSha256",
+              "filesVerified",
+              "assets"
+            ],
+            "additionalProperties": false
+          },
+          "events": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 64,
+            "items": {
+              "type": "object",
+              "properties": {
+                "state": {
+                  "enum": [
+                    "open",
+                    "addressed",
+                    "verified",
+                    "reopened"
+                  ]
+                },
+                "actor": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "at": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                },
+                "note": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 8000
+                },
+                "evidence": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 8000
+                },
+                "binding": {
+                  "type": "object",
+                  "properties": {
+                    "sourceSha256": {
+                      "type": "string",
+                      "pattern": "^[a-f0-9]{64}$"
+                    },
+                    "filesVerified": {
+                      "type": "boolean"
+                    },
+                    "assets": {
+                      "type": "array",
+                      "maxItems": 10000,
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 500
+                          },
+                          "sha256": {
+                            "anyOf": [
+                              {
+                                "type": "string",
+                                "pattern": "^[a-f0-9]{64}$"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "sha256"
+                        ],
+                        "additionalProperties": false
+                      }
+                    }
+                  },
+                  "required": [
+                    "sourceSha256",
+                    "filesVerified",
+                    "assets"
+                  ],
+                  "additionalProperties": false
+                }
+              },
+              "required": [
+                "state",
+                "actor",
+                "at",
+                "note",
+                "binding"
+              ],
+              "additionalProperties": true
+            }
+          }
+        },
+        "required": [
+          "id",
+          "category",
+          "target",
+          "comment",
+          "state",
+          "binding",
+          "events"
+        ],
+        "additionalProperties": true
+      }
+    }
+  },
+  "required": [
+    "contract",
+    "schema",
+    "game",
+    "storyVersion",
+    "items"
+  ],
+  "additionalProperties": true
+}

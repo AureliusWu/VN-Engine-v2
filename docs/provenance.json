@@ -457,13 +457,19 @@
     {
       "target": "schemas/vn-agent-v1.request.schema.json",
       "mode": "new",
-      "targetSha256": "93e596ab41e01860dfb684dd80097d2e8a7378aa7dc08c2f633a66235029555b",
+      "targetSha256": "26fea04b21aea189f11f29d40edc65308a9d9820aaeb419d196600dcb55469ee",
       "origins": []
     },
     {
       "target": "schemas/vn-agent-v1.response.schema.json",
       "mode": "new",
       "targetSha256": "8fb1f2849f00b95cac17d790c0e7a33ebca5dc338f8fe323f02bfb17122096c4",
+      "origins": []
+    },
+    {
+      "target": "schemas/vn-author-review-v1.document.schema.json",
+      "mode": "new",
+      "targetSha256": "8f84697cce0d2dd93d51d0452c7129c906f3a75b5ee47d7422d00bf1984b4491",
       "origins": []
     },
     {
@@ -587,25 +593,25 @@
     {
       "target": "src/agent/project.ts",
       "mode": "new",
-      "targetSha256": "00bd5bdd740a9fe5dbdb18b94d3066af7a99fec6a5d7c31b093b21ed086cb109",
+      "targetSha256": "0b6e67c46fc3fafbcfd3ecee05d0bc0beeed0c030348b3a19ea7c7121111120d",
       "origins": []
     },
     {
       "target": "src/agent/protocol.ts",
       "mode": "new",
-      "targetSha256": "8bc519dde5264c6172494f5049bd3ed717d6330063b4895fe7e97139922cc405",
+      "targetSha256": "0db437b20a7b4a6bd79e365b1a59755d0b4bd53212c9e27d4adba0ff67e7bc75",
       "origins": []
     },
     {
       "target": "src/agent/schema.ts",
       "mode": "new",
-      "targetSha256": "9fe5d24fd6ed072de3f0494a67fe3828d674b0a2dd2b546c5b1755133836868c",
+      "targetSha256": "03b796122b01ebc27a216e54e6d9b0d0548a552d07f418542835056823a92618",
       "origins": []
     },
     {
       "target": "src/agent/sdk.ts",
       "mode": "new",
-      "targetSha256": "17d58d89b777c2030e121af95bb51a3be85ec57747466d86f60902ebc3f426f7",
+      "targetSha256": "dd3e51a2877127e39802d498e64a79a82c9994ed475a05db6b10a1cd01dfd11f",
       "origins": []
     },
     {
@@ -678,9 +684,27 @@
       "origins": []
     },
     {
+      "target": "src/creative/content.ts",
+      "mode": "new",
+      "targetSha256": "391bc5f0a50ec8fc120ee4fdb26b19a45f8c120c72b4059f9538209bd4330b04",
+      "origins": []
+    },
+    {
+      "target": "src/creative/feedback.ts",
+      "mode": "new",
+      "targetSha256": "cbccac49d922509081dd30ae0e8a955efa153222879947d93e9d00ebece2772d",
+      "origins": []
+    },
+    {
+      "target": "src/creative/impact.ts",
+      "mode": "new",
+      "targetSha256": "3fe66f5f53ffee0d3a628876f4219afd315e79e7eae59c64eebe790096d15c37",
+      "origins": []
+    },
+    {
       "target": "src/creative/project.ts",
       "mode": "new",
-      "targetSha256": "3e051f61cb1b5f1a905ae859a954b58c90075b8b01a2ab44d3484308eee2138c",
+      "targetSha256": "ddf3472d07fe91d5a3eb6892f416bd3d37f7e2ff8e6506db05a1868a09789013",
       "origins": []
     },
     {
@@ -705,7 +729,7 @@
       "target": "src/editor/index.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "0b6e86fb067b85777e3af490a0d26db64fb3d9b294bf27092033352e6bc42615"
+      "targetSha256": "4de86e14e80a53cbf648150b1dff03f58112b6256856ca28b6a2cd7b2acca4fa"
     },
     {
       "target": "src/editor/model.ts",
@@ -1103,7 +1127,7 @@
     {
       "target": "tools/agent-node.mjs",
       "mode": "new",
-      "targetSha256": "f7c2fedea525262aba05a92d7fc5710bbf22e66e1844948282622a5482866a84",
+      "targetSha256": "0cbfb00e8290d4cd8b3c8853de9e91c80e68f854f87b5630640b9062862fecce",
       "origins": []
     },
     {
@@ -1127,7 +1151,7 @@
     {
       "target": "tools/agent.mjs",
       "mode": "new",
-      "targetSha256": "e3988e40b8b8681176f3499f899b6aad3b61dc141c7b9cde03e06e51fd812318",
+      "targetSha256": "e170378ffb5af893afb99c73d71180ee7c71851fbc1d0daec9b78cbdac80711f",
       "origins": []
     },
     {
@@ -1164,6 +1188,12 @@
       "target": "tools/creative-example.mjs",
       "mode": "new",
       "targetSha256": "2342bdc2ffbc61ff60e794e314b9211211032057de831d49613fd3c39567ab0a",
+      "origins": []
+    },
+    {
+      "target": "tools/feedback-node.mjs",
+      "mode": "new",
+      "targetSha256": "85f4a302262148d70ba0e12a1949ac79f0dd4f21631178ac36a594199afcf372",
       "origins": []
     },
     {
@@ -1309,7 +1339,7 @@
     {
       "target": "tools/write-agent-schemas.mjs",
       "mode": "new",
-      "targetSha256": "11134c94d75ca7ff1405465dab91c2cf2b9466ce0b6b9aa02731176a71058cfc",
+      "targetSha256": "c23e70c973e2010e89e8c64fdf4a6b9d7ede9ac64f20b5632e248f07b8ba11c2",
       "origins": []
     }
   ]
