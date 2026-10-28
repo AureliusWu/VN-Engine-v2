@@ -338,7 +338,7 @@
       "target": "hosts/windows/VNEngine.Windows.csproj",
       "mode": "new",
       "origins": [],
-      "targetSha256": "717d8cc25c1666313c25fbbdc76fd0c3d30278df1b965f8889a2eca2ed967ec1"
+      "targetSha256": "3ee4fc2b51fb74f33abede3591ca008758a174ee2c41a36e0e64dd49f0259334"
     },
     {
       "target": "licenses/Healing-LICENSE.txt",
@@ -401,7 +401,7 @@
     {
       "target": "schemas/vn-agent-v1.request.schema.json",
       "mode": "new",
-      "targetSha256": "17cbf4f636750fac678792a688992fb42e089656ab1303e7a00591c640650c49",
+      "targetSha256": "29823da102c809ebd100a6d1c20f190d3a22633bbdd0327e486631fa7a4d9d25",
       "origins": []
     },
     {
@@ -525,7 +525,7 @@
     {
       "target": "src/agent/schema.ts",
       "mode": "new",
-      "targetSha256": "0f8ab164089a7db89610b095e53dd5a528eb600bd136140c45a31b631438053a",
+      "targetSha256": "6eeff2d8e462dfd147fffe6d749140a5aa73a08f710afcdb9eb0166a1d6443cf",
       "origins": []
     },
     {
@@ -798,7 +798,7 @@
     {
       "target": "src/regression/suite.ts",
       "mode": "new",
-      "targetSha256": "7eae9101ae1f79a79ff2698fad553336e036d6db4c04ac1eb13b3ac805fc7ed4",
+      "targetSha256": "0aab6cf18687be7289066643158b7d8cfc0a903ceb70f58655a7883f3b5fd2c0",
       "origins": []
     },
     {
@@ -988,7 +988,37 @@
       "target": "src/version.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "0b2a7060c3b38e80d4b96e55af73979d2bf67d2ef33f23f4f16d1c3253104d94"
+      "targetSha256": "ca03afd5fd1490f97085afa690ec15a5fc557630525d7fa8010f32d21b6889d6"
+    },
+    {
+      "target": "tools/agent-example.mjs",
+      "mode": "new",
+      "targetSha256": "2df211ce14ee1109e9747516a7d19f4fa12b26ef2cdec59fe903d450d9a9959c",
+      "origins": []
+    },
+    {
+      "target": "tools/agent-node.mjs",
+      "mode": "new",
+      "targetSha256": "947f693dcd4b2d86068a1988f37816a75e06a7f4a761dce697e07798c1b2130d",
+      "origins": []
+    },
+    {
+      "target": "tools/agent-ports.mjs",
+      "mode": "new",
+      "targetSha256": "c839188f4b2d5be8d992c06c627798510a1005a241899a3e1bf41dfd1209514d",
+      "origins": []
+    },
+    {
+      "target": "tools/agent-worker.mjs",
+      "mode": "new",
+      "targetSha256": "7cedc0c24fe514b1a64d410d57f9eac0d9e6717d07be2034168c20a060a517bb",
+      "origins": []
+    },
+    {
+      "target": "tools/agent.mjs",
+      "mode": "new",
+      "targetSha256": "5b082bf01d571bba92da21ded5ad6ad60f14ef0e9b8e10e0cd8c3ee6139e3d71",
+      "origins": []
     },
     {
       "target": "tools/benchmark-runtime.mjs",
@@ -1036,7 +1066,7 @@
       "target": "tools/package-game.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "857d8bd32a134f5804f296fffee7f60a6bad74a5990b78a59982fa4683818607"
+      "targetSha256": "b213d90196727792cc085aa4b1eab6ef9b9f19eeaddc3125ca7e6fd368ce6828"
     },
     {
       "target": "tools/package-studio.mjs",
@@ -1112,6 +1142,12 @@
       "targetSha256": "f257d283325eccf5c84813ba306d007821050356e6bfe73864dbfe18e385b7dc"
     },
     {
+      "target": "tools/test-agent-cli.mjs",
+      "mode": "new",
+      "targetSha256": "c6628efa7c9e53b18cd308aa2beb395325f99c053ad6c1718b84d886e5014b46",
+      "origins": []
+    },
+    {
       "target": "tools/test-routes.mjs",
       "mode": "new",
       "targetSha256": "ce4322bfacd7381476c956e1680bca4c5504f88dd38f566636432b09e8fdc089",
@@ -1121,7 +1157,7 @@
       "target": "tools/test-windows.ps1",
       "mode": "new",
       "origins": [],
-      "targetSha256": "b31751c286d6f0b5bfebce73c465ac0176a5d94125e86354dfac129fe9c5829a"
+      "targetSha256": "2b5d8f03804d6e6583337939bca89936db26869beb1770b4fec22d02cfe0306c"
     },
     {
       "target": "tools/validate-graph.mjs",

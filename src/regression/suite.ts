@@ -21,7 +21,7 @@ export type RouteCaseResult = { id: string; label?: string; status: 'PASS' | 'FA
 const canonical = (value: unknown): string => JSON.stringify(value, (_key, item) => item && typeof item === 'object' && !Array.isArray(item)
   ? Object.fromEntries(Object.entries(item).sort(([a],[b]) => a.localeCompare(b))) : item);
 
-class RouteClock implements Clock {
+export class RouteClock implements Clock {
   time = 0; serial = 0; tasks = new Map<number, {callback: () => void; due: number}>();
   now = () => this.time;
   set = (callback: () => void, delay: number) => { const id = ++this.serial; this.tasks.set(id, {callback,due:this.time + delay}); return id; };

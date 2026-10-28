@@ -5,6 +5,12 @@ New-Item -ItemType Directory -Force -Path $Output | Out-Null
 $Executable = [IO.Path]::GetFullPath($Executable)
 $Site = [IO.Path]::GetFullPath($Site)
 $Game = [IO.Path]::GetFullPath($Game)
+$ExpectedVersion = (Get-Content package.json -Raw | ConvertFrom-Json).version
+$ProgramVersion = [Diagnostics.FileVersionInfo]::GetVersionInfo($Executable).ProductVersion
+$GameManifest = Get-Content (Join-Path $Game 'build-manifest.json') -Raw | ConvertFrom-Json
+$StudioManifest = Get-Content (Join-Path $Site 'studio-manifest.json') -Raw | ConvertFrom-Json
+if (($ProgramVersion -split '[+]')[0] -ne $ExpectedVersion -or $GameManifest.buildIdentity.engineVersion -ne $ExpectedVersion -or $StudioManifest.engine -ne $ExpectedVersion) { throw "Program / game / studio version mismatch: $ProgramVersion" }
+@{ result = 'passed'; programVersion = $ProgramVersion; engineVersion = $ExpectedVersion; gameIdentity = $GameManifest.buildIdentity; commit = $env:GITHUB_SHA } | ConvertTo-Json -Depth 6 | Set-Content (Join-Path $Output 'version-identity.json')
 function Invoke-NativeCheck([string]$Name, [string[]]$Arguments) {
   $Report = Join-Path $Output "$Name.json"
   $ProcessArgs = $Arguments + @('--report', ('"' + $Report + '"'))

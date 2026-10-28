@@ -22,7 +22,7 @@ function buildTimestamp() {
 }
 
 /** Bundle local author data with our compiled runtime; no game engine downloads. */
-export async function packageGame(projectFile, output) {
+export async function packageGame(projectFile, output, options = {}) {
   const source = resolve(projectFile), sourceRoot = await realpath(dirname(source)), destination = resolve(output);
   let existing;
   try { existing = await stat(destination); } catch (error) { if (error.code !== 'ENOENT') throw error; }
@@ -78,6 +78,7 @@ catch(failure){error.textContent='启动未完成：'+failure.message;}
     game: project.game,
     version: project.version,
     engine: 'VN Engine v2 self runtime ' + ENGINE_VERSION,
+    source: options.sourceIdentity ?? { sourceSha256: createHash('sha256').update(await readFile(source)).digest('hex') },
     buildIdentity: { gameVersion: project.version, engineVersion: ENGINE_VERSION, commitSha, buildTime: buildTimestamp() },
     compliance: { contract: compliance.contract, mode: compliance.mode, warnings: [...compliance.warnings], ...(compliance.artGate ? { artGate: compliance.artGate } : {}), ...(compliance.qaGate ? { qaGate: compliance.qaGate } : {}),
       ...(compliance.routeGate ? { routes: { contract: compliance.routeGate.contract, status: compliance.routeGate.status, cases: compliance.routeGate.cases.length, restoreChecks: compliance.routeGate.restoreChecks, coverage: compliance.routeGate.coverage } } : {}) },

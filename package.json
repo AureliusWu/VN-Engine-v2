@@ -1,6 +1,6 @@
 {
   "name": "@aureliuswu/vn-engine-v2",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Self-developed narrative engine: script VM, VN/chat/investigation runtimes, DOM player and offline game builds",
   "private": true,
   "type": "module",
@@ -22,13 +22,14 @@
     "./agent": {
       "types": "./dist/agent/index.d.ts",
       "import": "./dist/agent/index.js"
-    }
+    },
+    "./agent/node": "./tools/agent-node.mjs"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test tests/*.test.mjs",
     "test:renpy": "python -m unittest discover -s tests/renpy -v",
-    "test:browser": "npm run build && node tests/browser.mjs && node tests/runtime-browser.mjs && node tests/runtime-stability-browser.mjs && node tests/collections-browser.mjs && node tests/timeline-browser.mjs && node tests/video-browser.mjs && node tests/editor-browser.mjs && node tests/presentation-editor-browser.mjs && node tests/collections-editor-browser.mjs && node tests/key-visual-browser.mjs && node tests/rollback-browser.mjs && node tests/minigame-browser.mjs && node tests/qa-report-browser.mjs && node tests/settings-browser.mjs && node tests/backup-browser.mjs && node tests/player-lifecycle-browser.mjs && node tests/read-progress-browser.mjs && node tests/routes-browser.mjs && node tests/routes-editor-browser.mjs && node tests/authoring-browser.mjs && node tests/workbench-browser.mjs",
+    "test:browser": "npm run build && node tests/browser.mjs && node tests/runtime-browser.mjs && node tests/runtime-stability-browser.mjs && node tests/collections-browser.mjs && node tests/timeline-browser.mjs && node tests/video-browser.mjs && node tests/editor-browser.mjs && node tests/presentation-editor-browser.mjs && node tests/collections-editor-browser.mjs && node tests/key-visual-browser.mjs && node tests/rollback-browser.mjs && node tests/minigame-browser.mjs && node tests/qa-report-browser.mjs && node tests/settings-browser.mjs && node tests/backup-browser.mjs && node tests/player-lifecycle-browser.mjs && node tests/read-progress-browser.mjs && node tests/routes-browser.mjs && node tests/routes-editor-browser.mjs && node tests/authoring-browser.mjs && node tests/workbench-browser.mjs && node tests/agent-browser.mjs",
     "demo": "npm run build && node tools/serve.mjs",
     "validate:spec": "npm run build && node tools/validate-project.mjs examples/runtime/campus.json examples/runtime/netlove.json examples/runtime/circuit.json examples/runtime/rain.json",
     "validate:spec:release": "npm run build && node tools/validate-project.mjs --release",
@@ -44,7 +45,9 @@
     "qa:report": "npm run build && node tools/qa-report.mjs",
     "qa:samples": "npm run build && node tools/qa-samples.mjs",
     "test:routes": "npm run build && node tools/test-routes.mjs",
-    "agent:schemas": "npm run build && node tools/write-agent-schemas.mjs"
+    "agent:schemas": "npm run build && node tools/write-agent-schemas.mjs",
+    "agent": "node tools/agent.mjs",
+    "test:agent": "npm run build && node --test tests/agent.test.mjs tests/agent-node.test.mjs && node tests/agent-browser.mjs"
   },
   "devDependencies": {
     "typescript": "5.9.3",

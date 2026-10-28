@@ -7,8 +7,8 @@
 | 阶段 | 交付 | 完成条件 | 状态 |
 | --- | --- | --- | --- |
 | A | vn-agent-v1、JSON Schema、纯数据 SDK、有限读取与稳定 ID 批次 | capabilities / init / inspect / refs / apply / validate / test；类型和引用诊断、SHA 冲突、dry-run、最终原子验证、无导入副作用 | 核心检查通过（164 Node、6 Python、140 来源文件）；文件提交与实际 preview / build 由后续阶段验收 |
-| B | Node 文件 SDK 与统一 CLI | JSON stdout、退出码、协作锁、预期源哈希、prepared / committed 回执、崩溃恢复和重复请求；实际文件与子进程测试 | 待实施 |
-| C | 真实 preview / build、样例、0.5.0 与整体验收 | CLI 独立完成分支 VN 和多章调查；真实 Chromium 截图、子目录离线包、四类 / Rain、Windows CLI 和原生 CI | 待实施 |
+| B | Node 文件 SDK 与统一 CLI | JSON stdout、退出码、协作锁、预期源哈希、prepared / committed 回执、崩溃恢复和重复请求；实际文件与子进程测试 | 文件 SDK / CLI 及 6 项文件、进程、崩溃恢复测试已通过；整体验收继续 |
+| C | 真实 preview / build、样例、0.5.0 与整体验收 | CLI 独立完成分支 VN 和多章调查；真实 Chromium 截图、子目录离线包、四类 / Rain、Windows CLI 和原生 CI | SDK 两个真实预览与独立包已跑通；CLI / 离线 / CI 继续验证 |
 
 ## 协议与实现边界
 

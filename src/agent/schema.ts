@@ -33,7 +33,7 @@ const common = { timeoutMs: integer(1, AGENT_LIMITS.requestMs) };
 const paging = { kind: text, id: text, chapterId: text, limit: integer(1, 100), maxBytes: integer(4096, AGENT_LIMITS.outputBytes), cursor: { type: 'string', maxLength: 4096 } };
 export const COMMAND_SCHEMAS: Record<string, Schema> = {
   capabilities: shape({ ...common, schema: enumOf('request', 'response', 'operation') }),
-  init: shape({ ...common, type: enumOf('vn', 'chat', 'script', 'investigation'), game: { ...text, pattern: '^[a-zA-Z0-9_-]+$' }, storyVersion: text, title: text, format: enumOf('project', 'editor'), output: text }, ['type', 'game', 'storyVersion', 'title']),
+  init: shape({ ...common, type: enumOf('vn', 'chat', 'script', 'investigation'), game: { ...text, pattern: '^[a-zA-Z0-9_-]+$' }, storyVersion: text, title: text, format: enumOf('project', 'editor'), output: text, recover: bool }, ['type', 'game', 'storyVersion', 'title']),
   inspect: shape({ ...common, ...paging, kind: enumOf('overview', 'nodes', 'chapters', 'variables', 'assets', 'presentation', 'routes') }),
   refs: shape({ ...common, ...paging, kind: enumOf('node', 'variable', 'chapter', 'asset', 'evidence') }, ['kind', 'id']),
   apply: shape({ ...common, expectedSourceSha256: hash, operations: { type: 'array', minItems: 1, maxItems: AGENT_LIMITS.operations, items: { oneOf: OPERATION_DEFINITIONS } }, dryRun: bool, recover: bool }, ['expectedSourceSha256', 'operations']),

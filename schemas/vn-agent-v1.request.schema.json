@@ -120,6 +120,9 @@
               "minLength": 1,
               "maxLength": 500,
               "pattern": "\\S"
+            },
+            "recover": {
+              "type": "boolean"
             }
           },
           "required": [

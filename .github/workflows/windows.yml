@@ -24,6 +24,8 @@ jobs:
           dotnet-version: '10.0.x'
       - run: npm ci
       - run: npm run build
+      - name: Execute AI CLI flows and machine error checks on Windows
+        run: node tools/test-agent-cli.mjs test-results/agent-cli
       - name: Bundle local editor and independent engine sample
         run: |
           node tools/package-studio.mjs build/windows/site
@@ -69,3 +71,4 @@ jobs:
           path: |
             test-results/windows/*.json
             test-results/windows/*.png
+            test-results/agent-cli/

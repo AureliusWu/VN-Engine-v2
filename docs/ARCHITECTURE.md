@@ -44,3 +44,7 @@ MediaDirector 消费 visit 和阅读条件，使用注入的 AudioContext/Audio 
 0.2.1 的异步音频状态串行协调、演出暂停、失败清理和性能范围见 [优化记录](OPTIMIZATION-0.2.1.md)。当前只优化引擎；四作迁移仅在用户主动提出后执行。
 
 详细数据和调用约定见 [自研运行时](SELF-RUNTIME.md)；原四作的正式迁移见 [接入与兼容](MIGRATION.md)。
+
+## R1 AI 开发入口（0.5.0）
+
+`src/agent` 定义 vn-agent-v1 schema 与纯数据 SDK，复用 EditorModel、RuntimeSession、runRouteSuite 和 compliance。`tools/agent-node.mjs` 注入本地资源、事务日志与真实 preview / package 端口，CLI 使用相同 Worker 入口；纯模块导入不访问设备。预览使用同一 createProject / DOMRenderer，沿作者路线从真实入口执行，逐步存档重建由现有回归器核对。独立作品排除 agent / editor 模块，Studio 仍复用作者与运行核心。详见 [AI 开发约定](AI_DEVELOPMENT.md)。
