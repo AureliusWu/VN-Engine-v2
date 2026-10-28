@@ -1,7 +1,7 @@
 {
   "schema": 1,
   "version": "0.4.0",
-  "status": "LOCAL_PASS",
+  "status": "COMPLETE",
   "baseline": "2d78b0c58b5aa44fab75c7b1c73c4c7a623f2df9",
   "coreCommit": "5a983036ba6bca2571b08e3566e1fbc5b5a12939",
   "local": {
@@ -27,8 +27,29 @@
     }
   },
   "native": {
-    "status": "UNVERIFIED",
-    "reason": "Await implementation commit Windows workflow"
+    "status": "PASS",
+    "commit": "140d04e8e5911df236e36d468123a93f23029ed1",
+    "runId": 40611729075,
+    "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40611729075",
+    "assemblyAndEngineVersion": "0.4.0",
+    "firstStartAndProcessRestart": "PASS",
+    "checks": [
+      "Native EXE and bundled engine version agree",
+      "Variable catalog, boolean creation, typed ordered effects and actual asserted route",
+      "Chapter creation and identity references, reorder undo and actual cross-chapter play"
+    ],
+    "artifacts": [
+      {
+        "id": 12783756781,
+        "name": "windows-native-evidence",
+        "digest": "sha256:0d8181cb0939d75424be125cb9d7bc55d831d988586a2bdf271b32e21d196ecd"
+      },
+      {
+        "id": 12783382651,
+        "name": "VNEngine-Studio-win-x64",
+        "digest": "sha256:3d3e852778ce50c134c4a80e3b824978e01ef9f8875ee390369727bb959f2d53"
+      }
+    ]
   },
   "compatibility": {
     "projectSchema": 1,
@@ -61,5 +82,96 @@
     "Alpha; formal artwork, listening and physical devices require separate evidence",
     "Chapter identity/order changes with authored replay snapshots are protected until snapshots are removed and recaptured",
     "Changes to published story identity or semantics require a separate storyVersion/save migration plan"
-  ]
+  ],
+  "implementationCommit": "140d04e8e5911df236e36d468123a93f23029ed1",
+  "standaloneSamples": [
+    {
+      "sample": "campus",
+      "routes": "PASS",
+      "cases": 3,
+      "restoreChecks": 21,
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "identity": {
+        "gameVersion": "self-demo-v1",
+        "engineVersion": "0.4.0",
+        "commitSha": "140d04e8e5911df236e36d468123a93f23029ed1",
+        "buildTime": "2026-10-28T00:55:00.728Z"
+      },
+      "humanQa": "BLOCKED"
+    },
+    {
+      "sample": "circuit",
+      "routes": "PASS",
+      "cases": 3,
+      "restoreChecks": 35,
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "identity": {
+        "gameVersion": "self-demo-v1",
+        "engineVersion": "0.4.0",
+        "commitSha": "140d04e8e5911df236e36d468123a93f23029ed1",
+        "buildTime": "2026-10-28T00:55:01.416Z"
+      },
+      "humanQa": "BLOCKED"
+    },
+    {
+      "sample": "netlove",
+      "routes": "PASS",
+      "cases": 2,
+      "restoreChecks": 10,
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "identity": {
+        "gameVersion": "self-demo-v1",
+        "engineVersion": "0.4.0",
+        "commitSha": "140d04e8e5911df236e36d468123a93f23029ed1",
+        "buildTime": "2026-10-28T00:55:01.129Z"
+      },
+      "humanQa": "BLOCKED"
+    },
+    {
+      "sample": "rain",
+      "routes": "PASS",
+      "cases": 2,
+      "restoreChecks": 7,
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "identity": {
+        "gameVersion": "self-demo-v1",
+        "engineVersion": "0.4.0",
+        "commitSha": "140d04e8e5911df236e36d468123a93f23029ed1",
+        "buildTime": "2026-10-28T00:55:01.712Z"
+      },
+      "humanQa": "BLOCKED"
+    }
+  ],
+  "engineCi": {
+    "status": "PASS",
+    "commit": "140d04e8e5911df236e36d468123a93f23029ed1",
+    "runId": 40611729066,
+    "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40611729066",
+    "artifacts": [
+      {
+        "id": 12782838646,
+        "name": "alpha-qa-reports",
+        "digest": "sha256:aefca0ea41f161e038fd90276651ee40dd2c19d24faf7c6d6549aeb5aded8786"
+      },
+      {
+        "id": 12782678748,
+        "name": "engine-browser-evidence",
+        "digest": "sha256:c2e27c36b61fa40646e235ee44efbf695cbabbde98d90b61858740ed05ae8b07"
+      },
+      {
+        "id": 12782598752,
+        "name": "vn-engine-standalone-samples",
+        "digest": "sha256:f5f7494a5e19c068e728df1dd70e0b0a1c429601d0466378c63a48d5dc92ef63"
+      }
+    ]
+  },
+  "closingCommitScope": "Documentation only; all source checks are bound to implementationCommit"
 }

@@ -9,7 +9,7 @@
 | 1 | 变量目录、类型 / 边界、引用重命名与删除保护 | 选择效果、组合条件和路线期望原子更新；失败保留原工程；真实路线与旧格式存档恢复 | 核心已实现；154 项 Node、6 项 Python、129 项来源和四样例校验通过 |
 | 2 | 调查章节新增、入口、排序、重命名、删除和引用保护 | 演出、布局、章节动作、结局与路线期望同步；撤销完整恢复；真实跨章执行 | 核心与表单已完成；真实跨章试玩 / 回归、入口失效阻断和撤销通过 |
 | 3 | Studio 工作台与类型化效果表单 | 表单新增 / 编辑 / 导出 / 实际试玩 / 路线测试；移动布局、草稿和独立 Studio | 已完成；完整浏览器 / 编辑器通过，包含真实草稿恢复与子目录独立 Studio |
-| 4 | 版本与整体验收 | package / engine / Windows / 构建身份一致为 0.4.0；完整核心、浏览器、编辑器、Windows 原生 CI 和四样例 QA | 本地 155 项 Node、6 项 Python、130 项来源、完整浏览器 / 编辑器通过；0.4 原生流程及提交锁 QA 待实现提交 CI |
+| 4 | 版本与整体验收 | package / engine / Windows / 构建身份一致为 0.4.0；完整核心、浏览器、编辑器、Windows 原生 CI 和四样例 QA | 已完成；155 项 Node、6 项 Python、130 项来源、完整浏览器 / 编辑器、Engine / Windows CI 与提交锁四样例 QA 均通过 |
 
 ## 编辑身份与兼容
 
@@ -20,3 +20,11 @@
 每阶段小步提交 main，不强推。检查共享构建目录，顺序执行本地构建与测试。版本升级保留 alpha 的真实能力边界，不把引擎样例视作正式作品或实体设备验收。
 
 核心阶段提交 `5a983036ba6bca2571b08e3566e1fbc5b5a12939` 的 [Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40610707512) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40610707590) 均通过。该阶段尚未包含 0.4 界面与版本变更，不作为最终版本的替代证据。
+
+## 最终闭环
+
+实现提交：`140d04e8e5911df236e36d468123a93f23029ed1`。[Engine checks](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40611729066) 与 [Windows native host](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40611729075) 均成功。
+
+原生程序与内置引擎均实际报告 0.4.0；变量工作台、有序效果和跨章作者流程在 WebView2 首次启动与完整进程重启后各通过一次。四样例在同一提交锁下运行 10 个用例、覆盖 11 个声明结局、执行 73 次逐步存读档，文件 / 解码 / 构建检查均 PASS；正式人工验收继续 BLOCKED。
+
+[版本说明](RELEASE-v0.4.0.md) · [详细验收](VALIDATION-v0.4.0.md) · [机器记录](validation-v0.4.0.json) · [Windows 便携产物](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40611729075/artifacts/12783382651)。收尾提交只更新文档；上述证据绑定确切实现提交，不冒充文档提交的新一次 CI。

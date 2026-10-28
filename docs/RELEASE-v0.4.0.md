@@ -18,4 +18,6 @@
 
 ## 验收
 
-本地和 CI 结果在实现完成后按确切提交更新，不用旧版本通过记录替代新版本。Windows 便携构建与四份独立样例产物由对应工作流保留。
+实现提交 `140d04e8e5911df236e36d468123a93f23029ed1`：155 项 Node、6 项 Python、130 项来源与完整浏览器 / 编辑器通过；[Engine CI](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40611729066) 和 [Windows CI](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40611729075) 均成功。Windows 实际版本 0.4.0，工作台与跨章流程在首次 / 重启后均通过；四样例的路线 / 解码 / 包复核通过。
+
+[Windows x64 便携包](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40611729075/artifacts/12783382651) · [独立样例包](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40611729066/artifacts/12782598752) · [完整验收](VALIDATION-v0.4.0.md)。
