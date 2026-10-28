@@ -63,7 +63,7 @@
     {
       "target": "editor/acceptance.mjs",
       "mode": "new",
-      "targetSha256": "11b7cb6555e1be42667c90ea618dce558b73620bb2783fafad58ae29501d156a",
+      "targetSha256": "e6bdbf805730c1ef319564bf94b07601f7ef2ccd0070527de1f382cf1da5fb30",
       "origins": []
     },
     {
@@ -129,7 +129,7 @@
     {
       "target": "editor/production.mjs",
       "mode": "new",
-      "targetSha256": "5a45303c3216b559efe4dc94e2958027e76b1db57c832a06e722a9217919d857",
+      "targetSha256": "accdb7713966d6315966ceb77f13c5d70274be22e0769bc09e6c475a22d503ca",
       "origins": []
     },
     {
@@ -161,7 +161,7 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "20c25cdaf6b36281924c4bb1a39b5bdc978a9af6171b3bacab3e59542759587e"
+      "targetSha256": "604205a3b5b4ff8ee2ed68a5c1adf8e14b7622fd7f950a02c672fa79e10e6197"
     },
     {
       "target": "editor/style.css",
@@ -406,7 +406,7 @@
       "target": "hosts/windows/VNEngine.Windows.csproj",
       "mode": "new",
       "origins": [],
-      "targetSha256": "1a01cdfe602692f6e4aa9aa5d5cb51f4105f63026f077f01c03d255acf8b3f10"
+      "targetSha256": "420268b3cad20811c50efd12d61624a06652eae9e02fe67755b76717b548cd32"
     },
     {
       "target": "licenses/Healing-LICENSE.txt",
@@ -686,13 +686,13 @@
     {
       "target": "src/compliance/acceptance.ts",
       "mode": "new",
-      "targetSha256": "a21490571fd5fc4b36f0ed87bd4595a5f26212a5abf2302e7c1a69ff9b53285f",
+      "targetSha256": "3fedc7f941f459804140e0c640cad7d5b781b5f609b8efd9c169229b189b9c18",
       "origins": []
     },
     {
       "target": "src/compliance/art.ts",
       "mode": "new",
-      "targetSha256": "80b5ddb52953cb5aac560f2502466f59a7acda8dbedfacc174d3514964fb2913",
+      "targetSha256": "54d6b5eacdc041cc33f8d71302f5e1056ddf83d5d3ab7e5270225fa36a6f1096",
       "origins": []
     },
     {
@@ -1134,7 +1134,7 @@
       "target": "src/version.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "0492e023687f405e961d36c0331c3bd2d40d603c637a13db0cba9f89825d9434"
+      "targetSha256": "03b898baee1762d308f186172ed428cdb86574e9c44fc4c01f1d220a2754a062"
     },
     {
       "target": "tools/acceptance-node.mjs",
@@ -1254,13 +1254,13 @@
       "target": "tools/package-game.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "050a26225e6a97cfaf37c137dcfaf3e76d0930e35d45107998a3ee85dfdd59c1"
+      "targetSha256": "3e48852f9ce537164f56d984f58f8260479d10d1a36dbfc4885543bf5a873497"
     },
     {
       "target": "tools/package-studio.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "b7e36c093bd42c9b41f72be8fca816c2d9c3bda309f9f1afe464d2d34f5d4c3c"
+      "targetSha256": "4c6978438e189ed4b51b15f07e188996481b93489acd0902502f9c8e33a934e3"
     },
     {
       "target": "tools/probe-assets.mjs",
@@ -1270,8 +1270,8 @@
     },
     {
       "target": "tools/pwa.mjs",
-      "mode": "verbatim",
-      "targetSha256": "18c0bcd19ad0cf158983d14fe48254cb73f89492f35789a828186b853901f59c",
+      "mode": "adapted",
+      "targetSha256": "b7e93014057a6c09a95ae8aa2579a3e02b4e23a3ea78e0ff7a66236fafed5605",
       "origins": [
         {
           "repository": "AureliusWu/NetLove",

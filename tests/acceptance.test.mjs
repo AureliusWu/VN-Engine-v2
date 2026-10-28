@@ -29,6 +29,14 @@ test('R4-B001: fresh AI acceptance satisfies release without human signatures; c
   const next=await syntheticAcceptance(project,picture);project.releaseEvidence.targets.desktop=false;
   assert.equal(assessAiAcceptance(project,next).status,'BLOCKED');
 });
+test('technical reviews cannot reuse a report for undeclared categories or a Linux run as Windows acceptance',async()=>{
+  const {project,picture}=qaFixture(),options=await syntheticAcceptance(project,picture);
+  const technical=options.acceptanceContext.verifiedInputs.find(i=>i.kind==='test-report');
+  technical.platform='linux';
+  assert.equal(assessAiAcceptance(project,options).checks.find(c=>c.key==='windows').status,'UNVERIFIED');
+  technical.platform='win32';technical.categories=['web'];
+  assert.equal(assessAiAcceptance(project,options).checks.find(c=>c.key==='accessibility').status,'UNVERIFIED');
+});
 test('AI review rejects changed evidence, partial coverage, missing modality, fake technical mode and unresolved blocking findings',async()=>{
   const {project,picture}=qaFixture(),original=await syntheticAcceptance(project,picture);
   for(const change of [
@@ -61,6 +69,15 @@ test('R4-B002: stale or non-ready linked Neutral blocks a referenced variant wit
   assert.equal(stale.assets.find(a=>a.id==='hero/smile').ART_READY,'FAIL');
   project.releaseEvidence.art['hero/neutral'].runtimeSha256=sha256;project.assets.find(a=>a.id==='hero/neutral').status='DRAFT';
   assert.equal((await assess()).CHARACTER_MASTER_INHERITANCE,'FAIL');
+  project.releaseEvidence.characterMasters.hero.neutralAsset='missing-neutral';
+  assert.equal((await assess()).CHARACTER_MASTER_INHERITANCE,'FAIL');
+});
+test('source changes during packaging preserve the external edit and never label an old payload with new source identity',async t=>{
+  const f=await setup(t),output=path.join(f.root,'raced-build');
+  await assert.rejects(packageGame(f.source,output,{onPhase:async phase=>{
+    if(phase==='snapshot-ready')await fs.writeFile(f.source,f.sourceText+'\n');
+  }}),/SOURCE_CONFLICT/);
+  assert.equal(await fs.readFile(f.source,'utf8'),f.sourceText+'\n');await assert.rejects(fs.access(output));
 });
 test('R4-B003: omitted startup files, omitted runtime dependencies and wrong content fingerprint never pass build verification',async t=>{
   const f=await setup(t),old=process.env.VN_ENGINE_COMMIT;process.env.VN_ENGINE_COMMIT='a'.repeat(40);

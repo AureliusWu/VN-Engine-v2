@@ -92,6 +92,7 @@ catch(failure){error.textContent='启动未完成：'+failure.message;}
     files: [...files].map(([name, bytes]) => ({ name, size: bytes.length, sha256: createHash('sha256').update(bytes).digest('hex') }))
   };
   files.set('build-manifest.json', Buffer.from(JSON.stringify(metadata, null, 2) + '\n'));
+  await options.onPhase?.('snapshot-ready');
   if(!sourceBytes.equals(await readFile(source)))throw Error('SOURCE_CONFLICT: Project changed during build');
   await mkdir(destination, { recursive: true });
   for (const [name, bytes] of files) { const path = resolve(destination, name); if (!path.startsWith(destination + sep)) throw new Error('Unsafe output path'); await mkdir(dirname(path), { recursive: true }); await writeFile(path, bytes); }

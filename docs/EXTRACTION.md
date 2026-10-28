@@ -30,3 +30,7 @@
 ## v0.2 自研扩展
 
 新增 ScriptEngine、RuntimeSession、DOMRenderer、MediaDirector、资源清单与独立作品构建均在本仓库实现。Rain 格式转入自研执行块，保留原行与选择回应，执行无需 Ren’Py。旧 SDK 编译路径仅作兼容。新样例 SVG/合成测试音有独立用途，不计入四作正式素材完成度。
+
+## R4 离线适配
+
+tools/pwa.mjs 为独立 Studio 增加导航壳和精确文档优先参数，由 verbatim 改为 adapted，保留原提交与来源哈希；游戏默认策略继续回归。Studio 字体沿用固定 Rain 字体字节与 OFL，按新增 AI 审阅界面重建子集。

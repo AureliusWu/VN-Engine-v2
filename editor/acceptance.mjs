@@ -20,6 +20,7 @@ export function createAcceptancePanel(ctx) {
       finally{await reader.cancel().catch(()=>{});}
       const all=new Uint8Array(size);let offset=0;for(const part of parts){all.set(part,offset);offset+=part.length;}return all;
     };
+    output.replaceChildren(ctx.element('p','AI 模拟终审：正在核对（UNVERIFIED）',{'data-ai-status':'UNVERIFIED'}));
     const context=await captureAcceptanceContext(ctx.project(),text,document,readAsset,bytes);
     if(current!==epoch||!active||text!==ctx.source())throw Error('工程或面板已改变，审核核对已取消');
     report=assessAiAcceptance(ctx.project(),{acceptance:document,acceptanceContext:context});error='';

@@ -10,7 +10,7 @@ export function fingerprintFiles(files) {
   return hash.digest('hex').slice(0, 14);
 }
 
-export function renderWorker({ namespace, version, urls }) {
+export function renderWorker({ namespace, version, urls, shell = 'index.html', navigationShellFirst = true }) {
   return `// Generated from actual build paths and bytes. Assets are cached atomically.
 const PREFIX = ${JSON.stringify(namespace + '-v2:')} + encodeURIComponent(self.registration.scope) + ':';
 const CACHE = PREFIX + ${JSON.stringify(version)};
@@ -27,15 +27,15 @@ self.addEventListener('fetch', event => {
   if (request.method !== 'GET' || url.origin !== self.location.origin || !url.href.startsWith(self.registration.scope)) return;
   event.respondWith(caches.open(CACHE).then(async cache => {
     // These immutable local files can have different Origin request headers.
-    if (request.mode === 'navigate') {
-      const shell = await cache.match(new URL('index.html', self.registration.scope), { ignoreVary: true });
+    if (request.mode === 'navigate' && ${JSON.stringify(navigationShellFirst)}) {
+      const shell = await cache.match(new URL(${JSON.stringify(shell)}, self.registration.scope), { ignoreVary: true });
       if (shell) return shell;
     }
     const hit = await cache.match(request, { ignoreVary: true });
     if (hit) return hit;
     try { return await fetch(request); }
     catch {
-      if (request.mode === 'navigate') return await cache.match(new URL('index.html', self.registration.scope), { ignoreVary: true }) || Response.error();
+      if (request.mode === 'navigate') return await cache.match(new URL(${JSON.stringify(shell)}, self.registration.scope), { ignoreVary: true }) || Response.error();
       return Response.error();
     }
   }));

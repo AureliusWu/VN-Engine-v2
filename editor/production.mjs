@@ -117,7 +117,7 @@ export function createProductionPanel(root,ctx){
   if(impact){const report=card('最近一次修改影响');report.append(e('p',impact.beforeSha256+' → '+impact.afterSha256,{class:'help'}),e('p',`内容 ${impact.content.total} · 节点 ${impact.nodes.total} · 素材 ${impact.assets.total} · 任务 ${impact.tasks.total}`));for(const key of ['content','affectedContent','nodes','affectedNodes','assets','tasks','voiceWarnings'])report.append(e('p',key+'：'+JSON.stringify(impact[key]),{class:'help'}));report.append(e('p',impact.unknown.join('；'),{class:'help'}));}
  }
  function render(){
-  if(disposed)return;active=true;stopMedia();const scroll=root.parentElement.scrollTop,focused=root.contains(document.activeElement)?document.activeElement.getAttribute('aria-label'):null;root.replaceChildren();
+  if(disposed)return;acceptance.leave();active=true;stopMedia();const scroll=root.parentElement.scrollTop,focused=root.contains(document.activeElement)?document.activeElement.getAttribute('aria-label'):null;root.replaceChildren();
   const nav=controls(root);for(const [id,label]of [['context','简报与角色'],['tasks','六类任务'],['assets','素材与试听'],['theme','主题'],['feedback','问题与反馈'],['validation','验证状态']]){const button=action(label,()=>{if(view!==id){query='';kind='';state='';character='';}view=id;render();});button.setAttribute('aria-pressed',String(view===id));button.dataset.productionView=id;nav.append(button);}
   ({context:contextView,tasks:taskView,assets:assetView,theme:themeView,feedback:feedbackView,validation:validationView})[view]();root.parentElement.scrollTop=scroll;if(focused)root.querySelector('[aria-label='+JSON.stringify(focused)+']')?.focus({preventScroll:true});
  }

@@ -1,6 +1,6 @@
 {
   "name": "@aureliuswu/vn-engine-v2",
-  "version": "0.7.0",
+  "version": "0.8.0",
   "description": "Self-developed narrative engine: script VM, VN/chat/investigation runtimes, DOM player and offline game builds",
   "private": true,
   "type": "module",

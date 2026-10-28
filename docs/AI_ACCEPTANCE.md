@@ -7,7 +7,7 @@
 独立 acceptance.json 使用 vn-ai-acceptance-v1 / schema 1，规则版本 r4-1，完整 schema 位于 schemas/vn-ai-acceptance-v1.document.schema.json。记录绑定 game、storyVersion、ENGINE_VERSION、精确源字节、实际素材 / 许可，另存输入、模型、模态、时间、覆盖、理由与定位问题。完整记录不进入玩家工程、存档或成品资源。
 
 - story / text / visualIntegration / audio / art / master 使用 ai-simulated。
-- accessibility / web / pwa / windows 使用 automated，需对应当前源 SHA 的实际 PASS 测试报告；AI 意见不能替代平台执行。
+- accessibility / web / pwa / windows 使用 automated，需对应当前源 SHA 的实际 PASS 测试报告；报告须列明 categories，Windows 另须 platform:win32，AI 意见不能替代平台执行。
 - 每条审阅须引用精确 $source 输入。剧情另需当前路线报告；视觉整合须含 1280px 和 390px 的实际 PNG；美术须含当前资源图；母版须含对应哈希的图；听感须覆盖全部适用音频，并声明 audio 观察能力。
 - 主机重新读取输入字节并验证哈希，核对 PNG 头部尺寸。这些结构与字节检查不自动证明审美、听感或模型身份。源、素材、主题 / 演出、目标、引擎或规则变化均使旧结果失效。
 - 缺模态、缺文件、抽样覆盖、未处理 error、超时或 UNVERIFIED 均不能批准完整范围。解码 / RMS / 峰值不自动成为艺术或听感 PASS。

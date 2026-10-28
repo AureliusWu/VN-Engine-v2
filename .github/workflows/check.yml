@@ -58,3 +58,18 @@ jobs:
         with:
           name: engine-browser-evidence
           path: test-results/
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: r4-review-evidence
+          path: |
+            test-results/r4-acceptance-*/studio-ai-*.png
+            test-results/r4-acceptance-*/R4_BROWSER_REPORT.json
+            test-results/r4-acceptance-*/R4_OFFLINE_STUDIO_REPORT.json
+            test-results/creative-*/sdk/project.json
+            test-results/creative-*/sdk/assets/
+            test-results/creative-*/sdk/preview-desktop/*.png
+            test-results/creative-*/sdk/preview-mobile/*.png
+            test-results/creative-*/sdk/CREATIVE_REPORT.json
+            test-results/creative-*/sdk/ROUTE_REPORT.json
+            test-results/creative-*/sdk/MEDIA_REPORT.json

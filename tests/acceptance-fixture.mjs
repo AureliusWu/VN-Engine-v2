@@ -20,7 +20,7 @@ export async function syntheticAcceptance(project, picture, sourceText=JSON.stri
     if(['background','portrait','cg','ui','audio','video'].includes(asset.kind))inputs.push({id:'asset:'+asset.id,kind:['audio','video'].includes(asset.kind)?'audio':'image',src:asset.src,assetId:asset.id,sha256:sha(data)});
   }
   for(const width of [1280,390]){const data=fixturePng(width),src='review-inputs/synthetic-'+width+'.png';bytes.set(src,data);inputs.push({id:'viewport-'+width,kind:'screenshot',src,sha256:sha(data),width,height:720});}
-  for(const [id,kind,report] of [['routes','routes',runRouteSuite(project)],['technical','test-report',{status:'PASS',fixture:true}]]) {
+  for(const [id,kind,report] of [['routes','routes',runRouteSuite(project)],['technical','test-report',{status:'PASS',fixture:true,categories:['accessibility','web','pwa','windows'],platform:'win32'}]]) {
     const data=Buffer.from(JSON.stringify({...report,sourceSha256:binding.sourceSha256})),src='review-inputs/'+id+'.json';bytes.set(src,data);inputs.push({id,kind,src,sha256:sha(data)});
   }
   const doc={contract:'vn-ai-acceptance-v1',schema:1,game:project.game,storyVersion:project.version,engineVersion:ENGINE_VERSION,rubricVersion:'r4-1',binding,inputs,fixture:true,

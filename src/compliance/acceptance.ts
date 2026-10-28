@@ -18,7 +18,7 @@ export type AiAcceptanceDocument = { contract: typeof AI_ACCEPTANCE_CONTRACT; sc
   engineVersion: string; rubricVersion: typeof AI_REVIEW_RUBRIC; binding: ReviewBinding; inputs: AcceptanceInput[];
   reviews: AcceptanceReview[]; supersedesSha256?: string; fixture?: boolean };
 export type AcceptanceContext = { sourceText: string; binding: ReviewBinding;
-  verifiedInputs: (AcceptanceInput & { status?: AcceptanceStatus })[] };
+  verifiedInputs: (AcceptanceInput & { status?: AcceptanceStatus; categories?: string[]; platform?: string })[] };
 export type AcceptanceOptions = { acceptance?: unknown; acceptanceContext?: AcceptanceContext };
 export type AcceptanceCheck = { key: string; status: AcceptanceStatus; reason: string;
   mode?: string; model?: string; reviewedAt?: string };
@@ -63,7 +63,7 @@ export async function captureAcceptanceContext(project: EngineProject, sourceTex
       total += bytes.byteLength;
       if (bytes.byteLength > 67_108_864 || total > 268_435_456) throw new Error('ACCEPTANCE_BUDGET_EXCEEDED');
       if (await reviewSourceHash(bytes) !== item.sha256) continue;
-      let status: AcceptanceStatus | undefined;
+      let status: AcceptanceStatus | undefined, categories: string[] | undefined, platform: string | undefined;
       if (item.kind === 'screenshot') {
         const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
         if (bytes.length < 24 || view.getUint32(0) !== 0x89504e47 || view.getUint32(4) !== 0x0d0a1a0a
@@ -71,9 +71,10 @@ export async function captureAcceptanceContext(project: EngineProject, sourceTex
       }
       if (item.kind === 'routes' || item.kind === 'test-report') {
         const report = JSON.parse(new TextDecoder('utf-8', { fatal: true }).decode(bytes));
+        categories=Array.isArray(report.categories)?report.categories.filter((v:unknown)=>typeof v==='string'):[];platform=typeof report.platform==='string'?report.platform:undefined;
         status = report.sourceSha256 === binding.sourceSha256 && ['PASS', 'FAIL', 'UNVERIFIED'].includes(report.status) ? report.status : 'UNVERIFIED';
       }
-      verifiedInputs.push({ ...item, ...(status ? { status } : {}) });
+      verifiedInputs.push({ ...item, ...(status ? { status, categories, platform } : {}) });
     } catch (error) {
       if (error instanceof Error && /BUDGET|TIMEOUT|ABORTED/.test(error.message)) throw error;
     }
@@ -132,7 +133,7 @@ export function assessAiAcceptance(project: EngineProject, options: AcceptanceOp
     if (!doc.binding.filesVerified || !context.binding.filesVerified) throw new Error('Actual asset bytes are unverified');
     if (!doc.inputs.some(i => i.kind === 'project' && i.src === '$source' && i.sha256 === context.binding.sourceSha256))
       throw new Error('Acceptance must include the exact source input');
-    if (doc.inputs.some(input => !context.verifiedInputs.some(v => JSON.stringify({ ...v, status: undefined }) === JSON.stringify(input))))
+    if (doc.inputs.some(input => !context.verifiedInputs.some(v => JSON.stringify({ ...v, status: undefined, categories: undefined, platform: undefined }) === JSON.stringify(input))))
       throw new Error('Acceptance evidence bytes or metadata are missing or changed');
     evidenceBound = true;
   } catch (error) { common = error instanceof Error ? error.message : String(error); }
@@ -147,7 +148,7 @@ export function assessAiAcceptance(project: EngineProject, options: AcceptanceOp
       else if (review.mode !== (isTechnical ? 'automated' : 'ai-simulated')) reason = 'Review mode does not match content or technical scope';
       else if (!inputs.some(i => i.kind === 'project')) reason = 'Review did not include current project input';
       else if (review.coverage !== 'full') reason = 'Sampled or incomplete review cannot approve the full scope';
-      else if (isTechnical && !inputs.some(i => i.kind === 'test-report' && context.verifiedInputs.some(v => v.id === i.id && v.status === 'PASS')))
+      else if (isTechnical && !inputs.some(i => i.kind === 'test-report' && context.verifiedInputs.some(v => v.id === i.id && v.status === 'PASS' && v.categories?.includes(review.category) && (review.category!=='windows'||v.platform==='win32'))))
         reason = 'Technical acceptance needs a passed actual test report';
       else if (!isTechnical && !review.modalities.includes('text')) reason = 'Project context was not observed';
       else if (key === 'story' && !inputs.some(i => i.kind === 'routes' && context.verifiedInputs.some(v => v.id === i.id && v.status === 'PASS')))

@@ -100,7 +100,7 @@ export function assessProductionArt(project: EngineProject, referencedIds: reado
   for (const id of [...required]) {
     const value = records[id], link = isRecord(value?.characterMaster) ? value.characterMaster : {};
     const master = typeof link.id === 'string' ? masters[link.id] : undefined;
-    if (byId.get(id)?.kind === 'portrait' && typeof master?.neutralAsset === 'string') required.add(master.neutralAsset);
+    if (byId.get(id)?.kind === 'portrait' && typeof master?.neutralAsset === 'string' && byId.has(master.neutralAsset)) required.add(master.neutralAsset);
   }
   const masterPassed = (value: Record<string, unknown>): boolean => {
     const link = isRecord(value.characterMaster) ? value.characterMaster : {}, masterValue = known(link.id) ? masters[link.id] : undefined;
