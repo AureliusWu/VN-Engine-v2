@@ -6,7 +6,7 @@
 
 | 阶段 | 交付 | 完成条件 | 状态 |
 | --- | --- | --- | --- |
-| A | vn-agent-v1、JSON Schema、纯数据 SDK、有限读取与稳定 ID 批次 | capabilities / init / inspect / refs / apply / validate / test；类型和引用诊断、SHA 冲突、dry-run、最终原子验证、无导入副作用 | 完成：179 Node、6 Python、149 来源；schema、分页 / 片段、批次与预算边界通过 |
+| A | vn-agent-v1、JSON Schema、纯数据 SDK、有限读取与稳定 ID 批次 | capabilities / init / inspect / refs / apply / validate / test；类型和引用诊断、SHA 冲突、dry-run、最终原子验证、无导入副作用 | 完成：180 Node、6 Python、149 来源；schema、分页 / 片段、批次与预算边界通过 |
 | B | Node 文件 SDK 与统一 CLI | JSON stdout、退出码、协作锁、预期源哈希、prepared / committed 回执、崩溃恢复和重复请求；实际文件与子进程测试 | 完成：文件 SDK / CLI、真实崩溃与回执恢复、失败 / 冲突 / 重放、JSON 与退出码通过 |
 | C | 真实 preview / build、样例、0.5.0 与整体验收 | CLI 独立完成分支 VN 和多章调查；真实 Chromium 截图、子目录离线包、四类 / Rain、Windows CLI 和原生 CI | SDK / CLI 两流程、四模板与 Rain、四包子目录断网重开通过；收尾修复等待确切提交 CI |
 

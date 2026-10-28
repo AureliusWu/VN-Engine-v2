@@ -34,7 +34,8 @@ async function acquire(file, request, phase) {
       let dead = false; if (Number.isSafeInteger(owner.pid) && owner.pid > 0) { try { process.kill(owner.pid, 0); } catch (err) { dead = err.code === 'ESRCH'; } }
       if (!dead) throw new AgentError('LOCKED', 'Another writer owns the lease', { actual: owner.requestId ?? null });
       if (!request.params.recover) throw new AgentError('RECOVERY_REQUIRED', 'Dead writer lease; retry the identical request with recover=true');
-      await releaseAgentLease(owner);
+      if (typeof owner.token !== 'string' || !owner.token) throw new AgentError('RECOVERY_REQUIRED', 'Dead lease has no ownership token');
+      await releaseAgentLease({ file: lease.file, token: owner.token });
     }
   }
   throw new AgentError('LOCKED', 'Could not acquire writer lease');

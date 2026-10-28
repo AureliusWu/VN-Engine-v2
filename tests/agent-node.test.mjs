@@ -70,3 +70,8 @@ test('source SHA binds CRLF UTF-8 bytes; BOM is rejected without rewriting the s
  const inspected=await runAgentFileRequest(req('inspect',file));assert.equal(inspected.status,'PASS');assert.equal(inspected.project.sourceSha256,createHash('sha256').update(await fs.readFile(file)).digest('hex'));
  const bom=Buffer.concat([Buffer.from([0xef,0xbb,0xbf]),Buffer.from(original)]);await fs.writeFile(file,bom);const refused=await runAgentFileRequest(req('inspect',file));assert.equal(refused.status,'FAIL');assert.equal(refused.diagnostics.at(-1).code,'INVALID_ENCODING');assert.deepEqual(await fs.readFile(file),bom);
 });
+test('dead lease recovery is bound to this project, ignoring a foreign path in metadata',async t=>{
+ const {file,dir,first}=await fixture(t),other=path.join(dir,'unrelated.json'),content=JSON.stringify({token:'old-token',keep:true});await fs.writeFile(other,content);
+ await fs.writeFile(file+'.agent-lock',JSON.stringify({pid:99999999,token:'old-token',file:other,requestId:'dead-owner'}));
+ const request=edit(file,first.project.sourceSha256,'bound-recovery');request.params.recover=true;const result=await runAgentFileRequest(request);assert.equal(result.status,'PASS',JSON.stringify(result));assert.equal(await fs.readFile(other,'utf8'),content);
+});
