@@ -57,6 +57,53 @@ internal static class SmokeTests
             if(await JS("window.nativeR2 === 'passed'")!="true")throw new InvalidDataException("Native R2 flow: "+await JS("window.nativeR2"));
             checks.Add("R2 six-discipline CLI sample renders actual generated illustrations and dusk theme, executes its branch and save reconstruction, preserves DRAFT and player storage, on first launch and restart");
             await JS("""
+              document.querySelector('[data-tab=production]').click();
+              window.nativeR3Change=(label,value)=>{const input=document.querySelector('[aria-label="'+label+'"]');if(!input)throw Error('Missing R3 field '+label);input.value=value;input.dispatchEvent(new Event('change'));};
+              window.nativeR3Click=label=>{const button=[...document.querySelectorAll('#production-list button')].find(b=>b.textContent===label);if(!button||button.disabled)throw Error('Missing R3 control '+label);button.click();};
+              nativeR3Change('作品前提','Native R3 review fixture');nativeR3Click('六类任务');nativeR3Click('添加剧情任务');
+              nativeR3Change('任务简报 story-1','Review the opening on the native host');
+              nativeR3Click('主题');nativeR3Change('主题预设','paper');document.querySelector('[data-command=undo]').click();document.querySelector('[data-command=redo]').click();document.querySelector('[data-command=undo]').click();
+              nativeR3Click('问题与反馈');
+              """);
+            if (window.Options.VerifyPersistence)
+            {
+                await JS("nativeR3Click('打开审阅文档')");
+                await Wait("document.querySelector('[data-feedback-id=\"native-r3\"] [data-freshness]')?.dataset.freshness === 'fresh'");
+                if(await JS("document.querySelector('[data-feedback-id=\"native-r3\"]').textContent.includes('合成夹具')")!="true")throw new InvalidDataException("Native R3 review did not survive full process restart");
+                checks.Add("R3 independent review.json reopens with its history and matching project/file identity after a complete process restart");
+            }
+            else
+            {
+                await JS("""
+                  nativeR3Change('反馈 ID','native-r3');nativeR3Change('操作者（自报）','Synthetic native reviewer');
+                  const target=[...document.querySelector('[aria-label="反馈目标"]').options].find(o=>JSON.parse(o.value).kind==='line').value;
+                  nativeR3Change('反馈目标',target);nativeR3Change('反馈意见','合成夹具：核对原生开场；不是人工剧情终审');nativeR3Click('记录问题');
+                  """);
+                await Wait("document.querySelector('[data-feedback-id=\"native-r3\"] [data-freshness]')?.dataset.freshness === 'fresh'");
+            }
+            await JS("nativeR3Change('修复或重开说明 native-r3','Synthetic native repair statement');nativeR3Click('记录修复 native-r3')");
+            await Wait("document.querySelector('[data-feedback-id=\"native-r3\"] [data-freshness]')?.textContent.includes('已修复待复验')");
+            await JS("nativeR3Change('复验声明 native-r3','Synthetic fixture only, no human acceptance');nativeR3Click('确认复验 native-r3')");
+            await Wait("document.querySelector('[data-feedback-id=\"native-r3\"] [data-freshness]')?.textContent.includes('已复验')");
+            await JS("nativeR3Click('重开问题 native-r3')");
+            await Wait("document.querySelector('[data-feedback-id=\"native-r3\"] [data-freshness]')?.textContent.includes('重开')");
+            await JS("nativeR3Click('保存审阅文档')");
+            var reviewFile = Path.Combine(window.SmokeFolder, "review.json");
+            await Wait("document.querySelector('#status')?.textContent.includes('审阅文档已保存')");
+            HostFiles.ValidateAuthorReview(HostFiles.ReadJson(reviewFile));
+            await JS("nativeR3Click('打开审阅文档')");
+            await Wait("document.querySelector('#status')?.textContent.includes('审阅文档已打开') && document.querySelector('[data-feedback-id=\"native-r3\"] [data-freshness]')?.dataset.freshness==='fresh'");
+            var reviewImage = Path.Combine(Path.GetDirectoryName(window.Options.Report)!, "review-" + Path.GetFileNameWithoutExtension(window.Options.Report) + ".png");
+            await using (var image = File.Create(reviewImage)) await window.Browser.CoreWebView2.CapturePreviewAsync(Microsoft.Web.WebView2.Core.CoreWebView2CapturePreviewImageFormat.Png, image);
+            await JS("nativeR3Click('定位问题 native-r3')");
+            await Wait("document.querySelector('[data-tab=story]').getAttribute('aria-pressed')==='true' && document.activeElement?.getAttribute('aria-label')?.includes('ID')");
+            checks.Add("R3 native production/task/theme controls share undo/redo; targeted feedback completes addressed/verified/reopened, atomic separate-file save, reopen and source/file freshness; reviewer statements are synthetic fixtures");
+            await JS("document.querySelector('[data-tab=production]').click();nativeR3Click('素材与试听');nativeR3Change('素材种类','audio');[...document.querySelectorAll('#production-list button')].find(b=>b.textContent.startsWith('试听 ')).click()");
+            await Wait("document.querySelector('[data-audition]')?.currentTime > .03 && !document.querySelector('[data-audition]').paused");
+            await JS("document.querySelector('[data-tab=story]').click()");
+            await Wait("!document.querySelector('[data-audition]')");
+            checks.Add("R3 native audition plays actual local audio and releases the media element when leaving the panel");
+            await JS("""
               window.nativePresentationAuthor = 'pending';
               try {
                 const section = () => [...document.querySelectorAll('#inspector > details')].find(node => node.querySelector('summary')?.textContent === '正式图层与时间线');

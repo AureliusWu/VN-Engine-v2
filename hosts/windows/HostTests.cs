@@ -20,6 +20,9 @@ internal static class HostTests
             var jsonPath = Path.Combine(root, "workspace.vnproj"); HostFiles.WriteJson(jsonPath, "{\"title\":\"中文\"}"); var before = File.ReadAllBytes(jsonPath);
             Reject(() => HostFiles.WriteJson(jsonPath, "{broken")); Check(File.ReadAllBytes(jsonPath).SequenceEqual(before), "失败写入破坏了原文件");
             Check(!before.Take(3).SequenceEqual(new byte[] { 0xef, 0xbb, 0xbf }), "写入了 BOM"); checks.Add("Atomic UTF-8 JSON saves preserve existing bytes when parsing fails");
+            HostFiles.ValidateAuthorReview("{\"contract\":\"vn-author-review-v1\",\"schema\":1,\"game\":\"fixture\",\"storyVersion\":\"1\",\"items\":[]}");
+            Reject(() => HostFiles.ValidateAuthorReview("{\"schema\":1,\"game\":\"fixture\",\"assets\":[]}"));
+            checks.Add("Independent native review files require the versioned author contract and cannot be confused with runtime projects");
             var content = "{\"schema\":1,\"game\":\"fixture\",\"title\":\"Fixture\",\"assets\":[{\"id\":\"a\",\"kind\":\"background\",\"src\":\"assets/a.svg\"}]}";
             Directory.CreateDirectory(Path.Combine(root, "assets")); File.WriteAllText(Path.Combine(root, "assets/a.svg"), "<svg/>"); File.WriteAllText(Path.Combine(root, "private.txt"), "private");
             var workspace = new AssetWorkspace(root, content);

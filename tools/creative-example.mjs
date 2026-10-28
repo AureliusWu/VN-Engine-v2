@@ -8,7 +8,7 @@ import {runAgentFileRequest} from './agent-node.mjs';
 import {importAssetPath} from './agent-imports.mjs';
 const repository=fileURLToPath(new URL('..',import.meta.url));
 const sha=bytes=>createHash('sha256').update(bytes).digest('hex');
-export async function runCreativeExample(output,{transport='sdk',preview=true}={}) {
+export async function runCreativeExample(output,{transport='sdk',preview=true,game='vn-creative-bookshop',storyVersion='creative-draft-1'}={}) {
  const root=path.resolve(output);await fs.mkdir(root,{recursive:true});
  const project=path.join(root,'project.json'),evidence=[];let serial=0;
  async function call(command,params={},allowed=['PASS']) {
@@ -29,7 +29,7 @@ export async function runCreativeExample(output,{transport='sdk',preview=true}={
   ['font','font','examples/agent/assets/agent.woff2','licensed'],['license','license','examples/agent/assets/OFL.txt','licensed']];
  const files=await Promise.all(definitions.map(async([id,kind,file,method,prompt])=>{const source=path.join(repository,file),bytes=await fs.readFile(source),sha256=sha(bytes),extension=path.extname(file).slice(1);return{id,kind,source,sha256,extension,method,prompt,relative:importAssetPath(sha256,extension)};}));
  const probe=await call('probe',{files:files.map(f=>({id:f.id,kind:f.kind,file:f.source})),output:path.join(root,'MEDIA_REPORT.json')});
- const initialized=await call('init',{type:'script',game:'vn-creative-bookshop',storyVersion:'creative-draft-1',title:'The Last Returned Book'});
+ const initialized=await call('init',{type:'script',game,storyVersion,title:'The Last Returned Book'});
  // Production context first; the default stable opening ID is retained for this first batch.
  const production=await call('apply',{expectedSourceSha256:initialized.project.sourceSha256,operations:[
   {op:'production.patch',value:{schema:1,brief:{premise:'At closing time, a visitor returns a book with a note still inside.',tone:'Quiet warmth, unresolved curiosity',visualStyle:'Painterly amber bookshop and blue rainy evening',musicDirection:'96 BPM soft additive plucks in A minor',soundDirection:'Low rain and one door bell',writingStyle:'Brief concrete lines; leave one small question open'},

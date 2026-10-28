@@ -4,7 +4,7 @@ import {promises as fs} from 'node:fs';
 import {tmpdir} from 'node:os';
 import path from 'node:path';
 import {spawnSync} from 'node:child_process';
-import {newProject,contentCatalogue,contentKey,captureReviewBinding,readAuthorReview,editAuthorReview,assessAuthorReview} from '../dist/editor/index.js';
+import {newProject,contentCatalogue,contentKey,captureReviewBinding,readAuthorReview,editAuthorReview,assessAuthorReview,analyseContentImpact} from '../dist/editor/index.js';
 import {executeAgentRequest,sourceHash,schemaErrors,AGENT_RESPONSE_SCHEMA} from '../dist/agent/index.js';
 import {createProject} from '../dist/index.js';
 import {runAgentFileRequest,runAgentFileRequestInProcess} from '../tools/agent-node.mjs';
@@ -30,6 +30,7 @@ test('impact and apply dry-run expose bounded real node, task, voice and global 
  const p=newProject('script');p.production={schema:1,tasks:[{id:'plot',kind:'story',brief:'Plot',state:'review',targets:[{nodeId:'start'}]},{id:'art',kind:'art',brief:'Art',state:'review',dependsOn:['plot']}]};const source=text(p);
  const request=req('impact',{expectedSourceSha256:await sourceHash(source),operations:[{op:'exit.set',nodeId:'start',value:{type:'jump',next:'end'}}],limit:1});const r=await executeAgentRequest(request,{source});assert.equal(r.response.status,'PASS',JSON.stringify(r.response));assert.equal(r.candidate,undefined);assert.ok(r.response.data.impact.nodes.items.includes('start'));assert.equal(r.response.data.impact.tasks.total,2);assert.equal(r.response.data.impact.tasks.truncated,true);assert.equal(r.response.data.impact.fullRouteSuiteRequired,true);assert.equal(r.response.data.applied,false);
  const global=await executeAgentRequest(req('impact',{expectedSourceSha256:await sourceHash(source),operations:[{op:'ui.set',value:{schema:1,preset:'paper'}}]}),{source});assert.deepEqual(global.response.data.impact.globalChanges,['ui']);assert.equal(global.response.data.impact.tasks.total,2);
+ const a=newProject('script');a.assets=[{id:'voice',kind:'audio',src:'old.wav'}];a.defaults={voice:'voice'};const b=structuredClone(a);b.assets[0].src='revised.wav';const impact=analyseContentImpact(a,b,'a'.repeat(64),'b'.repeat(64));assert.equal(impact.content.total,0);assert.ok(impact.affectedContent.total>0);assert.ok(impact.affectedNodes.items.includes('start'));assert.ok(impact.voiceWarnings.total>0);
 });
 test('review model binds actual bytes, preserves extensions and makes source, target and file changes stale',async()=>{
  const p=newProject('script'),bytes=new Uint8Array([1,2,3]);p.assets=[{id:'picture',kind:'background',src:'picture.png',sha256:await sourceHash(bytes)}];const source=text(p),binding=await captureReviewBinding(p,source,async()=>bytes);assert.equal(binding.filesVerified,true);

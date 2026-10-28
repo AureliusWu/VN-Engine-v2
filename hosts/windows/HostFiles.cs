@@ -44,6 +44,17 @@ internal static partial class HostFiles
         if (root.ValueKind == JsonValueKind.Object && root.TryGetProperty("format", out var format) && format.GetString() == "vn-engine-editor") return root.GetProperty("project");
         return root;
     }
+    internal static void ValidateAuthorReview(string content)
+    {
+        if (Encoding.UTF8.GetByteCount(content) > MaxJson) throw new InvalidDataException("审阅超过 8 MB");
+        using var parsed = JsonDocument.Parse(content, new JsonDocumentOptions { MaxDepth = 64 });
+        var doc = parsed.RootElement;
+        if (doc.ValueKind != JsonValueKind.Object || doc.GetProperty("contract").GetString() != "vn-author-review-v1" || doc.GetProperty("schema").GetInt32() != 1
+            || string.IsNullOrWhiteSpace(doc.GetProperty("game").GetString()) || string.IsNullOrWhiteSpace(doc.GetProperty("storyVersion").GetString())
+            || doc.GetProperty("items").ValueKind != JsonValueKind.Array || doc.GetProperty("items").GetArrayLength() > 500) throw new InvalidDataException("不是受支持的作者审阅文档");
+        foreach (var item in doc.GetProperty("items").EnumerateArray())
+            if (item.GetProperty("events").ValueKind != JsonValueKind.Array || item.GetProperty("events").GetArrayLength() is < 1 or > 64) throw new InvalidDataException("审阅操作记录无效");
+    }
     internal static void WriteJson(string path, string content)
     {
         if (Encoding.UTF8.GetByteCount(content) > MaxJson) throw new InvalidDataException("工程超过 8 MB");

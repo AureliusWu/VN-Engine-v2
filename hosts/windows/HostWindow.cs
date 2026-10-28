@@ -1,4 +1,5 @@
 using System.Text;
+using System.Security.Cryptography;
 using System.Text.Json;
 using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
@@ -14,6 +15,7 @@ internal sealed class HostWindow : Form
     private readonly string profile;
     private readonly string host;
     private readonly string startURL;
+    private string? reviewPath, reviewSha;
     private bool allowClose, closePending, fullScreen, bridgeBusy;
     private Rectangle normalBounds;
     private FormWindowState normalState;
@@ -148,6 +150,8 @@ internal sealed class HostWindow : Form
                     "save-workspace" => SaveProject(value, false),
                     "export-project" => SaveProject(value, true),
                     "bind-assets" => BindAssets(value),
+                    "open-author-review" => OpenAuthorReview(),
+                    "save-author-review" => SaveAuthorReview(value),
                     _ => throw new InvalidDataException("不支持的桌面命令")
                 };
                 Reply(new { id, ok = true, result });
@@ -201,6 +205,43 @@ internal sealed class HostWindow : Form
             if (baseUri.AbsoluteUri == "https://studio.vnengine.test/samples/") source = new AssetWorkspace(Path.Combine(options.Site, "samples"), content);
         }
         HostFiles.SaveWithAssets(path, content, source, projectOnly); if (!projectOnly) SmokeSavedFile = path;
+        return new { cancelled = false };
+    }
+    private static string FileSha(string path) { using var stream = File.OpenRead(path); return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant(); }
+    private object OpenAuthorReview()
+    {
+        string path;
+        if (options.Smoke) path = Path.Combine(SmokeFolder, "review.json");
+        else
+        {
+            using var picker = new OpenFileDialog { Filter = "作者审阅 (*.json)|*.json", CheckFileExists = true, Multiselect = false };
+            if (picker.ShowDialog(this) != DialogResult.OK) return new { cancelled = true }; path = picker.FileName;
+        }
+        var content = HostFiles.ReadJson(path); HostFiles.ValidateAuthorReview(content);
+        reviewPath = Path.GetFullPath(path); reviewSha = FileSha(path);
+        return new { cancelled = false, content };
+    }
+    private object SaveAuthorReview(JsonElement message)
+    {
+        var content = message.GetProperty("content").GetString() ?? throw new InvalidDataException("缺少审阅内容");
+        HostFiles.ValidateAuthorReview(content);
+        string path;
+        if (options.Smoke) path = Path.Combine(SmokeFolder, "review.json");
+        else
+        {
+            using var picker = new SaveFileDialog { Filter = "作者审阅 (*.json)|*.json", FileName = "review.json", AddExtension = true, OverwritePrompt = true };
+            if (picker.ShowDialog(this) != DialogResult.OK) return new { cancelled = true }; path = picker.FileName;
+        }
+        path = Path.GetFullPath(path);
+        if (string.Equals(path, SmokeSavedFile, StringComparison.OrdinalIgnoreCase) || workspaces.Values.Any(w => w.Files.Any(name => string.Equals(Path.GetFullPath(Path.Combine(w.Root, name)), path, StringComparison.OrdinalIgnoreCase)))) throw new InvalidDataException("审阅文档不能覆盖工程或清单资源");
+        using var lease = new FileStream(path + ".vnreview.lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None, 1, FileOptions.DeleteOnClose);
+        if (File.Exists(path))
+        {
+            HostFiles.ValidateAuthorReview(HostFiles.ReadJson(path));
+            if (string.Equals(reviewPath, path, StringComparison.OrdinalIgnoreCase) && reviewSha != FileSha(path)) throw new IOException("审阅文件已被外部修改，请重新打开后再保存");
+        }
+        else if (string.Equals(reviewPath, path, StringComparison.OrdinalIgnoreCase) && reviewSha != null) throw new IOException("审阅文件已被移除，请重新打开或另存");
+        HostFiles.WriteJson(path, content); reviewPath = path; reviewSha = FileSha(path);
         return new { cancelled = false };
     }
     private object BindAssets(JsonElement message)

@@ -64,7 +64,7 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "1c32852e03fcbadd2328455898a1f0d1d1acddb80d9ab23029b3145e05efe612"
+      "targetSha256": "a15b9debd4394af56c5a1ca07e689aac8fe2500f90f82900cd601a98f8b80a5a"
     },
     {
       "target": "editor/collections.mjs",
@@ -76,7 +76,7 @@
       "target": "editor/index.html",
       "mode": "new",
       "origins": [],
-      "targetSha256": "b177333a462e18e80b2e12dfae64d2facb80e77bb538a742a5d703168982dd0c"
+      "targetSha256": "389deb8c3882194a01a6644c735b0cba7f8f2565d59a652d0a26dd6f804b59d3"
     },
     {
       "target": "editor/logic.mjs",
@@ -121,6 +121,12 @@
       "targetSha256": "cef8495a1d542bb71e4ac436413c70f2d3e605ed3eab3d930b0f2a2b9a60370f"
     },
     {
+      "target": "editor/production.mjs",
+      "mode": "new",
+      "targetSha256": "b41d8fca1c76a9a42729110b7401fa88b906cdbf3306d8aba7e80046b712ff23",
+      "origins": []
+    },
+    {
       "target": "editor/route-worker.mjs",
       "mode": "new",
       "targetSha256": "ece437dcaf170451006c7f53bfca371d4680cf240f07c56084360060c57fdec4",
@@ -149,13 +155,13 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "0fe899b0dcf6064d048723829a02fcf3db486d4661aefcb5f766e64cafecf01d"
+      "targetSha256": "99ba10dd438d6def2dd90d616addf22d977e35f5984c45618635759a1cea4841"
     },
     {
       "target": "editor/style.css",
       "mode": "new",
       "origins": [],
-      "targetSha256": "5f203529cf6bd09b2173bd225ca2352780184e08d2e839309dd010cbd7df6c97"
+      "targetSha256": "ee7300cb5af11e0c0d200f40e5ee1cdcb6732592bd7378683e833f7912940bd9"
     },
     {
       "target": "examples/agent/assets/agent.woff2",
@@ -364,19 +370,19 @@
       "target": "hosts/windows/HostFiles.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "a19ec844c59f3552ac02305c772b2eb9731bc4a748e5a9bfd8782d68b801894b"
+      "targetSha256": "f0da4e9715dec736fffb5d0117e42b48ab8b41f52e787b5ee70ffbd13a3c3e7c"
     },
     {
       "target": "hosts/windows/HostTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "54421bbcc2ac5eea22502de5b1efda8fec6c7f3747c3fa3e0b30d75da4780a87"
+      "targetSha256": "84720959e76781c74b24e7db05946c9e33e2257acaaf63ad191d74d73ec19499"
     },
     {
       "target": "hosts/windows/HostWindow.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "7c119a671c7d97907dfce2c977c0f260ff38f2eec55feb1d9bed467e950473c3"
+      "targetSha256": "83c4f82d31dfce6d953e860f24b9aa2d5d35f12878dc471b6cfb7eb91cc00c05"
     },
     {
       "target": "hosts/windows/Program.cs",
@@ -388,7 +394,7 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "68e93bca11e902e18ab7bb2e6a1266e9cb61a47a98501d7a9679ca88eee5a884"
+      "targetSha256": "d1e764212cbba09873cb6da9a7fe41ff34b4fe719a8dab76e0cfeae346b4481b"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
@@ -698,7 +704,7 @@
     {
       "target": "src/creative/impact.ts",
       "mode": "new",
-      "targetSha256": "3fe66f5f53ffee0d3a628876f4219afd315e79e7eae59c64eebe790096d15c37",
+      "targetSha256": "fa6b504a24019d0ef42ab3e87c02735091f8aeb618a4132727de3e4d9324a4b9",
       "origins": []
     },
     {
@@ -1187,7 +1193,7 @@
     {
       "target": "tools/creative-example.mjs",
       "mode": "new",
-      "targetSha256": "2342bdc2ffbc61ff60e794e314b9211211032057de831d49613fd3c39567ab0a",
+      "targetSha256": "8a1f410aa1f12b30d1823a6a93534073ef8c43c34280740e1324294338d279e0",
       "origins": []
     },
     {
@@ -1212,6 +1218,12 @@
       "target": "tools/generate-runtime-video.py",
       "mode": "new",
       "targetSha256": "5a3b7137b2cc83206d07e1d564ec888af97ad0b13a1e404d0df87946fce30127",
+      "origins": []
+    },
+    {
+      "target": "tools/iteration-example.mjs",
+      "mode": "new",
+      "targetSha256": "cdae4fad1b0ab24ed9ff1431225ca9fa649abede7dc36204bd007cf297347d69",
       "origins": []
     },
     {

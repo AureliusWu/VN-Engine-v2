@@ -1,7 +1,8 @@
-import { EditorModel, newProject } from '../lib/editor/index.js';
+import { EditorModel, newProject, readAuthorReview } from '../lib/editor/index.js';
 import { renderPresentationEditor } from './presentation.mjs';
 import { renderCollectionsEditor } from './collections.mjs';
 import { createRoutesPanel } from './routes.mjs';
+import { createProductionPanel } from './production.mjs';
 import { renderBranchEditor, renderEvidenceCatalog, evidenceChecklist, renderEffectsEditor } from './logic.mjs';
 import { renderStructureEditor } from './structure.mjs';
 import { ENGINE_VERSION } from '../lib/index.js';
@@ -11,7 +12,8 @@ const $ = id => document.getElementById(id);
 const DRAFT_KEY = 'vn-engine-studio:draft:v1';
 let model = new EditorModel(newProject('script')), selected, tab = 'story', draft, draftTimer, previewTimer;
 let baseURL = new URL('../samples/', location.href).href, resourceURLs = new Map(), resourceFiles, previewReady = false, revision = 0, savedSource = '';
-let nativeHidden = false;
+let nativeHidden = false, identitySource = '', identityProject = '';
+function projectSource(){const text=model.serialize(true);return text===identityProject?identitySource:text;}
 let replayRequest;
 let routeRequest;
 const openInspectorSections = new Set();
@@ -49,27 +51,36 @@ const routes = createRoutesPanel($('route-list'), {element,action,field,project:
       $('preview').contentWindow.postMessage({source:'vn-engine-studio',type:'capture-route',revision:current,id},location.origin);
     });
   },download,navigate:state=>{const node=model.graph().nodes.find(n=>n.id===state.sceneId&&(!n.chapter||state.lineId.startsWith(n.chapter+'/')));if(!node)throw Error('此运行节点没有对应的可编辑节点');selected=node.key;switchTab('story');renderGraph(model.graph());renderInspector();}});
+const production = createProductionPanel($('production-list'), {element,action,field,run,project:()=>model.getView().project,model:()=>model,source:projectSource,
+  assetURL:relative=>resourceURLs.get(relative)??new URL(relative,baseURL).href,edit:fn=>mutate(fn,true),changed:()=>{scheduleDraft();document.body.dataset.dirty=String(model.dirty||production.dirty||unappliedSource());},status,download,preview,routes:()=>switchTab('routes'),
+  navigate:target=>{const node=model.graph().nodes.find(n=>n.id===(target.nodeId??target.id)&&n.chapter===target.chapterId);if(!node)throw Error('此目标没有可编辑节点；可在内容目录与原工程中查看');selected=node.key;switchTab('story');renderGraph(model.graph());renderInspector();const input=[...$('inspector').querySelectorAll('input,textarea')].find(n=>n.value===target.id);input?.scrollIntoView({block:'center'});input?.focus();}
+});
 function mutate(fn, inspector = false) { fn(); update(inspector); status('更改已记录，可撤销'); }
 function set(path, value, inspector = false) { mutate(() => model.set(path, value), inspector); }
 function scheduleDraft() {
   clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 350);
 }
 function saveDraft() {
-  try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ schema: 1, document: JSON.parse(model.serialize()), source: unappliedSource() ? $('source').value : undefined, baseURL: baseURL.startsWith(location.origin + '/') ? baseURL : undefined, at: new Date().toISOString() })); }
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ schema: 1, document: JSON.parse(model.serialize()), authorReview: production.getReview(), source: unappliedSource() ? $('source').value : undefined, baseURL: baseURL.startsWith(location.origin + '/') ? baseURL : undefined, at: new Date().toISOString() })); }
   catch { status('本地草稿无法保存，请使用“保存工程”保留更改', true); }
 }
 function clearResources(nextBase = new URL('./', location.href).href) {
+  production.stopMedia();
   for (const url of resourceURLs.values()) URL.revokeObjectURL(url);
   resourceURLs.clear(); resourceFiles = undefined; baseURL = nextBase; $('asset-state').textContent = '未绑定目录；资源路径相对于工程文件。';
 }
 function replace(input, options = {}) {
-  const next = new EditorModel(input); // Fully parse before touching the current editor or its resources.
-  clearResources(options.baseURL); if (options.files) resourceFiles = new Set(options.files); model = next; selected = model.graph().nodes[0]?.key;
+  const next = new EditorModel(input);
+  const incomingReview = options.authorReview;
+  if(incomingReview) readAuthorReview(incomingReview,next.getView().project);
+  // Fully parse before touching the current editor or its resources.
+  clearResources(options.baseURL); if (options.files) resourceFiles = new Set(options.files); model = next;
+  identityProject=model.serialize(true);identitySource=typeof input==='string'&&!JSON.parse(input).format?input:identityProject;production.reset(incomingReview);selected = model.graph().nodes[0]?.key;
   savedSource = ''; tab = 'story'; renderProject(); update(true); switchTab('story');
   if (options.draft) { model.markUnsaved(); document.body.dataset.dirty = 'true'; $('save-state').textContent = '● 未保存'; status('草稿已恢复；请重新绑定本地资源目录'); }
   else status('工程已打开');
 }
-function canReplace() { return (!model.dirty && !unappliedSource()) || confirm('当前更改尚未保存。仍要替换当前工程吗？本地草稿只保留一份。'); }
+function canReplace() { return (!model.dirty && !production.dirty && !unappliedSource()) || confirm('当前更改尚未保存。仍要替换当前工程吗？本地草稿只保留一份。'); }
 function renderProject() {
   const root = $('project-fields'); root.replaceChildren();
   const project = model.getView().project;
@@ -79,11 +90,11 @@ function renderProject() {
   field(root, '回退保留步数', project.rollback?.limit ?? 80, value => set(['rollback'], { ...model.getView().project.rollback, limit: Number(value) }, true));
 }
 function update(inspector = false) {
-  routes.changed();
+  routes.changed();production.changed();
   const startup = document.querySelector('#project-fields [aria-label="启动界面"]'); if (startup) startup.value = model.getView().project.titleScreen ? 'title' : 'story';
   const graph = model.graph(); if (!graph.nodes.some(n => n.key === selected)) selected = graph.nodes[0]?.key;
   $('project-name').textContent = model.getView().project.title || '未命名作品'; $('save-state').textContent = model.dirty ? '● 未保存' : '已保存';
-  document.body.dataset.dirty = String(model.dirty || unappliedSource()); document.body.dataset.projectType = model.getView().project.type;
+  document.body.dataset.dirty = String(model.dirty || production.dirty || unappliedSource()); document.body.dataset.projectType = model.getView().project.type;
   document.querySelector('[data-command=undo]').disabled = !model.canUndo; document.querySelector('[data-command=redo]').disabled = !model.canRedo;
   document.querySelector('[data-command=add-node]').disabled = model.getView().project.type === 'rain';
   $('graph-count').textContent = `${graph.nodes.length} 节点 · ${graph.edges.length} 连线`;
@@ -310,11 +321,13 @@ function renderAssets() {
 }
 function switchTab(next) {
   if (tab === 'source' && next !== 'source' && $('source').value !== savedSource && !confirm('JSON 面板有尚未应用的文本，仍要切换吗？')) return;
-  tab = next; for (const name of ['story', 'structure', 'assets', 'collections', 'routes', 'source']) { $(name + '-panel').hidden = name !== tab; document.querySelector(`[data-tab=${name}]`).setAttribute('aria-pressed', String(name === tab)); }
+  if(next!=='production')production.leave();
+  tab = next; for (const name of ['story', 'structure', 'assets', 'collections', 'routes', 'production', 'source']) { $(name + '-panel').hidden = name !== tab; document.querySelector(`[data-tab=${name}]`).setAttribute('aria-pressed', String(name === tab)); }
   if (tab === 'assets') renderAssets(); if (tab === 'source') { $('source').value = model.serialize(true); savedSource = $('source').value; }
   if (tab === 'collections') renderCollections();
   if (tab === 'structure') renderStructure();
   if (tab === 'routes') routes.render();
+  if (tab === 'production') production.render();
 }
 function renderStructure() {
   renderStructureEditor($('structure-list'), { element, field, action, model, project: model.getView().project, mutate, set,
@@ -362,12 +375,12 @@ function download(content, filename) {
 }
 async function save(projectOnly) {
   if (projectOnly && model.diagnostics(resourceFiles).some(d => d.severity === 'error')) throw new Error('请先修复工程诊断中的错误');
-  const content = model.serialize(projectOnly), name = /^[a-zA-Z0-9_-]+$/.test(model.getView().project.game) ? model.getView().project.game : 'project';
+  const content = projectOnly?projectSource():model.serialize(false), name = /^[a-zA-Z0-9_-]+$/.test(model.getView().project.game) ? model.getView().project.game : 'project';
   const suggestedName = name + (projectOnly ? '.json' : '.vnproj');
   if (unappliedSource()) throw new Error('JSON 面板有未应用的更改，请先点击“应用 JSON”');
   if (nativeHost) { const result = await nativeRequest(projectOnly ? 'export-project' : 'save-workspace', { content, suggestedName, baseURL }); if (result.cancelled) { status('已取消保存，当前工程仍保留'); return; } }
   else download(content, suggestedName);
-  if (!projectOnly) { model.markSaved(); document.body.dataset.dirty = 'false'; $('save-state').textContent = '已保存'; }
+  if (!projectOnly) { model.markSaved(); document.body.dataset.dirty = String(production.dirty); $('save-state').textContent = '已保存'; }
   saveDraft(); status(projectOnly ? '运行数据已导出；请随数据保留相对路径对应的资源目录' : '工程已保存；资源路径相对于工程文件，请随工程保留资源');
 }
 const commands = {
@@ -390,13 +403,13 @@ const commands = {
     if (nativeHost) { const result = await nativeRequest('bind-assets', { content: model.serialize(true) }); if (!result.cancelled) { clearResources(result.baseURL); resourceFiles = new Set(result.files); $('asset-state').textContent = `已绑定目录，允许读取 ${resourceFiles.size} 个清单文件`; update(false); } }
     else { $('asset-directory').value = ''; $('asset-directory').click(); }
   },
-  'restore-draft': () => { if (draft && canReplace()) { replace(draft.document, { baseURL: draft.baseURL ?? new URL('./', location.href).href, draft: true }); if (typeof draft.source === 'string') { switchTab('source'); $('source').value = draft.source; document.body.dataset.dirty = 'true'; } $('draft-banner').hidden = true; } },
+  'restore-draft': () => { if (draft && canReplace()) { replace(draft.document, { baseURL: draft.baseURL ?? new URL('./', location.href).href, draft: true, authorReview:draft.authorReview }); if (typeof draft.source === 'string') { switchTab('source'); $('source').value = draft.source; document.body.dataset.dirty = 'true'; } $('draft-banner').hidden = true; } },
   'discard-draft': () => { draft = undefined; $('draft-banner').hidden = true; try { localStorage.removeItem(DRAFT_KEY); } catch {} }
 };
 for (const button of document.querySelectorAll('[data-command]')) button.addEventListener('click', () => run(commands[button.dataset.command]));
 for (const button of document.querySelectorAll('[data-tab]')) button.addEventListener('click', () => switchTab(button.dataset.tab));
 $('auto-preview').addEventListener('change', () => { if ($('auto-preview').checked) preview(); });
-$('source').addEventListener('input', () => { document.body.dataset.dirty = String(model.dirty || unappliedSource()); $('save-state').textContent = model.dirty || unappliedSource() ? '● 未保存' : '已保存'; scheduleDraft(); });
+$('source').addEventListener('input', () => { document.body.dataset.dirty = String(model.dirty || production.dirty || unappliedSource()); $('save-state').textContent = model.dirty || unappliedSource() ? '● 未保存' : '已保存'; scheduleDraft(); });
 $('open-file').addEventListener('change', () => run(async () => { const file = $('open-file').files[0]; if (!file) return; if (file.size > 8_000_000) throw new Error('工程超过 8 MB'); replace(await file.text()); }));
 $('asset-directory').addEventListener('change', () => run(() => {
   const files = [...$('asset-directory').files]; if (!files.length) return;
@@ -410,12 +423,13 @@ window.addEventListener('keydown', event => {
   if (event.key.toLowerCase() === 's') { event.preventDefault(); run(commands.save); }
   if (event.key.toLowerCase() === 'z' && !typing) { event.preventDefault(); run(event.shiftKey ? commands.redo : commands.undo); }
 });
-window.addEventListener('beforeunload', event => { if (model.dirty || (tab === 'source' && $('source').value !== savedSource)) { saveDraft(); event.preventDefault(); event.returnValue = ''; } });
+window.addEventListener('beforeunload', event => { if (model.dirty || production.dirty || (tab === 'source' && $('source').value !== savedSource)) { saveDraft(); event.preventDefault(); event.returnValue = ''; } });
 window.addEventListener('pagehide', () => { clearTimeout(draftTimer); clearTimeout(previewTimer); for (const url of resourceURLs.values()) URL.revokeObjectURL(url); });
-window.addEventListener('vn-engine-host-visibility', event => { if (typeof event.detail?.hidden !== 'boolean') return; nativeHidden = event.detail.hidden; $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'visibility', hidden: nativeHidden }, location.origin); });
+window.addEventListener('vn-engine-host-visibility', event => { if (typeof event.detail?.hidden !== 'boolean') return; nativeHidden = event.detail.hidden;if(nativeHidden)production.stopMedia(); $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'visibility', hidden: nativeHidden }, location.origin); });
 $('version').textContent = ENGINE_VERSION; $('host-label').textContent = nativeHost ? 'Windows 原生宿主' : '浏览器工作区';
 try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { const value = JSON.parse(raw); if (value.schema === 1 && value.document) { new EditorModel(value.document); draft = value; $('draft-banner').hidden = false; } } } catch { status('旧草稿无法读取，可继续新建或打开工程', true); }
 selected = model.graph().nodes[0]?.key; renderProject(); update(true); status('编辑器已就绪'); document.body.dataset.editorReady = 'true';
 const connectPreview = () => $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'connect' }, location.origin);
 $('preview').addEventListener('load', connectPreview); connectPreview();
-window.addEventListener('pagehide',()=>routes.dispose());
+window.addEventListener('pagehide',()=>{routes.dispose();production.dispose();});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)production.stopMedia();});
