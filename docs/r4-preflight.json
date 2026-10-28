@@ -1,0 +1,82 @@
+{
+  "schema": 1,
+  "kind": "planning-preflight",
+  "round": "R4",
+  "date": "2026-10-28",
+  "repository": "AureliusWu/VN-Engine-v2",
+  "branch": "main",
+  "observedCommit": "230cc360a92c6d94c61b8910096771c588a5594f",
+  "currentVersion": "0.7.0",
+  "proposedTargetVersion": "0.8.0",
+  "implementationStarted": false,
+  "checksExecuted": {
+    "command": "npm run check",
+    "status": "PASS",
+    "nodePassed": 201,
+    "pythonPassed": 6,
+    "provenanceFiles": 172,
+    "agentSchemas": "PASS",
+    "independentDevelopmentProjects": 4
+  },
+  "confirmedUnfixedBugs": [
+    {
+      "id": "R4-B001",
+      "priority": "P0",
+      "status": "CONFIRMED_UNFIXED",
+      "location": "src/compliance/qa.ts:assessQaEvidence",
+      "fixture": "tests/qa-fixture.mjs:qaFixture",
+      "steps": [
+        "Assess initial synthetic QA evidence",
+        "Change scenes[0].lines[0].text without changing prior QA declarations",
+        "Assess the same evidence for the changed project"
+      ],
+      "observed": { "before": "PASS", "afterTextEdit": "PASS" },
+      "expected": "Old acceptance must not approve changed content; require current bound review"
+    },
+    {
+      "id": "R4-B002",
+      "priority": "P0",
+      "status": "CONFIRMED_UNFIXED",
+      "location": "src/compliance/art.ts:masterPassed",
+      "fixture": "Synthetic Neutral and smile linked to the same Character Master",
+      "steps": [
+        "Give the linked Neutral a runtimeSha256 differing from its current asset manifest",
+        "Assess with room and smile referenced, Neutral only linked as master.neutralAsset",
+        "Compare with also directly referencing Neutral"
+      ],
+      "observed": {
+        "variantOnlyRelease": "PASS",
+        "variantOnlyInheritance": "PASS",
+        "neutralAlsoReferencedRelease": "BLOCKED",
+        "neutralTechReady": "FAIL"
+      },
+      "expected": "Invalid linked Neutral must propagate to variant acceptance even when not directly referenced"
+    },
+    {
+      "id": "R4-B003",
+      "priority": "P0",
+      "status": "CONFIRMED_UNFIXED",
+      "location": "tools/qa-report.mjs:inspectBuild",
+      "fixture": "Actual temporary package built with packageGame from qaFixture",
+      "steps": [
+        "Build package using the observed engine commit lock",
+        "Delete app.mjs and omit its entry from build-manifest.json",
+        "Run buildQaReport with buildDirectory; no decode requested"
+      ],
+      "observed": { "appMissing": true, "manifestEntryMissing": true, "buildStatus": "PASS" },
+      "expected": "Build subcheck must FAIL for missing required startup file",
+      "scope": "Observation concerns build subcheck; the no-decode aggregate report is not claimed PASS"
+    }
+  ],
+  "plannedReviewMode": "ai-simulated",
+  "notExecutedThisPreflight": [
+    "AI literary, visual or listening acceptance",
+    "Full browser and focused Studio suites",
+    "Windows native execution",
+    "Any bug fix",
+    "Version bump or GitHub Release publication"
+  ],
+  "fixtureLimitation": "Synthetic evidence and deliberately altered temporary inputs test validators; they are not real work acceptance",
+  "temporaryReproductionFilesRemoved": true,
+  "gameMigrationPerformed": false
+}
