@@ -65,3 +65,8 @@ test('Node SDK works from eval/stdin module hosts without inheriting incompatibl
  const module=new URL('../tools/agent-node.mjs',import.meta.url).href;const code=`import {runAgentFileRequest} from ${JSON.stringify(module)};console.log(JSON.stringify(await runAgentFileRequest({protocol:'vn-agent-v1',requestId:'stdin',command:'capabilities',params:{}})));`;
  const child=spawnSync(process.execPath,['--input-type=module','-e',code],{encoding:'utf8'});assert.equal(child.status,0,child.stderr);assert.equal(JSON.parse(child.stdout).status,'PASS');
 });
+test('source SHA binds CRLF UTF-8 bytes; BOM is rejected without rewriting the source',async t=>{
+ const {file}=await fixture(t);const original=(await fs.readFile(file,'utf8')).replaceAll('\n','\r\n');await fs.writeFile(file,original);const {createHash}=await import('node:crypto');
+ const inspected=await runAgentFileRequest(req('inspect',file));assert.equal(inspected.status,'PASS');assert.equal(inspected.project.sourceSha256,createHash('sha256').update(await fs.readFile(file)).digest('hex'));
+ const bom=Buffer.concat([Buffer.from([0xef,0xbb,0xbf]),Buffer.from(original)]);await fs.writeFile(file,bom);const refused=await runAgentFileRequest(req('inspect',file));assert.equal(refused.status,'FAIL');assert.equal(refused.diagnostics.at(-1).code,'INVALID_ENCODING');assert.deepEqual(await fs.readFile(file),bom);
+});

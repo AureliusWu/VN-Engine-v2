@@ -30,7 +30,7 @@ Rain 既有 `type: rain` 工程支持读取、引用、校验、真实路线、�
 
 ## 请求与命令
 
-协议固定 `vn-agent-v1`；引擎版本 0.5.0 与作品 `version` 分开维护。所有请求必须有 `protocol / requestId / command / params`，工程命令另带 `project` 文件路径。JSON 字段不能包含可执行数据。完整可执行开发样例见后文。
+协议固定 `vn-agent-v1`；引擎版本 0.5.0 与作品 `version` 分开维护。所有请求必须有 `protocol / requestId / command / params`，工程命令另带 `project` 文件路径。工程与回执文件使用无 BOM 的 UTF-8，SHA256 绑定原始字节；BOM / 非法编码明确拒绝并保留文件。JSON 字段不能包含可执行数据。完整可执行开发样例见后文。
 
 ```json
 {"protocol":"vn-agent-v1","requestId":"inspect-001","command":"inspect","project":"build/my-game/project.json","params":{"kind":"nodes","limit":5,"maxBytes":8192}}

@@ -6,7 +6,7 @@ import path from 'node:path';
 import { executeAgentRequest, validateAgentRequest, AgentError, agentResponse, failAgent, AGENT_LIMITS } from '../dist/agent/index.js';
 const hash = value => createHash('sha256').update(value).digest('hex');
 const canonical = value => Array.isArray(value) ? value.map(canonical) : value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map(k => [k, canonical(value[k])])) : value;
-const decode = bytes => new TextDecoder('utf-8', { fatal: true }).decode(bytes);
+const decode = bytes => { if (bytes[0] === 0xef && bytes[1] === 0xbb && bytes[2] === 0xbf) throw new AgentError('INVALID_ENCODING', 'Project and journal files must use UTF-8 without BOM; original bytes are preserved'); return new TextDecoder('utf-8', { fatal: true }).decode(bytes); };
 async function readText(file) { const stat = await fs.stat(file); if (stat.size > AGENT_LIMITS.inputBytes) throw new AgentError('BUDGET_EXCEEDED', 'File exceeds input budget', {}, 'UNVERIFIED'); return decode(await fs.readFile(file)); }
 async function current(file) { try { return hash(await fs.readFile(file)); } catch (e) { if (e.code === 'ENOENT') return null; throw e; } }
 async function atomic(file, text, mode = 0o600) {

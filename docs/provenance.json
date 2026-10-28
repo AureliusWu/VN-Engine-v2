@@ -1025,7 +1025,7 @@
     {
       "target": "tools/agent-node.mjs",
       "mode": "new",
-      "targetSha256": "d3ae888756a069729536c11654ee983d6543d86b5ddfbc12afcec460d111ae7a",
+      "targetSha256": "68c02fa5204802df7a166e8416401a5a1527495d783ce7d5c01fdc3093a826db",
       "origins": []
     },
     {
