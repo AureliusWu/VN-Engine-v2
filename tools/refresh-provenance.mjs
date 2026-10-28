@@ -15,11 +15,11 @@ function visit(directory) {
     if (['__pycache__', 'bin', 'obj'].includes(entry.name)) continue;
     const target = posix.join(directory, entry.name);
     if (entry.isDirectory()) visit(target);
-    else if (/\.(ts|mjs|py|ps1|cs|csproj|manifest)$/.test(target) || (target.startsWith('editor/') && /\.(html|css)$/.test(target))) discovered.push(target);
+    else if (/\.(ts|mjs|py|ps1|cs|csproj|manifest)$/.test(target) || (target.startsWith('schemas/') && /\.json$/.test(target)) || (target.startsWith('editor/') && /\.(html|css)$/.test(target))) discovered.push(target);
   }
 }
 
-for (const directory of ['src', 'adapters', 'tools', 'editor', 'hosts/windows']) visit(directory);
+for (const directory of ['src', 'adapters', 'tools', 'editor', 'hosts/windows', 'schemas']) visit(directory);
 for (const target of discovered.sort()) {
   const existing = tracked.get(target);
   if (existing) existing.targetSha256 = sha256(target);

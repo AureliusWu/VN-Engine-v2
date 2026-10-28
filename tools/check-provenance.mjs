@@ -30,8 +30,8 @@ function visit(path) {
     if (['__pycache__', 'bin', 'obj'].includes(entry.name)) continue;
     const name = path + '/' + entry.name;
     if (entry.isDirectory()) visit(name);
-    else if (/\.(ts|mjs|py|ps1|cs|csproj|manifest)$/.test(name) || (name.startsWith('editor/') && /\.(html|css)$/.test(name))) assert.ok(paths.has(name), `Unrecorded module: ${name}`);
+    else if (/\.(ts|mjs|py|ps1|cs|csproj|manifest)$/.test(name) || (name.startsWith('schemas/') && /\.json$/.test(name)) || (name.startsWith('editor/') && /\.(html|css)$/.test(name))) assert.ok(paths.has(name), `Unrecorded module: ${name}`);
   }
 }
-for (const path of ['src', 'adapters', 'tools', 'editor', 'hosts/windows']) visit(path);
+for (const path of ['src', 'adapters', 'tools', 'editor', 'hosts/windows', 'schemas']) visit(path);
 console.log(`Provenance verified: ${manifest.files.length} files, four pinned source snapshots`);

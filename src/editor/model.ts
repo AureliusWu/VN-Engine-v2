@@ -378,12 +378,14 @@ export class EditorModel {
     validateEffects(project.program.variables, effects);
     return this.set(['program', 'blocks', blockIndex, 'exit', 'choices', choiceIndex, 'effects'], effects);
   }
-  addChapter() {
+  addChapter(options: { id?: string; title?: string } = {}) {
     const project = this.document.project; if (project.type !== 'investigation') throw new Error('当前工程不是调查类型');
-    let id = 'chapter-1'; for (let i = 2; project.chapters.some(chapter => chapter.id === id); i++) id = 'chapter-' + i;
+    let id = options.id ?? 'chapter-1';
+    if (options.id) { assertAuthorID(id); if (/[/:]/.test(id) || project.chapters.some(chapter => chapter.id === id)) throw new Error('章节 ID 无效或已使用'); }
+    else for (let i = 2; project.chapters.some(chapter => chapter.id === id); i++) id = 'chapter-' + i;
     this.transact(p => {
       if (p.type !== 'investigation') return;
-      p.chapters.push({ id, title: '新章节', order: p.chapters.length, entryNode: 'start', requiredEvidence: [], evidence: {}, nodes: {
+      p.chapters.push({ id, title: options.title ?? '新章节', order: p.chapters.length, entryNode: 'start', requiredEvidence: [], evidence: {}, nodes: {
         start: { kind: 'dialogue', text: '新章节的开场。', location: '', time: '', progress: 0, actions: [{ id: 'finish', label: '完成本章', next: 'end' }] },
         end: { kind: 'ending', text: '本章结束。', location: '', time: '', progress: 100, outcome: 'complete', actions: [] }
       } });

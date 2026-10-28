@@ -18,6 +18,10 @@
     "./editor": {
       "types": "./dist/editor/index.d.ts",
       "import": "./dist/editor/index.js"
+    },
+    "./agent": {
+      "types": "./dist/agent/index.d.ts",
+      "import": "./dist/agent/index.js"
     }
   },
   "scripts": {
@@ -28,7 +32,7 @@
     "demo": "npm run build && node tools/serve.mjs",
     "validate:spec": "npm run build && node tools/validate-project.mjs examples/runtime/campus.json examples/runtime/netlove.json examples/runtime/circuit.json examples/runtime/rain.json",
     "validate:spec:release": "npm run build && node tools/validate-project.mjs --release",
-    "check": "npm test && npm run test:renpy && node tools/check-provenance.mjs && node tools/validate-project.mjs examples/runtime/campus.json examples/runtime/netlove.json examples/runtime/circuit.json examples/runtime/rain.json",
+    "check": "npm test && npm run test:renpy && node tools/write-agent-schemas.mjs --check && node tools/check-provenance.mjs && node tools/validate-project.mjs examples/runtime/campus.json examples/runtime/netlove.json examples/runtime/circuit.json examples/runtime/rain.json",
     "gate:release": "npm run check && npm run test:browser && node tools/release-gate.mjs",
     "provenance:refresh": "node tools/refresh-provenance.mjs",
     "verify:upstream": "npm run build && node tools/compare-upstream.mjs",
@@ -39,7 +43,8 @@
     "test:editor": "npm run build && node tests/editor-browser.mjs && node tests/presentation-editor-browser.mjs && node tests/collections-editor-browser.mjs && node tests/key-visual-browser.mjs && node tests/rollback-browser.mjs && node tests/minigame-browser.mjs && node tests/routes-editor-browser.mjs && node tests/authoring-browser.mjs && node tests/workbench-browser.mjs",
     "qa:report": "npm run build && node tools/qa-report.mjs",
     "qa:samples": "npm run build && node tools/qa-samples.mjs",
-    "test:routes": "npm run build && node tools/test-routes.mjs"
+    "test:routes": "npm run build && node tools/test-routes.mjs",
+    "agent:schemas": "npm run build && node tools/write-agent-schemas.mjs"
   },
   "devDependencies": {
     "typescript": "5.9.3",
