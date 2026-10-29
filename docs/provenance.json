@@ -135,7 +135,7 @@
     {
       "target": "editor/production.mjs",
       "mode": "new",
-      "targetSha256": "bd367a460e82ddbf65701d9385af3aaf5ef2230d8aa344f424dee58c8c99d13f",
+      "targetSha256": "8e7d5635e79bf1a229d2302f965a2a567f9be3e565956befbdabd8b4ba65c3c1",
       "origins": []
     },
     {

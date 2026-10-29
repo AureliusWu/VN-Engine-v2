@@ -58,8 +58,13 @@ try {
   assert.equal(await page.locator('[data-author-route]').last().innerText().then(text => text.includes('最后兜底')), true);
   await command('undo'); await command('undo'); assert.equal(await page.locator('[data-author-route]').count(), 2);
   await edit('路由 1 条件 1 值', ' '); assert.match(await page.locator('#status').innerText(), /有限数值/);
-  assert.deepEqual((await exportProject()).program.blocks.find(block => block.id === 'gate').exit.routes, authored.program.blocks.find(block => block.id === 'gate').exit.routes);
-  passed('Route ordering is undoable, fallback stays last and invalid numeric input preserves authored bytes');
+  const invalidDownload = page.waitForEvent('download', { timeout: 300 }).then(() => true, error => { if (error.name === 'TimeoutError') return false; throw error; });
+  await command('export'); assert.equal(await invalidDownload, false, 'Invalid pending numeric input must block export');
+  assert.match(await page.locator('#status').innerText(), /有限数值/);
+  assert.equal(await page.getByLabel('路由 1 条件 1 值', { exact: true }).inputValue(), ' ');
+  assert.equal(await page.locator('body').getAttribute('data-dirty'), 'true');
+  await edit('路由 1 条件 1 值', '1'); assert.deepEqual(await exportProject(), authored);
+  passed('Route ordering is undoable, fallback stays last and invalid numeric input blocks export until corrected without changing authored data');
   await page.screenshot({ path: out + '/studio-conditions.png', fullPage: true });
 
   const investigation = newProject('investigation'); investigation.title = '证据作者测试'; investigation.settings = { textDelayMs: 0 };

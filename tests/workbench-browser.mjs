@@ -30,8 +30,11 @@ try {
   script.routeTests = { schema: 1, cases: [{ id: 'authored', steps: [{ type: 'action', id: 'yes' }], expect: { ending: '完成', variables: { trust: 3, flag: true } } }] };
   await upload(script); await tab('structure'); await edit('变量 trust ID', 'affinity');
   await page.getByLabel('变量 affinity 类型', { exact: true }).selectOption('boolean'); assert.match(await page.locator('#status').innerText(), /不能直接改变类型/);
-  assert.equal(await page.getByLabel('变量 affinity 类型', { exact: true }).inputValue(), 'number');
-  await edit('变量 affinity 最大值', '-1'); assert.match(await page.locator('#status').innerText(), /边界/); assert.equal(await page.getByLabel('变量 affinity 最大值', { exact: true }).inputValue(), '10');
+  assert.equal(await page.getByLabel('变量 affinity 类型', { exact: true }).inputValue(), 'boolean');
+  assert.equal(await page.locator('body').getAttribute('data-dirty'), 'true');
+  await page.getByLabel('变量 affinity 类型', { exact: true }).selectOption('number');
+  await edit('变量 affinity 最大值', '-1'); assert.match(await page.locator('#status').innerText(), /边界/); assert.equal(await page.getByLabel('变量 affinity 最大值', { exact: true }).inputValue(), '-1');
+  assert.equal(await page.locator('body').getAttribute('data-dirty'), 'true');
   await edit('变量 affinity 最大值', '20');
   assert.equal(await page.getByRole('button', { name: '删除变量 affinity', exact: true }).isDisabled(), true);
   await page.getByRole('button', { name: '添加布尔变量', exact: true }).click(); await edit('变量 variable-1 ID', 'flag');
@@ -48,13 +51,21 @@ try {
   await refresh(); await preview.locator('[data-action=yes]').click(); await preview.locator('.vn-text').filter({ hasText: '这里等待你的故事' }).waitFor(); await runRoutes();
   passed('Variable catalog rename, typed ordered effects and bounded input produce a real passing runtime/Worker route without JSON authoring');
   await tab('story'); await page.getByRole('button', { name: '编辑节点 start', exact: true }).click();
-  await edit('选择 1 效果 2 值', ''); assert.match(await page.locator('#status').innerText(), /有限数值/); assert.equal(await page.getByLabel('选择 1 效果 2 值', { exact: true }).inputValue(), '3');
+  await edit('选择 1 效果 2 值', ''); assert.match(await page.locator('#status').innerText(), /有限数值/); assert.equal(await page.getByLabel('选择 1 效果 2 值', { exact: true }).inputValue(), '');
+  for (const action of ['export', 'save']) {
+    const invalidDownload = page.waitForEvent('download', { timeout: 300 }).then(() => true, error => { if (error.name === 'TimeoutError') return false; throw error; });
+    await command(action); assert.equal(await invalidDownload, false, 'Invalid pending effect input must block ' + action);
+    assert.match(await page.locator('#status').innerText(), /有限数值/);
+    assert.equal(await page.getByLabel('选择 1 效果 2 值', { exact: true }).inputValue(), '');
+    assert.equal(await page.locator('body').getAttribute('data-dirty'), 'true');
+  }
+  await edit('选择 1 效果 2 值', '3');
   assert.deepEqual(await download('export'), authored);
   const workspace = await download('save'); assert.equal(workspace.format, 'vn-engine-editor'); assert.deepEqual(new EditorModel(workspace).getView().project, authored);
   await tab('structure'); await page.evaluate(() => document.fonts.ready); await page.screenshot({ path: out + '/workbench-variables.png', fullPage: true });
   await page.reload(); await page.waitForSelector('body[data-editor-ready=true]'); await command('restore-draft'); await tab('structure');
   assert.equal(await page.getByLabel('变量 affinity 最大值', { exact: true }).inputValue(), '20'); assert.equal(await page.locator('[data-variable-id=flag]').count(), 1);
-  passed('Invalid edits retain exact data; workspace export and actual draft restoration preserve variables, effects and metadata');
+  passed('Invalid effect input blocks export/save until corrected; workspace and draft restoration preserve exact variables, effects and metadata');
 
   const investigation = newProject('investigation'); investigation.title = 'v0.4 多章工作台'; investigation.settings = { textDelayMs: 0 };
   const first = ['read', 'back', 'reason'].map(id => ({ type: 'action', id })); investigation.routeTests = { schema: 1, cases: [
