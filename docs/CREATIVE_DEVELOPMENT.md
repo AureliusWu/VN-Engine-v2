@@ -23,7 +23,7 @@ node tools/creative-example.mjs build/r2-cli --cli
 
 入口是 `production: {schema:1,brief,characters,beats,tasks}`。简报描述前提、语气、视觉、音乐、声音、文风和受众。角色有稳定 `id`、姓名、设定和可选视觉 / 声音说明；节拍关联具体节点 / 台词、角色与制作任务。任务的 `kind` 为 `art / music / ui / sfx / text / story`，可记录提示词、来源、依赖、角色、目标和输出 asset ID。
 
-任务状态仅为 `planned / draft / review`。它们描述制作过程；素材自己的 `DRAFT / REVIEW / READY` 与正式人工 QA 是另一份记录，导入、生成和机器 PASS 都不会自动升级人工批准。本样例所有素材保持 DRAFT，正式构建明确 BLOCKED。
+任务状态仅为 `planned / draft / review`。它们描述制作过程；素材自己的 `DRAFT / REVIEW / READY` 与独立 AI 内容终审是另一份记录，导入、生成和技术 PASS 都不会自动升级内容批准。本样例所有素材保持 DRAFT，正式构建明确 BLOCKED。
 
 节点 / 台词以 `{nodeId,chapterId?,lineId?}` 定位；调查节点需要准确章节。循环依赖、重复 ID、悬空角色 / 任务 / 输出 / 目标、非法状态由 Studio 和 runtime 共用校验。批次可暂时不完整，最终状态必须有效。节点、章节、角色、任务和显式台词重命名同步制作引用；台词重命名同时同步演出和路线断言，已有回看存档要求重新录制。受引用实体不能静默删除；Studio 临时断链仍会阻止导出。
 

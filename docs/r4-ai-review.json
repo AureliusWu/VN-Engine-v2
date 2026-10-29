@@ -1,0 +1,129 @@
+{
+  "schema": 1,
+  "kind": "actual-ai-review-summary",
+  "policy": "ai-simulated",
+  "fixture": false,
+  "reviewedDate": "2026-10-29",
+  "reviewer": "Codex current session; self-declared identity",
+  "modelIdentityAuthenticated": false,
+  "observedModalities": [
+    "text",
+    "image"
+  ],
+  "artifactSourceCommit": "b10feaeba17d605935c3721431b816c68c8880c4",
+  "engineVersion": "0.8.0",
+  "game": "vn-creative-bookshop",
+  "storyVersion": "creative-draft-1",
+  "inputArtifact": {
+    "id": 12863634977,
+    "sha256": "da0063be877c26153c5c12fba1342fc4b2195358bec6d02f9608591087b1bdb5"
+  },
+  "inputs": [
+    {
+      "id": "project",
+      "artifactPath": "creative-nyBjcP/sdk/project.json",
+      "sha256": "da7e44cd8edd84662fcdb098ff6be9979decaa6eb3e39b514c995e4f73181fdc"
+    },
+    {
+      "id": "room",
+      "kind": "background",
+      "artifactPath": "creative-nyBjcP/sdk/assets/imported/629a0da16c83a1588ee1a2fb90ef0b772234b6de231913a18af564961624e368.png",
+      "sha256": "629a0da16c83a1588ee1a2fb90ef0b772234b6de231913a18af564961624e368"
+    },
+    {
+      "id": "an",
+      "kind": "portrait",
+      "artifactPath": "creative-nyBjcP/sdk/assets/imported/9f705a6757b7a5d09085253e0066aebd088d81745257ee8a2c24dffae58cc079.png",
+      "sha256": "9f705a6757b7a5d09085253e0066aebd088d81745257ee8a2c24dffae58cc079"
+    },
+    {
+      "id": "memory",
+      "kind": "audio",
+      "artifactPath": "creative-nyBjcP/sdk/assets/imported/bb856e62208846d5ece2c98230291e2c52e651714f5463f21ae2c27d61632622.wav",
+      "sha256": "bb856e62208846d5ece2c98230291e2c52e651714f5463f21ae2c27d61632622"
+    },
+    {
+      "id": "rain",
+      "kind": "audio",
+      "artifactPath": "creative-nyBjcP/sdk/assets/imported/5df43b57167629752c2dee994b5dfa525383fc1248e30e4e7a3183e6503b7916.wav",
+      "sha256": "5df43b57167629752c2dee994b5dfa525383fc1248e30e4e7a3183e6503b7916"
+    },
+    {
+      "id": "bell",
+      "kind": "audio",
+      "artifactPath": "creative-nyBjcP/sdk/assets/imported/36170b2e90efbd18ac13d1b55f3ba7253427a88389ec7b3f356655d1c77411ed.wav",
+      "sha256": "36170b2e90efbd18ac13d1b55f3ba7253427a88389ec7b3f356655d1c77411ed"
+    },
+    {
+      "id": "font",
+      "kind": "font",
+      "artifactPath": "creative-nyBjcP/sdk/assets/imported/c56612f34bb74f578294679efa9904eed68becbf55531971b314b77ebf486d08.woff2",
+      "sha256": "c56612f34bb74f578294679efa9904eed68becbf55531971b314b77ebf486d08"
+    },
+    {
+      "id": "runtime-desktop",
+      "kind": "screenshot",
+      "artifactPath": "creative-nyBjcP/sdk/preview-desktop/preview.png",
+      "sha256": "bbb3329a1e730e5cb6d11d5fa4ee11a3fc2707554f4b262a981564e4affb4bf9",
+      "width": 1280
+    },
+    {
+      "id": "runtime-mobile",
+      "kind": "screenshot",
+      "artifactPath": "creative-nyBjcP/sdk/preview-mobile/preview.png",
+      "sha256": "9334178ed08af6810e41b3bdf26b647d6e9748fbfc695375d1b32eda7c57618f",
+      "width": 390
+    }
+  ],
+  "observations": [
+    {
+      "category": "text",
+      "status": "PASS",
+      "coverage": "full for this four-line/two-choice technical sample",
+      "rationale": "Read all four stable lines and both choices in the exact source. English grammar and punctuation are coherent; stay/return and tomorrow/leave responses match the selected choice. No placeholder text or contradictory speaker identity found."
+    },
+    {
+      "category": "story",
+      "status": "PASS",
+      "coverage": "full for the two authored endings, not a whole-game certification",
+      "rationale": "Read the premise, character brief, boolean gate, both complete endings and the executed route traces. The gate preserves stay/leave intent. The contents of the note remain deliberately open, consistent with the stated brief."
+    },
+    {
+      "category": "art:room",
+      "status": "PASS",
+      "coverage": "actual background image",
+      "rationale": "Observed the actual bookshop image. Amber pendants and shelves frame blue wet streets and glass entrance; central floor is clear, no apparent embedded lettering or UI. It matches the brief and visible runtime scene."
+    },
+    {
+      "category": "art:an",
+      "status": "PASS",
+      "coverage": "actual single portrait image; no master/difference family certified",
+      "rationale": "Observed the actual full-body image and runtime composition. Brown bob, flower hairpin, teal cardigan, cream blouse, plaid skirt, brown shoes and book match the character brief; both feet and readable silhouette are present. The same SHA256 is rendered in the sample. No variant or mother-master consistency claim is made."
+    },
+    {
+      "category": "visualIntegration",
+      "status": "UNVERIFIED",
+      "coverage": "sampled: the return ending at 1280px and 390px",
+      "observedSample": "PASS",
+      "rationale": "Viewed current desktop and mobile screenshots. Character remains recognizable, dialogue is readable and controls wrap without covering the observed text. Opening, choice, all modals and 160%-font/high-contrast states were not visually reviewed for this exact sample; these images cannot approve the full category."
+    },
+    {
+      "category": "audio",
+      "status": "UNVERIFIED",
+      "coverage": "no subjective listening",
+      "rationale": "Actual audio bytes are bound and CI reports decode/playback/mix lifecycle results. This session has no usable audio observation for subjective listening, so noise, timbre, mood and loop seams are not marked PASS."
+    }
+  ],
+  "studioVisualObservation": {
+    "status": "PASS for viewed screens only",
+    "scope": "Current 390px AI panel and native restart screenshot were viewed. Synthetic PASS panels illustrate protocol execution only."
+  },
+  "formalAcceptanceImported": false,
+  "releaseApproval": false,
+  "assetStatus": "DRAFT unchanged",
+  "limitations": [
+    "This summary is evidence of the observations actually made, not a replacement acceptance.json or an overall release approval.",
+    "Complete visual integration, subjective listening, Character Master readiness and physical-device acceptance are not certified.",
+    "No real game assets or stories were modified."
+  ]
+}

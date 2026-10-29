@@ -1,5 +1,9 @@
 # 引擎验证记录
 
+## R4 v0.8.0 缺陷修复与 AI 模拟终审
+
+最终实现 b10feaeba17d605935c3721431b816c68c8880c4 的 Engine / Windows CI 均成功：221 项 Node、6 项 Python、176 项来源、完整浏览器 / Studio、Windows 31 项专项 / 原生 / 完整进程重启和独立包 / Studio 子目录离线通过。B001—B005 已关闭；实际 AI 正文 / 单项原图已审阅，全量画面、听感与实体设备仍 UNVERIFIED，样例仍 DRAFT。当前内容终审采用 AI 模拟审核，旧真人签字只作历史视图。见 [0.8.0 验证](VALIDATION-v0.8.0.md)、[机器记录](r4-validation.json) 和 [测试包 / 版本说明](RELEASE-v0.8.0.md)。收尾文档不冒充新的实现验证，R4 后停止。
+
 ## R3 v0.7.0 内容迭代与制作审阅
 
 最终实现 `399d8e2991a79dbdb8cfd780d758b39cf0e11465` 的 Engine / Windows CI 均成功：201 项 Node、6 项 Python、172 项来源、完整浏览器 / Studio、SDK / CLI 两轮修订与真实配乐、两个最新包的子目录断网新页、四原有样例路线 / 文件 / 解码 / 包，以及 Windows 编译 / 文件冲突 / 反馈重开 / 试听 / 完整重启均通过。派生 ID / Rain 定位、独立反馈 / 玩家字节隔离及版本 / 素材过期有实际检查。见 [0.7.0 验证](VALIDATION-v0.7.0.md) 和 [机器记录](r3-validation.json)。DRAFT 与正式人工 BLOCKED / UNVERIFIED 保留；收尾文档不冒充新一次实现验收。

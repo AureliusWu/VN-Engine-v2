@@ -4,23 +4,27 @@
 
 VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 
-本文件只记录**可以由代码、测试、构建或明确证据验证的引擎能力**。剧情质量、美术构图、演出节奏、音频体验等仍属于作品级人工 QA，不因引擎具备接口而自动记为 PASS。
+本文件只记录**可以由代码、测试、构建或明确证据验证的引擎能力**。剧情质量、美术构图、演出节奏、音频体验等采用作品级 AI 模拟审阅，不因引擎具备接口而自动记为 PASS。
 
 用户提供的最高规范已更新为 [GALGAME SPEC v0.2](GALGAME_SPEC_v0.2.md)。现有机器契约和本页原有状态仍对应 v0.1；v0.2 的逐项差距、适用范围与实际证据见 [v0.2 Gap Audit](GALGAME_SPEC_v0.2_GAP_AUDIT.md)。不能通过改版本标识宣称完成 v0.2。
 
-正式发布另执行 [v0.2 美术与设备证据门禁](RELEASE_ART_GATE.md)；该补充门禁只核对结构化人工声明与证据引用，不自动判定美术质量或证据真实性。
+正式发布另执行 [v0.2 美术与设备证据门禁](RELEASE_ART_GATE.md)；该补充门禁核对技术元数据、当前实际输入绑定的 AI 审阅和设备证据，不自动认证模型、来源或设备声明。
 
 状态统一使用：`PASS / PARTIAL / ENGINE_GAP / UNVERIFIED / N/A`。
 
 ## 当前基线
 
-- Engine baseline: `0.6.0 alpha`
+- Engine baseline: `0.8.0 alpha`
 - SPEC: `GALGAME SPEC v0.1`
 - 自动契约：`GALGAME_SPEC-v0.1`
 - 主入口：`validateProjectCompliance()`
 - CLI：`node tools/validate-project.mjs [--release] project.json [...]`
 - CI：`npm run check`
 - 正式总 Gate：`npm run gate:release -- /path/to/project.json`
+
+## R4 缺陷修复与 AI 模拟终审
+
+vn-ai-acceptance-v1 绑定精确源、实际素材 / 许可与证据；SDK / CLI / Studio / Windows / 正式门禁共用当前策略。旧 humanQa 只读历史，不批准新内容。B001—B005 的问题、跨平台与实际 AI 观察范围见 [R4 验证](VALIDATION-v0.8.0.md) 和 [问题关闭表](R4_BUGS.md)。技术能力完成与指定作品的完整内容通过分开记录。
 
 ## R3 内容迭代与作者审阅
 
@@ -39,7 +43,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 | Asset manifest integrity | PASS | 复用 `AssetCatalog`，检查 ID、kind、路径与 manifest |
 | Asset reference validation | PASS | 对背景、立绘、CG、BGM、Ambience、SE、Voice、Font、Video 与 fallback 做 ID + kind 交叉检查 |
 | Placeholder text gate | PASS | development 记 warning；release 对 `TODO / FIXME / PLACEHOLDER / lorem ipsum` 失败 |
-| Asset status gate | PARTIAL | 开发模式允许未完成状态；正式门禁拒绝清单中的 PLACEHOLDER，并要求相关视觉资产声明 READY 和人工证据 |
+| Asset status gate | PARTIAL | 开发模式允许未完成状态；正式门禁拒绝清单中的 PLACEHOLDER，并要求相关视觉资产声明 READY 和当前 AI 审阅 |
 | Build Identity | PASS | 独立构建 manifest 写入 Game Version、Engine Version、Commit SHA、Build Time |
 | Build checksum | PASS | 独立构建继续为每个 runtime 文件写入 SHA256 |
 | Release commit lock | PASS | `VN_RELEASE_BUILD=1` 时缺少 `VN_ENGINE_COMMIT` / `GITHUB_SHA` 直接失败 |
@@ -112,7 +116,7 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 
 引擎只提供能力，不强迫作品启用全部能力。作品如果声明支持 Gallery、Rollback、Video、小游戏等，而引擎尚未具备对应正式能力，应明确记录为 `ENGINE_GAP` 或 `PARTIAL`，不得在 Script 层长期堆临时 Hack。
 
-自动化 Gate 负责机械可验证项：ID、引用、资源类型、占位文本、构建身份、Checksum、结构有效性、Timeline authoring 和 Video fallback 引用。剧情质量、角色一致性、CG 构图、演出节奏、UI 体验和音频体验继续由人工 QA 判断。
+自动化 Gate 负责机械可验证项：ID、引用、资源类型、占位文本、构建身份、Checksum、结构有效性、Timeline authoring 和 Video fallback 引用。剧情质量、角色一致性、CG 构图、演出节奏、UI 体验和音频体验由实际 AI 模拟审阅判断；缺模态或覆盖不足保留 UNVERIFIED。
 
 ## 下一阶段优先级
 
@@ -131,11 +135,11 @@ VN Engine v2 对 `GALGAME SPEC v0.1` 的引擎侧落实记录。
 - DOM 与 Studio 图层 / 时间线 / 镜头控件已接入，`cb03e9c` 浏览器与 Windows 原生检查通过；Key Visual 范围 / 生命周期已通过 `9986aa7` 浏览器及 Windows 检查，实际构图仍需作品验收
 - Video 已接入 DOM 和编辑器，浏览器与 Windows 无声 WebM 通过；有声听感和实际设备编码支持需作品验证
 
-### P1 — Release Evidence
+### P1 — Release Evidence（R4 已更新内容策略）
 
 - 作品专用的 `gate:release -- project.json` 输出结构化检查结果；按作品发行流程保存为 CI artifact
 - `QA_REPORT`、实际资产解码、候选包复核与人工 QA Gate 已接入，`bc253ca` 浏览器 / Windows CI 已通过
-- Windows / Web / PWA 的 build identity 与 checksum 可在报告中汇总；平台体验仍需人工证据
+- Windows / Web / PWA 的 build identity 与 checksum 可在报告中汇总；平台体验仍需实际测试证据
 - RC / RELEASE 时强制 `VN_RELEASE_BUILD=1`
 
 ## Definition of Done

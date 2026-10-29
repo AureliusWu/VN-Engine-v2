@@ -1,4 +1,32 @@
-# R4 验证进行中
+# R4 验证 · 0.8.0 alpha
+
+状态：**引擎工程交付完成；实际作品全量内容终审未全部通过**。2026-10-29（北京时间）。最终实现 `b10feaeba17d605935c3721431b816c68c8880c4`；后续文档提交与该实现的 CI 证据分别记录。
+
+| 范围 | 最终实际结果 |
+| --- | --- |
+| 核心 | 221 项 Node、6 项 Python、176 项来源、Agent schemas 与四工程开发校验通过 |
+| 完整浏览器 / Studio | [Engine checks 40797015632](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40797015632) 成功，包含完整 test:browser、完整 test:editor 与新生成样例 QA |
+| Windows | [Windows native host 40797015450](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40797015450) 成功；31 项 Node 专项、真实 CLI、编译、WebView2、文件桥、外部冲突及完整进程重启 |
+| R1—R3 | SDK / CLI、四模板 / Rain、两轮修订、实际新音频字节、旧文件保留、新包子目录断网新页通过 |
+| R4 审核协议 | 实际文件导入 / 证据目录 / 保存、改源过期 / 撤销复核、迟到读取取消、390px 键盘与玩家存储隔离通过；合成审核不冒充实际 AI 质量结果 |
+| 离线 | 独立作品和独立 Studio 子目录断网新页；Studio 真正打开 preview.html 并运行预览 |
+| 四样例 | 10 个用例 / 11 个声明结局 / 73 次逐步存读档；实际文件、解码、成品全部 PASS；正式总报告仍 BLOCKED |
+| 版本 | npm / lock / ENGINE_VERSION / Windows / build manifest 为 0.8.0，原生 version-identity 实际通过 |
+| 发行 | CI 测试包可下载；GitHub Release、tag 与 npm 包未发布 |
+
+B001—B005 已关闭并由最终提交回归验证，见 [问题关闭表](R4_BUGS.md)。JSON、精确提交、CI / artifact URL 与外层 ZIP SHA256 见 [机器记录](r4-validation.json)，测试包与版本说明见 [准备稿](RELEASE-v0.8.0.md)。
+
+## 实际 AI 观察与限制
+
+已读取精确源 `da7e44cd…73181fdc` 的书店技术样例：全部四行对白、两个选项、两个实际结局与角色 / 创作简报；查看两张原始图片、当前 1280px / 390px 的结束画面及 Studio / Windows 截图。正文与单项原图在此狭小范围通过，完整视觉整合仍只抽样，主观听感未执行。输入哈希、观察理由和范围见 [实际 AI 审阅摘要](r4-ai-review.json)，它不是一份已放行的 acceptance.json。
+
+当前样例仍 DRAFT；没有把接口通过、合成夹具或音频解码写成实际艺术 / 听感 / 实体设备 PASS。当前内容政策已采用 AI 模拟审核，真人内容签字不再单独阻断引擎 alpha。操作系统对话框使用 CI 预设路径；本地 Chromium 下载返回截断 ZIP，完整浏览器结果来自上述确切提交的真实 CI。
+
+三份最新证据 ZIP（AI 审阅输入、四样例 QA、Windows 原生报告）已下载并核对 SHA256 与 CI 上传 / artifact 元数据一致。四份 QA 的 route / files / decoding / build 均 PASS、构建 commit 均为最终实现；六份原生 JSON 的 passed 状态、版本与首次 / 重启范围已读取。
+
+## 历史阶段记录（保留当时状态）
+
+### 初次实施
 
 实施基线为 a039734c8e2e509d5257d194ef042a871917149e。版本已统一为 0.8.0 alpha，跨平台收尾仍在执行。
 

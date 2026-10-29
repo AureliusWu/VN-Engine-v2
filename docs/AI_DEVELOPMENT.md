@@ -1,4 +1,4 @@
-# AI 开发接口 · v0.7.0
+# AI 开发接口 · v0.8.0
 
 > R4 政策更新：文案、美术和听感终审改为有实际输入绑定的 AI 模拟审核；技术与实体设备检查保留。当前接口见 [AI_ACCEPTANCE.md](AI_ACCEPTANCE.md)。以下旧人工声明属于旧契约 / 历史范围，不再单独批准当前内容。
 
@@ -34,7 +34,7 @@ Rain 既有 `type: rain` 工程支持读取、引用、校验、真实路线、�
 
 ## 请求与命令
 
-协议固定 `vn-agent-v1`；引擎版本 0.7.0 与作品 `version` 分开维护。所有请求必须有 `protocol / requestId / command / params`，工程命令另带 `project` 文件路径。工程与回执文件使用无 BOM 的 UTF-8，SHA256 绑定原始字节；BOM / 非法编码明确拒绝并保留文件。JSON 字段不能包含可执行数据。完整可执行开发样例见后文。
+协议固定 `vn-agent-v1`；引擎版本 0.8.0 与作品 `version` 分开维护。所有请求必须有 `protocol / requestId / command / params`，工程命令另带 `project` 文件路径。工程与回执文件使用无 BOM 的 UTF-8，SHA256 绑定原始字节；BOM / 非法编码明确拒绝并保留文件。JSON 字段不能包含可执行数据。完整可执行开发样例见后文。
 
 ```json
 {"protocol":"vn-agent-v1","requestId":"inspect-001","command":"inspect","project":"build/my-game/project.json","params":{"kind":"nodes","limit":5,"maxBytes":8192}}
@@ -48,6 +48,7 @@ Rain 既有 `type: rain` 工程支持读取、引用、校验、真实路线、�
 | refs | `kind: node/variable/chapter/asset/evidence` 和 `id`；调查节点 / 证据可指定 `chapterId`；分页规则相同 |
 | impact | 与 apply 相同操作与预期哈希，但只读分析；limit / output 可选，报告直接修改、资源消费者、任务 / 语音和未知范围 |
 | feedback.inspect / put / transition | 独立 reviewFile、源 / 审阅哈希、目标 / 意见 / 状态历史；见 [R3 契约](ITERATION_DEVELOPMENT.md) |
+| acceptance.bundle / import / inspect | 独立 acceptanceFile、实际输入、源 / 审核哈希、历史 / 冲突 / 恢复；见 [R4 AI 终审](AI_ACCEPTANCE.md) |
 | apply | `expectedSourceSha256,operations` 必填，`dryRun,recover` 可选；隔离副本最终校验通过后提交 |
 | validate | `mode: development/release`，默认 development；结构 / 引用 / 类型 / 资源实际字节校验与现有发布规则 |
 | test | 从真实入口运行所有作者用例或指定 `caseId`；`maxOperations`；`output` 可写新的详细报告文件 |
@@ -58,7 +59,7 @@ Rain 既有 `type: rain` 工程支持读取、引用、校验、真实路线、�
 
 响应总有 `protocol,engineVersion,command,requestId,ok,status,project,data,diagnostics,artifacts`。`project` 在可读取时包含 `game,storyVersion,sourceSha256`；无法读取时为 null。apply 成功响应给出实际提交后的哈希；dry-run 身份仍为原源文件，候选哈希在 data 中。每条诊断给出稳定 `code,severity,message`，可用时带 `operation,path,nodeId,chapterId,assetId,expected,actual`。JSON 字段路径为数组，操作索引从 0 开始。
 
-PASS 表示该命令声明的技术范围通过。FAIL 表示实际错误；BLOCKED 表示正式门禁阻断；UNVERIFIED 表示预算、取消、未执行或覆盖不足。缺失人工验收不会由机器补为通过。
+PASS 表示该命令声明的技术范围通过。FAIL 表示实际错误；BLOCKED 表示正式门禁阻断；UNVERIFIED 表示预算、取消、未执行或覆盖不足。导入审核文件成功不等于内容通过；当前内容放行使用有实际输入的 AI 审阅，真实平台测试另行执行。
 
 ## 有界读取
 
@@ -112,7 +113,7 @@ node tools/agent-example.mjs build/r1-sdk
 node tools/agent-example.mjs build/r1-cli --cli
 ```
 
-输出各有 TRANSCRIPT.json（完整可复制请求 / 响应）；script / investigation 目录内有 project.json、ROUTE_REPORT.json、preview/preview.png、PREVIEW_REPORT.json 与 game/build-manifest.json。调查示例重命名章节和证据、检查引用、跨章到达结局。独立包可由任意静态服务器部署到子目录，下载完成后离线重开。技术样例未获正式美术 / 人工验收，所以 development 包可生成，release 模式保持 BLOCKED。
+输出各有 TRANSCRIPT.json（完整可复制请求 / 响应）；script / investigation 目录内有 project.json、ROUTE_REPORT.json、preview/preview.png、PREVIEW_REPORT.json 与 game/build-manifest.json。调查示例重命名章节和证据、检查引用、跨章到达结局。独立包可由任意静态服务器部署到子目录，下载完成后离线重开。技术样例仍为 DRAFT，缺少当前完整 AI 内容 / 设备证据；development 包可生成，release 模式保持 BLOCKED。
 
 单次创建和 Node SDK 编辑：
 
@@ -145,7 +146,7 @@ for (const [command, params] of [
 
 ## 预算与兼容边界
 
-输入 / 源文件最多 8 MB，嵌套 60 层；单资源 64 MiB、单请求资源共 256 MiB；路线最多 20000 操作；预览最多 30000ms；请求最多 60000ms。预算耗尽不标 PASS。预览使用可注入虚拟时钟处理剧情等待，真实 Chromium / DOMRenderer 验证画面；默认 reduced motion，禁用音频设备，不能替代动画、声音、实体设备或人工构图验收。预览存储被隔离，测试逐步标准 save/restore，不向玩家 Save / Meta / 已读写入。
+输入 / 源文件最多 8 MB，嵌套 60 层；单资源 64 MiB、单请求资源共 256 MiB；路线最多 20000 操作；预览最多 30000ms；请求最多 60000ms。预算耗尽不标 PASS。预览使用可注入虚拟时钟处理剧情等待，真实 Chromium / DOMRenderer 验证画面；默认 reduced motion，禁用音频设备，不能替代动画、声音、实体设备或实际构图审阅。预览存储被隔离，测试逐步标准 save/restore，不向玩家 Save / Meta / 已读写入。
 
 项目 / EditorDocument / Save 均保留 schema 1；运行器和 Studio 语义未另建副本。game、故事版本、台词与章节 ID 仍是存档身份，调整已发行作品身份 / 顺序需要独立兼容设计；R1 不执行迁移。旧 Rain 入口与原存档重建规则保持。四作和 RESET 正式文件、资产、玩家数据均独立。
 
@@ -159,7 +160,7 @@ for (const [command, params] of [
 | 读取 | INVALID_CURSOR / STALE_CURSOR / BUDGET_EXCEEDED | 重新读取、缩小范围或预算内分批 |
 | 文件事务 | SOURCE_CONFLICT / REQUEST_REUSED / REPLAY_CONFLICT / LOCKED / RECOVERY_REQUIRED / JOURNAL_ERROR / JOURNAL_FULL | 按前文核对源字节与请求日志，不盲目重放 |
 | 宿主 | FILE_NOT_FOUND / PROJECT_PATH_UNSAFE / IO_ERROR / OUTPUT_EXISTS / HOST_PORT_REQUIRED | 检查路径、输出或端口；已有内容不覆盖 |
-| 执行 | ROUTE_FAILED / PREVIEW_STATE_MISMATCH / PREVIEW_RENDER_FAILED / PREVIEW_ERROR / BUILD_ERROR / BUILD_IDENTITY_CONFLICT / RELEASE_GATE_BLOCKED | 看实际路线 / 资源 / 门禁原因，不提升人工状态 |
+| 执行 | ROUTE_FAILED / PREVIEW_STATE_MISMATCH / PREVIEW_RENDER_FAILED / PREVIEW_ERROR / BUILD_ERROR / BUILD_IDENTITY_CONFLICT / RELEASE_GATE_BLOCKED | 看实际路线 / 资源 / 门禁原因，不自动提升素材或内容状态 |
 | 中断 | TIMEOUT / ABORTED / WORKER_ERROR / WORKER_EXIT / INTERNAL_ERROR | 未验证；写入可能已完成时按回执恢复 |
 
 作者模型诊断码保留为 `PROJECT_` 加原码大写（连字符转下划线）；具体校验原因不被稳定错误码替代。协议 schema 与模型 schema 共同定义有效数据，扩展未声明能力需升级协议或清楚标识兼容扩展。

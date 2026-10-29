@@ -1,75 +1,68 @@
-# v0.2 正式美术与设备证据门禁
+# 正式美术与设备证据门禁 · R4
 
-> R4 政策更新：文案、美术和听感终审改为有实际输入绑定的 AI 模拟审核；技术与实体设备检查保留。当前接口见 [AI_ACCEPTANCE.md](AI_ACCEPTANCE.md)。以下旧人工声明属于旧契约 / 历史范围，不再单独批准当前内容。
+这是 GALGAME SPEC v0.2 的部分工程门禁。项目契约保持 `GALGAME_SPEC-v0.1`，美术报告保持 `GALGAME_SPEC-v0.2-art-draft`；不声称全部 v0.2 合规。当前文案、美术和听感终审采用 [AI 模拟审阅](AI_ACCEPTANCE.md)。
 
-这是 `GALGAME SPEC v0.2` 的**部分工程门禁**，不是对 v0.2 全部条款的合规声明。既有项目契约标识保持 `GALGAME_SPEC-v0.1`；新增报告标识为 `GALGAME_SPEC-v0.2-art-draft`。
+## 当前正式门禁
 
-## 门禁做什么
+开发模式允许草稿。正式校验和 `VN_RELEASE_BUILD=1` 打包分别检查：
 
-开发模式允许未完成资产继续迭代。正式校验和 `VN_RELEASE_BUILD=1` 打包会检查：
+- 相关视觉资源显式 READY、TECH_READY、实际清单 SHA256 与 runtimeSha256、真实来源和本地文件。技术就绪不会自动提升美术状态。
+- 独立 acceptance.json 中当前源 / 素材 / 证据绑定的 `art:<assetId>` AI 审阅。审核者必须看到实际图片；旧 ART_READY、七项视觉标记或真人签字不能单独批准当前资源。
+- 正式立绘的 Character Master、neutral / variant 用途、母版 SHA256，以及 `master:<characterId>` AI 审阅。关联 Neutral 即使未直接出现在场景，也必须存在、READY、技术哈希与 AI 审阅有效；失败、未知和缺失都会传递给差分。
+- `visualIntegration` AI 审阅检查实际画面、桌面 / 390px 与交互覆盖；Key Visual 使用声明必须与演出一致。动态人物引用不能凭静态未引用判断为无须审核。
+- 清单出现 PLACEHOLDER 会阻断。潜在占位或程序 / 模板来源给出待审警告；是否符合正式视觉风格由实际 AI 美术审阅判断。
+- 显式 mobile / pwa / desktop 目标，至少一个为 true。生成的 PWA 正式包须声明 pwa；移动 / PWA 的 mobilePhysicalDevice 仍须真实设备、操作者、日期与证据。浏览器视口和 AI 判断不能补写实体设备 PASS。
+- 当前剧情 / 文案 / 听感和实际平台技术结果见 [QA_REPORT.md](QA_REPORT.md)。缺失、过期、抽样或模态不足不通过。
 
-- 已引用的背景、立绘、CG，以及资源清单中的 UI 视觉素材；无法静态穷尽的动态人物演出会保守检查全部视觉资源，并要求另附运行验收证据。
-- 正式视觉资源声明 `status: READY`、资源清单 SHA256 和相同的 `runtimeSha256`。正式 CLI 校验与打包器会另读取实际文件并核对声明的 SHA256；二者不检查图像解码或尺寸。
-- 每项分别声明 `TECH_READY`、`ART_READY`、七项视觉门禁、审核者、日期、真实来源和桌面 / 移动 / 来源证据引用。缺项或 `UNVERIFIED` 会阻止正式发布；技术状态不会自动改写美术状态。
-- 资源清单中存在显式 `PLACEHOLDER` 即阻止发布；文件名、路径或说明含占位字样，以及来源描述为程序化 / 模板时，输出需要人工复核的警告。程序生成是否为作品有意采用的正式风格由人工判断。
-- 显式声明 `mobile / pwa / desktop` 目标。声明移动端或 PWA 时，必须提供 `mobilePhysicalDevice` 的 `kind: physical`、设备、人工审核者、日期与证据；浏览器窄屏截图不能替代实体设备记录。本打包器总会生成 PWA，因此正式包须声明 `pwa: true`。
-- 声明是否使用装饰性 Key Visual；使用时需提供在实际剧情、对白和选项中检查遮挡及生命周期的人工证据。引擎不自动判定这些声明的真实性。
-- 正式立绘必须关联 Character Master、角色用途（neutral / variant）和母版 SHA256。母版或关联 Neutral 的人工视觉门禁未通过时，差分继承失败，不能凭差分自己的 PASS 绕过。
-- 正式作品另需 [人工 QA 记录与统一报告](QA_REPORT.md)；缺少适用项的审核者、日期或证据时阻断。
+AI PASS 在报告计算中投影为旧视觉结果字段，保留旧字段的可读兼容；不批量改写工程的 DRAFT / READY。更改资源状态、主题或正文后必须按新源复审。模型 / 人的身份、来源真实性与物理设备声明未被文件哈希自动认证。
 
-门禁核对的是**人工填写的声明和引用是否齐备**，不会自动鉴定截图真实性、构图、美术风格、来源真实性或设备是否确为实体设备。来源无法确认时请填 `UNVERIFIED`，不要猜测。应由作品团队保留原始截图、文件哈希、审核记录及实际设备证据。
+## 工程元数据与独立审阅
 
-## 作品数据示意
-
-下例故意保持 `UNVERIFIED`，会被正式门禁阻止。`room` 需对应资源清单中的 `background / portrait / cg / ui` 资源，其 `status` 与 `sha256` 也需按实际结果填写；不要把示例当作已通过证据。
+工程中的 releaseEvidence 继续保存目标、技术状态、来源及母版关联。以下未完成示意会阻断；实际 AI 观察与证据清单另存 acceptance.json，不放进玩家包。
 
 ```json
 {
   "releaseEvidence": {
     "targets": { "mobile": true, "pwa": true, "desktop": true },
-    "keyVisual": { "used": true, "status": "UNVERIFIED", "reviewer": "UNVERIFIED", "reviewedAt": "", "evidence": "UNVERIFIED" },
+    "keyVisual": { "used": false },
     "mobilePhysicalDevice": {
-      "status": "UNVERIFIED", "kind": "physical", "device": "UNVERIFIED", "reviewer": "UNVERIFIED",
-      "reviewedAt": "", "evidence": "UNVERIFIED"
+      "status": "UNVERIFIED", "kind": "physical", "device": "UNVERIFIED",
+      "reviewer": "UNVERIFIED", "reviewedAt": "", "evidence": "UNVERIFIED"
     },
     "art": {
       "room": {
         "TECH_READY": "UNVERIFIED", "ART_READY": "UNVERIFIED",
-        "VISUAL_IDENTITY_PASS": "UNVERIFIED", "COMPOSITION_PASS": "UNVERIFIED",
-        "STYLE_PASS": "UNVERIFIED", "SCENE_INTEGRATION_PASS": "UNVERIFIED",
-        "MOBILE_PASS": "UNVERIFIED", "DESKTOP_PASS": "UNVERIFIED", "PROVENANCE_PASS": "UNVERIFIED",
-        "reviewer": "UNVERIFIED", "reviewedAt": "", "source": "UNVERIFIED", "runtimeSha256": "",
-        "evidence": { "desktop": "UNVERIFIED", "mobile": "UNVERIFIED", "provenance": "UNVERIFIED" }
+        "runtimeSha256": "", "source": "UNVERIFIED"
       }
     }
   }
 }
 ```
 
-如使用动态人物呈现，还需 `dynamicPresentation: { status, reviewer, reviewedAt, evidence }`，确认实际运行中的动态资源引用。证据的 `status` 为 `PASS / FAIL / UNVERIFIED`；必须是经人工复核后的实际结果。正式立绘的 `masterSha256` 必填，其他视觉资源如填写需是 64 位十六进制 SHA256。
-
-角色母版关联使用以下结构片段，需与每资产完整记录合并。`characterMasters.hero` 应包含 ART_READY、七项视觉门禁、reviewer / reviewedAt / evidence 和 masterSha256。若 Neutral 在 runtime 清单内，可用 `neutralAsset` 明确关联；该 Neutral 的人工门禁失败也会传给全部变体。母版源图的证据与声明哈希仍须人工核实，不会因关联存在而自动通过艺术审核。
+母版关联示意：
 
 ```json
 {
   "characterMasters": {
-    "hero": {"ART_READY":"UNVERIFIED","masterSha256":"","neutralAsset":"hero/neutral","reviewer":"UNVERIFIED","reviewedAt":"","evidence":"UNVERIFIED"}
+    "hero": { "masterSha256": "<真实64位SHA256>", "neutralAsset": "hero/neutral" }
   },
   "art": {
-    "hero/neutral": {"masterSha256":"","characterMaster":{"id":"hero","role":"neutral"}},
-    "hero/smile": {"masterSha256":"","characterMaster":{"id":"hero","role":"variant"}}
+    "hero/neutral": { "masterSha256": "<真实64位SHA256>", "characterMaster": { "id": "hero", "role": "neutral" } },
+    "hero/smile": { "masterSha256": "<真实64位SHA256>", "characterMaster": { "id": "hero", "role": "variant" } }
   }
 }
 ```
 
-## 运行
+这些是片段，不是能直接放行的完整工程。旧 releaseEvidence.qa、reviewer / reviewedAt 和七项视觉声明仍可读取；独立当前审核与真实字节检查决定现行结果。
+
+## 运行与状态
 
 ```bash
-npm run validate:spec:release -- /path/to/project.json
-npm run gate:release -- /path/to/project.json
-VN_RELEASE_BUILD=1 VN_ENGINE_COMMIT=<40位提交SHA> npm run build:game -- /path/to/project.json /path/to/new-output
+npm run validate:spec:release -- /path/to/project.json --acceptance=/path/to/acceptance.json
+VN_ENGINE_COMMIT=<40位实际提交SHA> npm run gate:release -- /path/to/project.json --acceptance=/path/to/acceptance.json
+VN_RELEASE_BUILD=1 VN_ENGINE_COMMIT=<40位实际提交SHA> npm run build:game -- /path/to/project.json /path/to/new-output --acceptance=/path/to/acceptance.json
 ```
 
-`gate:release` 需传入具体作品，完整步骤和候选 / 报告输出见 [QA_REPORT](QA_REPORT.md)。单独的 `validate:spec:release` 按作品声明的目标检查；如也要检查本引擎的 PWA 打包要求，可加 `--pwa-package`。失败时 CLI 输出 `SPEC_ART_GATE_BLOCKED`、`SPEC_QA_GATE_BLOCKED` 或 `SPEC_FILE_GATE_BLOCKED` 及结构化 JSON；正式构建把 `artGate / qaGate` 写入 `build-manifest.json`。正式构建要求有效的 40 位提交 SHA；同时提供 `VN_ENGINE_COMMIT` 与 `GITHUB_SHA` 时，两者必须一致。
+失败输出结构化 ART / QA / ROUTE / FILE 门禁原因；正式构建记录 artGate / qaGate 和路线摘要。VN_ENGINE_COMMIT 与 GITHUB_SHA 同时存在时必须相同。候选包进一步检查实际文件、源、启动依赖、离线缓存和指纹。
 
-角色母版继承、装饰 Key Visual 范围 / 生命周期以及本地资产解码探测已经接入；人工证据真实性、母版源图真实性、实际构图、听感和实体设备仍须作品团队验收。不能因工程门禁返回 PASS 而宣称整部作品或 v0.2 全量合规。
+引擎完成、指定作品内容通过、测试包可下载和 GitHub Release 已发布分别记录。AI 模拟审阅替代内容终审的真人签字；实际声音播放、平台测试与声明的实体设备检查继续使用真实证据。

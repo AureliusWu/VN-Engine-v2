@@ -1,0 +1,207 @@
+{
+  "schema": 1,
+  "round": "R4",
+  "engineVersion": "0.8.0",
+  "channel": "alpha",
+  "status": "ENGINEERING_COMPLETE",
+  "checkedDate": "2026-10-29",
+  "timezone": "Asia/Shanghai",
+  "validatedImplementationCommit": "b10feaeba17d605935c3721431b816c68c8880c4",
+  "stages": {
+    "plan": "a039734c8e2e509d5257d194ef042a871917149e",
+    "AB": "c5a4bcf55c0d46d054804fea6d2e7688f22db53c",
+    "C": "07b8c349cbe9b53b24dd4c43cad4712ba23a5eaa",
+    "B004": "e85b0852bedb7884d07e0a694432850573b9e18f",
+    "B005": "b10feaeba17d605935c3721431b816c68c8880c4"
+  },
+  "ci": {
+    "engine": {
+      "run": 40797015632,
+      "status": "success",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40797015632"
+    },
+    "windows": {
+      "run": 40797015450,
+      "status": "success",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40797015450"
+    }
+  },
+  "checks": {
+    "node": 221,
+    "python": 6,
+    "provenanceFiles": 176,
+    "schemas": "PASS",
+    "fullBrowser": "PASS",
+    "focusedStudio": "PASS",
+    "windowsNodeSpecialists": 31,
+    "windowsNative": "PASS",
+    "nativeFullProcessRestart": "PASS",
+    "studioNestedOfflineFreshPage": "PASS",
+    "r1r2r3SdkCli": "PASS",
+    "sampleRouteCases": 10,
+    "sampleDeclaredEndings": 11,
+    "sampleRestoreChecks": 73,
+    "fourSampleFilesDecodeBuild": "PASS"
+  },
+  "bugs": [
+    {
+      "id": "R4-B001",
+      "priority": "P0",
+      "status": "FIXED_VERIFIED"
+    },
+    {
+      "id": "R4-B002",
+      "priority": "P0",
+      "status": "FIXED_VERIFIED"
+    },
+    {
+      "id": "R4-B003",
+      "priority": "P0",
+      "status": "FIXED_VERIFIED"
+    },
+    {
+      "id": "R4-B004",
+      "priority": "P0",
+      "status": "FIXED_VERIFIED"
+    },
+    {
+      "id": "R4-B005",
+      "priority": "P1",
+      "status": "FIXED_VERIFIED"
+    }
+  ],
+  "sampleReports": [
+    {
+      "file": "campus-QA_REPORT.json",
+      "game": "vn-self-campus",
+      "sourceSha256": "c11e064726fe2425bca631f23db115647b08d5978467d7a72aa6f455551c0422",
+      "routes": "PASS",
+      "cases": 3,
+      "declaredEndings": 4,
+      "restoreChecks": 21,
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "overall": "BLOCKED"
+    },
+    {
+      "file": "circuit-QA_REPORT.json",
+      "game": "vn-self-investigation",
+      "sourceSha256": "846a8063cb7b26b033bbda9cd962aaa9dffef9cd9238b3ddaf85828b30e71b0f",
+      "routes": "PASS",
+      "cases": 3,
+      "declaredEndings": 4,
+      "restoreChecks": 35,
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "overall": "BLOCKED"
+    },
+    {
+      "file": "netlove-QA_REPORT.json",
+      "game": "vn-self-chat",
+      "sourceSha256": "23942f2ebac2bdd1b57088ed5b7c2f9b9343386990099beaf19d882c9294e4f8",
+      "routes": "PASS",
+      "cases": 2,
+      "declaredEndings": 1,
+      "restoreChecks": 10,
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "overall": "BLOCKED"
+    },
+    {
+      "file": "rain-QA_REPORT.json",
+      "game": "vn-self-rain",
+      "sourceSha256": "13d585ed1dda3d7b6da72eb9f90cd78bc6d071a9d4f5c6cb13eea90f4e811993",
+      "routes": "PASS",
+      "cases": 2,
+      "declaredEndings": 2,
+      "restoreChecks": 7,
+      "files": "PASS",
+      "decoding": "PASS",
+      "build": "PASS",
+      "overall": "BLOCKED"
+    }
+  ],
+  "artifacts": [
+    {
+      "name": "vn-engine-standalone-samples",
+      "id": 12864805062,
+      "run": 40797015632,
+      "sha256": "9cfdf8e735d067aee10f99f1f651a69484051adb9494b9416509b3104133063e",
+      "digestScope": "GitHub outer artifact ZIP; CI metadata",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40797015632/artifacts/12864805062"
+    },
+    {
+      "name": "alpha-qa-reports",
+      "id": 12864312246,
+      "run": 40797015632,
+      "sha256": "b983ab041e7885e01bfc0f52afc1e7d636c55a1f0948241bd9f7fa5560126089",
+      "downloadVerified": true,
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40797015632/artifacts/12864312246"
+    },
+    {
+      "name": "engine-browser-evidence",
+      "id": 12864113135,
+      "run": 40797015632,
+      "sha256": "64265cb7b1433ac37a87e5091126eda2006fd4b743b7e7232adadf1681632142",
+      "digestScope": "GitHub outer artifact ZIP; CI metadata",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40797015632/artifacts/12864113135"
+    },
+    {
+      "name": "r4-review-evidence",
+      "id": 12863634977,
+      "run": 40797015632,
+      "sha256": "da0063be877c26153c5c12fba1342fc4b2195358bec6d02f9608591087b1bdb5",
+      "downloadVerified": true,
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40797015632/artifacts/12863634977"
+    },
+    {
+      "name": "VNEngine-Studio-win-x64",
+      "id": 12863879074,
+      "run": 40797015450,
+      "sha256": "0384b0771b0643163ef7a0203e1e5aa798efa244460fd97ab030c3a897fb9525",
+      "digestScope": "GitHub outer artifact ZIP, containing VNEngine-Studio-0.8.0-win-x64.zip; CI metadata",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40797015450/artifacts/12863879074"
+    },
+    {
+      "name": "windows-native-evidence",
+      "id": 12863719577,
+      "run": 40797015450,
+      "sha256": "3269680602b9cdc1d0af83715897c3c4c23bbbbedefe1d4ccc78cda8f6093a47",
+      "downloadVerified": true,
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40797015450/artifacts/12863719577"
+    }
+  ],
+  "contentAcceptance": {
+    "policy": "ai-simulated",
+    "protocolImplementation": "PASS",
+    "syntheticRegressionFixturesAreActualAiReview": false,
+    "actualReviewSummary": "r4-ai-review.json",
+    "fullSampleAcceptance": "UNVERIFIED",
+    "listening": "UNVERIFIED",
+    "physicalDevice": "UNVERIFIED",
+    "draftAssetsPromoted": false
+  },
+  "publication": {
+    "githubReleaseCreated": false,
+    "githubReleasesObserved": 0,
+    "npmPublished": false,
+    "testArtifactsAvailable": true
+  },
+  "boundaries": {
+    "gameMigrationPerformed": false,
+    "fourGamesOrResetModified": false,
+    "nextRoundStarted": false,
+    "manualOsDialogsClaimed": false,
+    "localBrowserExecuted": false,
+    "localBrowserReason": "Chromium download returned a truncated ZIP; real complete browser evidence comes from exact-commit GitHub CI."
+  },
+  "priorFailedRun": {
+    "commit": "e85b0852bedb7884d07e0a694432850573b9e18f",
+    "windowsRun": 40796554578,
+    "reason": "Directory aliases caused a false BLOCKED result; reproduced locally and fixed as R4-B005. Not relabeled PASS."
+  },
+  "note": "This file records the tested implementation commit; later documentation-only commits do not reuse these run IDs as if newly executed."
+}
