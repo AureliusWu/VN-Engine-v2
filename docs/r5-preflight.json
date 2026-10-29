@@ -24,7 +24,7 @@
     "nodeTests": 225,
     "passed": 221,
     "failed": 4,
-    "reason": "EPERM creating symbolic-link fixtures on this Windows account; assertions in those four tests were not reached",
+    "reason": "EPERM creating symbolic-link fixtures on this Windows account; the key symbolic-link scenario assertions were not reached",
     "policy": "No OS permission changes or test skips; full core validation is required in CI"
   }
 }

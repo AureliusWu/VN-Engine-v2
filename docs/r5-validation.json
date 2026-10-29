@@ -1,0 +1,211 @@
+{
+  "round": "R5",
+  "completedDate": "2026-10-30",
+  "engineVersion": "0.8.1",
+  "baselineCommit": "622615a39ea05d446502d733c27055d5415f4411",
+  "implementationAndRegressionCommit": "8cdab361dd41bdb1e9258f45603b7d6c9a1bf62a",
+  "provenance": {
+    "manifest": "docs/provenance.json",
+    "verifiedFiles": 178
+  },
+  "pullRequest": "https://github.com/AureliusWu/VN-Engine-v2/pull/1",
+  "deliveryChecks": "https://github.com/AureliusWu/VN-Engine-v2/pull/1/checks",
+  "local": {
+    "browser": "Microsoft Edge 156.0.4314.50, isolated headless profiles",
+    "completeBrowserSuite": "PASS",
+    "completeEditorSuite": "PASS",
+    "agentSchemas": "PASS",
+    "sampleSpecifications": 4,
+    "pythonTests": {
+      "passed": 6,
+      "failed": 0
+    },
+    "nodeCheck": {
+      "total": 225,
+      "passed": 221,
+      "fixtureSetupFailed": 4,
+      "reason": "Windows EPERM creating fixtures before the key symbolic-link scenario assertions"
+    },
+    "r5Groups": {
+      "studio": 10,
+      "runtime": 4,
+      "feedbackDrafts": 4,
+      "acceptance": 5
+    },
+    "regressionGroupsStatus": "PASS",
+    "reports": [
+      "test-results/r5-studio/r5-studio-browser.json",
+      "test-results/r5-runtime/r5-runtime-browser.json",
+      "test-results/r5-feedback/r5-feedback-browser.json",
+      "test-results/r4-acceptance-*/R5_ACCEPTANCE_PANEL_REPORT.json"
+    ]
+  },
+  "windows": {
+    "run": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40909572717",
+    "conclusion": "success",
+    "pullRequestHead": "8cdab361dd41bdb1e9258f45603b7d6c9a1bf62a",
+    "actualCheckoutAndBuildCommit": "8124b65f3333ea319a2f221975ed09e244dd3de9",
+    "programVersion": "0.8.1+8124b65f3333ea319a2f221975ed09e244dd3de9",
+    "priorNodeChecks": 31,
+    "mediaNodeChecks": 8,
+    "nativeReports": [
+      {
+        "file": "host-policy.json",
+        "result": "passed",
+        "checks": 10
+      },
+      {
+        "file": "studio-first.json",
+        "result": "passed",
+        "checks": 23
+      },
+      {
+        "file": "studio-restart.json",
+        "result": "passed",
+        "checks": 25
+      },
+      {
+        "file": "game-first.json",
+        "result": "passed",
+        "checks": 7
+      },
+      {
+        "file": "game-restart.json",
+        "result": "passed",
+        "checks": 7
+      },
+      {
+        "file": "version-identity.json",
+        "result": "passed"
+      }
+    ],
+    "portableArtifact": {
+      "id": 12913276964,
+      "bytes": 64264368,
+      "sha256": "4458a66bd27f3dd2287720b0ffd2d76ad8439e0b053c218ac4b1ff06f8ec6f9d",
+      "digestScope": "GitHub outer artifact ZIP",
+      "downloaded": false
+    },
+    "evidenceArtifact": {
+      "id": 12912738585,
+      "bytes": 4729180,
+      "sha256": "9df68c02d98298f6751e867bed4c12fce224c6f4eaabaedc5b46424aadb5113f",
+      "downloadedZipMatchesDigest": true,
+      "digestScope": "GitHub outer artifact ZIP"
+    }
+  },
+  "preservedFailures": [
+    {
+      "runId": 40907811878,
+      "reason": "Final production source hash was not refreshed; Node 225 and Python 6 passed",
+      "resolution": "Refreshed and verified all 178 provenance records"
+    },
+    {
+      "runId": 40908495514,
+      "reason": "Legacy creative test counted a legal resumed playing event as a replay",
+      "resolution": "Verify the same audio instance and currentTime; restore must not add plays"
+    },
+    {
+      "scope": "Local initial browser run",
+      "reason": "Legacy tests allowed stale export after invalid fields",
+      "resolution": "Assert blocked export/save, preserved raw input and identical valid model after correction"
+    }
+  ],
+  "limitations": [
+    "Manual computer use discovered the initial save/focus defects; it later stopped because the browser URL could not be verified. No later manual retest is claimed.",
+    "Controlled native-bridge browser tests are separate from actual Windows WebView2 and restart evidence.",
+    "Native CI system dialogs use preset paths; no manual system-dialog, subjective listening or physical mobile acceptance is claimed.",
+    "Synthetic feedback and AI review fixtures do not approve production content. The four source games were not migrated and no Release was published."
+  ],
+  "engine": {
+    "run": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40909572433",
+    "conclusion": "success",
+    "pullRequestHead": "8cdab361dd41bdb1e9258f45603b7d6c9a1bf62a",
+    "actualCheckoutAndBuildCommit": "8124b65f3333ea319a2f221975ed09e244dd3de9",
+    "nodeTests": {
+      "passed": 225,
+      "failed": 0
+    },
+    "pythonTests": {
+      "passed": 6,
+      "failed": 0
+    },
+    "provenanceFiles": 178,
+    "schemas": "PASS",
+    "completeBrowserSuite": "PASS",
+    "completeEditorSuite": "PASS",
+    "samples": [
+      {
+        "name": "campus",
+        "overallStatus": "BLOCKED",
+        "routes": "PASS",
+        "files": "PASS",
+        "decoding": "PASS",
+        "build": "PASS",
+        "cases": 3,
+        "coveredEndings": 4,
+        "restoreChecks": 21,
+        "buildCommit": "8124b65f3333ea319a2f221975ed09e244dd3de9"
+      },
+      {
+        "name": "netlove",
+        "overallStatus": "BLOCKED",
+        "routes": "PASS",
+        "files": "PASS",
+        "decoding": "PASS",
+        "build": "PASS",
+        "cases": 2,
+        "coveredEndings": 1,
+        "restoreChecks": 10,
+        "buildCommit": "8124b65f3333ea319a2f221975ed09e244dd3de9"
+      },
+      {
+        "name": "circuit",
+        "overallStatus": "BLOCKED",
+        "routes": "PASS",
+        "files": "PASS",
+        "decoding": "PASS",
+        "build": "PASS",
+        "cases": 3,
+        "coveredEndings": 4,
+        "restoreChecks": 35,
+        "buildCommit": "8124b65f3333ea319a2f221975ed09e244dd3de9"
+      },
+      {
+        "name": "rain",
+        "overallStatus": "BLOCKED",
+        "routes": "PASS",
+        "files": "PASS",
+        "decoding": "PASS",
+        "build": "PASS",
+        "cases": 2,
+        "coveredEndings": 2,
+        "restoreChecks": 7,
+        "buildCommit": "8124b65f3333ea319a2f221975ed09e244dd3de9"
+      }
+    ],
+    "artifacts": [
+      {
+        "id": 12913432524,
+        "name": "r5-stability-evidence",
+        "bytes": 1185278,
+        "sha256": "1bd6fad416d993f7799579137e5114d05e97b08e95b6a5036afeed3a9f5ff21f",
+        "digestScope": "GitHub outer artifact ZIP",
+        "downloadedZipMatchesDigest": true
+      },
+      {
+        "id": 12912214591,
+        "name": "alpha-qa-reports",
+        "bytes": 64443,
+        "sha256": "444ea986770bcd6dd955d0e2567c0abae2e4dfe47329c4cade2fff1ddaa65670",
+        "digestScope": "GitHub outer artifact ZIP",
+        "downloadedZipMatchesDigest": true
+      }
+    ],
+    "routeTotals": {
+      "cases": 10,
+      "coveredEndings": 11,
+      "restoreChecks": 73
+    }
+  }
+}

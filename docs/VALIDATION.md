@@ -1,5 +1,9 @@
 # 引擎验证记录
 
+## R5 v0.8.1 实机测试与稳定性
+
+本机实际 Studio / 播放器操作发现聚焦保存和鼠标后键盘失焦问题，新增作者输入、异步打开、音效续播与审核错误回归。实现 `8cdab36` 的 Engine / Windows CI 全绿：225 项 Node、6 项 Python、178 项来源、完整浏览器 / Studio、四样例技术 QA，以及实际 WebView2 / 完整进程重启证据已核对。完整本地浏览器 / 编辑器也通过；本地符号链接夹具权限限制单独保留。见 [0.8.1 验证](VALIDATION-v0.8.1.md)、[机器记录](r5-validation.json) 和 [问题表](R5_BUGS.md)。四作未迁移。
+
 ## R4 v0.8.0 缺陷修复与 AI 模拟终审
 
 最终实现 b10feaeba17d605935c3721431b816c68c8880c4 的 Engine / Windows CI 均成功：221 项 Node、6 项 Python、176 项来源、完整浏览器 / Studio、Windows 31 项专项 / 原生 / 完整进程重启和独立包 / Studio 子目录离线通过。B001—B005 已关闭；实际 AI 正文 / 单项原图已审阅，全量画面、听感与实体设备仍 UNVERIFIED，样例仍 DRAFT。当前内容终审采用 AI 模拟审核，旧真人签字只作历史视图。见 [0.8.0 验证](VALIDATION-v0.8.0.md)、[机器记录](r4-validation.json) 和 [测试包 / 版本说明](RELEASE-v0.8.0.md)。收尾文档不冒充新的实现验证，R4 后停止。
