@@ -29,3 +29,5 @@ npm / lock / 引擎 / Windows 已统一 0.8.0。211 项 Node 与 6 项 Python、
 查漏补缺复现 R4-B004：重新计算清单哈希与内容指纹后，损坏 HTML 启动脚本、CSS URL、PWA 图标 / 启动页或从离线缓存漏掉 app.mjs，旧实现的 build 子项仍为 PASS；五个负向用例均在旧实现失败。新增实际入口 / CSS / Web App Manifest / 当前生成 worker 检查，并补充无模块入口、过期缓存指纹及合法查询参数 / fragment / data URI 的回归。检查保留原成品，不修补被检文件。
 
 本次本地 Chromium 下载仍返回截断 ZIP，没有声称本地浏览器执行。新增修复的完整跨平台结果等待本提交 CI，不能沿用 `07b8c34` 的通过结果。
+
+`e85b085` 首次 Windows 扩展检查发现旧 QA 用例的总结果由预期 UNVERIFIED 变成 BLOCKED。进一步用真实目录别名在本地复现 R4-B005：loadAcceptanceOptions 用未规范化的父目录与规范化素材路径比较，错误拒绝合法输入。改为复用现有 filePath 规范化；补充目录别名 / Windows junction 正向检查及外部素材目录拒绝检查。未放宽素材边界，也未跳过 Windows 用例。

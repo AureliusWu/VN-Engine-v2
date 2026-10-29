@@ -1,7 +1,7 @@
 import {syntheticAcceptance} from './acceptance-fixture.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, rm, mkdir, symlink } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -67,6 +67,22 @@ test('build dependency resolution accepts local query/fragment URLs and inline d
   await writeFile(file, (await readFile(file, 'utf8')).replace('./app.mjs', './app.mjs?v=1#start').replace('</style>', '.scene{background:url(./icon.svg#scene)}.inline{background:url(data:image/svg+xml;base64,PHN2Zy8+)}</style>'));
   await refreshBuild(output);
   assert.equal((await buildQaReport(source, { buildDirectory: output })).build.status, 'PASS');
+});
+
+test('R4-B005: directory aliases preserve current acceptance without weakening asset boundaries', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'vn-qa-alias-')); t.after(() => rm(root, { recursive: true, force: true }));
+  const actual = join(root, 'actual'), alias = join(root, 'alias'); await mkdir(actual);
+  const fixture = qaFixture(), source = await writeQaFixture(actual, fixture.project, fixture.picture);
+  await symlink(actual, alias, process.platform === 'win32' ? 'junction' : 'dir');
+  const direct = await buildQaReport(source), throughAlias = await buildQaReport(join(alias, 'project.json'));
+  assert.equal(direct.contentReview.release, 'PASS');
+  assert.equal(throughAlias.contentReview.release, 'PASS', JSON.stringify(throughAlias.contentReview));
+  assert.equal(throughAlias.status, direct.status); assert.deepEqual(throughAlias.project, direct.project);
+  const outside = join(root, 'outside'); await mkdir(outside); await writeFile(join(outside, 'room.svg'), fixture.picture);
+  await rm(join(actual, 'assets'), { recursive: true });
+  await symlink(outside, join(actual, 'assets'), process.platform === 'win32' ? 'junction' : 'dir');
+  const escaped = await buildQaReport(join(alias, 'project.json'));
+  assert.equal(escaped.contentReview.release, 'BLOCKED'); assert.equal(escaped.files.status, 'FAIL');
 });
 
 test('current AI acceptance replaces human signatures, binds source, and requires only applicable scopes', async () => {

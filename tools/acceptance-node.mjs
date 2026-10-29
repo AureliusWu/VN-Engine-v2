@@ -15,7 +15,7 @@ export function acceptanceEvidenceReader(root) {
   };
 }
 export async function loadAcceptanceOptions(projectFile, options = {}) {
-  const file = path.resolve(projectFile), sourceText = await io.readText(file), project = readDocument(sourceText).project;
+  const file = await io.filePath(projectFile), sourceText = await io.readText(file), project = readDocument(sourceText).project;
   const acceptanceFile = path.resolve(options.acceptanceFile ?? path.join(path.dirname(file), 'acceptance.json'));
   let acceptance = options.acceptance;
   if (acceptance === undefined) {
