@@ -24,9 +24,10 @@ try{
  await page.goto(base+'/creative-player');
  await page.evaluate(async project=>{
   Object.defineProperty(window,'localStorage',{get(){throw Error('Creative preview accessed player storage')}});
-  const NativeContext=window.AudioContext;window.r2Contexts=[];window.r2Sounds=[];window.r2Sources=[];
+  const NativeContext=window.AudioContext;window.r2Contexts=[];window.r2Sounds=[];window.r2Sources=[];window.r2Players=[];window.r2PlayCalls=0;
   window.AudioContext=class extends NativeContext{constructor(...args){super(...args);r2Contexts.push(this);const analyser=this.createAnalyser();analyser.fftSize=2048;this.r2Analyser=analyser;analyser.connect(this.destination);const make=this.createGain.bind(this);this.createGain=()=>{const gain=make(),connect=gain.connect.bind(gain);gain.connect=target=>connect(target===this.destination?analyser:target);return gain;};const source=this.createBufferSource.bind(this);this.createBufferSource=()=>{const node=source(),start=node.start.bind(node);node.start=(...args)=>{r2Sources.push({loop:node.loop});return start(...args);};return node;};}};
-  const play=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){this.addEventListener('playing',()=>r2Sounds.push(this.currentSrc),{once:true});return play.call(this);};
+  const createElement=document.createElement;document.createElement=function(...args){const node=createElement.apply(this,args);if(args[0]==='audio')r2Players.push(node);return node;};
+  const play=HTMLMediaElement.prototype.play;HTMLMediaElement.prototype.play=function(){r2PlayCalls++;this.addEventListener('playing',()=>r2Sounds.push(this.currentSrc),{once:true});return play.call(this);};
   window.r2Peak=()=>{const a=r2Contexts[0]?.r2Analyser;if(!a)return 0;const b=new Float32Array(a.fftSize);a.getFloatTimeDomainData(b);return Math.max(...b.map(Math.abs));};
   const {mountGame}=await import('/lib/index.js');window.r2Game=mountGame(document.getElementById('game'),project,{baseURL:new URL('/samples/',location.href),storage:null});
  },project);
@@ -34,11 +35,21 @@ try{
  await page.locator('[data-control=sound]').click();await page.waitForFunction(()=>r2Contexts[0]?.state==='running'&&r2Sources.length>=2&&r2Peak()>0.0001);
  evidence.playback.initial=await page.evaluate(()=>({state:r2Contexts[0].state,peak:r2Peak(),loops:r2Sources.filter(s=>s.loop).length}));assert.ok(evidence.playback.initial.peak>0);assert.equal(evidence.playback.initial.loops,2);
  await page.screenshot({path:path.join(root,'player-desktop.png'),fullPage:true});
- await page.locator('[data-control=next]').click();await page.waitForFunction(()=>r2Sounds.length===1);await page.evaluate(()=>{window.r2Saved=r2Game.session.save();r2Game.session.configure({fontScale:1.2});});
- await page.locator('[data-control=settings]').click();await page.waitForFunction(()=>r2Contexts[0].state==='suspended');const stopped=await page.evaluate(()=>r2Contexts[0].currentTime);await page.waitForTimeout(100);assert.equal(await page.evaluate(()=>r2Contexts[0].currentTime),stopped);
- await page.keyboard.press('Escape');await page.waitForFunction(()=>r2Contexts[0].state==='running'&&r2Peak()>0.0001);
- await page.evaluate(()=>r2Game.session.restore(r2Saved));await page.waitForTimeout(150);assert.equal(await page.evaluate(()=>r2Sounds.length),1);
- evidence.playback.pauseResume={suspendedClockStopped:true,resumed:true};evidence.playback.oneShot={actualPlayingEvents:1,noReplayOnSettingsOrRestore:true};
+ await page.locator('[data-control=next]').click();await page.waitForFunction(()=>r2Sounds.length===1&&r2Players[0]?.currentTime>.05);
+ await page.evaluate(()=>{window.r2Cue=r2Players[0];window.r2Saved=r2Game.session.save();r2Game.session.configure({fontScale:1.2});});
+ assert.deepEqual(await page.evaluate(()=>({players:r2Players.length,plays:r2PlayCalls})),{players:1,plays:1});
+ await page.locator('[data-control=settings]').click();await page.waitForFunction(()=>r2Contexts[0].state==='suspended');
+ const stopped=await page.evaluate(()=>({graph:r2Contexts[0].currentTime,cue:r2Cue.currentTime,paused:r2Cue.paused,ended:r2Cue.ended}));
+ assert.equal(stopped.paused,true);assert.equal(stopped.ended,false);await page.waitForTimeout(100);
+ assert.deepEqual(await page.evaluate(()=>({graph:r2Contexts[0].currentTime,cue:r2Cue.currentTime})),{graph:stopped.graph,cue:stopped.cue});
+ await page.keyboard.press('Escape');await page.waitForFunction(time=>r2Contexts[0].state==='running'&&r2Peak()>0.0001&&!r2Cue.paused&&r2Cue.currentTime>time+.03,stopped.cue);
+ const resumed=await page.evaluate(()=>({samePlayer:r2Cue===r2Players[0],players:r2Players.length,plays:r2PlayCalls,events:r2Sounds.length,cue:r2Cue.currentTime}));
+ assert.equal(resumed.samePlayer,true);assert.equal(resumed.players,1);assert.equal(resumed.plays,2);assert.equal(resumed.events,2);
+ await page.evaluate(()=>r2Game.session.restore(r2Saved));await page.waitForTimeout(150);
+ assert.deepEqual(await page.evaluate(()=>({samePlayer:r2Cue===r2Players[0],players:r2Players.length,plays:r2PlayCalls,events:r2Sounds.length,paused:r2Cue.paused})),
+  {samePlayer:true,players:1,plays:resumed.plays,events:resumed.events,paused:true});
+ evidence.playback.pauseResume={suspendedClockStopped:true,cueClockStopped:true,resumedSameElement:true,pausedCueTime:stopped.cue,resumedCueTime:resumed.cue};
+ evidence.playback.oneShot={createdPlayers:1,actualPlayingEventsBeforeRestore:resumed.events,playCallsBeforeRestore:resumed.plays,noNewPlayerOnSettingsOrRestore:true,noPlaybackOnRestore:true};
  await page.setViewportSize({width:390,height:844});await page.evaluate(()=>r2Game.session.configure({fontScale:1.6}));assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);await page.screenshot({path:path.join(root,'player-mobile.png'),fullPage:true});
  await page.evaluate(()=>r2Game.dispose());await page.goto(base+'/editor/');await page.waitForFunction(()=>document.body.dataset.editorReady==='true');
  await page.evaluate(p=>{localStorage.setItem('vn-engine:vn-creative-bookshop:save:auto','sentinel');localStorage.setItem('vn-engine:vn-creative-bookshop:meta','sentinel');localStorage.setItem('vn-engine:vn-creative-bookshop:read','sentinel');document.querySelector('[data-tab=source]').click();document.querySelector('#source').value=JSON.stringify(p);document.querySelector('[data-command=apply-source]').click();document.querySelector('[data-command=preview]').click();},project);
