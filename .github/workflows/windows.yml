@@ -25,8 +25,8 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx playwright install chromium
-      - name: Verify R3 feedback conflicts and real process-death recovery on Windows
-        run: node --test tests/iteration.test.mjs tests/acceptance.test.mjs
+      - name: Verify R3/R4 feedback recovery, AI acceptance and standalone dependency checks on Windows
+        run: node --test tests/iteration.test.mjs tests/acceptance.test.mjs tests/qa-report.test.mjs
       - name: Execute AI CLI flows and machine error checks on Windows
         run: node tools/test-agent-cli.mjs test-results/agent-cli
       - name: Execute six-discipline creative CLI flow with actual media probes and draft release gate

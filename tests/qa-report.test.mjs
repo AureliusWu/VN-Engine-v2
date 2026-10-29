@@ -1,7 +1,7 @@
 import {syntheticAcceptance} from './acceptance-fixture.mjs';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { mkdtemp, writeFile, readFile } from 'node:fs/promises';
+import { mkdtemp, writeFile, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { spawnSync } from 'node:child_process';
@@ -9,6 +9,65 @@ import { assessQaEvidence, validateProjectCompliance, ReleaseQaGateError } from 
 import { buildQaReport } from '../tools/qa-report.mjs';
 import { packageGame } from '../tools/package-game.mjs';
 import { qaFixture, writeQaFixture } from './qa-fixture.mjs';
+import { createHash } from 'node:crypto';
+import { fingerprintFiles, renderWorker } from '../tools/pwa.mjs';
+
+// Keep byte checks valid so each case exercises dependency closure, not a stale checksum.
+async function refreshBuild(output, changeWorker = text => text) {
+  const filename = join(output, 'build-manifest.json'), manifest = JSON.parse(await readFile(filename, 'utf8'));
+  const files = await Promise.all(manifest.files.filter(entry => entry.name !== 'sw.js').map(async entry => ({ name: entry.name, bytes: await readFile(join(output, entry.name)) })));
+  manifest.contentFingerprint = fingerprintFiles(files);
+  const worker = changeWorker(renderWorker({ namespace: 'vn-self-' + manifest.game, version: manifest.contentFingerprint, urls: files.map(file => file.name) }));
+  await writeFile(join(output, 'sw.js'), worker);
+  for (const entry of manifest.files) {
+    const bytes = await readFile(join(output, entry.name));
+    entry.size = bytes.length; entry.sha256 = createHash('sha256').update(bytes).digest('hex');
+  }
+  await writeFile(filename, JSON.stringify(manifest));
+}
+
+test('R4-B004: current checksums cannot hide broken startup, CSS, web manifest or offline cache references', async t => {
+  const cases = [
+    ['html-startup', async output => {
+      const file = join(output, 'index.html'); await writeFile(file, (await readFile(file, 'utf8')).replace('./app.mjs', './missing-entry.mjs'));
+    }, /missing-entry\.mjs/],
+    ['html-no-loader', async output => {
+      const file = join(output, 'index.html'); await writeFile(file, (await readFile(file, 'utf8')).replace(/<script[^>]*><\/script>/, ''));
+    }, /module entry/],
+    ['css-resource', async output => {
+      const file = join(output, 'index.html'); await writeFile(file, (await readFile(file, 'utf8')).replace('</style>', '.scene{background:url(./missing-image.png)}</style>'));
+    }, /missing-image\.png/],
+    ['manifest-icon', async output => {
+      const file = join(output, 'manifest.webmanifest'), manifest = JSON.parse(await readFile(file, 'utf8')); manifest.icons[0].src = 'missing-icon.svg'; await writeFile(file, JSON.stringify(manifest));
+    }, /missing-icon\.svg/],
+    ['manifest-start', async output => {
+      const file = join(output, 'manifest.webmanifest'), manifest = JSON.parse(await readFile(file, 'utf8')); manifest.start_url = './missing-start.html'; await writeFile(file, JSON.stringify(manifest));
+    }, /missing-start\.html/],
+    ['offline-cache', async () => {}, /cache|worker/i, text => text.replace('"app.mjs",', '')],
+    ['offline-stale-fingerprint', async () => {}, /worker|fingerprint/i, text => text.replace(/^const CACHE = .*$/m, 'const CACHE = PREFIX + "stale-version";')]
+  ];
+  for (const [name, damage, reason, changeWorker] of cases) await t.test(name, async t => {
+    const root = await mkdtemp(join(tmpdir(), 'vn-build-dependencies-')); t.after(() => rm(root, { recursive: true, force: true }));
+    const fixture = qaFixture(), source = await writeQaFixture(root, fixture.project, fixture.picture), output = join(root, 'game');
+    const previous = process.env.VN_ENGINE_COMMIT; process.env.VN_ENGINE_COMMIT = 'a'.repeat(40);
+    try { await packageGame(source, output); } finally { if (previous === undefined) delete process.env.VN_ENGINE_COMMIT; else process.env.VN_ENGINE_COMMIT = previous; }
+    await damage(output); await refreshBuild(output, changeWorker);
+    const before = await readFile(join(output, 'build-manifest.json')), report = await buildQaReport(source, { buildDirectory: output });
+    assert.equal(report.build.status, 'FAIL', name); assert.match(report.build.reason, reason);
+    assert.deepEqual(await readFile(join(output, 'build-manifest.json')), before, 'Inspection preserves the inspected artifact');
+  });
+});
+
+test('build dependency resolution accepts local query/fragment URLs and inline data without leaving the package scope', async t => {
+  const root = await mkdtemp(join(tmpdir(), 'vn-build-urls-')); t.after(() => rm(root, { recursive: true, force: true }));
+  const fixture = qaFixture(), source = await writeQaFixture(root, fixture.project, fixture.picture), output = join(root, 'game');
+  const previous = process.env.VN_ENGINE_COMMIT; process.env.VN_ENGINE_COMMIT = 'a'.repeat(40);
+  try { await packageGame(source, output); } finally { if (previous === undefined) delete process.env.VN_ENGINE_COMMIT; else process.env.VN_ENGINE_COMMIT = previous; }
+  const file = join(output, 'index.html');
+  await writeFile(file, (await readFile(file, 'utf8')).replace('./app.mjs', './app.mjs?v=1#start').replace('</style>', '.scene{background:url(./icon.svg#scene)}.inline{background:url(data:image/svg+xml;base64,PHN2Zy8+)}</style>'));
+  await refreshBuild(output);
+  assert.equal((await buildQaReport(source, { buildDirectory: output })).build.status, 'PASS');
+});
 
 test('current AI acceptance replaces human signatures, binds source, and requires only applicable scopes', async () => {
   const {project,picture}=qaFixture(),options=await syntheticAcceptance(project,picture);

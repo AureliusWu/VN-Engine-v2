@@ -21,3 +21,11 @@ C 增加技术报告适用类别 / Windows 平台拒绝、打包源变化保护�
 npm / lock / 引擎 / Windows 已统一 0.8.0。211 项 Node 与 6 项 Python、schema 和四工程校验通过；来源清单对 tools/pwa.mjs 从 verbatim 改为 adapted，保留原来源哈希，以记录 Studio 的导航缓存适配。Studio 字体由原固定 Rain 字体 SHA256 重建，新增界面文字没有缺字。
 
 实际查看了两张 R2 原图及 Windows 真实场景 / 审阅截图。当前模型不支持音频输入；尝试提供实际音频后工具明确拒绝输入，因此不能把本会话的听感标为 PASS。AI 听感接口和拒绝缺模态回归已实现；实际作品听感仍须具备音频输入能力的 AI 执行。合成测试与此限制分别记录。
+
+## 2026-10-29 断点续跑
+
+核实远端 `07b8c349cbe9b53b24dd4c43cad4712ba23a5eaa` 的 Engine checks `40705933562` 与 Windows native host `40705933603` 均成功；完整浏览器 / 聚焦 Studio / 原生首次和进程重启均有真实日志。已下载审核与原生证据，两份 ZIP 的 SHA256 与 CI 上传摘要一致，并查看桌面、390px Studio 与实际书店样例画面。本地在该基线重跑 211 项 Node、6 项 Python、176 项来源和 schema / 四工程校验通过。
+
+查漏补缺复现 R4-B004：重新计算清单哈希与内容指纹后，损坏 HTML 启动脚本、CSS URL、PWA 图标 / 启动页或从离线缓存漏掉 app.mjs，旧实现的 build 子项仍为 PASS；五个负向用例均在旧实现失败。新增实际入口 / CSS / Web App Manifest / 当前生成 worker 检查，并补充无模块入口、过期缓存指纹及合法查询参数 / fragment / data URI 的回归。检查保留原成品，不修补被检文件。
+
+本次本地 Chromium 下载仍返回截断 ZIP，没有声称本地浏览器执行。新增修复的完整跨平台结果等待本提交 CI，不能沿用 `07b8c34` 的通过结果。
