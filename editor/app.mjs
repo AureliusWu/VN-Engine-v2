@@ -7,17 +7,26 @@ import { renderBranchEditor, renderEvidenceCatalog, evidenceChecklist, renderEff
 import { renderStructureEditor } from './structure.mjs';
 import { ENGINE_VERSION } from '../lib/index.js';
 import { nativeHost, nativeRequest } from './native.mjs';
+import { createFieldEdits, createOpenGate } from './operations.mjs';
 
 const $ = id => document.getElementById(id);
 const DRAFT_KEY = 'vn-engine-studio:draft:v1';
 let model = new EditorModel(newProject('script')), selected, tab = 'story', draft, draftTimer, previewTimer;
 let baseURL = new URL('../samples/', location.href).href, resourceURLs = new Map(), resourceFiles, previewReady = false, revision = 0, savedSource = '';
 let nativeHidden = false, identitySource = '', identityProject = '';
+let workspaceVersion = 0, fileOpenRequest;
 function projectSource(){const text=model.serialize(true);return text===identityProject?identitySource:text;}
 let replayRequest;
 let routeRequest;
 const openInspectorSections = new Set();
 const status = (text, error = false) => { $('status').textContent = text; $('status').classList.toggle('error', error); };
+const actionCallbacks = new WeakMap();
+const fieldEdits = createFieldEdits({
+  scope: root => [root, root === 'inspector' ? selected : '', root === 'production-list' ? document.querySelector('[data-production-view][aria-pressed=true]')?.dataset.productionView : ''],
+  changed: () => { workspaceVersion++; syncDirty(); scheduleDraft(); },
+  error: error => status(error.message, true)
+});
+const opening = createOpenGate({ version: () => workspaceVersion, cancelled: () => status('等待打开时工程已更改，已取消打开；当前更改仍保留', true) });
 function element(tag, text, attrs = {}) {
   const node = document.createElement(tag); if (text !== undefined) node.textContent = text;
   for (const [key, value] of Object.entries(attrs)) { if (key === 'class') node.className = value; else node.setAttribute(key, value); }
@@ -25,9 +34,11 @@ function element(tag, text, attrs = {}) {
 }
 function action(label, callback, className = 'small-button') {
   const button = element('button', label, { type: 'button', class: className });
-  button.addEventListener('click', () => run(callback)); return button;
+  const invoke = () => run(() => afterFields(callback));
+  actionCallbacks.set(button, invoke); button.addEventListener('click', invoke); return button;
 }
 async function run(fn) { try { await fn(); } catch (error) { status(error.message, true); } }
+function afterFields(callback) { const pending = fieldEdits.flush(); return pending ? pending.then(callback) : callback(); }
 function field(parent, label, value, callback, options = {}) {
   const wrap = element('label', undefined, { class: 'field' }), caption = element('span', label);
   let input;
@@ -35,12 +46,17 @@ function field(parent, label, value, callback, options = {}) {
     input = element('select'); for (const choice of options.choices) { const [id, title] = Array.isArray(choice) ? choice : [choice, choice]; input.append(element('option', title, { value: id })); }
   } else input = element(options.multiline ? 'textarea' : 'input');
   input.setAttribute('aria-label', label); input.value = value ?? ''; if (options.placeholder) input.placeholder = options.placeholder;
-  input.addEventListener('change', () => run(() => callback(input.value)));
+  fieldEdits.bind(input, label, parent, callback);
   wrap.append(caption, input); parent.append(wrap); return input;
 }
 const valueAt = path => path.reduce((v, key) => v?.[key], model.getView().project);
 const graphNode = () => model.graph().nodes.find(n => n.key === selected);
 const unappliedSource = () => tab === 'source' && $('source').value !== savedSource;
+function syncDirty() {
+  const unsaved = model.dirty || fieldEdits.dirty || unappliedSource();
+  document.body.dataset.dirty = String(unsaved || production.dirty);
+  $('save-state').textContent = unsaved ? '● 未保存' : '已保存';
+}
 const routes = createRoutesPanel($('route-list'), {element,action,field,project:()=>model.getView().project,set:value=>set(['routeTests'],value,true),
   record:()=>preview({recordRoute:true}),capture:id=>{
     if(!routes.active)throw Error('录制已中断或工程已更改，请从头录制');
@@ -52,7 +68,7 @@ const routes = createRoutesPanel($('route-list'), {element,action,field,project:
     });
   },download,navigate:state=>{const node=model.graph().nodes.find(n=>n.id===state.sceneId&&(!n.chapter||state.lineId.startsWith(n.chapter+'/')));if(!node)throw Error('此运行节点没有对应的可编辑节点');selected=node.key;switchTab('story');renderGraph(model.graph());renderInspector();}});
 const production = createProductionPanel($('production-list'), {element,action,field,run,project:()=>model.getView().project,model:()=>model,source:projectSource,
-  assetURL:relative=>resourceURLs.get(relative)??new URL(relative,baseURL).href,edit:fn=>mutate(fn,true),changed:()=>{scheduleDraft();document.body.dataset.dirty=String(model.dirty||production.dirty||unappliedSource());},status,download,preview,routes:()=>switchTab('routes'),
+  assetURL:relative=>resourceURLs.get(relative)??new URL(relative,baseURL).href,edit:fn=>mutate(fn,true),changed:()=>{workspaceVersion++;scheduleDraft();syncDirty();},status,download,preview,routes:()=>switchTab('routes'),
   navigate:target=>{
     const content=contentCatalogue(model.getView().project).find(c=>c.kind===target.kind&&c.id===target.id&&c.nodeId===target.nodeId&&c.chapterId===target.chapterId);
     const node=model.graph().nodes.find(n=>n.id===(content?.nodeId??target.nodeId??target.id)&&n.chapter===target.chapterId);
@@ -74,7 +90,7 @@ function scheduleDraft() {
   clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 350);
 }
 function saveDraft() {
-  try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ schema: 1, document: JSON.parse(model.serialize()), authorReview: production.getReview(), source: unappliedSource() ? $('source').value : undefined, baseURL: baseURL.startsWith(location.origin + '/') ? baseURL : undefined, at: new Date().toISOString() })); }
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ schema: 1, document: JSON.parse(model.serialize()), authorReview: production.getReview(), productionDraft: production.getDraft(), source: unappliedSource() ? $('source').value : undefined, pendingFields: fieldEdits.snapshot(), editorTab: tab, selectedNode: selected, productionView: document.querySelector('[data-production-view][aria-pressed=true]')?.dataset.productionView, baseURL: baseURL.startsWith(location.origin + '/') ? baseURL : undefined, at: new Date().toISOString() })); }
   catch { status('本地草稿无法保存，请使用“保存工程”保留更改', true); }
 }
 function clearResources(nextBase = new URL('./', location.href).href) {
@@ -87,13 +103,14 @@ function replace(input, options = {}) {
   const incomingReview = options.authorReview;
   if(incomingReview) readAuthorReview(incomingReview,options.draft?{...next.getView().project,game:incomingReview.game,version:incomingReview.storyVersion}:next.getView().project);
   // Fully parse before touching the current editor or its resources.
+  opening.invalidate(); fieldEdits.reset();
   clearResources(options.baseURL); if (options.files) resourceFiles = new Set(options.files); model = next;
   identityProject=model.serialize(true);identitySource=typeof input==='string'&&!JSON.parse(input).format?input:identityProject;production.reset(incomingReview,{detached:options.draft});selected = model.graph().nodes[0]?.key;
   savedSource = ''; tab = 'story'; renderProject(); update(true); switchTab('story');
   if (options.draft) { model.markUnsaved(); document.body.dataset.dirty = 'true'; $('save-state').textContent = '● 未保存'; status('草稿已恢复；请重新绑定本地资源目录'); }
   else status('工程已打开');
 }
-function canReplace() { return (!model.dirty && !production.dirty && !unappliedSource()) || confirm('当前更改尚未保存。仍要替换当前工程吗？本地草稿只保留一份。'); }
+function canReplace() { return (!model.dirty && !production.dirty && !fieldEdits.dirty && !unappliedSource()) || confirm('当前更改尚未保存。仍要替换当前工程吗？本地草稿只保留一份。'); }
 function renderProject() {
   const root = $('project-fields'); root.replaceChildren();
   const project = model.getView().project;
@@ -103,11 +120,11 @@ function renderProject() {
   field(root, '回退保留步数', project.rollback?.limit ?? 80, value => set(['rollback'], { ...model.getView().project.rollback, limit: Number(value) }, true));
 }
 function update(inspector = false) {
+  workspaceVersion++;
   routes.changed();production.changed();
   const startup = document.querySelector('#project-fields [aria-label="启动界面"]'); if (startup) startup.value = model.getView().project.titleScreen ? 'title' : 'story';
   const graph = model.graph(); if (!graph.nodes.some(n => n.key === selected)) selected = graph.nodes[0]?.key;
-  $('project-name').textContent = model.getView().project.title || '未命名作品'; $('save-state').textContent = model.dirty ? '● 未保存' : '已保存';
-  document.body.dataset.dirty = String(model.dirty || production.dirty || unappliedSource()); document.body.dataset.projectType = model.getView().project.type;
+  $('project-name').textContent = model.getView().project.title || '未命名作品'; syncDirty(); document.body.dataset.projectType = model.getView().project.type;
   document.querySelector('[data-command=undo]').disabled = !model.canUndo; document.querySelector('[data-command=redo]').disabled = !model.canRedo;
   document.querySelector('[data-command=add-node]').disabled = model.getView().project.type === 'rain';
   $('graph-count').textContent = `${graph.nodes.length} 节点 · ${graph.edges.length} 连线`;
@@ -147,7 +164,7 @@ function renderGraph(graph) {
     button.dataset.key = node.key; button.style.left = point.x + 'px'; button.style.top = point.y + 'px';
     button.append(element('small', node.entry ? 'ENTRY / 入口' : node.ending ? 'ENDING / 结局' : 'SCENE / 场景'), element('strong', node.title), element('p', node.text), element('div', node.id, { class: 'node-id' }));
     let drag;
-    button.addEventListener('pointerdown', event => { if (event.button !== 0) return; drag = { x: event.clientX, y: event.clientY, point }; button.setPointerCapture(event.pointerId); });
+    button.addEventListener('pointerdown', event => { if (event.button !== 0) return; if (fieldEdits.dirty) { event.preventDefault(); run(() => fieldEdits.flush()); return; } drag = { x: event.clientX, y: event.clientY, point }; button.setPointerCapture(event.pointerId); });
     button.addEventListener('pointermove', event => { if (!drag) return; const x = Math.max(0, point.x + event.clientX - drag.x), y = Math.max(0, point.y + event.clientY - drag.y); button.style.left = x + 'px'; button.style.top = y + 'px'; });
     button.addEventListener('pointerup', event => {
       if (!drag) return; const moved = Math.abs(event.clientX - drag.x) + Math.abs(event.clientY - drag.y) > 5;
@@ -155,7 +172,7 @@ function renderGraph(graph) {
       if (moved) { selected = node.key; mutate(() => model.move(node.key, next), true); }
     });
     button.addEventListener('pointercancel', () => { drag = undefined; button.style.left = point.x + 'px'; button.style.top = point.y + 'px'; });
-    button.addEventListener('click', () => { selected = node.key; renderGraph(model.graph()); renderInspector(); });
+    button.addEventListener('click', () => run(() => afterFields(() => { selected = node.key; renderGraph(model.graph()); renderInspector(); })));
     button.addEventListener('keydown', event => {
       if (event.altKey && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
         event.preventDefault(); mutate(() => model.move(node.key, { x: Math.max(0, point.x + (event.key === 'ArrowRight' ? 20 : event.key === 'ArrowLeft' ? -20 : 0)), y: Math.max(0, point.y + (event.key === 'ArrowDown' ? 20 : event.key === 'ArrowUp' ? -20 : 0)) }), true);
@@ -387,22 +404,25 @@ function download(content, filename) {
   document.body.append(anchor); anchor.click(); anchor.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 async function save(projectOnly) {
+  const pending = fieldEdits.flush(); if (pending) await pending;
   if (projectOnly && model.diagnostics(resourceFiles).some(d => d.severity === 'error')) throw new Error('请先修复工程诊断中的错误');
-  const content = projectOnly?projectSource():model.serialize(false), name = /^[a-zA-Z0-9_-]+$/.test(model.getView().project.game) ? model.getView().project.game : 'project';
+  const savedModel = model, content = projectOnly?projectSource():model.serialize(false), name = /^[a-zA-Z0-9_-]+$/.test(model.getView().project.game) ? model.getView().project.game : 'project';
   const suggestedName = name + (projectOnly ? '.json' : '.vnproj');
   if (unappliedSource()) throw new Error('JSON 面板有未应用的更改，请先点击“应用 JSON”');
   if (nativeHost) { const result = await nativeRequest(projectOnly ? 'export-project' : 'save-workspace', { content, suggestedName, baseURL }); if (result.cancelled) { status('已取消保存，当前工程仍保留'); return; } }
   else download(content, suggestedName);
-  if (!projectOnly) { model.markSaved(); document.body.dataset.dirty = String(production.dirty); $('save-state').textContent = '已保存'; }
+  if (!projectOnly && (model !== savedModel || content !== model.serialize(false) || fieldEdits.dirty || unappliedSource())) { syncDirty(); saveDraft(); status('工程快照已保存；等待期间的后续更改尚未保存'); return; }
+  if (!projectOnly) { model.markSaved(); syncDirty(); }
   saveDraft(); status(projectOnly ? '运行数据已导出；请随数据保留相对路径对应的资源目录' : '工程已保存；资源路径相对于工程文件，请随工程保留资源');
 }
 const commands = {
   new: () => { if (canReplace()) replace(newProject($('template').value)); },
-  sample: async () => { if (!canReplace()) return; const response = await fetch(`../samples/${$('sample').value}.json`); if (!response.ok) throw new Error('样例读取失败'); replace(await response.json(), { baseURL: new URL('../samples/', location.href).href }); },
+  sample: async () => { if (!canReplace()) return; const request = opening.begin(), response = await fetch(`../samples/${$('sample').value}.json`); if (!response.ok) throw new Error('样例读取失败'); const input = await response.json(); request.commit(() => replace(input, { baseURL: new URL('../samples/', location.href).href })); },
   open: async () => {
     if (!canReplace()) return;
-    if (nativeHost) { const result = await nativeRequest('open-project'); if (!result.cancelled) replace(result.content, { baseURL: result.baseURL, files: result.files }); }
-    else { $('open-file').value = ''; $('open-file').click(); }
+    const request = opening.begin();
+    if (nativeHost) { const result = await nativeRequest('open-project'); if (!result.cancelled) request.commit(() => replace(result.content, { baseURL: result.baseURL, files: result.files })); }
+    else { fileOpenRequest = request; $('open-file').value = ''; $('open-file').click(); }
   },
   save: () => save(false), export: () => save(true),
   undo: () => { if (model.undo()) { renderProject(); update(true); saveDraft(); } },
@@ -416,14 +436,24 @@ const commands = {
     if (nativeHost) { const result = await nativeRequest('bind-assets', { content: model.serialize(true) }); if (!result.cancelled) { clearResources(result.baseURL); resourceFiles = new Set(result.files); $('asset-state').textContent = `已绑定目录，允许读取 ${resourceFiles.size} 个清单文件`; update(false); } }
     else { $('asset-directory').value = ''; $('asset-directory').click(); }
   },
-  'restore-draft': () => { if (draft && canReplace()) { replace(draft.document, { baseURL: draft.baseURL ?? new URL('./', location.href).href, draft: true, authorReview:draft.authorReview }); if (typeof draft.source === 'string') { switchTab('source'); $('source').value = draft.source; document.body.dataset.dirty = 'true'; } $('draft-banner').hidden = true; } },
+  'restore-draft': async () => { if (draft && canReplace()) {
+    replace(draft.document, { baseURL: draft.baseURL ?? new URL('./', location.href).href, draft: true, authorReview:draft.authorReview });
+    production.restoreDraft(draft.productionDraft);
+    if (model.graph().nodes.some(node => node.key === draft.selectedNode)) { selected = draft.selectedNode; renderGraph(model.graph()); renderInspector(); }
+    if (['story','structure','assets','collections','routes','production','source'].includes(draft.editorTab)) switchTab(draft.editorTab);
+    if (tab === 'production' && draft.productionView) { const button = [...document.querySelectorAll('[data-production-view]')].find(node => node.dataset.productionView === draft.productionView); if (button) await actionCallbacks.get(button)?.(); }
+    if (typeof draft.source === 'string') { switchTab('source'); $('source').value = draft.source; }
+    fieldEdits.restore(draft.pendingFields); syncDirty(); $('draft-banner').hidden = true;
+  } },
   'discard-draft': () => { draft = undefined; $('draft-banner').hidden = true; try { localStorage.removeItem(DRAFT_KEY); } catch {} }
 };
-for (const button of document.querySelectorAll('[data-command]')) button.addEventListener('click', () => run(commands[button.dataset.command]));
-for (const button of document.querySelectorAll('[data-tab]')) button.addEventListener('click', () => switchTab(button.dataset.tab));
+const replacementCommands = new Set(['new', 'open', 'sample', 'restore-draft', 'discard-draft']);
+for (const button of document.querySelectorAll('[data-command]')) button.addEventListener('click', () => run(() => replacementCommands.has(button.dataset.command) ? commands[button.dataset.command]() : afterFields(commands[button.dataset.command])));
+for (const button of document.querySelectorAll('[data-tab]')) button.addEventListener('click', () => run(() => afterFields(() => switchTab(button.dataset.tab))));
 $('auto-preview').addEventListener('change', () => { if ($('auto-preview').checked) preview(); });
-$('source').addEventListener('input', () => { document.body.dataset.dirty = String(model.dirty || production.dirty || unappliedSource()); $('save-state').textContent = model.dirty || unappliedSource() ? '● 未保存' : '已保存'; scheduleDraft(); });
-$('open-file').addEventListener('change', () => run(async () => { const file = $('open-file').files[0]; if (!file) return; if (file.size > 8_000_000) throw new Error('工程超过 8 MB'); replace(await file.text()); }));
+$('source').addEventListener('input', () => { workspaceVersion++; syncDirty(); scheduleDraft(); });
+$('open-file').addEventListener('change', () => run(async () => { const file = $('open-file').files[0]; if (!file) return; const request = fileOpenRequest ?? opening.begin(); fileOpenRequest = undefined; if (file.size > 8_000_000) throw new Error('工程超过 8 MB'); const input = await file.text(); request.commit(() => replace(input)); }));
+$('open-file').addEventListener('cancel', () => { fileOpenRequest = undefined; });
 $('asset-directory').addEventListener('change', () => run(() => {
   const files = [...$('asset-directory').files]; if (!files.length) return;
   if (files.length > 10000 || files.some(f => f.size > 128_000_000)) throw new Error('目录过大：最多 10000 文件，单文件 128 MB');
@@ -436,7 +466,7 @@ window.addEventListener('keydown', event => {
   if (event.key.toLowerCase() === 's') { event.preventDefault(); run(commands.save); }
   if (event.key.toLowerCase() === 'z' && !typing) { event.preventDefault(); run(event.shiftKey ? commands.redo : commands.undo); }
 });
-window.addEventListener('beforeunload', event => { if (model.dirty || production.dirty || (tab === 'source' && $('source').value !== savedSource)) { saveDraft(); event.preventDefault(); event.returnValue = ''; } });
+window.addEventListener('beforeunload', event => { if (model.dirty || production.dirty || fieldEdits.dirty || unappliedSource()) { saveDraft(); event.preventDefault(); event.returnValue = ''; } });
 window.addEventListener('pagehide', () => { clearTimeout(draftTimer); clearTimeout(previewTimer); for (const url of resourceURLs.values()) URL.revokeObjectURL(url); });
 window.addEventListener('vn-engine-host-visibility', event => { if (typeof event.detail?.hidden !== 'boolean') return; nativeHidden = event.detail.hidden;if(nativeHidden)production.stopMedia(); $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'visibility', hidden: nativeHidden }, location.origin); });
 $('version').textContent = ENGINE_VERSION; $('host-label').textContent = nativeHost ? 'Windows 原生宿主' : '浏览器工作区';

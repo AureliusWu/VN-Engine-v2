@@ -27,6 +27,13 @@ jobs:
       - run: npx playwright install chromium
       - name: Verify R3/R4 feedback recovery, AI acceptance and standalone dependency checks on Windows
         run: node --test tests/iteration.test.mjs tests/acceptance.test.mjs tests/qa-report.test.mjs
+      - name: Verify R5 authoring, focus and audio regressions on Windows
+        run: |
+          node --test tests/runtime-media.test.mjs
+          node tests/r5-studio-browser.mjs
+          node tests/r5-runtime-browser.mjs
+          node tests/r5-feedback-browser.mjs
+          node tests/acceptance-browser.mjs
       - name: Execute AI CLI flows and machine error checks on Windows
         run: node tools/test-agent-cli.mjs test-results/agent-cli
       - name: Execute six-discipline creative CLI flow with actual media probes and draft release gate

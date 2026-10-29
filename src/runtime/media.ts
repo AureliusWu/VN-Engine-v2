@@ -14,6 +14,8 @@ export class MediaDirector {
   private musicBus: GainNode;
   private ambienceBus: GainNode;
   private effect?: HTMLAudioElement;
+  private effectPaused = false;
+  private effectAttempt = 0;
   private visit = -1;
   private handling = false;
   private pending?: RuntimeView;
@@ -95,11 +97,31 @@ export class MediaDirector {
           const player = this.createAudio(source); this.effect = player; player.volume = settings.masterVolume * settings.seVolume;
           player.onended = () => { if (this.effect === player) this.stopEffect(); };
           player.onerror = () => { if (this.effect === player) { this.stopEffect(); this.options.onError?.('动作音效暂时无法播放'); } };
-          void player.play().catch(() => { if (this.effect === player) { this.stopEffect(); this.options.onError?.('动作音效暂时无法播放'); } });
+          this.playEffect(player);
         } catch { this.stopEffect(); this.options.onError?.('动作音效暂时不可用，可以继续阅读'); }
       }
     } else if (!settings.soundEffects) this.stopEffect();
-    if (this.effect) { this.effect.volume = settings.masterVolume * settings.seVolume; if (!this.playable) this.effect.pause(); }
+    if (this.effect) {
+      const player = this.effect; player.volume = settings.masterVolume * settings.seVolume;
+      if (player.ended) this.stopEffect();
+      else if (!this.playable && !this.effectPaused) { this.effectPaused = true; this.effectAttempt++; player.pause(); }
+      else if (this.playable && this.effectPaused) { this.effectPaused = false; this.playEffect(player); }
+    }
+  }
+
+  private playEffect(player: HTMLAudioElement) {
+    const attempt = ++this.effectAttempt;
+    const failed = () => {
+      if (!this.disposed && this.effect === player && attempt === this.effectAttempt && this.playable) {
+        this.stopEffect(); this.options.onError?.('动作音效暂时无法播放');
+      }
+    };
+    try {
+      void player.play().then(() => {
+        // A late play resolution may follow a panel, a new visit, or disposal.
+        if (this.disposed || this.effect !== player || !this.playable) player.pause();
+      }).catch(failed);
+    } catch { failed(); }
   }
 
   private reconcileGraph(): Promise<void> {
@@ -140,6 +162,7 @@ export class MediaDirector {
     } catch { this.options.onError?.('声音尚未启用，可再次点击声音按钮'); }
   }
   private stopEffect() {
+    this.effectAttempt++; this.effectPaused = false;
     const player = this.effect; if (!player) return; this.effect = undefined;
     player.onended = null; player.onerror = null; player.pause(); player.removeAttribute('src'); player.load();
   }

@@ -1,0 +1,30 @@
+{
+  "round": "R5",
+  "date": "2026-10-29",
+  "baselineCommit": "622615a39ea05d446502d733c27055d5415f4411",
+  "scope": "Engine stability and author data protection; no game migration",
+  "manualComputerUse": {
+    "platform": "Windows",
+    "browser": "Microsoft Edge",
+    "observations": [
+      "Focused Studio title input followed by Ctrl+S displayed saved while the project header retained the old title",
+      "Clicking next in the campus player left focus on BODY; pressing 1 did not choose the visible branch"
+    ],
+    "limitation": "Computer Use later stopped because it could not confirm the current browser URL; no later manual retest or local native host interaction is claimed"
+  },
+  "controlledRegressionsBeforeFix": [
+    {"bug": "R5-B001", "expected": "Saved title equals focused input", "actual": "Exported title remained the original title and dirty was false"},
+    {"bug": "R5-B003", "expected": "Mouse actions preserve keyboard reading focus", "actual": "Focus, mini-game focus and real audio resume regressions failed; external focus preservation passed"},
+    {"bug": "R5-B004", "expected": "Paused sound effect resumes the same instance", "actual": "Sound effect resume and asynchronous resume branches failed"},
+    {"bug": "R5-B005", "expected": "A thrown input read finishes with BLOCKED", "actual": "Panel remained UNVERIFIED and showed verification in progress"},
+    {"bug": "R5-B002", "expected": "The later selected acceptance document B wins", "actual": "Earlier document A loaded first and cancelled B"}
+  ],
+  "localCoreEnvironment": {
+    "command": "npm run check",
+    "nodeTests": 225,
+    "passed": 221,
+    "failed": 4,
+    "reason": "EPERM creating symbolic-link fixtures on this Windows account; assertions in those four tests were not reached",
+    "policy": "No OS permission changes or test skips; full core validation is required in CI"
+  }
+}
