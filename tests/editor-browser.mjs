@@ -68,11 +68,33 @@ try {
 
   const folder = await mkdtemp(join(tmpdir(), 'vn-editor-assets-')); await mkdir(join(folder, 'assets'));
   await writeFile(join(folder, 'assets', 'picture.svg'), '<svg xmlns="http://www.w3.org/2000/svg" width="400" height="200"><rect width="400" height="200" fill="#278"/></svg>');
-  const custom = newProject('script'); custom.assets = [{ id: 'picture', kind: 'background', src: 'assets/picture.svg' }]; custom.defaults = { background: 'picture' };
-  await page.locator('#open-file').setInputFiles({ name: 'project.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(custom)) });
+  const custom = newProject('script'); custom.title = 'Directory-bound independent project'; custom.assets = [{ id: 'picture', kind: 'background', src: 'assets/picture.svg' }]; custom.defaults = { background: 'picture' };
+  // File selection dispatches change but does not await the editor's asynchronous read.
+  // Hold that read explicitly so this test cannot accidentally depend on fast IO.
+  await page.evaluate(() => {
+    const read = File.prototype.text;
+    File.prototype.text = function () {
+      const result = read.call(this);
+      if (this.name !== 'directory-project.json') return result;
+      File.prototype.text = read;
+      return new Promise((resolve, reject) => { window.releaseDirectoryProject = () => result.then(resolve, reject); });
+    };
+  });
+  await page.locator('#open-file').setInputFiles({ name: 'directory-project.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(custom)) });
+  await page.waitForFunction(() => typeof window.releaseDirectoryProject === 'function');
+  assert.notEqual(await page.locator('#project-name').innerText(), custom.title);
+  await page.evaluate(() => { window.releaseDirectoryProject(); delete window.releaseDirectoryProject; });
+  await page.waitForFunction(title => document.getElementById('project-name').textContent === title, custom.title);
   await page.locator('#asset-directory').setInputFiles(folder);
-  await page.waitForFunction(() => document.getElementById('preview').contentDocument.querySelector('.vn-background')?.naturalWidth > 0);
+  await page.waitForFunction(() => {
+    const image = document.getElementById('preview').contentDocument.querySelector('.vn-background');
+    return image?.naturalWidth === 400 && image.naturalHeight === 200;
+  });
   assert.equal(await page.locator('#diagnostic-count').innerText(), '通过');
+  const [directoryExport] = await Promise.all([page.waitForEvent('download'), command('export')]);
+  const withDirectory = JSON.parse(await readFile(await directoryExport.path(), 'utf8'));
+  assert.equal(withDirectory.title, custom.title);
+  assert.deepEqual(withDirectory.assets, custom.assets); assert.deepEqual(withDirectory.defaults, custom.defaults);
   await page.getByLabel('台词 1 正文', { exact: true }).fill('目录绑定后的独立故事。'); await page.getByLabel('台词 1 正文', { exact: true }).blur(); await waitPreview('目录绑定后的独立故事');
   passed('Browser directory selection maps real local image bytes into preview without changing relative project paths');
 
