@@ -1,0 +1,104 @@
+{
+  "targetVersion": "1.0.0",
+  "date": "2026-10-30",
+  "baselineCommit": "a6b54f68412c91a7e64d0a88149a216595f61cdd",
+  "plan": "docs/V1_PLAN.md",
+  "compatibility": "docs/V1_COMPATIBILITY.md",
+  "provenanceFiles": 180,
+  "local": {
+    "nodeVersion": "24.14.1",
+    "browser": "Microsoft Edge 156.0.4314.50, isolated headless",
+    "nodeCheck": {
+      "total": 251,
+      "passed": 247,
+      "fixtureSetupFailed": 4,
+      "skipped": 0,
+      "reason": "Windows EPERM creating existing symlink fixtures"
+    },
+    "pythonPassed": 6,
+    "schemas": "PASS",
+    "sampleSpecificationsPassed": 4,
+    "studioGroupsPassed": 8,
+    "playerGroupsPassed": 5,
+    "renderGroupsPassed": 5,
+    "storageTestsPassed": 4,
+    "actualOldEngineFixture": {
+      "producerEngineVersion": "0.8.2",
+      "producerCommit": "a6b54f68412c91a7e64d0a88149a216595f61cdd",
+      "path": "tests/fixtures/v0.8.2-compatibility.json",
+      "currentCompatibilityTest": "PASS"
+    },
+    "completeBrowserSuite": "PASS",
+    "completeEditorSuite": "PASS",
+    "logs": [
+      "test-results/v1-check-final.log",
+      "test-results/v1-browser-final.log",
+      "test-results/v1-editor-final.log"
+    ],
+    "reports": [
+      "test-results/v1-studio/v1-studio-browser.json",
+      "test-results/v1-player/v1-player-browser.json",
+      "test-results/v1-render/v1-render-browser.json"
+    ],
+    "productionImportCompletionWait": "PASS in the independently rerun complete production script and the final complete editor suite"
+  },
+  "negativeEvidence": [
+    {
+      "scope": "Old Studio",
+      "log": "test-results/v1-studio-before.log",
+      "failed": 7,
+      "passed": 1
+    },
+    {
+      "scope": "Old slot contract",
+      "log": "test-results/v1-storage-before.log",
+      "failed": 3,
+      "passed": 1
+    },
+    {
+      "scope": "Old player",
+      "log": "test-results/v1-player-before.log",
+      "failed": 3,
+      "passed": 2
+    },
+    {
+      "scope": "Old renderer",
+      "log": "test-results/v1-render-baseline.log",
+      "failed": 4,
+      "passed": 1
+    },
+    {
+      "scope": "Initial focus correction",
+      "reason": "Enter reopening overwrite confirmation disabled the focused slot and stranded Escape",
+      "resolution": "Focus Cancel when owned row focus would be disabled; retain all original assertions"
+    },
+    {
+      "scope": "Legacy production review test wait",
+      "report": "test-results/v1-baseline/production-review-wait.json",
+      "reason": "A previous fresh badge could satisfy the wait while the new file was still held",
+      "resolution": "Await the prior file input becoming disconnected after successful import; retain product latest-selection rules and original assertions"
+    }
+  ],
+  "evidenceBoundaries": {
+    "manualDesktopRetest": "NOT_PERFORMED: previous task Computer Use stopped because the current browser URL could not be verified confidently",
+    "nativeBridgeFixtures": "Controlled acknowledgements, not physical file IO scheduling",
+    "osReducedMotion": "Browser media preference simulation, not user OS settings",
+    "nativeWindows": "Actual build, WebView2, file IO and restart evidence comes from the v1 CI runs linked in the merged PR",
+    "physicalMobileAndSubjectiveAudio": "UNVERIFIED"
+  },
+  "deliveryEvidenceLocation": "Merged v1 PR description and exact merged-main GitHub Actions",
+  "deliveryRequirements": [
+    "exact-head PR core/browser/windows success",
+    "merged PR",
+    "actual main Engine/Windows success",
+    "local HEAD equals origin/main",
+    "clean worktree and only main locally/remotely"
+  ],
+  "publication": {
+    "npm": false,
+    "githubRelease": false,
+    "tag": false,
+    "signedInstaller": false,
+    "formalGameMigration": false
+  }
+}

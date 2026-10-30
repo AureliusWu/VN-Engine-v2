@@ -1,0 +1,102 @@
+{
+  "producerEngineVersion": "0.8.2",
+  "producerCommit": "a6b54f68412c91a7e64d0a88149a216595f61cdd",
+  "synthetic": true,
+  "workspace": {
+    "format": "vn-engine-editor",
+    "schema": 1,
+    "project": {
+      "schema": 1,
+      "game": "v1-compatibility-fixture",
+      "version": "story-v1",
+      "title": "0.8.2 compatibility fixture",
+      "assets": [],
+      "type": "script",
+      "program": {
+        "schema": 1,
+        "game": "v1-compatibility-fixture",
+        "version": "story-v1",
+        "entry": "start",
+        "variables": {
+          "trust": {
+            "initial": 0,
+            "min": 0,
+            "max": 10
+          }
+        },
+        "blocks": [
+          {
+            "id": "start",
+            "title": "开场",
+            "lines": [
+              {
+                "id": "start-1",
+                "speaker": "作者",
+                "text": "选择将改变变量。"
+              }
+            ],
+            "exit": {
+              "type": "choice",
+              "choices": [
+                {
+                  "id": "yes",
+                  "text": "保留信任",
+                  "next": "end",
+                  "effects": [
+                    {
+                      "op": "add",
+                      "key": "trust",
+                      "value": 1
+                    }
+                  ]
+                }
+              ]
+            }
+          },
+          {
+            "id": "end",
+            "title": "结局",
+            "lines": [
+              {
+                "id": "end-1",
+                "speaker": "作者",
+                "text": "这里等待你的故事。"
+              }
+            ],
+            "exit": {
+              "type": "end",
+              "ending": "完成"
+            }
+          }
+        ]
+      },
+      "extension": {
+        "synthetic": true,
+        "marker": "preserve across engine updates"
+      }
+    },
+    "positions": {}
+  },
+  "saveEnvelope": {
+    "schema": 2,
+    "save_version": 2,
+    "game": "v1-compatibility-fixture",
+    "game_version": "story-v1",
+    "slot": "manual-1",
+    "savedAt": "2026-10-30T00:00:00.000Z",
+    "payload": {
+      "format": "vn-script-save",
+      "schema": 1,
+      "game": "v1-compatibility-fixture",
+      "version": "story-v1",
+      "state": {
+        "blockId": "start",
+        "line": 0,
+        "decisions": []
+      }
+    },
+    "summary": {
+      "title": "0.8.2 compatibility fixture"
+    }
+  }
+}

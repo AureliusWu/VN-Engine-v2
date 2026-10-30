@@ -50,6 +50,16 @@ jobs:
           node tests/r6-runtime-browser.mjs
       - name: Execute six-discipline creative CLI flow with actual media probes and draft release gate
         run: node tools/creative-example.mjs test-results/creative-cli --cli --no-preview
+      - name: Verify v1 author operations, save identity, focus and rendering recovery
+        run: |
+          New-Item -ItemType Directory -Force test-results/v1-storage | Out-Null
+          node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=test-results/v1-storage/storage-tests.xml tests/v1-storage.test.mjs tests/v1-compatibility.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tests/v1-studio-browser.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tests/v1-player-browser.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tests/v1-render-browser.mjs
       - name: Execute R3 two-revision CLI flow with source-bound feedback and new audio bytes
         run: node tools/iteration-example.mjs test-results/iteration-cli --cli --no-preview
       - name: Bundle local editor and independent engine sample
@@ -104,6 +114,7 @@ jobs:
             test-results/windows/*.json
             test-results/windows/*.png
             test-results/r6-*/
+            test-results/v1-*/
             test-results/agent-cli/
             test-results/creative-cli/CREATIVE_REPORT.json
             test-results/creative-cli/MEDIA_REPORT.json

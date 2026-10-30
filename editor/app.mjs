@@ -8,6 +8,7 @@ import { renderStructureEditor } from './structure.mjs';
 import { ENGINE_VERSION } from '../lib/index.js';
 import { nativeHost, nativeRequest } from './native.mjs';
 import { createFieldEdits, createOpenGate } from './operations.mjs';
+import { createAsyncOperation } from './async-operation.mjs';
 
 const $ = id => document.getElementById(id);
 const DRAFT_KEY = 'vn-engine-studio:draft:v1';
@@ -27,6 +28,7 @@ const fieldEdits = createFieldEdits({
   error: error => status(error.message, true)
 });
 const opening = createOpenGate({ version: () => workspaceVersion, cancelled: () => status('等待打开时工程已更改，已取消打开；当前更改仍保留', true) });
+const assetBinding = createAsyncOperation(() => [model, workspaceVersion]);
 function element(tag, text, attrs = {}) {
   const node = document.createElement(tag); if (text !== undefined) node.textContent = text;
   for (const [key, value] of Object.entries(attrs)) { if (key === 'class') node.className = value; else node.setAttribute(key, value); }
@@ -67,7 +69,7 @@ const routes = createRoutesPanel($('route-list'), {element,action,field,project:
       $('preview').contentWindow.postMessage({source:'vn-engine-studio',type:'capture-route',revision:current,id},location.origin);
     });
   },download,navigate:state=>{const node=model.graph().nodes.find(n=>n.id===state.sceneId&&(!n.chapter||state.lineId.startsWith(n.chapter+'/')));if(!node)throw Error('此运行节点没有对应的可编辑节点');selected=node.key;switchTab('story');renderGraph(model.graph());renderInspector();}});
-const production = createProductionPanel($('production-list'), {element,action,field,run,project:()=>model.getView().project,model:()=>model,source:projectSource,
+const production = createProductionPanel($('production-list'), {element,action,field,run,project:()=>model.getView().project,model:()=>model,version:()=>workspaceVersion,source:projectSource,
   assetURL:relative=>resourceURLs.get(relative)??new URL(relative,baseURL).href,edit:fn=>mutate(fn,true),changed:()=>{workspaceVersion++;scheduleDraft();syncDirty();},status,download,preview,routes:()=>switchTab('routes'),
   navigate:target=>{
     const content=contentCatalogue(model.getView().project).find(c=>c.kind===target.kind&&c.id===target.id&&c.nodeId===target.nodeId&&c.chapterId===target.chapterId);
@@ -103,7 +105,7 @@ function replace(input, options = {}) {
   const incomingReview = options.authorReview;
   if(incomingReview) readAuthorReview(incomingReview,options.draft?{...next.getView().project,game:incomingReview.game,version:incomingReview.storyVersion}:next.getView().project);
   // Fully parse before touching the current editor or its resources.
-  opening.invalidate(); fieldEdits.reset();
+  opening.invalidate(); assetBinding.invalidate(); fieldEdits.reset();
   clearResources(options.baseURL); if (options.files) resourceFiles = new Set(options.files); model = next;
   identityProject=model.serialize(true);identitySource=typeof input==='string'&&!JSON.parse(input).format?input:identityProject;production.reset(incomingReview,{detached:options.draft});selected = model.graph().nodes[0]?.key;
   savedSource = ''; tab = 'story'; renderProject(); update(true); switchTab('story');
@@ -437,7 +439,13 @@ const commands = {
   'apply-source': () => { mutate(() => model.replaceProject($('source').value), true); renderProject(); savedSource = $('source').value; },
   'add-asset': () => { const assets = structuredClone(model.getView().project.assets), ids = new Set(assets.map(a => a.id)); let id = 'asset-1'; for (let i = 2; ids.has(id); i++) id = 'asset-' + i; assets.push({ id, kind: 'background', src: 'assets/image.png' }); set(['assets'], assets, true); },
   'bind-assets': async () => {
-    if (nativeHost) { const result = await nativeRequest('bind-assets', { content: model.serialize(true) }); if (!result.cancelled) { clearResources(result.baseURL); resourceFiles = new Set(result.files); $('asset-state').textContent = `已绑定目录，允许读取 ${resourceFiles.size} 个清单文件`; update(false); } }
+    if (nativeHost) {
+      const request = assetBinding.begin();
+      try {
+        const result = await nativeRequest('bind-assets', { content: model.serialize(true) });
+        if (!result.cancelled) request.commit(() => { clearResources(result.baseURL); resourceFiles = new Set(result.files); $('asset-state').textContent = `已绑定目录，允许读取 ${resourceFiles.size} 个清单文件`; update(false); });
+      } catch (error) { if (request.current()) throw error; }
+    }
     else { $('asset-directory').value = ''; $('asset-directory').click(); }
   },
   'restore-draft': async () => { if (draft && canReplace()) {

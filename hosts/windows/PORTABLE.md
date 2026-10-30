@@ -1,5 +1,7 @@
 # VN Engine Studio · Windows
 
+本次为 1.0.0 引擎便携构建，版本与产物源提交可在程序中核对。更新范围和兼容约定见 [版本说明](docs/RELEASE-v1.0.0.md) 与 [1.x 兼容](docs/V1_COMPATIBILITY.md)。
+
 完整解压后运行 `VNEngine.exe`，保留旁边的 `site` 目录。程序需要系统中的 Microsoft Edge WebView2 Runtime；.NET 运行时已包含在此包内。
 
 默认打开可视化编辑器。可以新建工程、编辑节点和分支、绑定资源、试玩、保存 `.vnproj`，以及导出供引擎打包使用的 `.json`。

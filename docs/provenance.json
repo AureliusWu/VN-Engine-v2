@@ -70,7 +70,13 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "93a5ec0568e9014e38fd0e22006842e19cf2195a9bf344f7567694b2cd9f1431"
+      "targetSha256": "f21e5a20a7c1b90e5048473bddc5432d413f9d1486064d1473c00f60c5173a37"
+    },
+    {
+      "target": "editor/async-operation.mjs",
+      "mode": "new",
+      "targetSha256": "515c019834c079596d4afc390d40d581582927621cb246d8eabae9d969e88cf3",
+      "origins": []
     },
     {
       "target": "editor/collections.mjs",
@@ -135,7 +141,7 @@
     {
       "target": "editor/production.mjs",
       "mode": "new",
-      "targetSha256": "8e7d5635e79bf1a229d2302f965a2a567f9be3e565956befbdabd8b4ba65c3c1",
+      "targetSha256": "faa031251bf42e25f23925036ffb968188c2b14aad18f26e5326f427e6e36190",
       "origins": []
     },
     {
@@ -418,7 +424,7 @@
       "target": "hosts/windows/VNEngine.Windows.csproj",
       "mode": "new",
       "origins": [],
-      "targetSha256": "80baed7656d01c59b5e24e6714679f15076c8b43d6cc536d9b9c694de7a7af38"
+      "targetSha256": "162de114026f91715c051fdc488baa424f96c65a53c7a57ba6bdf9e80bbe075a"
     },
     {
       "target": "licenses/Healing-LICENSE.txt",
@@ -963,7 +969,7 @@
       "target": "src/render/dom.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "874abdd14b3c19f233a8b17ab1df52891f920089c61e7c0da4c4bc870193d095"
+      "targetSha256": "8672594e380e118b1230b70fb4ec9bad2a89682634ddc988eb8b77a7b1ed83a3"
     },
     {
       "target": "src/render/key-visual.ts",
@@ -1076,7 +1082,7 @@
     {
       "target": "src/storage/contract.ts",
       "mode": "new",
-      "targetSha256": "f0d03f11da7072bea15048d7dde176298f70e470a7051a4682c9abf561a2af1f",
+      "targetSha256": "8124b3f8fb9d09b3ab50ae46fee6aaa39108181dfeb0c9886b0ec08f008c80ca",
       "origins": []
     },
     {
@@ -1146,7 +1152,7 @@
       "target": "src/version.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "e7df490ae02002612530f40219ff1486d58ef0f85d49004ca3db403f20f94a74"
+      "targetSha256": "58c44c72317c058e95ad4f167e5ba1c4f8bb8b93747457d297dd333e769d1fe2"
     },
     {
       "target": "tools/acceptance-node.mjs",

@@ -1,6 +1,6 @@
-# VN Engine Studio 0.7
+# VN Engine Studio 1.0.0
 
-可视化编辑器的可用初版。与播放器共用 `EngineProject`、真实状态机、资源清单、调度与渲染，没有另一份预览用剧情逻辑。
+可视化编辑器与播放器共用 `EngineProject`、真实状态机、资源清单、调度与渲染，没有另一份预览用剧情逻辑。1.0.0 增加作者异步操作保护，更新与兼容范围见 [版本说明](RELEASE-v1.0.0.md) 和 [1.x 约定](V1_COMPATIBILITY.md)。
 
 ```bash
 npm ci
