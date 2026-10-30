@@ -1,0 +1,51 @@
+{
+  "schema": "vn-workflow-validation-v1",
+  "recordedOn": "2026-10-30",
+  "scope": "workflow-and-tooling",
+  "status": "PASS",
+  "baselineCommit": "f065ea784752d9c7335638e3b383afd12cf98bd0",
+  "inputs": [
+    {
+      "path": "tools/vn_portfolio.py",
+      "sha256": "a0f62cccb2359d0b66f61007c8fefdcbfdf481d55c9a700e517a2d20cb76f13c"
+    },
+    {
+      "path": "tests/portfolio/test_workflow.py",
+      "sha256": "4b7d6c991d12358ef7da50e7ee3ee344daaa58902d0fb97d793a370863554ac5"
+    },
+    {
+      "path": ".vn/workflow.json",
+      "sha256": "73024272c963c60a03f50952f0715bbe617f67228f0760343ee4049476f8fce5"
+    },
+    {
+      "path": "package.json",
+      "sha256": "1207988ef9aae848f7a7035f71111a23a93bc6cdddd47d0190571c4d8051201a"
+    },
+    {
+      "path": ".github/workflows/vn-portfolio.yml",
+      "sha256": "c5a062ee8992224f516fdf55474e2342e5a5fa5fef9e8806a92ab6924f738fab"
+    }
+  ],
+  "executed": {
+    "nodeTests": 381,
+    "renpyAdapterTests": 6,
+    "portfolioTests": 8,
+    "provenanceFiles": 200,
+    "sampleTechnicalValidations": 4,
+    "portfolioRepositories": 6,
+    "sourceFiles": 31,
+    "commandEntries": 22,
+    "platformWorkflows": 15,
+    "sharedFilesPerPeer": 15,
+    "sharedPeers": 3,
+    "skillValidation": "PASS",
+    "skillForwardTest": "completed-with-sparse-checkout-rule-refinement"
+  },
+  "notExecuted": [
+    "complete-browser-suite",
+    "windows-native-suite",
+    "physical-device",
+    "human-playtest"
+  ],
+  "releaseStatus": "NOT_ASSESSED"
+}

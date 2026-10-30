@@ -1,0 +1,75 @@
+{
+  "schema": "vn-portfolio-baselines-v1",
+  "recordedOn": "2026-10-30",
+  "repositories": [
+    {
+      "repository": "AureliusWu/Rain",
+      "baselineCommit": "7ea82a4ae4724aebe6f087060f57cb50482384d3",
+      "packageVersion": "1.7.0",
+      "profile": ".vn/workflow.json",
+      "sources": [
+        "game/data/story.json"
+      ],
+      "engine": "Ren’Py 8.5.3 / official Web WASM"
+    },
+    {
+      "repository": "AureliusWu/Healing",
+      "baselineCommit": "1978ec9d85a72000bb848359e8d4a4b69bf44f1e",
+      "packageVersion": "1.5.4",
+      "profile": ".vn/workflow.json",
+      "sources": [
+        "src/story/chapter1.ts",
+        "src/story/chapter2.ts",
+        "src/story/chapter3.ts",
+        "src/story/index.ts"
+      ],
+      "engine": "React / TypeScript / Electron"
+    },
+    {
+      "repository": "AureliusWu/NetLove",
+      "baselineCommit": "d345b054bf4323a6cfd75e51d2dbb36d8da1a81e",
+      "packageVersion": "1.1.1",
+      "profile": ".vn/workflow.json",
+      "sources": [
+        "src/story/story.json"
+      ],
+      "engine": "React / TypeScript / Electron"
+    },
+    {
+      "repository": "AureliusWu/Circuit",
+      "baselineCommit": "72ea0b28d7b1a56d23c352ab4dcaf579d6db39ca",
+      "packageVersion": "1.10.1",
+      "profile": ".vn/workflow.json",
+      "sources": [
+        "src/story/chapters/*.ts",
+        "src/story/engine.ts"
+      ],
+      "engine": "React / TypeScript / Tauri 2"
+    },
+    {
+      "repository": "AureliusWu/RESET",
+      "baselineCommit": "45996c5445eb9ef9a60448e77673260ea3f7ce0d",
+      "packageVersion": "1.3.1",
+      "profile": ".vn/workflow.json",
+      "sources": [
+        "game/content/manifest.json",
+        "game/content/chapters/*.json",
+        "game/content/runtime.json",
+        "game/assets/manifest.json",
+        "ENGINE.lock.json"
+      ],
+      "engine": "VN Engine v2 0.3.0 pinned / WebView2"
+    },
+    {
+      "repository": "AureliusWu/VN-Engine-v2",
+      "baselineCommit": "f065ea784752d9c7335638e3b383afd12cf98bd0",
+      "packageVersion": "1.4.0",
+      "profile": ".vn/workflow.json",
+      "sources": [
+        "src/index.ts",
+        "src/agent/index.ts"
+      ],
+      "engine": "Self-developed TypeScript SDK / CLI / Studio / WebView2"
+    }
+  ]
+}

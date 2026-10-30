@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased · VN 共用工作流 R1 — 2026-10-30
+
+- 新增六仓声明式工作流 profile 与只读审计工具，检查正文来源、命令入口、平台流程和三仓共用文件 SHA256 漂移；不执行配置命令，不授予内容或发布 PASS。
+- 核心 check 接入审计回归和本仓配置检查，独立六仓 CI 保存逐仓提交/文件身份；跨仓方法与基线见 docs/portfolio/R1-REUSE.md。
+- 游戏运行链、公开版本、存档和 RESET 锁定引擎保持原有契约。
+
 ## 1.4.0 — 2026-10-30 · 后台编译与取消保护
 
 - 参考 Yarn Spinner 与 Inky 的编译任务生命周期，将 Studio DSL 编译、资源清单检查和 JSON 预览格式化移到独立 Worker；同步公共 API、CLI、Agent、IR 与存档格式保持兼容。

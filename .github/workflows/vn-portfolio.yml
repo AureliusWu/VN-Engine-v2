@@ -1,0 +1,54 @@
+name: VN portfolio workflow inventory
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'tools/vn_portfolio.py'
+      - 'tests/portfolio/**'
+      - '.vn/**'
+      - '.github/workflows/vn-portfolio.yml'
+  pull_request:
+    paths:
+      - 'tools/vn_portfolio.py'
+      - 'tests/portfolio/**'
+      - '.vn/**'
+      - '.github/workflows/vn-portfolio.yml'
+permissions:
+  contents: read
+concurrency:
+  group: vn-portfolio-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          path: VN-Engine-v2
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Read peer workflow and authored source files without media payloads
+        env:
+          GIT_TERMINAL_PROMPT: '0'
+        run: |
+          set -euo pipefail
+          for repo in Rain Healing NetLove Circuit RESET; do
+            git clone --depth 1 --filter=blob:none --no-checkout "https://github.com/AureliusWu/$repo.git" "$repo"
+            git -C "$repo" sparse-checkout init --no-cone
+            git -C "$repo" sparse-checkout set --no-cone '/*' '!/*/' '/.vn/' '/.github/workflows/' '/scripts/' '/tools/' '/src/' '/tests/' '/docs/*.md' '/docs/production/*.md' '/docs/production/*.json' '/docs/production/templates/' '/game/data/story.json' '/game/content/' '/game/assets/manifest.json'
+            git -C "$repo" checkout main
+          done
+      - name: Verify inventory behavior
+        working-directory: VN-Engine-v2
+        run: python3 -m unittest discover -s tests/portfolio -v
+      - name: Inspect all six repositories; this is not a game release gate
+        run: python3 VN-Engine-v2/tools/vn_portfolio.py VN-Engine-v2 Rain Healing NetLove Circuit RESET --require-all --out vn-workflow-audit.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: vn-workflow-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: vn-workflow-audit.json
+          if-no-files-found: error

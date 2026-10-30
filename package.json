@@ -39,7 +39,7 @@
     "demo": "npm run build && node tools/serve.mjs",
     "validate:spec": "npm run build && node tools/validate-project.mjs examples/runtime/campus.json examples/runtime/netlove.json examples/runtime/circuit.json examples/runtime/rain.json",
     "validate:spec:release": "npm run build && node tools/validate-project.mjs --release",
-    "check": "npm test && npm run test:renpy && node tools/write-agent-schemas.mjs --check && node tools/check-provenance.mjs && node tools/validate-project.mjs examples/runtime/campus.json examples/runtime/netlove.json examples/runtime/circuit.json examples/runtime/rain.json",
+    "check": "npm test && npm run test:renpy && node tools/write-agent-schemas.mjs --check && node tools/check-provenance.mjs && node tools/validate-project.mjs examples/runtime/campus.json examples/runtime/netlove.json examples/runtime/circuit.json examples/runtime/rain.json && npm run test:portfolio && npm run audit:workflow",
     "gate:release": "npm run check && npm run test:browser && node tools/release-gate.mjs",
     "provenance:refresh": "node tools/refresh-provenance.mjs",
     "verify:upstream": "npm run build && node tools/compare-upstream.mjs",
@@ -59,7 +59,9 @@
     "test:acceptance": "npm run build && node --test tests/acceptance.test.mjs && node tests/acceptance-browser.mjs",
     "test:v1": "npm run build && node --test tests/v1-storage.test.mjs tests/v1-compatibility.test.mjs && node tests/v1-studio-browser.mjs && node tests/v1-player-browser.mjs && node tests/v1-render-browser.mjs",
     "test:p3": "npm run build && node --test tests/p3-dsl.test.mjs tests/p3-context.test.mjs tests/p3-integration.test.mjs && node tests/p3-runtime-browser.mjs && node tests/p3-studio-browser.mjs && node tests/p3-package-browser.mjs",
-    "test:p4": "npm run build && node --test tests/p4-task.test.mjs && node tests/p4-studio-browser.mjs && node tests/p4-package-browser.mjs"
+    "test:p4": "npm run build && node --test tests/p4-task.test.mjs && node tests/p4-studio-browser.mjs && node tests/p4-package-browser.mjs",
+    "test:portfolio": "python -m unittest discover -s tests/portfolio -v",
+    "audit:workflow": "python tools/vn_portfolio.py ."
   },
   "devDependencies": {
     "typescript": "5.9.3",

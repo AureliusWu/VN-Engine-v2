@@ -1511,6 +1511,12 @@
       "origins": []
     },
     {
+      "target": "tools/vn_portfolio.py",
+      "mode": "new",
+      "targetSha256": "a0f62cccb2359d0b66f61007c8fefdcbfdf481d55c9a700e517a2d20cb76f13c",
+      "origins": []
+    },
+    {
       "target": "tools/write-agent-schemas.mjs",
       "mode": "new",
       "targetSha256": "6e172f5abf95c14c6081d765bb13faea6db367b257dd215237c7b3012cd0cd52",

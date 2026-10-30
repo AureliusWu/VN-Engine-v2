@@ -1,0 +1,606 @@
+{
+  "schema": "vn-workflow-audit-v1",
+  "toolVersion": "1.0.0",
+  "scope": "workflow-inventory-only",
+  "status": "PASS",
+  "coverage": "complete",
+  "missingRepositories": [],
+  "releaseStatus": "NOT_ASSESSED",
+  "runtimeStatus": "NOT_RUN",
+  "commandsExecuted": false,
+  "errors": [],
+  "repositories": [
+    {
+      "root": "VN-Engine-v2",
+      "repository": "AureliusWu/VN-Engine-v2",
+      "errors": [],
+      "checks": [
+        {
+          "id": "full-check",
+          "argv": [
+            "npm",
+            "run",
+            "check"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        },
+        {
+          "id": "browser",
+          "argv": [
+            "npm",
+            "run",
+            "test:browser"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        },
+        {
+          "id": "portfolio",
+          "argv": [
+            "python3",
+            "tools/vn_portfolio.py",
+            "."
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        },
+        {
+          "id": "release",
+          "argv": [
+            "npm",
+            "run",
+            "gate:release"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        }
+      ],
+      "sources": [
+        {
+          "path": "src/agent/index.ts",
+          "sha256": "13555e886ddb4541da69a542a1f1a1559447a5ebfea3bc279a2321b74bf1f613"
+        },
+        {
+          "path": "src/index.ts",
+          "sha256": "6bc68b858cf09b22951a156f6fb1b73ef255c2412b0cf1dc69dc7362b3af4906"
+        }
+      ],
+      "workflows": [
+        {
+          "path": ".github/workflows/check.yml",
+          "sha256": "3eef07f41d9ece94ed42f48efcc55dece062b4c79de29ab1ac1ba1b4bcc094cb",
+          "execution": "NOT_RUN"
+        },
+        {
+          "path": ".github/workflows/windows.yml",
+          "sha256": "6f436ffffdce7f240f63ecd9bc4b1eb8e9e726b7d8fe132418d48c6e11e16144",
+          "execution": "NOT_RUN"
+        },
+        {
+          "path": ".github/workflows/vn-portfolio.yml",
+          "sha256": "c5a062ee8992224f516fdf55474e2342e5a5fa5fef9e8806a92ab6924f738fab",
+          "execution": "NOT_RUN"
+        }
+      ],
+      "shared": null,
+      "commit": "f065ea784752d9c7335638e3b383afd12cf98bd0",
+      "dirty": true,
+      "identity": "checkout",
+      "profileSha256": "73024272c963c60a03f50952f0715bbe617f67228f0760343ee4049476f8fce5",
+      "kind": "engine",
+      "packageVersion": "1.4.0",
+      "status": "PASS"
+    },
+    {
+      "root": "Rain",
+      "repository": "AureliusWu/Rain",
+      "errors": [],
+      "checks": [
+        {
+          "id": "authoring",
+          "argv": [
+            "python3",
+            "-m",
+            "tools.validate"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        },
+        {
+          "id": "graph",
+          "argv": [
+            "node",
+            "scripts/vn-contract.mjs",
+            "game/data/story.json"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        },
+        {
+          "id": "materials",
+          "argv": [
+            "node",
+            "scripts/vn-materials.mjs",
+            "verify"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        },
+        {
+          "id": "pwa",
+          "argv": [
+            "npm",
+            "run",
+            "test:pwa"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        }
+      ],
+      "sources": [
+        {
+          "path": "game/data/story.json",
+          "sha256": "b31768d93d2df436447a4fc4933dfbb78f0623e3d6aa83865ffe625a89751784"
+        }
+      ],
+      "workflows": [
+        {
+          "path": ".github/workflows/game.yml",
+          "sha256": "b68ae4314b624fda06a69541149a5a2ab6de2b6c1d0b836a4ce17462786b3240",
+          "execution": "NOT_RUN"
+        },
+        {
+          "path": ".github/workflows/web.yml",
+          "sha256": "67c2ef4982ef34160dee88373d1941ad1f352bf2b28973cc9cafad2f3e925b6e",
+          "execution": "NOT_RUN"
+        }
+      ],
+      "shared": {
+        "version": "1.2.0",
+        "files": {
+          "docs/production/SHARED-VN.md": "a44afcc027b434f3972632cb643e04de9c6a350864a983d0ca907c05e3cae674",
+          "scripts/vn-contract.mjs": "7385f28e51f7b633e3e64ec15b51891d4b5edbc17d1f3a0a7d18c9d5887ecdb7",
+          "scripts/vn-contract.d.mts": "382423131839fa824b4ba46ad2c64cb5653c6a562f736c381da938f013ac776f",
+          "scripts/vn-materials.mjs": "4259df6e5a5eb23de52a00b60f3767747226f75759d978258990cbd57361b11e",
+          "scripts/vn-materials.test.mjs": "876f5c0e214cb1f53fe9ab61174446c8ee4c7ae2a415482c7bbcf74abd52ae08",
+          "docs/production/REUSABLE-MATERIALS.md": "c40da5d6a54ac49325002f535219d377562b2f6337a3f6211ebb5a6c574f2b93",
+          "docs/production/templates/ART-PROMPT.md": "2707278d457016924469427b4d80e2a7ae19a7090df06d3fc0f33a1c3348db49",
+          "docs/production/templates/ASSET-RECORD.json": "e89b8775b40e89e5ca57135fbae0eb8f13a009ff450fcb9baed83b9543c92cc9",
+          "docs/production/templates/DUAL-PLATFORM-CHECKLIST.md": "25e938e4294def0b00b34cc4703bfdec7221591fd2ae13ce10109cc390d933d1",
+          "scripts/vn-creative.mjs": "a98149f99694e2dcdf13dd30515be122f5caed7e89642ca8ea2a16de19cbe77b",
+          "scripts/vn-creative.d.mts": "b47a40eeb01d20019ab755a78a3c8f10bfb917b077be99fac15ea11ed3cc8881",
+          "scripts/vn-creative.test.mjs": "d8a5df00c68801afbbb1747b0aac3111a7054588a3a3ccda84e8af00784b01fc",
+          "docs/production/CREATIVE-PLAYBOOK.md": "dcf2cc35f28a8c35b648f23ba305b27f8c6337cf025ffd9e525c96a20b627f58",
+          "docs/production/templates/SCENE-REVISION.md": "9d52c9c1fdd94dee530f0607871228a18418e6097f44684eac8dc24a2760351b",
+          "docs/production/READ-HISTORY.md": "2d9070b6dee781321f9ef80839e8f7eb296a16a4c48a1d7787646ad05cf39c30"
+        }
+      },
+      "commit": "7ea82a4ae4724aebe6f087060f57cb50482384d3",
+      "dirty": true,
+      "identity": "checkout",
+      "profileSha256": "5fd024180d93356aa0e76c3702ad8092aa05ab19e9802bef51b00ad7934ed54a",
+      "kind": "game",
+      "packageVersion": "1.7.0",
+      "status": "PASS"
+    },
+    {
+      "root": "Healing",
+      "repository": "AureliusWu/Healing",
+      "errors": [],
+      "checks": [
+        {
+          "id": "full-check",
+          "argv": [
+            "npm",
+            "run",
+            "check"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        },
+        {
+          "id": "materials",
+          "argv": [
+            "npm",
+            "run",
+            "test:materials"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        },
+        {
+          "id": "desktop",
+          "argv": [
+            "npm",
+            "run",
+            "test:desktop:installed"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        }
+      ],
+      "sources": [
+        {
+          "path": "src/story/chapter1.ts",
+          "sha256": "37f513e3c2fcf056d931e0128f1718f9dc31739d649396f786e68970cea81bf1"
+        },
+        {
+          "path": "src/story/chapter2.ts",
+          "sha256": "3c7f41ce6e2186cd75103ce6f42e43fb44d9be2959ec8c9e7471e83120131d96"
+        },
+        {
+          "path": "src/story/chapter3.ts",
+          "sha256": "283b5f100226ac934152449dbcbb572ddc2220aeaaf5697ae5110380071ef613"
+        },
+        {
+          "path": "src/story/index.ts",
+          "sha256": "efa4c11c50087ab5c4b6d71007c9c6f57d0d584ba78e7205cb0ff1d41756f5d2"
+        }
+      ],
+      "workflows": [
+        {
+          "path": ".github/workflows/build.yml",
+          "sha256": "691d9caca1f6fb2691597dcbe931b78c3f19b25a04a9eb857d2df9774c79215a",
+          "execution": "NOT_RUN"
+        },
+        {
+          "path": ".github/workflows/pages.yml",
+          "sha256": "802185a18a5dd01232c4625a3a130a60959d66e8a251c318b9a0cff9fb30b106",
+          "execution": "NOT_RUN"
+        }
+      ],
+      "shared": {
+        "version": "1.2.0",
+        "files": {
+          "docs/production/SHARED-VN.md": "a44afcc027b434f3972632cb643e04de9c6a350864a983d0ca907c05e3cae674",
+          "scripts/vn-contract.mjs": "7385f28e51f7b633e3e64ec15b51891d4b5edbc17d1f3a0a7d18c9d5887ecdb7",
+          "scripts/vn-contract.d.mts": "382423131839fa824b4ba46ad2c64cb5653c6a562f736c381da938f013ac776f",
+          "scripts/vn-materials.mjs": "4259df6e5a5eb23de52a00b60f3767747226f75759d978258990cbd57361b11e",
+          "scripts/vn-materials.test.mjs": "876f5c0e214cb1f53fe9ab61174446c8ee4c7ae2a415482c7bbcf74abd52ae08",
+          "docs/production/REUSABLE-MATERIALS.md": "c40da5d6a54ac49325002f535219d377562b2f6337a3f6211ebb5a6c574f2b93",
+          "docs/production/templates/ART-PROMPT.md": "2707278d457016924469427b4d80e2a7ae19a7090df06d3fc0f33a1c3348db49",
+          "docs/production/templates/ASSET-RECORD.json": "e89b8775b40e89e5ca57135fbae0eb8f13a009ff450fcb9baed83b9543c92cc9",
+          "docs/production/templates/DUAL-PLATFORM-CHECKLIST.md": "25e938e4294def0b00b34cc4703bfdec7221591fd2ae13ce10109cc390d933d1",
+          "scripts/vn-creative.mjs": "a98149f99694e2dcdf13dd30515be122f5caed7e89642ca8ea2a16de19cbe77b",
+          "scripts/vn-creative.d.mts": "b47a40eeb01d20019ab755a78a3c8f10bfb917b077be99fac15ea11ed3cc8881",
+          "scripts/vn-creative.test.mjs": "d8a5df00c68801afbbb1747b0aac3111a7054588a3a3ccda84e8af00784b01fc",
+          "docs/production/CREATIVE-PLAYBOOK.md": "dcf2cc35f28a8c35b648f23ba305b27f8c6337cf025ffd9e525c96a20b627f58",
+          "docs/production/templates/SCENE-REVISION.md": "9d52c9c1fdd94dee530f0607871228a18418e6097f44684eac8dc24a2760351b",
+          "docs/production/READ-HISTORY.md": "2d9070b6dee781321f9ef80839e8f7eb296a16a4c48a1d7787646ad05cf39c30"
+        }
+      },
+      "commit": "1978ec9d85a72000bb848359e8d4a4b69bf44f1e",
+      "dirty": true,
+      "identity": "checkout",
+      "profileSha256": "48ba524f1c79ca8330574b4de6b11c85c20538d8b9fd9073e1cacd55da1e0d97",
+      "kind": "game",
+      "packageVersion": "1.5.4",
+      "status": "PASS"
+    },
+    {
+      "root": "NetLove",
+      "repository": "AureliusWu/NetLove",
+      "errors": [],
+      "checks": [
+        {
+          "id": "full-check",
+          "argv": [
+            "npm",
+            "run",
+            "check"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        },
+        {
+          "id": "materials",
+          "argv": [
+            "npm",
+            "run",
+            "test:materials"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        },
+        {
+          "id": "desktop",
+          "argv": [
+            "npm",
+            "run",
+            "test:desktop:installed"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        }
+      ],
+      "sources": [
+        {
+          "path": "src/story/story.json",
+          "sha256": "bb1b48866451894354acb635170295bbfda0e1327e26b6e663ef00be55d34d2f"
+        }
+      ],
+      "workflows": [
+        {
+          "path": ".github/workflows/build.yml",
+          "sha256": "425a8a1408f3440f0ee3ad456b8a25a2bfa8ba7e427e9336de762e392664bab0",
+          "execution": "NOT_RUN"
+        },
+        {
+          "path": ".github/workflows/pages.yml",
+          "sha256": "aed767d8beae20590d3c8fe076ef707ddce9461e938dd3d99f5582603df011d3",
+          "execution": "NOT_RUN"
+        }
+      ],
+      "shared": {
+        "version": "1.2.0",
+        "files": {
+          "docs/production/SHARED-VN.md": "a44afcc027b434f3972632cb643e04de9c6a350864a983d0ca907c05e3cae674",
+          "scripts/vn-contract.mjs": "7385f28e51f7b633e3e64ec15b51891d4b5edbc17d1f3a0a7d18c9d5887ecdb7",
+          "scripts/vn-contract.d.mts": "382423131839fa824b4ba46ad2c64cb5653c6a562f736c381da938f013ac776f",
+          "scripts/vn-materials.mjs": "4259df6e5a5eb23de52a00b60f3767747226f75759d978258990cbd57361b11e",
+          "scripts/vn-materials.test.mjs": "876f5c0e214cb1f53fe9ab61174446c8ee4c7ae2a415482c7bbcf74abd52ae08",
+          "docs/production/REUSABLE-MATERIALS.md": "c40da5d6a54ac49325002f535219d377562b2f6337a3f6211ebb5a6c574f2b93",
+          "docs/production/templates/ART-PROMPT.md": "2707278d457016924469427b4d80e2a7ae19a7090df06d3fc0f33a1c3348db49",
+          "docs/production/templates/ASSET-RECORD.json": "e89b8775b40e89e5ca57135fbae0eb8f13a009ff450fcb9baed83b9543c92cc9",
+          "docs/production/templates/DUAL-PLATFORM-CHECKLIST.md": "25e938e4294def0b00b34cc4703bfdec7221591fd2ae13ce10109cc390d933d1",
+          "scripts/vn-creative.mjs": "a98149f99694e2dcdf13dd30515be122f5caed7e89642ca8ea2a16de19cbe77b",
+          "scripts/vn-creative.d.mts": "b47a40eeb01d20019ab755a78a3c8f10bfb917b077be99fac15ea11ed3cc8881",
+          "scripts/vn-creative.test.mjs": "d8a5df00c68801afbbb1747b0aac3111a7054588a3a3ccda84e8af00784b01fc",
+          "docs/production/CREATIVE-PLAYBOOK.md": "dcf2cc35f28a8c35b648f23ba305b27f8c6337cf025ffd9e525c96a20b627f58",
+          "docs/production/templates/SCENE-REVISION.md": "9d52c9c1fdd94dee530f0607871228a18418e6097f44684eac8dc24a2760351b",
+          "docs/production/READ-HISTORY.md": "2d9070b6dee781321f9ef80839e8f7eb296a16a4c48a1d7787646ad05cf39c30"
+        }
+      },
+      "commit": "d345b054bf4323a6cfd75e51d2dbb36d8da1a81e",
+      "dirty": true,
+      "identity": "checkout",
+      "profileSha256": "0214cd8d8566c754bb9d3495f706a9c3291134899e76a3ba80bf05aab5eb6b98",
+      "kind": "game",
+      "packageVersion": "1.1.1",
+      "status": "PASS"
+    },
+    {
+      "root": "Circuit",
+      "repository": "AureliusWu/Circuit",
+      "errors": [],
+      "checks": [
+        {
+          "id": "logic",
+          "argv": [
+            "npm",
+            "run",
+            "test"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        },
+        {
+          "id": "build",
+          "argv": [
+            "npm",
+            "run",
+            "build"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        },
+        {
+          "id": "runtime-media",
+          "argv": [
+            "python3",
+            "tools/production/validate_runtime.py",
+            "--require-complete",
+            "--decode"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        },
+        {
+          "id": "reading-browser",
+          "argv": [
+            "python3",
+            "tests/reading-browser.py",
+            "http://127.0.0.1:4173"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        }
+      ],
+      "sources": [
+        {
+          "path": "src/story/chapters/answering.ts",
+          "sha256": "a8d35125fa1c262923e3c8b05da63dbd2d95f1d3789cff6b8be1d20f1d992bdf"
+        },
+        {
+          "path": "src/story/chapters/backfeed.ts",
+          "sha256": "d063bea2146a5fc5463370f112c7e2c16c6a82b9f10ee91ae46b62ca4285cf60"
+        },
+        {
+          "path": "src/story/chapters/closure.ts",
+          "sha256": "3ad9839ca4f33e3c286e2a6f5c8d37e64ce7e4fc35fb82bfaf682139d50ef73e"
+        },
+        {
+          "path": "src/story/chapters/everlight.ts",
+          "sha256": "816ff020553de60528a4c8aecfa34e639c10a1dd36f96e461326077af243ce9f"
+        },
+        {
+          "path": "src/story/chapters/neutral.ts",
+          "sha256": "68c54a83e6695b41ee057e1c837c141e5748c893579cd1c431085dc7dfc264dc"
+        },
+        {
+          "path": "src/story/chapters/return-visit.ts",
+          "sha256": "dcad510e51255cc7594081d2aab755e3e0da261c86ba4cfc63b5bd3c5f99a697"
+        },
+        {
+          "path": "src/story/chapters/seventh-night.ts",
+          "sha256": "8b8caf9f86ae3a1df0ae36e775fd26e6e379934bf4601d10738d7f2f79973bd5"
+        },
+        {
+          "path": "src/story/chapters/signoff.ts",
+          "sha256": "9d62ade07e781bcc00cfd87ec8a5d1bf9fe4ae2f5cb6d68bce983fd228bb6ae7"
+        },
+        {
+          "path": "src/story/chapters/thirteen-households.ts",
+          "sha256": "913dfc630e24891746143c8e86df185155fe777cbefa55baa699762420d934cd"
+        },
+        {
+          "path": "src/story/chapters/tickets.ts",
+          "sha256": "3f53998bff253362bc833dc1b66ab272ddb484ec799ff1921175413c3b3a8bd9"
+        },
+        {
+          "path": "src/story/chapters/visitors.ts",
+          "sha256": "595da971be187cfa53004526e842c8fc328502c1ef52dfce0ed746daf2e3774c"
+        },
+        {
+          "path": "src/story/engine.ts",
+          "sha256": "327d7f1fcffc1cf8c5cd03608c325091ab29c089d8f128fd12ec4d47c0a79dca"
+        }
+      ],
+      "workflows": [
+        {
+          "path": ".github/workflows/ci.yml",
+          "sha256": "820eaa0723a79ea7389d08fe260f11bea41741ad061ea94ee183b421c1445b6a",
+          "execution": "NOT_RUN"
+        },
+        {
+          "path": ".github/workflows/release.yml",
+          "sha256": "8ad582fe54343febccc6be6749cd38c02fcb4f58cd588bae5f3676368b8c89ab",
+          "execution": "NOT_RUN"
+        },
+        {
+          "path": ".github/workflows/pages.yml",
+          "sha256": "39a9ccf67d9341960d1e2135a6c2c8e3e8c3e0b43eba62a6256186506ff2ce8d",
+          "execution": "NOT_RUN"
+        }
+      ],
+      "shared": null,
+      "commit": "72ea0b28d7b1a56d23c352ab4dcaf579d6db39ca",
+      "dirty": true,
+      "identity": "checkout",
+      "profileSha256": "c18668aff22c7ef399ed4aa12cb04137803804097e8dc12ac583e0df2b0eaa1d",
+      "kind": "game",
+      "packageVersion": "1.10.1",
+      "status": "PASS"
+    },
+    {
+      "root": "RESET",
+      "repository": "AureliusWu/RESET",
+      "errors": [],
+      "checks": [
+        {
+          "id": "candidate",
+          "argv": [
+            "npm",
+            "run",
+            "check:release"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        },
+        {
+          "id": "stable",
+          "argv": [
+            "npm",
+            "run",
+            "check:stable"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        },
+        {
+          "id": "routes",
+          "argv": [
+            "npm",
+            "run",
+            "test:routes"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        },
+        {
+          "id": "npc-dom",
+          "argv": [
+            "npm",
+            "run",
+            "test:npc:browser"
+          ],
+          "entryStatus": "FOUND",
+          "execution": "NOT_RUN"
+        }
+      ],
+      "sources": [
+        {
+          "path": "ENGINE.lock.json",
+          "sha256": "1181c97645cdf09e447ef110e37565df6da54c8294fe4352ee4c1e0e2f0a2fa3"
+        },
+        {
+          "path": "game/assets/manifest.json",
+          "sha256": "ed8e7ba03a77f6f607690b6f80400ddee25d89e9ab579d2c2184f1069ecd0000"
+        },
+        {
+          "path": "game/content/chapters/01.json",
+          "sha256": "caa18f9082ad0c4a455fbea0c1a4fd648e80cc8b87d559724cbf0f81c45c3f76"
+        },
+        {
+          "path": "game/content/chapters/02.json",
+          "sha256": "a83f8f71320ccd232ac43a7da8da8e7ebcf6afbd2a1891c9a5da4197ee517ac5"
+        },
+        {
+          "path": "game/content/chapters/03.json",
+          "sha256": "a257b406e292a87f759e6e25b84c1ddb4503d206ea680ce6f14b517236a07f54"
+        },
+        {
+          "path": "game/content/chapters/04.json",
+          "sha256": "d28ab86c35c0e428547697a195422b55d94284a88411c34e14663ef2712b6840"
+        },
+        {
+          "path": "game/content/chapters/05.json",
+          "sha256": "8bc5060e616a33567926e7b2f8abfc605f843c1cd32a9e52c54853bc9e145618"
+        },
+        {
+          "path": "game/content/chapters/06.json",
+          "sha256": "98be90ad3c85db4604621aee1b576d1f545a40abdc776708db7a702c8648cb9b"
+        },
+        {
+          "path": "game/content/chapters/07.json",
+          "sha256": "1b0dba130bdd7d6d063c64439900eb00bd6c17e20ccab7a2edbb30d7520e0f12"
+        },
+        {
+          "path": "game/content/manifest.json",
+          "sha256": "c69bf29d5a5e3b334549a692d5051a75fc13d2d62145ae8f6164071182b6532e"
+        },
+        {
+          "path": "game/content/runtime.json",
+          "sha256": "a3f2537f89e30aaeea244602a13135c67ee1f9ba4bb61f6968f5473bd37fbe3c"
+        }
+      ],
+      "workflows": [
+        {
+          "path": ".github/workflows/build.yml",
+          "sha256": "805ce02b4743bfd0ddb9530dcaec494abf7a52b72973b0a902920695e2e9d8e1",
+          "execution": "NOT_RUN"
+        },
+        {
+          "path": ".github/workflows/release.yml",
+          "sha256": "d5721f5a15553ce759c22d1bcd43be18065b03beaa534f2c1e7f1944cf542d08",
+          "execution": "NOT_RUN"
+        },
+        {
+          "path": ".github/workflows/pages.yml",
+          "sha256": "a6ac48393e14f9b979c9894cfe7e670b1240e86bdc071c09f0d3dc83b0b181fa",
+          "execution": "NOT_RUN"
+        }
+      ],
+      "shared": null,
+      "commit": "45996c5445eb9ef9a60448e77673260ea3f7ce0d",
+      "dirty": true,
+      "identity": "checkout",
+      "profileSha256": "76940fa0e38ab0f535af61d4bb736ee9d8f80bd13466ac39876f96bfa4d399f9",
+      "kind": "game",
+      "packageVersion": "1.3.1",
+      "status": "PASS"
+    }
+  ],
+  "evidenceNote": "R1 working trees over exact R1-BASELINES.json commits before publication. Dirty state is explicit. Machine paths redacted to repository names. This inventory does not assert runtime or release quality."
+}

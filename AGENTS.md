@@ -15,3 +15,5 @@
 
 - 作者工具修改运行 `tests/editor.test.mjs` 与 `npm run test:editor`，验证工程格式、撤销、断链、目录资源和真实预览；编辑器工程与运行数据分别导出。
 - Windows 宿主修改必须通过 `.github/workflows/windows.yml` 的编译、原生 WebView2 与进程重启检查；系统对话框人工操作和 CI 预设路径分别记录。不得用 Linux 编译或浏览器代替原生执行成功的证据。
+
+跨仓制作工作流另读 [VN 工作流 R1](docs/production/VN-WORKFLOW-R1.md) 与 `.vn/workflow.json`。复用方法按本作语义适配；清单检查 PASS 不授予运行、内容或发布 PASS。

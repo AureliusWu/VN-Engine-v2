@@ -1,0 +1,61 @@
+{
+  "schema": "vn-workflow-profile-v1",
+  "workflowVersion": "1.0.0",
+  "repository": "AureliusWu/VN-Engine-v2",
+  "kind": "engine",
+  "engine": "Self-developed TypeScript SDK / CLI / Studio / WebView2",
+  "releaseAuthority": "native-project-gates",
+  "sources": [
+    "src/index.ts",
+    "src/agent/index.ts"
+  ],
+  "requiredPaths": [
+    "AGENTS.md",
+    "docs/production/VN-WORKFLOW-R1.md",
+    "docs/AI_DEVELOPMENT.md",
+    "docs/AI_ACCEPTANCE.md",
+    "docs/MIGRATION.md",
+    "tools/vn_portfolio.py",
+    "tests/portfolio/test_workflow.py"
+  ],
+  "commands": [
+    {
+      "id": "full-check",
+      "argv": [
+        "npm",
+        "run",
+        "check"
+      ]
+    },
+    {
+      "id": "browser",
+      "argv": [
+        "npm",
+        "run",
+        "test:browser"
+      ]
+    },
+    {
+      "id": "portfolio",
+      "argv": [
+        "python3",
+        "tools/vn_portfolio.py",
+        "."
+      ]
+    },
+    {
+      "id": "release",
+      "argv": [
+        "npm",
+        "run",
+        "gate:release"
+      ]
+    }
+  ],
+  "workflows": [
+    ".github/workflows/check.yml",
+    ".github/workflows/windows.yml",
+    ".github/workflows/vn-portfolio.yml"
+  ],
+  "identityNotes": "引擎和作品分别验收；旧四作与 RESET 的迁移/引擎升级须有明确用户指令。"
+}
