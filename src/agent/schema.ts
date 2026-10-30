@@ -40,14 +40,15 @@ const paging = { kind: text, id: text, chapterId: text, limit: integer(1, 100), 
 export const COMMAND_SCHEMAS: Record<string, Schema> = {
   capabilities: shape({ ...common, schema: enumOf('request', 'response', 'operation', 'production', 'ui','feedback','acceptance') }),
   init: shape({ ...common, type: enumOf('vn', 'chat', 'script', 'investigation'), game: { ...text, pattern: '^[a-zA-Z0-9_-]+$' }, storyVersion: text, title: text, format: enumOf('project', 'editor'), output: text, recover: bool }, ['type', 'game', 'storyVersion', 'title']),
-  inspect: shape({ ...common, ...paging, query:text,characterId:text,taskKind:enumOf('art','music','ui','sfx','text','story'),kind: enumOf('overview', 'nodes', 'chapters', 'variables', 'assets', 'presentation', 'routes', 'text', 'content','production', 'characters', 'beats', 'tasks', 'ui') }),
+  inspect: shape({ ...common, ...paging, query:text,characterId:text,taskKind:enumOf('art','music','ui','sfx','text','story'),kind: enumOf('overview', 'nodes', 'chapters', 'variables', 'assets', 'presentation', 'routes', 'text', 'content','production', 'characters', 'beats', 'tasks', 'ui', 'semantics', 'source', 'evidence'),
+    selector:shape({nodeId:text,lineId:text,chapterId:text,assetId:text,path:{type:'array',maxItems:60,items:{anyOf:[text,integer(0,10000)]}}}), document:object }),
   refs: shape({ ...common, ...paging, kind: enumOf('node', 'variable', 'chapter', 'asset', 'evidence', 'character', 'task', 'line','content') }, ['kind', 'id']),
   apply: shape({ ...common, expectedSourceSha256: hash, operations: { type: 'array', minItems: 1, maxItems: AGENT_LIMITS.operations, items: { oneOf: OPERATION_DEFINITIONS } }, dryRun: bool, recover: bool, imports:{type:'array',maxItems:32,items:shape({source:{type:'string',minLength:1,maxLength:4096},sha256:hash,extension:enumOf('png','jpg','jpeg','webp','svg','wav','mp3','ogg','woff2','txt','webm','mp4')},['source','sha256','extension'])} }, ['expectedSourceSha256', 'operations']),
   validate: shape({ ...common, mode: enumOf('development', 'release'), acceptanceFile:text }),
   probe: shape({...common,probeMs:integer(1,30000),files:{type:'array',minItems:1,maxItems:16,items:shape({id:text,file:{type:'string',minLength:1,maxLength:4096},kind:enumOf('background','portrait','cg','ui','audio','font','video','license')},['id','file','kind'])},output:text},['files']),
   review: shape({ ...common, limit:paging.limit,maxBytes:paging.maxBytes,cursor:paging.cursor }),
   test: shape({ ...common, maxOperations: integer(1, AGENT_LIMITS.routeOperations), caseId: text, output: text }),
-  preview: shape({ ...common, caseId: text, output: text, maxOperations: integer(1, AGENT_LIMITS.routeOperations), previewMs: integer(1, AGENT_LIMITS.previewMs), width: integer(320, 3840), height: integer(240, 2160) }, ['caseId', 'output']),
+  preview: shape({ ...common, caseId: text, output: text, maxOperations: integer(1, AGENT_LIMITS.routeOperations), previewMs: integer(1, AGENT_LIMITS.previewMs), width: integer(320, 3840), height: integer(240, 2160),captureEvidence:bool }, ['caseId', 'output']),
   build: shape({ ...common, output: text, mode: enumOf('development', 'release'), acceptanceFile:text }, ['output'])
 };
 COMMAND_SCHEMAS.impact=shape({...COMMAND_SCHEMAS.apply.properties,limit:integer(1,100),output:text},['expectedSourceSha256','operations']);
@@ -64,7 +65,8 @@ export const AGENT_REQUEST_SCHEMA: Schema = { $schema: 'https://json-schema.org/
 export const AGENT_RESPONSE_SCHEMA: Schema = { $schema: 'https://json-schema.org/draft/2020-12/schema', $id: 'urn:vn-agent-v1:response',
   ...shape({ protocol: { const: AGENT_PROTOCOL }, engineVersion: text, requestId: text, command: text, ok: bool, status: enumOf('PASS', 'FAIL', 'BLOCKED', 'UNVERIFIED'),
     project: { anyOf: [{ type: 'null' }, shape({ game: text, storyVersion: text, sourceSha256: hash }, ['game', 'storyVersion', 'sourceSha256'])] }, data: {},
-    diagnostics: { type: 'array', items: shape({ code: text, severity: enumOf('error', 'warning', 'info'), message: { type: 'string' }, path: { type: 'array', items: { anyOf: [{ type: 'string' }, { type: 'integer' }] } }, nodeId: text, chapterId: text, assetId: text, operation: integer(0, 127), expected: {}, actual: {} }, ['code', 'severity', 'message']) },
+    diagnostics: { type: 'array', items: shape({ code: text, severity: enumOf('error', 'warning', 'info'), message: { type: 'string' }, path: { type: 'array', items: { anyOf: [{ type: 'string' }, { type: 'integer' }] } }, nodeId: text, chapterId: text, assetId: text, operation: integer(0, 127), expected: {}, actual: {},
+      origin:shape({game:text,storyVersion:text,nodeId:text,lineId:text,chapterId:text,assetId:text,sourceSha256:hash,path:{type:'array',items:{anyOf:[{type:'string'},{type:'integer'}]}}},['game','storyVersion']) }, ['code', 'severity', 'message']) },
     artifacts: { type: 'array', items: shape({ kind: text, path: { type: 'string', minLength: 1, maxLength: 4096 }, sha256: hash }, ['kind', 'path']) }
   }, ['protocol', 'engineVersion', 'requestId', 'command', 'ok', 'status', 'project', 'data', 'diagnostics', 'artifacts']) };
 

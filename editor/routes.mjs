@@ -1,7 +1,7 @@
 import {createProject,routeExpectation,projectEndings} from '../lib/index.js';
 
 export function createRoutesPanel(root,host){
-  const {element,action,field}=host;let recording=false,recordingSource,report,reportSource,worker,jobSource,serial=0,timeout;
+  const {element,action,field}=host;let recording=false,recordingSource,report,reportSource,worker,jobSource,serial=0,timeout,rendering=false,renderAgain=false;
   const source=()=>JSON.stringify(host.project());
   const stop=()=>{clearTimeout(timeout);worker?.terminate();worker=undefined;};
   const setReport=(next,current)=>{report=next;reportSource=current;document.body.dataset.routeStatus=next.status;render();};
@@ -17,6 +17,13 @@ export function createRoutesPanel(root,host){
   const edit=(index,fn)=>{const tests=structuredClone(host.project().routeTests??{schema:1,cases:[]});fn(tests.cases[index],tests.cases);host.set(tests);};
   const command=(label,id,callback)=>{const button=action(label,callback);button.dataset.routeCommand=id;return button;};
   function render(){
+    // Removing a focused field may synchronously commit change and request another render.
+    // Finish the DOM operation before processing that request; nested replaceChildren is unsafe.
+    if(rendering){renderAgain=true;return;}
+    rendering=true;
+    try{do{renderAgain=false;renderOnce();}while(renderAgain);}finally{rendering=false;}
+  }
+  function renderOnce(){
     const scroller=root.closest('.panel'),scrollTop=scroller?.scrollTop??0;
     root.replaceChildren();const controls=element('div',undefined,{class:'route-controls'});
     controls.append(command('从头录制路线','record',()=>host.record()),command('完成录制并添加用例','capture',async()=>{const id=nextId(),test=await host.capture(id);const tests=structuredClone(host.project().routeTests??{schema:1,cases:[]});tests.cases.push(test);host.set(tests);}),

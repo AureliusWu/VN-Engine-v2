@@ -1,3 +1,5 @@
+import { appendRuntimeEffect, type RuntimeEffectContext, type RuntimeEffectPhase } from '../runtime/evidence.js';
+
 const MAX_CACHED_TRACKS = 2;
 const MAX_CACHED_BYTES = 32 * 1024 * 1024;
 
@@ -10,16 +12,34 @@ export class SceneLoop {
   private disposed = false;
   private buffers = new Map<string, { buffer: AudioBuffer; bytes: number }>();
   private pending?: { url: string; controller: AbortController; promise: Promise<AudioBuffer> };
+  private evidence?: RuntimeEffectContext;
+  private evidencePhase?: RuntimeEffectPhase;
+  private evidenceAttempt = 1;
 
   constructor(private context: AudioContext, private bus: GainNode) {}
 
-  select(url?: string) {
+  private record(phase: RuntimeEffectPhase, code?: string) {
+    this.evidencePhase = phase;
+    if (this.evidence) appendRuntimeEffect({ ...this.evidence, attempt: this.evidenceAttempt }, phase, code);
+  }
+
+  select(url?: string, evidence?: RuntimeEffectContext) {
     if (this.disposed) return;
     if (url !== this.wanted) {
+      if (this.wanted && !['cancelled', 'settled', 'failed'].includes(this.evidencePhase ?? '')) this.record('cancelled', 'MEDIA_SELECTION_CHANGED');
       this.generation++;
       this.cancelDownload();
       this.release();
       this.wanted = url;
+      this.evidence = evidence; this.evidenceAttempt = 1; this.evidencePhase = undefined;
+      if (url) this.record('scheduled');
+    } else if (evidence && evidence.visit !== this.evidence?.visit) {
+      this.evidence = evidence;
+      if (url && this.source) this.record('retained');
+      else if (url) {
+        if (this.evidencePhase === 'failed') this.evidenceAttempt++;
+        this.record('scheduled');
+      }
     }
     void this.ensure();
   }
@@ -27,6 +47,7 @@ export class SceneLoop {
   async ensure() {
     const url = this.wanted, generation = this.generation;
     if (!url || this.source || this.disposed || this.context.state !== 'running') return;
+    if (this.evidencePhase === 'failed' && !this.pending) { this.evidenceAttempt++; this.record('scheduled'); }
     try {
       const buffer = await this.load(url);
       if (generation !== this.generation || url !== this.wanted || this.source || this.disposed || this.context.state !== 'running') return;
@@ -40,8 +61,10 @@ export class SceneLoop {
       this.source = source;
       this.level = level;
       source.start();
+      this.record('started');
     } catch {
       // A missing file does not block dialogue, saves or later playback retries.
+      if (generation === this.generation && url === this.wanted && !this.disposed && this.evidencePhase !== 'failed') this.record('failed', 'AUDIO_LOAD_OR_START_FAILED');
     }
   }
 
@@ -96,6 +119,7 @@ export class SceneLoop {
   }
 
   dispose() {
+    if (!this.disposed && this.wanted && !['cancelled', 'settled', 'failed'].includes(this.evidencePhase ?? '')) this.record('cancelled', 'MEDIA_DISPOSED');
     this.disposed = true;
     this.generation++;
     this.cancelDownload();

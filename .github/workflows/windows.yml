@@ -25,6 +25,16 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx playwright install chromium
+      - name: Verify P0 runtime contracts, evidence and Studio on Windows
+        run: |
+          node --test tests/p0-agent.test.mjs tests/p0-evidence.test.mjs tests/p0-media.test.mjs tests/p0-report.test.mjs tests/p0-semantics.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tests/p0-runtime-browser.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tests/p0-studio-browser.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tests/p0-preview-browser.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify R3/R4 feedback recovery, AI acceptance and standalone dependency checks on Windows
         run: node --test tests/iteration.test.mjs tests/acceptance.test.mjs tests/qa-report.test.mjs
       - name: Verify R5 authoring, focus and audio regressions on Windows
@@ -115,6 +125,7 @@ jobs:
             test-results/windows/*.png
             test-results/r6-*/
             test-results/v1-*/
+            test-results/p0-*/
             test-results/agent-cli/
             test-results/creative-cli/CREATIVE_REPORT.json
             test-results/creative-cli/MEDIA_REPORT.json

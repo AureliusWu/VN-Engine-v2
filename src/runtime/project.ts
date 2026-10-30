@@ -22,6 +22,7 @@ import { validateProjectMiniGames } from '../minigame/project.js';
 import type { ReadProgressPort } from './read.js';
 import type { RouteSuite } from '../regression/types.js';
 import { validateRouteSuite } from '../regression/schema.js';
+import type { RuntimeEvidence } from './evidence.js';
 
 type ProjectBase = { production?: ProductionPlan; ui?: ProjectUI; schema: 1; game: string; version: string; title: string; titleScreen?: boolean; routeTests?: RouteSuite; assets: readonly Asset[]; font?: string; settings?: Partial<RuntimeSettings>; rollback?: RollbackOptions; collections?: ProjectCollections; releaseEvidence?: ReleaseEvidence };
 export type EngineProject = ProjectBase & (
@@ -30,7 +31,7 @@ export type EngineProject = ProjectBase & (
   | { type: 'rain'; story: RainStory; defaults?: StageCue }
   | { type: 'investigation'; chapters: readonly InvestigationChapter[]; stage?: InvestigationStage }
 );
-export function createProject(project: EngineProject, baseURL: string | URL, options: { clock?: Clock; settings?: Partial<RuntimeSettings>; assetURL?: (path: string) => string; initialPause?: string; readProgress?: ReadProgressPort } = {}) {
+export function createProject(project: EngineProject, baseURL: string | URL, options: { clock?: Clock; settings?: Partial<RuntimeSettings>; assetURL?: (path: string) => string; initialPause?: string; readProgress?: ReadProgressPort; evidence?: RuntimeEvidence } = {}) {
   if (project.schema !== 1 || !project.game || !project.version || !project.title || !Array.isArray(project.assets)) throw new Error('Invalid engine project');
   validateProjectUI(project.ui); validateCreativeProject(project);
   if (project.titleScreen !== undefined && typeof project.titleScreen !== 'boolean') throw new Error('titleScreen must be boolean');
@@ -72,5 +73,5 @@ export function createProject(project: EngineProject, baseURL: string | URL, opt
   else throw new Error('Unknown project runtime');
   if (project.rollback !== undefined && !isRecord(project.rollback)) throw new Error('Invalid rollback options');
   validateProjectMiniGames(project);
-  return { session: new RuntimeSession(driver, { clock: options.clock, settings: { ...project.settings, ...options.settings }, rollback: project.rollback, initialPause: options.initialPause, readProgress: options.readProgress }), assets };
+  return { session: new RuntimeSession(driver, { clock: options.clock, settings: { ...project.settings, ...options.settings }, rollback: project.rollback, initialPause: options.initialPause, readProgress: options.readProgress, evidence: options.evidence }), assets };
 }

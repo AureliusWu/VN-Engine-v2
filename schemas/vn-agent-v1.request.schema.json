@@ -191,7 +191,10 @@
                 "characters",
                 "beats",
                 "tasks",
-                "ui"
+                "ui",
+                "semantics",
+                "source",
+                "evidence"
               ]
             },
             "id": {
@@ -242,6 +245,59 @@
                 "text",
                 "story"
               ]
+            },
+            "selector": {
+              "type": "object",
+              "properties": {
+                "nodeId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500,
+                  "pattern": "\\S"
+                },
+                "lineId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500,
+                  "pattern": "\\S"
+                },
+                "chapterId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500,
+                  "pattern": "\\S"
+                },
+                "assetId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500,
+                  "pattern": "\\S"
+                },
+                "path": {
+                  "type": "array",
+                  "maxItems": 60,
+                  "items": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1,
+                        "maxLength": 500,
+                        "pattern": "\\S"
+                      },
+                      {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 10000
+                      }
+                    ]
+                  }
+                }
+              },
+              "required": [],
+              "additionalProperties": false
+            },
+            "document": {
+              "type": "object"
             }
           },
           "required": [],
@@ -2537,6 +2593,9 @@
               "type": "integer",
               "minimum": 240,
               "maximum": 2160
+            },
+            "captureEvidence": {
+              "type": "boolean"
             }
           },
           "required": [

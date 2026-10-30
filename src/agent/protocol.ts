@@ -2,13 +2,14 @@ import type { AiAcceptanceDocument, AcceptanceOptions, AcceptanceInput } from '.
 import { ENGINE_VERSION } from '../version.js';
 import type { EditorDocument } from '../editor/model.js';
 import type { AuthorReviewDocument } from '../creative/feedback.js';
+import type { SourceOrigin } from '../source/origin.js';
 
 export const AGENT_PROTOCOL = 'vn-agent-v1' as const;
 export const AGENT_LIMITS = Object.freeze({ inputBytes: 8_000_000, operations: 128, outputBytes: 65_536, defaultOutputBytes: 16_384,
   routeOperations: 20_000, requestMs: 60_000, previewMs: 30_000, assetBytes: 67_108_864, assetTotalBytes: 268_435_456, imports:32, probeFiles:16,probeMs:30000,probePixels:16777216,probeSamples:28800000 });
 export type AgentStatus = 'PASS' | 'FAIL' | 'BLOCKED' | 'UNVERIFIED';
 export type AgentDiagnostic = { code: string; severity: 'error' | 'warning' | 'info'; message: string; path?: (string | number)[];
-  nodeId?: string; chapterId?: string; assetId?: string; operation?: number; expected?: unknown; actual?: unknown };
+  nodeId?: string; chapterId?: string; assetId?: string; operation?: number; expected?: unknown; actual?: unknown; origin?: SourceOrigin };
 export type AgentRequest = { protocol: typeof AGENT_PROTOCOL; requestId: string; command: string; project?: string; params: Record<string, any> };
 export type AgentIdentity = { game: string; storyVersion: string; sourceSha256: string };
 export type AgentArtifact = { kind: string; path: string; sha256?: string };

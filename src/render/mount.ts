@@ -9,8 +9,9 @@ import type { RuntimeSettings } from '../runtime/session.js';
 import { createMetaStateStore } from '../meta/state.js';
 import type { StoragePort } from '../storage/store.js';
 import { DOMRenderer } from './dom.js';
+import type { RuntimeEvidence } from '../runtime/evidence.js';
 
-export type MountOptions = { baseURL?: string | URL; storage?: StoragePort | null; audio?: boolean; assetURL?: (path: string) => string };
+export type MountOptions = { baseURL?: string | URL; storage?: StoragePort | null; audio?: boolean; assetURL?: (path: string) => string; evidence?: RuntimeEvidence };
 
 /** Replay is a separate driver/session with no persistence or meta subscriptions. */
 function mountReplay(root: HTMLElement, project: EngineProject, saved: unknown, baseURL: string | URL, options: MountOptions, settings: Partial<RuntimeSettings>) {
@@ -62,7 +63,7 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
     const result = readProgress.flush();
     if (!['saved', 'clean'].includes(result.status) && !readWarning) { renderer?.notify('已读记录暂未保存，可以继续阅读'); readWarning = true; }
   };
-  const { session, assets } = createProject(project, baseURL, { assetURL: options.assetURL, initialPause: project.titleScreen ? 'title' : 'mount', readProgress: {
+  const { session, assets } = createProject(project, baseURL, { assetURL: options.assetURL, evidence: options.evidence, initialPause: project.titleScreen ? 'title' : 'mount', readProgress: {
     has: signature => readProgress.has(signature),
     mark: signature => { readProgress.mark(signature); if (storage && readProgress.dirty && readTimer === undefined) readTimer = globalThis.setTimeout(flushRead, 250); }
   } });
@@ -136,7 +137,7 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
   const hostVisibility = (event: Event) => { const hidden = (event as CustomEvent<unknown>).detail; if (hidden && typeof hidden === 'object' && 'hidden' in hidden && typeof hidden.hidden === 'boolean') session.pause('native-host', hidden.hidden); };
   view?.addEventListener('vn-engine-host-visibility', hostVisibility);
   view?.addEventListener('pagehide', flushRead); session.pause('mount', false);
-  return { session, renderer, assets, persistence, backup, continuation, readProgress, meta, unlockAudio, dispose() {
+  return { session, renderer, assets, persistence, backup, continuation, readProgress, meta, unlockAudio, get audioActive() { return !!media; }, dispose() {
     if (disposed) return; disposed = true; disconnectProgress(); disconnectRead(); flushRead(); view?.removeEventListener('pagehide', flushRead); view?.removeEventListener('vn-engine-host-visibility', hostVisibility); media?.dispose(); session.dispose(); renderer?.dispose(); if (context) void context.close().catch(() => {});
   } };
 }

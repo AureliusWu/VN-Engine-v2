@@ -53,23 +53,35 @@ export function createAgentPorts({sourceFile,readAsset,acceptanceOptions={}}) {
      if(cancelled){await browser.close();throw new AgentError('TIMEOUT','Preview deadline exhausted',{},'UNVERIFIED');}
      context=await browser.newContext({viewport:{width:request.params.width??1280,height:request.params.height??800},reducedMotion:'reduce',serviceWorkers:'block'});
      const page=await context.newPage();page.setDefaultTimeout(deadline);page.on('pageerror',e=>failures.push(e.message));await page.goto(base);
-     const actual=await page.evaluate(async({project,route,maxOperations})=>{
+     const actual=await page.evaluate(async({project,route,maxOperations,captureEvidence,sourceSha256})=>{
       // Storage poisoning ensures a preview cannot accidentally touch Save, Meta or read keys.
       Object.defineProperty(window,'localStorage',{get(){throw Error('Preview accessed player storage')}});
       const {createProject}=await import('/lib/runtime/project.js'),{DOMRenderer}=await import('/lib/render/dom.js'),{RouteClock,observeRoute}=await import('/lib/regression/suite.js');
-      const clock=new RouteClock(),{session,assets}=createProject(project,location.href,{clock,settings:{textDelayMs:0,reducedMotion:true},assetURL:relative=>new URL('/assets/'+relative,location.href).href});
-      const renderer=new DOMRenderer(document.getElementById('game'),session,assets,{ui:project.ui,title:project.title,font:project.font,storage:null});window.agentPreview={session,renderer};
+      const {RuntimeEvidence}=await import('/lib/runtime/evidence.js');
+      const evidence=captureEvidence?new RuntimeEvidence({sessionId:'preview-'+crypto.randomUUID(),sourceSha256}):undefined;
+      const clock=new RouteClock(),{session,assets}=createProject(project,location.href,{clock,evidence,settings:{textDelayMs:0,reducedMotion:true},assetURL:relative=>new URL('/assets/'+relative,location.href).href});
+      const renderer=new DOMRenderer(document.getElementById('game'),session,assets,{ui:project.ui,title:project.title,font:project.font,storage:null});window.agentPreview={session,renderer,evidence,project};
       let operations=0;const consume=()=>{if(++operations>maxOperations)throw Error('Preview operation budget exhausted')};const settle=()=>{while(!session.getView().ready){consume();clock.tick()}};
       const saves=new Map();settle();for(const step of route.steps){consume();settle();let accepted=true;switch(step.type){case'next':accepted=session.next();break;case'action':accepted=session.act(step.id);break;case'mini-start':accepted=session.startMiniGame();break;case'mini-input':accepted=session.playMiniGame(step.index);break;case'mini-skip':accepted=session.skipMiniGame();break;case'mini-abort':accepted=session.abortMiniGame();break;case'mini-finish':accepted=session.finishMiniGame();break;case'checkpoint':saves.set(step.id,session.save());break;case'restore':if(!saves.has(step.id))throw Error('Unknown checkpoint');session.restore(saves.get(step.id));break;}if(!accepted)throw Error('Rejected route action');settle();}
       await Promise.all(project.assets.filter(asset=>['background','portrait','cg','ui'].includes(asset.kind)).map(async asset=>{const img=new Image();img.src=assets.url(asset.id);await img.decode()}));await document.fonts.ready;await Promise.all([...document.images].filter(img=>img.getAttribute('src')).map(img=>img.decode()));await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
       return observeRoute(session,project.type);
-     },{project,route,maxOperations:request.params.maxOperations??AGENT_LIMITS.routeOperations});
+     },{project,route,maxOperations:request.params.maxOperations??AGENT_LIMITS.routeOperations,captureEvidence:request.params.captureEvidence===true,sourceSha256:identity.sourceSha256});
      if(JSON.stringify(actual)!==JSON.stringify(executed.final))throw new AgentError('PREVIEW_STATE_MISMATCH','Rendered session differs from verified route');
      if(failures.length)throw new AgentError('PREVIEW_RENDER_FAILED',failures.join('; '));
      const screenshot=path.join(output,'preview.png');await page.screenshot({path:screenshot,fullPage:true});
+     const artifacts=[];
+     if(request.params.captureEvidence===true){
+      const evidence=await page.evaluate(async()=>{
+       const {createRuntimeEvidenceReport}=await import('/lib/runtime/evidence-report.js');
+       const {session,renderer,evidence,project}=window.agentPreview;renderer.dispose();session.dispose();
+       return createRuntimeEvidenceReport(project,evidence.snapshot(),undefined,{runtime:true,media:false,audioDevice:false});
+      });
+      const evidenceFile=path.join(output,'RUNTIME_EVIDENCE.json');await fs.writeFile(evidenceFile,JSON.stringify(evidence)+'\n');
+      artifacts.push({kind:'runtime-evidence',path:evidenceFile,sha256:sha(await fs.readFile(evidenceFile))});
+     }
      const preview={protocol:'vn-agent-v1',status:'PASS',source:identity,engineCommit:commitIdentity(),caseId:route.id,routeStatus:executed.status,restoreChecks:executed.restoreChecks,scope:{realRenderer:true,legalEntry:true,isolatedStorage:true,audioDevice:false,humanAcceptance:'UNVERIFIED'},final:actual,screenshot:{path:screenshot,sha256:sha(await fs.readFile(screenshot))}};
      const reportFile=path.join(output,'PREVIEW_REPORT.json');await fs.writeFile(reportFile,JSON.stringify(preview,null,2)+'\n');
-     return {data:{caseId:route.id,final:{sceneId:actual.sceneId,lineId:actual.lineId,ending:actual.ending},source:identity,storage:'isolated',humanAcceptance:'UNVERIFIED'},artifacts:[{kind:'screenshot',...preview.screenshot},{kind:'preview-report',path:reportFile,sha256:sha(await fs.readFile(reportFile))}]};
+     return {data:{caseId:route.id,final:{sceneId:actual.sceneId,lineId:actual.lineId,ending:actual.ending},source:identity,storage:'isolated',humanAcceptance:'UNVERIFIED'},artifacts:[{kind:'screenshot',...preview.screenshot},{kind:'preview-report',path:reportFile,sha256:sha(await fs.readFile(reportFile))},...artifacts]};
     };
     return await Promise.race([task=work(),new Promise((_,reject)=>{timer=setTimeout(()=>{cancelled=true;reject(new AgentError('TIMEOUT','Preview deadline exhausted',{},'UNVERIFIED'));},deadline)})]);
    }catch(error){throw error instanceof AgentError?error:new AgentError('PREVIEW_ERROR',error.message);}
