@@ -1,0 +1,561 @@
+{
+  "contract": "vn-reference-mining-v1",
+  "targetVersion": "1.3.0",
+  "researchStatus": "COMPLETE",
+  "implementationAcceptance": "PENDING_SEPARATE_VALIDATION",
+  "observedDate": "2026-10-30",
+  "timezone": "Asia/Shanghai",
+  "engineBaseline": {
+    "version": "1.2.2",
+    "commitSha": "4c3500d23bce470f689c3da3b6e71450890990e2"
+  },
+  "localReferenceInventory": {
+    "path": "D:\\AI项目\\参考资料",
+    "vnEngineSnapshotsFound": false,
+    "checkedScope": [
+      "Top-level directory names",
+      "参考资料说明.md",
+      "参考资料来源.json VN-engine-name search"
+    ],
+    "directories": [
+      "_更新记录",
+      "cc-switch-main",
+      "claude-code-main",
+      "deepseek-harness",
+      "jiwen-main",
+      "MemoryConstellations-main"
+    ],
+    "conclusion": "No catalogued VN-engine snapshot is available here. The sources listed below were actually read from official remotes at exact commit SHAs; they were not read as local VN checkouts."
+  },
+  "repositories": [
+    {
+      "repository": "renpy/renpy",
+      "url": "https://github.com/renpy/renpy",
+      "defaultBranch": "master",
+      "headSha": "4025f3c2611e10021e620a9a7894053123fae556",
+      "stars": 6953,
+      "metadataObservedAtUtc": "2026-10-30T10:03:53Z",
+      "starsAreDatedSnapshot": true,
+      "archived": false,
+      "pushedAt": "2026-10-30T02:31:40Z",
+      "latestGitHubNonPrerelease": {
+        "tag": "8.5.3.26051504",
+        "publishedAt": "2026-05-16T02:09:49Z",
+        "url": "https://github.com/renpy/renpy/releases/tag/8.5.3.26051504"
+      },
+      "license": {
+        "label": "MIT for most engine/docs; LGPL and other dependency licenses separately",
+        "path": "sphinx/source/license.rst",
+        "url": "https://github.com/renpy/renpy/blob/4025f3c2611e10021e620a9a7894053123fae556/sphinx/source/license.rst"
+      },
+      "pinOrigin": "Existing P0 pin, rechecked against current official default-branch head"
+    },
+    {
+      "repository": "OpenWebGAL/WebGAL",
+      "url": "https://github.com/OpenWebGAL/WebGAL",
+      "defaultBranch": "main",
+      "headSha": "15173bc21339a65da34b78463fca8a304e4d503a",
+      "stars": 4020,
+      "metadataObservedAtUtc": "2026-10-30T10:03:53Z",
+      "starsAreDatedSnapshot": true,
+      "archived": false,
+      "pushedAt": "2026-10-17T16:37:05Z",
+      "latestGitHubNonPrerelease": {
+        "tag": "4.6.6",
+        "publishedAt": "2026-10-08T14:31:20Z",
+        "url": "https://github.com/OpenWebGAL/WebGAL/releases/tag/4.6.6"
+      },
+      "license": {
+        "label": "MPL-2.0",
+        "path": "LICENSE",
+        "url": "https://github.com/OpenWebGAL/WebGAL/blob/15173bc21339a65da34b78463fca8a304e4d503a/LICENSE"
+      },
+      "pinOrigin": "Existing P0 pin, rechecked against current official default-branch head"
+    },
+    {
+      "repository": "YarnSpinnerTool/YarnSpinner",
+      "url": "https://github.com/YarnSpinnerTool/YarnSpinner",
+      "defaultBranch": "main",
+      "headSha": "c5215f86dd5a6761aecbdc9f60f6a6108f91f919",
+      "stars": 2864,
+      "metadataObservedAtUtc": "2026-10-30T10:03:53Z",
+      "starsAreDatedSnapshot": true,
+      "archived": false,
+      "pushedAt": "2026-10-26T23:23:39Z",
+      "latestGitHubNonPrerelease": {
+        "tag": "v3.2.1",
+        "publishedAt": "2026-05-05T02:37:44Z",
+        "url": "https://github.com/YarnSpinnerTool/YarnSpinner/releases/tag/v3.2.1"
+      },
+      "license": {
+        "label": "MIT",
+        "path": "LICENSE.md",
+        "url": "https://github.com/YarnSpinnerTool/YarnSpinner/blob/c5215f86dd5a6761aecbdc9f60f6a6108f91f919/LICENSE.md"
+      },
+      "pinOrigin": "Official remote pin selected for this research"
+    },
+    {
+      "repository": "Monogatari/Monogatari",
+      "url": "https://github.com/Monogatari/Monogatari",
+      "defaultBranch": "develop",
+      "headSha": "86659baf065178071f0956092f754e1d76be0072",
+      "stars": 891,
+      "metadataObservedAtUtc": "2026-10-30T10:03:53Z",
+      "starsAreDatedSnapshot": true,
+      "archived": false,
+      "pushedAt": "2026-06-18T05:53:17Z",
+      "latestGitHubNonPrerelease": {
+        "tag": "v2.8.0",
+        "publishedAt": "2026-06-18T00:52:21Z",
+        "url": "https://github.com/Monogatari/Monogatari/releases/tag/v2.8.0"
+      },
+      "license": {
+        "label": "MIT",
+        "path": "LICENSE",
+        "url": "https://github.com/Monogatari/Monogatari/blob/86659baf065178071f0956092f754e1d76be0072/LICENSE"
+      },
+      "pinOrigin": "Existing P0 pin, rechecked against current official default-branch head"
+    },
+    {
+      "repository": "inkle/ink",
+      "url": "https://github.com/inkle/ink",
+      "defaultBranch": "master",
+      "headSha": "35c63e52f1d36060930dc7ed3cfba38ea224b528",
+      "stars": 4995,
+      "metadataObservedAtUtc": "2026-10-30T10:03:53Z",
+      "starsAreDatedSnapshot": true,
+      "archived": false,
+      "pushedAt": "2026-05-05T11:24:42Z",
+      "latestGitHubNonPrerelease": {
+        "tag": "v1.2.1",
+        "publishedAt": "2026-05-05T11:24:42Z",
+        "url": "https://github.com/inkle/ink/releases/tag/v1.2.1"
+      },
+      "license": {
+        "label": "MIT",
+        "path": "LICENSE.txt",
+        "url": "https://github.com/inkle/ink/blob/35c63e52f1d36060930dc7ed3cfba38ea224b528/LICENSE.txt"
+      },
+      "pinOrigin": "Official remote pin selected for this research"
+    }
+  ],
+  "sources": [
+    {
+      "id": "rpy-images",
+      "repository": "renpy/renpy",
+      "commitSha": "4025f3c2611e10021e620a9a7894053123fae556",
+      "path": "sphinx/source/displaying_images.rst",
+      "consultedLines": {
+        "start": 1,
+        "end": 135
+      },
+      "blobSha": "65581ae76e79310384029d511567c193d5fa4764",
+      "url": "https://github.com/renpy/renpy/blob/4025f3c2611e10021e620a9a7894053123fae556/sphinx/source/displaying_images.rst#L1",
+      "license": "MIT primary; dependency licenses separate",
+      "concept": "Named image/layer statements and lintable media declarations",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    },
+    {
+      "id": "rpy-audio",
+      "repository": "renpy/renpy",
+      "commitSha": "4025f3c2611e10021e620a9a7894053123fae556",
+      "path": "sphinx/source/audio.rst",
+      "consultedLines": {
+        "start": 1,
+        "end": 170
+      },
+      "blobSha": "4394dbe40e43ee0258983902aa706e5696a3cad0",
+      "url": "https://github.com/renpy/renpy/blob/4025f3c2611e10021e620a9a7894053123fae556/sphinx/source/audio.rst#L1",
+      "license": "MIT primary; dependency licenses separate",
+      "concept": "Explicit media channels and repeat/replace semantics",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    },
+    {
+      "id": "rpy-statements",
+      "repository": "renpy/renpy",
+      "commitSha": "4025f3c2611e10021e620a9a7894053123fae556",
+      "path": "renpy/statements.py",
+      "consultedLines": {
+        "start": 1,
+        "end": 115
+      },
+      "blobSha": "6174891d5badf9a82441f21f530314e5dc9b5417",
+      "url": "https://github.com/renpy/renpy/blob/4025f3c2611e10021e620a9a7894053123fae556/renpy/statements.py#L1",
+      "license": "MIT",
+      "concept": "Distinct parse/lint/execute/predict responsibilities",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    },
+    {
+      "id": "rpy-license",
+      "repository": "renpy/renpy",
+      "commitSha": "4025f3c2611e10021e620a9a7894053123fae556",
+      "path": "sphinx/source/license.rst",
+      "consultedLines": {
+        "start": 1,
+        "end": 95
+      },
+      "blobSha": "c86c22a827c96b92e97f2ab5a5c254a312037d9f",
+      "url": "https://github.com/renpy/renpy/blob/4025f3c2611e10021e620a9a7894053123fae556/sphinx/source/license.rst#L1",
+      "license": "MIT plus LGPL/other dependencies",
+      "concept": "License scope, not code reuse authorization",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    },
+    {
+      "id": "webgal-authoring",
+      "repository": "OpenWebGAL/WebGAL",
+      "commitSha": "15173bc21339a65da34b78463fca8a304e4d503a",
+      "path": "packages/webgal/src/Core/gameScripts/SCRIPT_AUTHORING.md",
+      "consultedLines": {
+        "start": 1,
+        "end": 120
+      },
+      "blobSha": "4ca48a26717a55f65a97e57404bbe946853c3d51",
+      "url": "https://github.com/OpenWebGAL/WebGAL/blob/15173bc21339a65da34b78463fca8a304e4d503a/packages/webgal/src/Core/gameScripts/SCRIPT_AUTHORING.md#L1",
+      "license": "MPL-2.0",
+      "concept": "Calculation state and post-commit presentation separation",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    },
+    {
+      "id": "webgal-perform",
+      "repository": "OpenWebGAL/WebGAL",
+      "commitSha": "15173bc21339a65da34b78463fca8a304e4d503a",
+      "path": "packages/webgal/src/Core/Modules/perform/performInterface.ts",
+      "consultedLines": {
+        "start": 1,
+        "end": 85
+      },
+      "blobSha": "858cc4c97a96b4f609527dc088cee769d2ed3c47",
+      "url": "https://github.com/OpenWebGAL/WebGAL/blob/15173bc21339a65da34b78463fca8a304e4d503a/packages/webgal/src/Core/Modules/perform/performInterface.ts#L1",
+      "license": "MPL-2.0",
+      "concept": "Explicit presentation start/cleanup/next/auto lifecycle",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    },
+    {
+      "id": "webgal-bgm",
+      "repository": "OpenWebGAL/WebGAL",
+      "commitSha": "15173bc21339a65da34b78463fca8a304e4d503a",
+      "path": "packages/webgal/src/Core/gameScripts/bgm.ts",
+      "consultedLines": {
+        "start": 1,
+        "end": 115
+      },
+      "blobSha": "c6339b0e4075d98800094c86fb490931d9161ff3",
+      "url": "https://github.com/OpenWebGAL/WebGAL/blob/15173bc21339a65da34b78463fca8a304e4d503a/packages/webgal/src/Core/gameScripts/bgm.ts#L1",
+      "license": "MPL-2.0",
+      "concept": "Named media statements and media parameters",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    },
+    {
+      "id": "webgal-effect",
+      "repository": "OpenWebGAL/WebGAL",
+      "commitSha": "15173bc21339a65da34b78463fca8a304e4d503a",
+      "path": "packages/webgal/src/Core/gameScripts/playEffect.ts",
+      "consultedLines": {
+        "start": 1,
+        "end": 120
+      },
+      "blobSha": "c9c010a7687a047dd5a07a6662d51c74fe6c11e1",
+      "url": "https://github.com/OpenWebGAL/WebGAL/blob/15173bc21339a65da34b78463fca8a304e4d503a/packages/webgal/src/Core/gameScripts/playEffect.ts#L1",
+      "license": "MPL-2.0",
+      "concept": "One-shot versus held media and explicit cleanup",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    },
+    {
+      "id": "webgal-background",
+      "repository": "OpenWebGAL/WebGAL",
+      "commitSha": "15173bc21339a65da34b78463fca8a304e4d503a",
+      "path": "packages/webgal/src/Core/gameScripts/changeBg/index.ts",
+      "consultedLines": {
+        "start": 1,
+        "end": 120
+      },
+      "blobSha": "b898e44abe8c6031bbc3717278a60949296c406f",
+      "url": "https://github.com/OpenWebGAL/WebGAL/blob/15173bc21339a65da34b78463fca8a304e4d503a/packages/webgal/src/Core/gameScripts/changeBg/index.ts#L1",
+      "license": "MPL-2.0",
+      "concept": "Persistent visual state versus transitions",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    },
+    {
+      "id": "webgal-figure",
+      "repository": "OpenWebGAL/WebGAL",
+      "commitSha": "15173bc21339a65da34b78463fca8a304e4d503a",
+      "path": "packages/webgal/src/Core/gameScripts/changeFigure.ts",
+      "consultedLines": {
+        "start": 1,
+        "end": 100
+      },
+      "blobSha": "d9788582e8c76514a7e56b75e47ef5f2b4246a7a",
+      "url": "https://github.com/OpenWebGAL/WebGAL/blob/15173bc21339a65da34b78463fca8a304e4d503a/packages/webgal/src/Core/gameScripts/changeFigure.ts#L1",
+      "license": "MPL-2.0",
+      "concept": "Explicit target identity and media argument parsing",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    },
+    {
+      "id": "monogatari-show",
+      "repository": "Monogatari/Monogatari",
+      "commitSha": "86659baf065178071f0956092f754e1d76be0072",
+      "path": "src/actions/ShowBackground.ts",
+      "consultedLines": {
+        "start": 1,
+        "end": 125
+      },
+      "blobSha": "591673a3cc5fe11305261467ffc86f41243a7672",
+      "url": "https://github.com/Monogatari/Monogatari/blob/86659baf065178071f0956092f754e1d76be0072/src/actions/ShowBackground.ts#L1",
+      "license": "MIT",
+      "concept": "Named show action and restore lifecycle",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    },
+    {
+      "id": "monogatari-play",
+      "repository": "Monogatari/Monogatari",
+      "commitSha": "86659baf065178071f0956092f754e1d76be0072",
+      "path": "src/actions/Play.ts",
+      "consultedLines": {
+        "start": 1,
+        "end": 145
+      },
+      "blobSha": "fcb9cb8712172fdee545b3ad919aaad9b1d36c6d",
+      "url": "https://github.com/Monogatari/Monogatari/blob/86659baf065178071f0956092f754e1d76be0072/src/actions/Play.ts#L1",
+      "license": "MIT",
+      "concept": "Audio progression, restore and lifecycle distinctions",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    },
+    {
+      "id": "monogatari-action",
+      "repository": "Monogatari/Monogatari",
+      "commitSha": "86659baf065178071f0956092f754e1d76be0072",
+      "path": "src/lib/Action.ts",
+      "consultedLines": {
+        "start": 410,
+        "end": 490
+      },
+      "blobSha": "8f98278f0c88f816a9cc86f5975fa356ba09bb6d",
+      "url": "https://github.com/Monogatari/Monogatari/blob/86659baf065178071f0956092f754e1d76be0072/src/lib/Action.ts#L410",
+      "license": "MIT",
+      "concept": "Before/apply/after and revert boundaries",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    },
+    {
+      "id": "yarn-diagnostics",
+      "repository": "YarnSpinnerTool/YarnSpinner",
+      "commitSha": "c5215f86dd5a6761aecbdc9f60f6a6108f91f919",
+      "path": "YarnSpinner.Compiler/DiagnosticDescriptor.cs",
+      "consultedLines": {
+        "start": 1,
+        "end": 145
+      },
+      "blobSha": "db3f9e0a03f7dc7fe46a4c77a4011bb7a99fc9af",
+      "url": "https://github.com/YarnSpinnerTool/YarnSpinner/blob/c5215f86dd5a6761aecbdc9f60f6a6108f91f919/YarnSpinner.Compiler/DiagnosticDescriptor.cs#L1",
+      "license": "MIT",
+      "concept": "Stable diagnostic code/severity/source locations",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    },
+    {
+      "id": "yarn-lineids",
+      "repository": "YarnSpinnerTool/YarnSpinner",
+      "commitSha": "c5215f86dd5a6761aecbdc9f60f6a6108f91f919",
+      "path": "YarnSpinner.Compiler/StringTableManager.cs",
+      "consultedLines": {
+        "start": 1,
+        "end": 180
+      },
+      "blobSha": "9147262594319cddd5d577fbe6568f9eed67f082",
+      "url": "https://github.com/YarnSpinnerTool/YarnSpinner/blob/c5215f86dd5a6761aecbdc9f60f6a6108f91f919/YarnSpinner.Compiler/StringTableManager.cs#L1",
+      "license": "MIT",
+      "concept": "Explicit versus implicit line identity and source association",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    },
+    {
+      "id": "yarn-duplicate-id",
+      "repository": "YarnSpinnerTool/YarnSpinner",
+      "commitSha": "c5215f86dd5a6761aecbdc9f60f6a6108f91f919",
+      "path": "YarnSpinner.Diagnostics/Definitions/YS0018-DuplicateLineID.md",
+      "consultedLines": {
+        "start": 1,
+        "end": 95
+      },
+      "blobSha": "c3c5225ee272f1e00940dbbdad11a98eb580d811",
+      "url": "https://github.com/YarnSpinnerTool/YarnSpinner/blob/c5215f86dd5a6761aecbdc9f60f6a6108f91f919/YarnSpinner.Diagnostics/Definitions/YS0018-DuplicateLineID.md#L1",
+      "license": "MIT",
+      "concept": "Duplicate line identity diagnostic",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    },
+    {
+      "id": "yarn-unknown-command",
+      "repository": "YarnSpinnerTool/YarnSpinner",
+      "commitSha": "c5215f86dd5a6761aecbdc9f60f6a6108f91f919",
+      "path": "YarnSpinner.Diagnostics/Definitions/YS0060-UnknownCommand.md",
+      "consultedLines": {
+        "start": 1,
+        "end": 95
+      },
+      "blobSha": "1d2224ac0ed520a21b353a3185bf1b1cea57566e",
+      "url": "https://github.com/YarnSpinnerTool/YarnSpinner/blob/c5215f86dd5a6761aecbdc9f60f6a6108f91f919/YarnSpinner.Diagnostics/Definitions/YS0060-UnknownCommand.md#L1",
+      "license": "MIT",
+      "concept": "Unknown-command diagnostic with upstream language-server severity policy",
+      "access": "official GitHub remote, read only; quoted range may end at EOF"
+    }
+  ],
+  "deferredSources": [
+    {
+      "id": "ink-future-authoring",
+      "repository": "inkle/ink",
+      "commitSha": "35c63e52f1d36060930dc7ed3cfba38ea224b528",
+      "path": "Documentation/WritingWithInk.md",
+      "consultedLines": {
+        "start": 448,
+        "end": 550
+      },
+      "blobSha": "9cb3112ae3f72bdc3a2b6234e890dfcb93c62c98",
+      "license": "MIT",
+      "concept": "Multi-file includes and once/sticky choices are deferred, not implemented",
+      "url": "https://github.com/inkle/ink/blob/35c63e52f1d36060930dc7ed3cfba38ea224b528/Documentation/WritingWithInk.md#L448",
+      "access": "Official GitHub remote; read-only future-candidate research"
+    },
+    {
+      "id": "monogatari-future-choices",
+      "repository": "Monogatari/Monogatari",
+      "commitSha": "86659baf065178071f0956092f754e1d76be0072",
+      "path": "docs/script-actions/choices.md",
+      "consultedLines": {
+        "start": 1,
+        "end": 150
+      },
+      "blobSha": "4f0f68b1311ec1d299aa2405fc7d211a95e2f5c5",
+      "license": "MIT",
+      "concept": "Hidden versus disabled choices; upstream callbacks are not adopted",
+      "url": "https://github.com/Monogatari/Monogatari/blob/86659baf065178071f0956092f754e1d76be0072/docs/script-actions/choices.md#L1",
+      "access": "Official GitHub remote; read-only future-candidate research"
+    },
+    {
+      "id": "monogatari-future-translations",
+      "repository": "Monogatari/Monogatari",
+      "commitSha": "86659baf065178071f0956092f754e1d76be0072",
+      "path": "docs/advanced-monogatari-development/translations.md",
+      "consultedLines": {
+        "start": 1,
+        "end": 130
+      },
+      "blobSha": "637c3a907e1cfec5f7857d9e041a9172592a1290",
+      "license": "MIT",
+      "concept": "Separate interface translation keys; locale work is deferred",
+      "url": "https://github.com/Monogatari/Monogatari/blob/86659baf065178071f0956092f754e1d76be0072/docs/advanced-monogatari-development/translations.md#L1",
+      "access": "Official GitHub remote; read-only future-candidate research"
+    }
+  ],
+  "baselineCapabilities": [
+    "Existing JSON StageCue media/visual/pause fields",
+    "Canonical replay and visit-scoped one-shot media",
+    "Pure bounded text DSL producing existing ScriptProgram",
+    "Source maps and source-bound runtime diagnostics",
+    "Studio preview/apply/undo and Agent script.compile",
+    "Source-derived module packaging and nested/offline validation"
+  ],
+  "identifiedGap": "The v1.2.2 text DSL cannot author existing presentation cues or diagnose cue asset IDs/kinds against an explicitly supplied project resource context.",
+  "accepted": [
+    {
+      "id": "dsl-presentation",
+      "status": "PLANNED",
+      "description": "cue block/line explicit-ID declarations map a documented literal whitelist to existing StageCue fields; no new VM opcode",
+      "sources": [
+        "rpy-images",
+        "rpy-audio",
+        "webgal-bgm",
+        "webgal-background",
+        "monogatari-show"
+      ]
+    },
+    {
+      "id": "resource-context-diagnostics",
+      "status": "PLANNED",
+      "description": "Use explicit bounded author-provided resource context to diagnose target IDs, asset IDs/kinds and values at the source span; absent context is not a verified resource PASS.",
+      "sources": [
+        "rpy-statements",
+        "yarn-diagnostics",
+        "yarn-lineids",
+        "yarn-duplicate-id",
+        "yarn-unknown-command"
+      ]
+    },
+    {
+      "id": "reuse-lifecycle",
+      "status": "EXISTING_BOUNDARY_RETAINED",
+      "description": "Keep persistent presentation reconstruction and visit-scoped one-shot outcomes separate; preview/apply continue through existing drivers/session/media.",
+      "sources": [
+        "webgal-authoring",
+        "webgal-perform",
+        "webgal-effect",
+        "monogatari-action",
+        "monogatari-play"
+      ]
+    }
+  ],
+  "rejectedForThisRound": [
+    "Replacing the self-developed TypeScript/DOM engine with RenPy, WebGAL, Monogatari or Yarn",
+    "Copying upstream parser, actions or media implementations",
+    "Arbitrary Python/JavaScript, user callbacks, dynamic command registration or shader/renderer plugins",
+    "Direct filesystem/network access or media playback during pure compilation",
+    "Making diagnostic reports, imported numeric state, read markers or resource guesses save authority",
+    "Implicit line IDs based on file order or text insertion",
+    "Adopting Yarn language-server unknown-command warnings as permission to accept unrecognized local DSL"
+  ],
+  "deferred": [
+    {
+      "feature": "Multi-file DSL and include/project manifests",
+      "reason": "Requires independent source/file identity, resolution budget, cycles, path boundaries and atomic Studio project-format tests; current task is existing StageCue authoring."
+    },
+    {
+      "feature": "Localization catalogs and variable interpolation",
+      "reason": "Requires text/voice locale, placeholder validation, source-binding invalidation, history/read identity, accessibility and font/runtime presentation tests."
+    },
+    {
+      "feature": "Conditional/once/disabled choices",
+      "reason": "Changes selectable-action semantics and requires replay, rollback, unavailable choices, old saves and imported-decision validation."
+    },
+    {
+      "feature": "Call/return/tunnels and local scope",
+      "reason": "Changes control-flow/continuation authority and requires explicit stack, route and save/restore compatibility design."
+    }
+  ],
+  "implementationPolicy": {
+    "newEngineCode": "Original implementation, provenance classification new; documentation references are inspiration only.",
+    "copiedUpstreamImplementation": false,
+    "upstreamDependenciesInstalled": false,
+    "upstreamBuildExecuted": false,
+    "gameMigrationAuthorized": false,
+    "referenceDocumentsAreAcceptanceEvidence": false
+  },
+  "requiredValidation": [
+    {
+      "scope": "Compiler",
+      "status": "PENDING",
+      "checks": [
+        "Existing DSL output compatibility",
+        "Whitelisted literal mapping to JSON StageCue",
+        "Explicit-ID target/duplicate/unknown-property errors",
+        "Context-bound resource ID/kind and numeric validation",
+        "Source offsets including CJK/CRLF and budget failures"
+      ]
+    },
+    {
+      "scope": "Author hosts",
+      "status": "PENDING",
+      "checks": [
+        "Studio candidate preview, explicit apply and single undo",
+        "Source/resource context and stale asynchronous request protection",
+        "Agent/CLI same compiler behavior; no compilation IO or media side effects"
+      ]
+    },
+    {
+      "scope": "Runtime and delivery",
+      "status": "PENDING",
+      "checks": [
+        "Compiled JSON and equivalent hand-authored JSON routes/state remain identical",
+        "Persistent cues restored by replay; historical one-shots not replayed",
+        "Real image/audio/pause behavior through existing DOM/media host",
+        "Generated player/Studio nested deployment and offline new page",
+        "Exact-commit Linux/Windows CI and actual native WebView2/restart separately recorded"
+      ]
+    }
+  ]
+}

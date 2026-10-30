@@ -1,0 +1,239 @@
+{
+  "schema": 1,
+  "game": "vn-stage-dsl",
+  "version": "dsl-demo-v1",
+  "title": "演出文本 · 自研引擎样例",
+  "type": "script",
+  "font": "ui",
+  "assets": [
+    {
+      "id": "classroom",
+      "kind": "background",
+      "src": "assets/classroom.svg",
+      "sha256": "2761edf9563cc9db15629d70e03096d184d0e89698d142100d3c4710092a3808",
+      "status": "DRAFT"
+    },
+    {
+      "id": "bedroom",
+      "kind": "background",
+      "src": "assets/bedroom.svg",
+      "sha256": "d27ebbcf89dffb01f30bee19e17cd32d8884fcf08be09ac23f21b4b12f3aec0e",
+      "status": "DRAFT"
+    },
+    {
+      "id": "student",
+      "kind": "portrait",
+      "src": "assets/student.svg",
+      "sha256": "fde972e6206aa75ec276623cab9975043b05072298847bef39fa84f0e9052b05",
+      "status": "DRAFT"
+    },
+    {
+      "id": "letter",
+      "kind": "cg",
+      "src": "assets/letter.svg",
+      "sha256": "a689306c319cc780d734852399617f9be661eadc5045b2899ff7ae05dfefe8ce",
+      "status": "DRAFT"
+    },
+    {
+      "id": "bgm",
+      "kind": "audio",
+      "src": "assets/music-test.wav",
+      "sha256": "406b3d388ab2d18e2cee5db1fc228019082df074c57c302114a87c77b79d02d1",
+      "status": "DRAFT"
+    },
+    {
+      "id": "air",
+      "kind": "audio",
+      "src": "assets/music-test.wav",
+      "sha256": "406b3d388ab2d18e2cee5db1fc228019082df074c57c302114a87c77b79d02d1",
+      "status": "DRAFT"
+    },
+    {
+      "id": "bell",
+      "kind": "audio",
+      "src": "assets/cue.wav",
+      "sha256": "ab910ded3f306a65f67341b17d18a9fd043473f7980ff3ebc7fb290af8b20b7b",
+      "status": "DRAFT"
+    },
+    {
+      "id": "greeting",
+      "kind": "audio",
+      "src": "assets/voice-test.wav",
+      "sha256": "dc137b1d691bdfa4e5a069e7cb1663f3225588f838395779b96720d643292496",
+      "status": "DRAFT"
+    },
+    {
+      "id": "ui",
+      "kind": "font",
+      "src": "assets/ui.woff2",
+      "sha256": "8a644fac98e6925a08cd7ea90beb24a49ca55ee6692fdbd885f45101ba37f342",
+      "status": "DRAFT",
+      "license": {
+        "name": "SIL Open Font License 1.1",
+        "src": "assets/OFL.txt"
+      }
+    }
+  ],
+  "settings": {
+    "textDelayMs": 0,
+    "masterVolume": 0.2,
+    "voiceVolume": 0.45
+  },
+  "program": {
+    "schema": 1,
+    "game": "vn-stage-dsl",
+    "version": "dsl-demo-v1",
+    "entry": "start",
+    "variables": {
+      "trust": {
+        "initial": 0,
+        "min": 0,
+        "max": 2
+      }
+    },
+    "blocks": [
+      {
+        "id": "start",
+        "title": "舞台开场",
+        "lines": [
+          {
+            "id": "hello",
+            "speaker": "旁白",
+            "text": "背景、立绘和声音来自同一份演出文本。",
+            "cue": {
+              "portrait": "student",
+              "voice": "greeting",
+              "sound": "bell",
+              "pauseMs": 120,
+              "effect": {
+                "type": "fade",
+                "durationMs": 150
+              }
+            }
+          },
+          {
+            "id": "question",
+            "speaker": "旁白",
+            "text": "请选择一条路线，读档仍从真实选择重建。"
+          }
+        ],
+        "cue": {
+          "background": "classroom",
+          "music": "bgm",
+          "ambience": "air"
+        },
+        "exit": {
+          "type": "choice",
+          "choices": [
+            {
+              "id": "yes",
+              "text": "继续演出",
+              "next": "finish",
+              "effects": [
+                {
+                  "op": "add",
+                  "key": "trust",
+                  "value": 1
+                }
+              ]
+            },
+            {
+              "id": "no",
+              "text": "安静离开",
+              "next": "quiet"
+            }
+          ]
+        }
+      },
+      {
+        "id": "finish",
+        "title": "完成",
+        "lines": [
+          {
+            "id": "done",
+            "speaker": "旁白",
+            "text": "插图出现，音乐停止，演出完成。",
+            "cue": {
+              "cg": "letter",
+              "portrait": null,
+              "effect": {
+                "type": "flash",
+                "durationMs": 100
+              }
+            }
+          }
+        ],
+        "cue": {
+          "background": "bedroom",
+          "music": null,
+          "ambience": null
+        },
+        "exit": {
+          "type": "end",
+          "ending": "good"
+        }
+      },
+      {
+        "id": "quiet",
+        "title": "离开",
+        "lines": [
+          {
+            "id": "quiet-line",
+            "speaker": "旁白",
+            "text": "画面保留，人物和音乐清除。"
+          }
+        ],
+        "cue": {
+          "portrait": null,
+          "music": null,
+          "ambience": null
+        },
+        "exit": {
+          "type": "end",
+          "ending": "neutral"
+        }
+      }
+    ]
+  },
+  "routeTests": {
+    "schema": 1,
+    "cases": [
+      {
+        "id": "stage-good",
+        "steps": [
+          {
+            "type": "next"
+          },
+          {
+            "type": "action",
+            "id": "yes"
+          }
+        ],
+        "expect": {
+          "ending": "good",
+          "variables": {
+            "trust": 1
+          }
+        }
+      },
+      {
+        "id": "stage-neutral",
+        "steps": [
+          {
+            "type": "next"
+          },
+          {
+            "type": "action",
+            "id": "no"
+          }
+        ],
+        "expect": {
+          "ending": "neutral",
+          "variables": {
+            "trust": 0
+          }
+        }
+      }
+    ]
+  }
+}

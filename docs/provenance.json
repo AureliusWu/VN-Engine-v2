@@ -94,7 +94,7 @@
       "target": "editor/index.html",
       "mode": "new",
       "origins": [],
-      "targetSha256": "b00fb4049f88349436439e93e08d9c448134b9dab815dadc76b8ad832bafc793"
+      "targetSha256": "35836ba90d6dbac9b28009c256cce3f9a4fcee586f4b99641484083401385afc"
     },
     {
       "target": "editor/logic.mjs",
@@ -202,7 +202,7 @@
     {
       "target": "editor/text-script.mjs",
       "mode": "new",
-      "targetSha256": "58cbc40044be578ee9a0c12208d7092b821c1855fe49bc7968b5b8aaed20d5cd",
+      "targetSha256": "8d3b46f782182e1feee98155b8875554befe2e6ee5401a24a051e399d0a10872",
       "origins": []
     },
     {
@@ -442,7 +442,7 @@
       "target": "hosts/windows/VNEngine.Windows.csproj",
       "mode": "new",
       "origins": [],
-      "targetSha256": "51ba0b07e4261b19dc5637d3f7c4130232fa4b985aa9a2325e77eab2add87b60"
+      "targetSha256": "e7aee274f11530e240bcba3a20e4eb17df2b9efaff82176c084be3c6d1485f7f"
     },
     {
       "target": "licenses/Healing-LICENSE.txt",
@@ -505,7 +505,7 @@
     {
       "target": "schemas/vn-agent-v1.request.schema.json",
       "mode": "new",
-      "targetSha256": "1b713cbacb8a91ece63b440fa69fa3c70696a5e8400b46ba1ea5cb8342002d2e",
+      "targetSha256": "c8dab2e83fbb1b7001288b2b1122669157993f81a764a251b12a75e2baa92340",
       "origins": []
     },
     {
@@ -665,13 +665,13 @@
     {
       "target": "src/agent/schema.ts",
       "mode": "new",
-      "targetSha256": "5dd9308b82b461562fe272bb589423bea22e42659e30f5390e15dc7a608b9396",
+      "targetSha256": "9419a699aefafd18d583a88e3c435ce1b45d8db2f8f688d3985b719308ec9d0f",
       "origins": []
     },
     {
       "target": "src/agent/sdk.ts",
       "mode": "new",
-      "targetSha256": "2c0b144864b36e3547ce7dc4f81c2e36bf1b2055498b3a9a5d9d83cf36cf115a",
+      "targetSha256": "6808c3d2ec53b7040353520c268bf6996d3468d45c94a6efd03fc787177191cc",
       "origins": []
     },
     {
@@ -1106,7 +1106,13 @@
     {
       "target": "src/script/text.ts",
       "mode": "new",
-      "targetSha256": "ea326f683501166690fecca715cb9c2b6d592a3dc72682ae23415d53c1e778b2",
+      "targetSha256": "7f613e22746ce6bd86776e0161baa4bd2fdbb0216b0baaea62c3fd1fcdfde8af",
+      "origins": []
+    },
+    {
+      "target": "src/script/text/project.ts",
+      "mode": "new",
+      "targetSha256": "22fd7d22316aec902704915e48f58d3a561deb403d5bb8601f4f7be0ed2ec8b1",
       "origins": []
     },
     {
@@ -1230,7 +1236,7 @@
       "target": "src/version.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "4f289760cd0f376bd2060eb39d9c7f484740549590b7f78f7582e27cc66bccf4"
+      "targetSha256": "ccc1c9e8a9b668ee01ead29ddafcf2225e5bd305f5614eadbf06b7938d2d167a"
     },
     {
       "target": "tools/acceptance-node.mjs",
@@ -1319,7 +1325,7 @@
     {
       "target": "tools/compile-script.mjs",
       "mode": "new",
-      "targetSha256": "76d1558a41f1f262dfec1b6a57cd3bffe353e5666165593861700297dbcdce1d",
+      "targetSha256": "b7eacf4152603bac0838f5ddf0487b0b7d82217b6ed138999be8b17e8a8a661e",
       "origins": []
     },
     {

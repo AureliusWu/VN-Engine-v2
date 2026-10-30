@@ -1,5 +1,7 @@
 # P1 资源计划与受限文本作者前端 · v1.2.0
 
+v1.3.0 在保留本页既有契约的基础上增加受限 cue 与可选工程上下文，见 [P3 契约](P3_DEVELOPMENT.md)；下文“首版”范围描述 1.2.0 历史边界。
+
 本轮按 Architecture Mining 报告的 P1-A / P1-B 实施两项独立增量。只优化引擎；四作原仓库、正文、宿主与玩家数据均不迁移。没有复制参考引擎实现。JSON IR、ScriptEngine、canonical replay、存档 envelope / payload 与持久键沿用现有约定。
 
 ## 资源计划与预算预取

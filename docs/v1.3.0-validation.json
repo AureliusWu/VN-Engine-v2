@@ -1,0 +1,544 @@
+{
+  "schema": 1,
+  "date": "2026-10-30",
+  "engineVersion": "1.3.0",
+  "baseCommit": "4c3500d23bce470f689c3da3b6e71450890990e2",
+  "scope": {
+    "sourceGamesMigrated": false,
+    "publicDataOrSaveFormatChanged": false,
+    "newDependencies": false,
+    "releaseOrTagCreated": false,
+    "referenceCodeCopied": false
+  },
+  "plan": "docs/PLAN-v1.3.0.md",
+  "research": "docs/reference-mining-v1.3.0.json",
+  "local": {
+    "nodeVersion": "v24.14.0",
+    "check": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 367,
+      "pass": 363,
+      "fail": 4,
+      "skipped": 0,
+      "reason": "Same four Windows EPERM symlink fixture failures as baseline; no assertions bypassed",
+      "log": "test-results/p3-check-final.log"
+    },
+    "completeBrowserSuite": {
+      "status": "PASS",
+      "scripts": 46,
+      "log": "test-results/p3-browser-final.log"
+    },
+    "completeEditorSuite": {
+      "status": "PASS",
+      "scripts": 20,
+      "log": "test-results/p3-editor-final.log"
+    },
+    "focusedNode": {
+      "status": "PASS",
+      "p3Cases": 21,
+      "withLegacyDslCases": 35,
+      "log": "test-results/p3-focused-final.log"
+    },
+    "python": {
+      "status": "PASS",
+      "total": 6
+    },
+    "schemaSync": "PASS",
+    "provenance": {
+      "status": "PASS",
+      "files": 197
+    },
+    "projectSchemas": {
+      "status": "PASS",
+      "total": 5
+    },
+    "p3BrowserReports": {
+      "runtime": {
+        "status": "PASS",
+        "checks": [
+          "Compiled 17-cue sample retains exact IR, visible assets and the authored hold across nested pause scopes",
+          "Real BGM, ambience, voice and SE start in Chromium; nested pauses freeze typing and resume the same voice",
+          "Both routes clear durable cues; save, restore and rollback reconstruct state without replaying SE or past effects",
+          "Disposal closes actual audio graphs, clears audio sources and preserves preexisting local storage"
+        ],
+        "browser": "153.0.8010.12",
+        "scope": {
+          "actualChromium": true,
+          "actualAudioContext": true,
+          "actualHTMLAudio": true,
+          "mockedMedia": false,
+          "physicalListening": false,
+          "nativeWindowsInput": false,
+          "playerStorage": null
+        },
+        "errors": [],
+        "report": "test-results/p3-runtime/REPORT.json"
+      },
+      "studio": {
+        "status": "PASS",
+        "checks": [
+          "Studio compiles cue candidates with current assets, previews real images and applies one undoable transaction",
+          "Missing and wrong-kind asset diagnostics select the exact current DSL cue and preserve JSON",
+          "A changed resource catalog invalidates an already compiled candidate and undo rechecks it"
+        ],
+        "errors": [],
+        "report": "test-results/p3-studio/REPORT.json"
+      },
+      "package": {
+        "status": "PASS",
+        "checks": [
+          "Stage DSL compiles to the packaged canonical IR; compiler/context/map stay outside the player",
+          "Generated player reaches good with actual images and stopped BGM/ambience; offline cache excludes author code",
+          "Packaged Studio opens a real project, binds local assets, rejects a missing voice, previews/applies/exports authored cues",
+          "New offline player pages execute both branches with correct images and media clearing",
+          "A new offline Studio page compiles, context-checks, previews, applies and exports through real author controls"
+        ],
+        "browser": "153.0.8010.12",
+        "scope": {
+          "automatedChromium": true,
+          "generatedPackages": true,
+          "nestedDeployment": true,
+          "offlineNewPages": true,
+          "studioFileInputs": "automated real project and directory inputs",
+          "physicalDevice": "UNVERIFIED",
+          "physicalListening": "UNVERIFIED",
+          "manualSystemDialogs": "UNVERIFIED",
+          "formalContentAcceptance": "not assessed; technical sample assets remain DRAFT"
+        },
+        "errors": [],
+        "report": "test-results/p3-package/REPORT.json"
+      }
+    },
+    "independentReview": "PASS; plan/source consistency, CLI read order/bounds, current Studio context and Agent schema/cursor inspected"
+  },
+  "originalFailures": [
+    {
+      "log": "test-results/p3-dsl-old-code.log",
+      "reason": "Old compiler rejects new cue grammar",
+      "retained": true
+    },
+    {
+      "log": "test-results/p3-studio-unbound-directory.log",
+      "reason": "Browser fixture did not bind the resource directory; fixed by real directory input, without weakening image assertions",
+      "retained": true
+    }
+  ],
+  "performance": {
+    "status": "WARN",
+    "report": "test-results/p3-performance-optimized.json",
+    "method": {
+      "measuredRounds": 3,
+      "plainOrder": [
+        "old,current",
+        "current,old",
+        "old,current"
+      ],
+      "newFeatureSamplesPerRound": 1,
+      "warmup": "Exactly one full-workload call each for old plain, current plain and current cues+context; warmup results retained below but excluded from measured medians.",
+      "timing": "performance.now around synchronous compile call; new workload measures compile plus project-context check. Imports, correctness assertions, explicit GC and packaging are excluded from compile timers.",
+      "garbageCollection": "Explicit gc before each timed call using node --expose-gc; excluded from timer.",
+      "artifactGzip": "Sum of gzipSync(default options) bytes per packaged lib JavaScript module; no browser/network transfer claim.",
+      "artifactBuildIdentity": "Benchmark-only development packages use fixed SOURCE_DATE_EPOCH=1710000000 and baseline commit string. New uncommitted 1.3.0 bytes are not claimed to be a release candidate for that old commit.",
+      "thresholds": {
+        "warnGrowthPercent": 10,
+        "failGrowthPercent": 20,
+        "newSynchronousWorkWarnMs": 200,
+        "newWorkFailMs": 3000
+      },
+      "allMeasuredSamplesRetained": true,
+      "benchmarkRerunForVerdict": false,
+      "sharedDistWritten": false,
+      "buildInvoked": false,
+      "sourceModified": false,
+      "contention": "Root explicitly held all builds/tests during this optimized timing window.",
+      "reasonForThisRun": "Actual compiler code changed after the retained pre-optimization and idle measurements. This is one fixed three-round validation, not an unchanged-code retry.",
+      "artifactWork": "No duplicate packaging or payload measurement. Prior exact payload report is referenced with its earlier snapshot scope."
+    },
+    "baseline": {
+      "commitSha": "4c3500d23bce470f689c3da3b6e71450890990e2",
+      "repository": "D:\\AI项目\\VN-Engine-v2\\test-results\\package-modules\\run-bv1XQI\\repository",
+      "sourceVerificationFile": "test-results/p3-performance-baseline-verification.json",
+      "verifiedSourceFiles": 81,
+      "verification": "All source TS files and file names match git show 4c3500d after CRLF-to-LF normalization; retained compiled snapshot reports engine 1.2.2. No old build was run."
+    },
+    "currentSnapshot": {
+      "repository": "D:\\AI项目\\VN-Engine-v2\\test-results\\p3-performance-optimized-k5VUhN\\current",
+      "capturedAt": "2026-10-30T10:29:03.136Z",
+      "distFiles": 246,
+      "distSnapshotSha256": "e790d6b8b5926239d5c74cad9c5cc59c60a8e5a02a0dfc9dd3c5bf1c681eb67c",
+      "sourceFiles": 82,
+      "sourceSnapshotSha256": "894244eda8082e91092e11dfd349d16b043f11cd6e964d9412832c3d7fe8eca3",
+      "textCompilerSourceSha256": "7f613e22746ce6bd86776e0161baa4bd2fdbb0216b0baaea62c3fd1fcdfde8af",
+      "previousTextCompilerSourceSha256": "0121ec07602faa37b14a665cf465ca967fa697bfd6fd7534101abaf40f7846c7"
+    },
+    "workloads": {
+      "plain": {
+        "lineCount": 7000,
+        "sourceLength": 305859,
+        "sourceSha256": "b4625469d7739f4ca7b3e4c92f9419602d794e2579f5d35712b9287200e69af4",
+        "cues": 0
+      },
+      "newFeature": {
+        "lineCount": 7000,
+        "cueCount": 7000,
+        "sourceLength": 479749,
+        "sourceSha256": "65bc721ab2f565a23321797a5e9ef612b2cbc2cec502799a7980fb7c89671768",
+        "resourceCatalogEntries": 1,
+        "defaultBudgets": {
+          "maxSourceLength": 1000000,
+          "maxTokens": 100000,
+          "maxLines": 30000,
+          "maxCues": 30000
+        },
+        "cueBudgetRejectionProbe": {
+          "maxCues": 6999,
+          "ok": false,
+          "error": "DSL_CUE_BUDGET",
+          "programAbsent": true
+        }
+      }
+    },
+    "summaries": {
+      "plainCompile": {
+        "old": {
+          "samplesMs": [
+            53.64929999999998,
+            61.81630000000007,
+            48.97659999999996
+          ],
+          "medianMs": 53.64929999999998,
+          "worstMs": 61.81630000000007
+        },
+        "current": {
+          "samplesMs": [
+            68.1789,
+            50.586200000000076,
+            52.89969999999994
+          ],
+          "medianMs": 52.89969999999994,
+          "worstMs": 68.1789
+        },
+        "medianGrowthPercent": -1.3972223309531406,
+        "verdict": "PASS"
+      },
+      "cueCompileAndContext": {
+        "samplesMs": [
+          181.534,
+          208.0270999999999,
+          196.79330000000004
+        ],
+        "medianMs": 196.79330000000004,
+        "worstMs": 208.0270999999999,
+        "compileMedianMs": 126.89539999999988,
+        "contextCheckMedianMs": 73.01289999999995,
+        "comparison": "No old-version comparison: v1.2.2 lacks cue/context compilation.",
+        "verdict": "WARN"
+      }
+    },
+    "warmups": [
+      {
+        "kind": "plain",
+        "variant": "old",
+        "round": 0,
+        "warmup": true,
+        "startedAt": "2026-10-30T10:29:50.448Z",
+        "completedAt": "2026-10-30T10:29:50.507Z",
+        "elapsedMs": 58.57539999999999,
+        "compileMs": 58.57459999999999,
+        "contextCheckMs": 0.0007999999999981355,
+        "diagnostics": 0,
+        "sourceMapEntries": 7006
+      },
+      {
+        "kind": "plain",
+        "variant": "current",
+        "round": 0,
+        "warmup": true,
+        "startedAt": "2026-10-30T10:29:50.513Z",
+        "completedAt": "2026-10-30T10:29:50.569Z",
+        "elapsedMs": 56.27249999999998,
+        "compileMs": 56.27169999999998,
+        "contextCheckMs": 0.0007999999999981355,
+        "diagnostics": 0,
+        "sourceMapEntries": 7006
+      },
+      {
+        "kind": "cues-and-context",
+        "variant": "current",
+        "round": 0,
+        "warmup": true,
+        "startedAt": "2026-10-30T10:29:50.583Z",
+        "completedAt": "2026-10-30T10:29:50.775Z",
+        "elapsedMs": 191.42120000000003,
+        "compileMs": 111.57540000000003,
+        "contextCheckMs": 79.8458,
+        "diagnostics": 0,
+        "sourceMapEntries": 14006
+      }
+    ],
+    "samples": [
+      {
+        "kind": "plain",
+        "variant": "old",
+        "round": 1,
+        "warmup": false,
+        "startedAt": "2026-10-30T10:29:50.780Z",
+        "completedAt": "2026-10-30T10:29:50.834Z",
+        "elapsedMs": 53.64929999999998,
+        "compileMs": 53.64839999999998,
+        "contextCheckMs": 0.0009000000000014552,
+        "diagnostics": 0,
+        "sourceMapEntries": 7006
+      },
+      {
+        "kind": "plain",
+        "variant": "current",
+        "round": 1,
+        "warmup": false,
+        "startedAt": "2026-10-30T10:29:50.841Z",
+        "completedAt": "2026-10-30T10:29:50.910Z",
+        "elapsedMs": 68.1789,
+        "compileMs": 68.17780000000005,
+        "contextCheckMs": 0.001099999999951251,
+        "diagnostics": 0,
+        "sourceMapEntries": 7006
+      },
+      {
+        "kind": "cues-and-context",
+        "variant": "current",
+        "round": 1,
+        "warmup": false,
+        "startedAt": "2026-10-30T10:29:50.925Z",
+        "completedAt": "2026-10-30T10:29:51.107Z",
+        "elapsedMs": 181.534,
+        "compileMs": 108.52110000000005,
+        "contextCheckMs": 73.01289999999995,
+        "diagnostics": 0,
+        "sourceMapEntries": 14006
+      },
+      {
+        "kind": "plain",
+        "variant": "current",
+        "round": 2,
+        "warmup": false,
+        "startedAt": "2026-10-30T10:29:51.126Z",
+        "completedAt": "2026-10-30T10:29:51.177Z",
+        "elapsedMs": 50.586200000000076,
+        "compileMs": 50.58490000000006,
+        "contextCheckMs": 0.0013000000000147338,
+        "diagnostics": 0,
+        "sourceMapEntries": 7006
+      },
+      {
+        "kind": "plain",
+        "variant": "old",
+        "round": 2,
+        "warmup": false,
+        "startedAt": "2026-10-30T10:29:51.189Z",
+        "completedAt": "2026-10-30T10:29:51.251Z",
+        "elapsedMs": 61.81630000000007,
+        "compileMs": 61.81569999999999,
+        "contextCheckMs": 0.0006000000000767614,
+        "diagnostics": 0,
+        "sourceMapEntries": 7006
+      },
+      {
+        "kind": "cues-and-context",
+        "variant": "current",
+        "round": 2,
+        "warmup": false,
+        "startedAt": "2026-10-30T10:29:51.266Z",
+        "completedAt": "2026-10-30T10:29:51.474Z",
+        "elapsedMs": 208.0270999999999,
+        "compileMs": 131.928,
+        "contextCheckMs": 76.09909999999991,
+        "diagnostics": 0,
+        "sourceMapEntries": 14006
+      },
+      {
+        "kind": "plain",
+        "variant": "old",
+        "round": 3,
+        "warmup": false,
+        "startedAt": "2026-10-30T10:29:51.481Z",
+        "completedAt": "2026-10-30T10:29:51.530Z",
+        "elapsedMs": 48.97659999999996,
+        "compileMs": 48.97569999999996,
+        "contextCheckMs": 0.0009000000000014552,
+        "diagnostics": 0,
+        "sourceMapEntries": 7006
+      },
+      {
+        "kind": "plain",
+        "variant": "current",
+        "round": 3,
+        "warmup": false,
+        "startedAt": "2026-10-30T10:29:51.538Z",
+        "completedAt": "2026-10-30T10:29:51.591Z",
+        "elapsedMs": 52.89969999999994,
+        "compileMs": 52.89879999999994,
+        "contextCheckMs": 0.0009000000000014552,
+        "diagnostics": 0,
+        "sourceMapEntries": 7006
+      },
+      {
+        "kind": "cues-and-context",
+        "variant": "current",
+        "round": 3,
+        "warmup": false,
+        "startedAt": "2026-10-30T10:29:51.605Z",
+        "completedAt": "2026-10-30T10:29:51.802Z",
+        "elapsedMs": 196.79330000000004,
+        "compileMs": 126.89539999999988,
+        "contextCheckMs": 69.89790000000016,
+        "diagnostics": 0,
+        "sourceMapEntries": 14006
+      }
+    ],
+    "retainedHistoricalReports": [
+      {
+        "path": "test-results/p3-performance.json",
+        "sha256": "f10177a9321cb863e17c6bddf68085a376a759c1484a5e9831c6b67b40a7e0ca"
+      },
+      {
+        "path": "test-results/p3-performance-initial.json",
+        "sha256": "6c5045a8e997c300a3a07218fbb7744850208ded5a3a2e3e152f63759c5662b1"
+      },
+      {
+        "path": "test-results/p3-performance-isolated-verification.json",
+        "sha256": "9bc37f79cade093db01b48281fa667da3d82fffb7bc2d642148e62cca7f0f2bb"
+      }
+    ],
+    "historicalResults": {
+      "initial": {
+        "old": {
+          "samplesMs": [
+            69.1079000000002,
+            81.96210000000019,
+            74.38680000000022
+          ],
+          "medianMs": 74.38680000000022,
+          "worstMs": 81.96210000000019
+        },
+        "current": {
+          "samplesMs": [
+            96.99379999999996,
+            95.33449999999993,
+            93.43430000000035
+          ],
+          "medianMs": 95.33449999999993,
+          "worstMs": 96.99379999999996
+        },
+        "medianGrowthPercent": 28.160506971666543,
+        "verdict": "FAIL"
+      },
+      "idle": {
+        "old": {
+          "samplesMs": [
+            75.02320000000003,
+            73.09269999999992,
+            60.02019999999993
+          ],
+          "medianMs": 73.09269999999992,
+          "worstMs": 75.02320000000003
+        },
+        "current": {
+          "samplesMs": [
+            77.90959999999995,
+            60.12419999999997,
+            58.82140000000004
+          ],
+          "medianMs": 60.12419999999997,
+          "worstMs": 77.90959999999995
+        },
+        "medianGrowthPercent": -17.74253790050164,
+        "verdict": "PASS"
+      }
+    },
+    "limitations": [
+      "Three samples remain directional and include JIT/GC/OS noise.",
+      "The 7000-cue synchronous author workload is reported separately from the no-cue backward-compatibility comparison.",
+      "The original possible-contention FAIL and idle verification remain intact; the comparable changed-code verdict is stated separately."
+    ]
+  },
+  "runtimeBundleComparison": {
+    "status": "PASS",
+    "report": "test-results/p3-payload-final.json",
+    "method": "Read retained exact-1.2.2 package bytes; freshly package current optimized code without rebuild. Sum raw and gzipSync(default) per lib JS module. No startup or network latency claim.",
+    "targets": {
+      "game": {
+        "old": {
+          "modules": 68,
+          "rawBytes": 423183,
+          "gzipBytes": 121174
+        },
+        "current": {
+          "modules": 68,
+          "rawBytes": 423183,
+          "gzipBytes": 121174
+        },
+        "rawGrowthPercent": 0,
+        "gzipGrowthPercent": 0
+      },
+      "studio": {
+        "old": {
+          "modules": 81,
+          "rawBytes": 587420,
+          "gzipBytes": 164746
+        },
+        "current": {
+          "modules": 82,
+          "rawBytes": 600686,
+          "gzipBytes": 168403
+        },
+        "rawGrowthPercent": 2.258350073201454,
+        "gzipGrowthPercent": 2.219780753402212
+      }
+    }
+  },
+  "cloud": {
+    "status": "PENDING_EXACT_PUSHED_SHA",
+    "evidence": "test-results/v1.3.0-cloud.json"
+  },
+  "limitations": [
+    "Local four symlink fixtures require exact-SHA Linux CI completion",
+    "7000-cue synchronous author workload worst 208.03ms retains WARN",
+    "Chromium real audio graphs are not physical listening; CI path presets are not manual system dialogs",
+    "Technical sample assets remain DRAFT; no formal content acceptance"
+  ],
+  "sourceHashBasis": "UTF-8 text normalized CRLF to LF to match Git blobs",
+  "sourceSha256": {
+    ".github/workflows/windows.yml": "71724d9921d809e493216c1eca418352f95dbaa6342e90075c4148e8ebd0a440",
+    "editor/index.html": "35836ba90d6dbac9b28009c256cce3f9a4fcee586f4b99641484083401385afc",
+    "editor/text-script.mjs": "8d3b46f782182e1feee98155b8875554befe2e6ee5401a24a051e399d0a10872",
+    "examples/dsl/stage.vn.txt": "c2c683f34f3deb5455662e0e30375e112a0bba1296ac973c207ebc93b3f4bae9",
+    "examples/runtime/stage.json": "7c2be90f7019986c3e906c19bdd903fa16b9cdbeffba48be198bed27ea3177cb",
+    "hosts/windows/VNEngine.Windows.csproj": "e7aee274f11530e240bcba3a20e4eb17df2b9efaff82176c084be3c6d1485f7f",
+    "package-lock.json": "89ac3f4f4963fad59a53b4e4a25993678c782189c6f675e568b4bf336bd991d1",
+    "package.json": "7fc6974ad7dc2d6edb0bacfacd6ac8629732b0795a03f36109cee157337c0b91",
+    "schemas/vn-agent-v1.request.schema.json": "c8dab2e83fbb1b7001288b2b1122669157993f81a764a251b12a75e2baa92340",
+    "src/agent/schema.ts": "9419a699aefafd18d583a88e3c435ce1b45d8db2f8f688d3985b719308ec9d0f",
+    "src/agent/sdk.ts": "6808c3d2ec53b7040353520c268bf6996d3468d45c94a6efd03fc787177191cc",
+    "src/script/text.ts": "7f613e22746ce6bd86776e0161baa4bd2fdbb0216b0baaea62c3fd1fcdfde8af",
+    "src/script/text/project.ts": "22fd7d22316aec902704915e48f58d3a561deb403d5bb8601f4f7be0ed2ec8b1",
+    "src/version.ts": "ccc1c9e8a9b668ee01ead29ddafcf2225e5bd305f5614eadbf06b7938d2d167a",
+    "tests/p3-context.test.mjs": "ed9675d52bd77c40869de481f173e18b4bde1bfb4f9ecf7e1ab203c856a38789",
+    "tests/p3-dsl.test.mjs": "f4aa4085a1866a62b3f885ddd4fa4b30988e7f7f21048448a27a8585852d3198",
+    "tests/p3-integration.test.mjs": "20a2e69d359252fee43da716aea82121637a87fc473525ece249f6dfd52b3b94",
+    "tests/p3-package-browser.mjs": "534ee7d1cc90dcd4bf944f14cbc185c11e3c22237f3438354b5cdab2186b2259",
+    "tests/p3-runtime-browser.mjs": "1ff321fb61b985faa2a565c2d764a54a645ff04d9c5f3510688ea9f2dcad4c87",
+    "tests/p3-studio-browser.mjs": "05f3253e9c7ee0a4ec99e1ae24b3f2fd9cdc47b31fae8e0f64324e6c793ef370",
+    "tools/compile-script.mjs": "b7eacf4152603bac0838f5ddf0487b0b7d82217b6ed138999be8b17e8a8a661e"
+  },
+  "evidenceSha256": {
+    "test-results/p3-check-final.log": "8811206be81712dc4a3bcd447c9ca85eaa47877f48a3020ccfa3cc41af2a3ed8",
+    "test-results/p3-browser-final.log": "2900ad66c02169d535f3e7d549d2e3330019c8a362c0cfebc40ecd84e92dc226",
+    "test-results/p3-editor-final.log": "e588beac0e09f5f694bcbc6aaff3a3e77ae24eb3f88594edf1b2dfd818b6293a",
+    "test-results/p3-focused-final.log": "45f15106c5ea2cc401e62479aac6f64561ae7cd28d1026c18c1cef5cbfbbf5e5",
+    "test-results/p3-performance-optimized.json": "7225a2beb9231e6c6d0488393615355f9324460b5638de519c5c558f27624496",
+    "test-results/p3-payload-final.json": "42f37ef69af02e2726dba9790e226197bf0f506ba053ab77f2c9a21652c4f9f8",
+    "test-results/p3-runtime/REPORT.json": "3ac5fa747e489c6fcdb3eea47a6a583f3b309de6d85e320c7d86c7d484ffa152",
+    "test-results/p3-studio/REPORT.json": "05533711876f88e2a9a9f448fe342233e293fc35bbbe5bee110665b2c5a7ef3d",
+    "test-results/p3-package/REPORT.json": "c4e7893b9974d65946d3aaa55e68c13b7319b2adfd452f1c70e51efdf6a505c7"
+  }
+}

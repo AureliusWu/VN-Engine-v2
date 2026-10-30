@@ -1,0 +1,39 @@
+# 演出绑定使用稳定 ID；资源由当前工程目录提供。
+vn-script 1
+game "vn-stage-dsl"
+version "dsl-demo-v1"
+entry start
+var trust number 0 min 0 max 2
+
+# 可在目标之前声明；不会新增运行时指令。
+cue block start background classroom
+cue block start music bgm
+cue block start ambience air
+cue line hello portrait student
+cue line hello voice greeting
+cue line hello sound bell
+cue line hello pause 120
+cue line hello effect fade 150
+
+block start "舞台开场"
+line hello "旁白" "背景、立绘和声音来自同一份演出文本。"
+line question "旁白" "请选择一条路线，读档仍从真实选择重建。"
+choice yes "继续演出" -> finish with add trust 1
+choice no "安静离开" -> quiet
+
+block finish "完成"
+line done "旁白" "插图出现，音乐停止，演出完成。"
+end good
+cue block finish background bedroom
+cue block finish music null
+cue block finish ambience null
+cue line done cg letter
+cue line done portrait null
+cue line done effect flash 100
+
+block quiet "离开"
+line quiet-line "旁白" "画面保留，人物和音乐清除。"
+end neutral
+cue block quiet portrait null
+cue block quiet music null
+cue block quiet ambience null

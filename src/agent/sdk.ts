@@ -15,14 +15,14 @@ import { inspectItems, referenceItems, agentProjectDiagnostics } from './project
 import { runtimeInspectionItems } from './runtime-inspection.js';
 import { RUNTIME_SEMANTICS_VERSION } from '../runtime/semantics.js';
 import { createSourceResolver } from '../source/origin.js';
-import { compileTextScript, TEXT_SCRIPT_FORMAT } from '../script/text.js';
+import { compileTextScript, checkTextScriptProject, TEXT_SCRIPT_FORMAT } from '../script/text.js';
 
 export function agentCapabilities() {
   return { protocol: AGENT_PROTOCOL, extensions:[CREATIVE_EXTENSION,'vn-author-review-v1','vn-content-impact-v1','vn-ai-acceptance-v1'], limits: AGENT_LIMITS, commands: Object.keys(COMMAND_SCHEMAS), operations: OPERATION_DEFINITIONS.map(schema => schema.properties.op.const),
     templates: ['vn', 'chat', 'script', 'investigation'], templateTypes: { vn: 'narrative', chat: 'narrative', script: 'script', investigation: 'investigation' }, projectTypes: ['narrative', 'script', 'investigation', 'rain'],
     compatibility: { projectSchema: 1, editorSchema: 1, saveSchema: 1, saveEnvelopeSchema:2, savePayloadSchema:1, rain: 'native-format-read-validate-test-preview-build' },
     runtimeInspection:{semanticsVersion:RUNTIME_SEMANTICS_VERSION,kinds:['semantics','source','evidence','resources'],evidenceContract:'vn-runtime-evidence-v1',resourceContract:'vn-resource-plan-v1',importedEvidenceAcceptance:'UNVERIFIED',sourceIdentity:'stable IDs and JSON path; source SHA binding'},
-    textScript:{format:TEXT_SCRIPT_FORMAT,command:'script.compile',readOnly:true,output:'paged ScriptProgram, diagnostics and independent source map; no project writes'},
+    textScript:{format:TEXT_SCRIPT_FORMAT,command:'script.compile',readOnly:true,cueScopes:['block','line'],cueFields:['background','portrait','cg','music','ambience','sound','voice','pause','effect'],projectContext:'optional identity and id/kind resource catalogue; no asset IO',output:'paged ScriptProgram, diagnostics and independent source map; no project writes'},
     operationScopes: { variable: ['script'], chapter: ['investigation'], evidence: ['investigation'], action: ['investigation'], line: ['narrative','script'], choice: ['narrative','script'], exit: ['script'], rainNodes: 'native-read-only' },
     hostPorts: ['readAsset', 'preview', 'build', 'probe', 'importsPrepared','readEvidence','acceptanceBundle'],
     schemas: {
@@ -128,14 +128,15 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
     const params = request.params; check();
     if (request.command === 'capabilities') { response.data = params.schema ? { schema: ({ request: AGENT_REQUEST_SCHEMA, response: AGENT_RESPONSE_SCHEMA, operation: AGENT_OPERATION_SCHEMA, production:PRODUCTION_SCHEMA, ui:UI_SCHEMA,feedback:FEEDBACK_DOCUMENT_SCHEMA,acceptance:AI_ACCEPTANCE_SCHEMA } as any)[params.schema] } : agentCapabilities(); return result; }
     if(request.command==='script.compile'){
-      const compiled=compileTextScript(params.source,{fileName:params.fileName});check();
+      const syntax=compileTextScript(params.source,{fileName:params.fileName});
+      const compiled=params.projectContext?checkTextScriptProject(syntax,params.projectContext):syntax;check();
       response.ok=compiled.ok;response.status=compiled.ok?'PASS':'FAIL';
       if(!compiled.ok)response.diagnostics.push({code:'DSL_COMPILE_FAILED',severity:'error',message:'Text script compilation failed; detailed source ranges are in the paginated diagnostic items'});
-      const items:any[]=[{id:'compile-summary',format:TEXT_SCRIPT_FORMAT,ok:compiled.ok,diagnostics:compiled.diagnostics.length,sourceMap:compiled.sourceMap.length,readOnly:true},
+      const items:any[]=[{id:'compile-summary',format:TEXT_SCRIPT_FORMAT,ok:compiled.ok,diagnostics:compiled.diagnostics.length,sourceMap:compiled.sourceMap.length,projectContext:compiled.projectContext??{checked:false},readOnly:true},
         ...(compiled.program?[{id:'program',program:compiled.program}]:[]),
         ...compiled.diagnostics.map((diagnostic,index)=>({id:'diagnostic-'+index,kind:'diagnostic',...diagnostic})),
         ...compiled.sourceMap.map((entry,index)=>({id:'source-map-'+index,kind:'source-map',entry}))];
-      page(response,items,request,await sourceHash(JSON.stringify([params.source,params.fileName??null])));check();return result;
+      page(response,items,request,await sourceHash(JSON.stringify([params.source,params.fileName??null,params.projectContext??null])));check();return result;
     }
     if(request.command==='probe'){if(!context.probe)throw new AgentError('HOST_PORT_REQUIRED','Probe requires the Node host or an injected decoder',{},'UNVERIFIED');const output=await context.probe(request);response.data=output.data;response.artifacts=output.artifacts;response.status=output.status;response.ok=output.status==='PASS';response.diagnostics=output.diagnostics;result.report=output.data;check();return result;}
     if (request.command === 'init') {

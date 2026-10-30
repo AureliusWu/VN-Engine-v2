@@ -33,6 +33,8 @@ jobs:
         run: npm run test:p1
       - name: Verify stable decoded audio identities and source-based package modules
         run: node --test tests/audio.test.mjs tests/browser-server.test.mjs tests/compiled-modules.test.mjs tests/package-modules.test.mjs
+      - name: Verify P3 staged DSL, contextual diagnostics and generated offline author/player packages
+        run: npm run test:p3
       - name: Verify R5 authoring, focus and audio regressions on Windows
         run: |
           node --test tests/runtime-media.test.mjs
@@ -123,6 +125,7 @@ jobs:
             test-results/v1-*/
             test-results/p0-*/
             test-results/p1-*/
+            test-results/p3-*/
             test-results/resource-audio/
             test-results/package-modules-browser/
             test-results/agent-cli/

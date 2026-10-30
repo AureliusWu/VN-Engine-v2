@@ -1,5 +1,7 @@
 import { ScriptEngine } from './engine.js';
 import type { Condition, Effect, Scalar, ScriptBlock, ScriptChoice, ScriptLine, ScriptProgram, Variable } from './types.js';
+import type { StageCue } from '../stage/types.js';
+import type { SourceOrigin } from '../source/origin.js';
 
 export const TEXT_SCRIPT_FORMAT = 'vn-script-text-v1' as const;
 export type TextScriptPosition = { offset: number; line: number; column: number };
@@ -8,28 +10,31 @@ export type TextScriptSpan = { start: TextScriptPosition; end: TextScriptPositio
 type Identity = { blockId?: string; lineId?: string; choiceId?: string };
 export type TextScriptDiagnostic = Identity & {
   code: string; severity: 'error' | 'warning'; message: string; span: TextScriptSpan;
-  fileName?: string; path?: (string | number)[];
+  fileName?: string; path?: (string | number)[]; assetId?: string; origin?: SourceOrigin;
 };
 /** Paths are relative to ScriptProgram, not an enclosing EngineProject. */
 export type TextScriptSourceMapEntry = Identity & {
-  kind: 'program' | 'variable' | 'block' | 'line' | 'choice' | 'exit' | 'route' | 'effect';
+  kind: 'program' | 'variable' | 'block' | 'line' | 'choice' | 'exit' | 'route' | 'effect' | 'cue';
   id: string; path: (string | number)[]; span: TextScriptSpan; fileName?: string;
 };
 export type TextScriptOptions = {
   fileName?: string; maxSourceLength?: number; maxTokens?: number; maxStringLength?: number;
-  maxBlocks?: number; maxLines?: number; maxChoices?: number; maxVariables?: number; maxDiagnostics?: number;
+  maxBlocks?: number; maxLines?: number; maxChoices?: number; maxVariables?: number; maxDiagnostics?: number; maxCues?: number;
 };
 export type TextScriptCompilation = {
   ok: boolean; program?: ScriptProgram; diagnostics: TextScriptDiagnostic[]; sourceMap: TextScriptSourceMapEntry[];
+  projectContext?: { checked: boolean; game?: string; version?: string; assetCount?: number };
 };
 type Token = { kind: 'atom' | 'string' | 'symbol' | 'newline'; value: string; span: TextScriptSpan };
 type DraftExit = { type: 'jump'; next: string } | { type: 'choice'; choices: ScriptChoice[] }
   | { type: 'branch'; routes: { when?: Condition; next: string }[] } | { type: 'end'; ending: string };
-type DraftBlock = { id: string; title?: string; lines: ScriptLine[]; exit?: DraftExit;
+type DraftBlock = { id: string; title?: string; lines: ScriptLine[]; cue?: StageCue; exit?: DraftExit;
   path: (string | number)[]; span: TextScriptSpan; map: TextScriptSourceMapEntry; choices: Set<string> };
 type Reference = Identity & { target: string; path: (string | number)[]; span: TextScriptSpan; from?: string };
+type CueField = 'background' | 'portrait' | 'cg' | 'music' | 'ambience' | 'sound' | 'voice' | 'pauseMs' | 'effect';
+type DraftCue = { scope: 'block' | 'line'; target: string; field: CueField; value: StageCue; span: TextScriptSpan; duplicate: boolean };
 const limits = { maxSourceLength: 1_000_000, maxTokens: 100_000, maxStringLength: 200_000,
-  maxBlocks: 10_000, maxLines: 30_000, maxChoices: 30_000, maxVariables: 1_000, maxDiagnostics: 100 };
+  maxBlocks: 10_000, maxLines: 30_000, maxChoices: 30_000, maxVariables: 1_000, maxDiagnostics: 100, maxCues: 30_000 };
 const forbidden = new Set(['__proto__', 'constructor', 'prototype']);
 const numberPattern = /^-?(?:0|[1-9]\d*)(?:\.\d+)?(?:[eE][+-]?\d+)?$/;
 const identifierPattern = /^[\p{L}_][\p{L}\p{N}_.:/-]*$/u;
@@ -47,8 +52,10 @@ const zero = (): TextScriptPosition => ({ offset: 0, line: 1, column: 1 });
  * choice yes "Continue" -> route with add trust 2, set consent true
  * block route / branch / when trust >= 2 && consent == true -> good / else -> other
  * block good / line done "Speaker" "Done" / end good
+ * cue block start background room / cue line done voice spoken / cue line done effect fade 450
  *
- * Only choice-owned effects are accepted. No IO, host code, expressions or new VM instructions.
+ * Variable mutation remains choice-owned. Cues target explicit IDs and lower to existing StageCue data.
+ * No IO, host code, expressions or new VM instructions.
  * The output is ordinary schema-1 ScriptProgram; text/maps never enter runtime saves.
  */
 export function compileTextScript(source: string, options: TextScriptOptions = {}): TextScriptCompilation {
@@ -57,7 +64,7 @@ export function compileTextScript(source: string, options: TextScriptOptions = {
   let halted = false, diagnosticsFull = false;
   const file = typeof options?.fileName === 'string' && options.fileName.length <= 4096 ? { fileName: options.fileName } : {};
   const report = (code: string, message: string, span: TextScriptSpan, extra: Identity & {
-    path?: (string | number)[]; severity?: 'error' | 'warning'
+    path?: (string | number)[]; severity?: 'error' | 'warning'; assetId?: string; origin?: SourceOrigin
   } = {}) => {
     if (diagnosticsFull) return;
     if (diagnostics.length >= configured.maxDiagnostics - 1) {
@@ -144,9 +151,10 @@ export function compileTextScript(source: string, options: TextScriptOptions = {
 
   const program: ScriptProgram = { schema: 1, game: '', version: '', entry: '', variables: {}, blocks: [] };
   const blocks: DraftBlock[] = [], blockIds = new Set<string>(), lineIds = new Set<string>(), references: Reference[] = [];
+  const cues: DraftCue[] = [], cueKeys = new Set<string>();
   const semanticChecks: (() => void)[] = [];
   const declarations = new Set<string>();
-  let current: DraftBlock | undefined, lineCount = 0, choiceCount = 0, variableCount = 0;
+  let current: DraftBlock | undefined, lineCount = 0, choiceCount = 0, variableCount = 0, cueCount = 0;
   let header = false;
   const map = (kind: TextScriptSourceMapEntry['kind'], id: string, path: (string | number)[], span: TextScriptSpan, identity: Identity = {}) => {
     const entry: TextScriptSourceMapEntry = { kind, id, path, span, ...file, ...identity };
@@ -273,9 +281,52 @@ export function compileTextScript(source: string, options: TextScriptOptions = {
           budget(++lineCount <= configured.maxLines, 'DSL_LINE_BUDGET', span);
           if (halted) break;
           const path = [...owner.path, 'lines', owner.lines.length];
-          owner.lines.push({ id: name, speaker, text: value, ...(medium ? { medium } : {}) }); lineIds.add(name);
+          const line: ScriptLine = { id: name, speaker, text: value, ...(medium ? { medium } : {}) };
+          owner.lines.push(line); lineIds.add(name);
           map('line', name, path, span, { blockId: owner.id, lineId: name });
         } break;
+      }
+      case 'cue': {
+        const scopeToken = command[cursor++], scope = scopeToken?.value;
+        if (scopeToken?.kind !== 'atom' || (scope !== 'block' && scope !== 'line')) syntax('Cue scope must be block or line.', 'DSL_CUE_SCOPE', scopeToken?.span ?? span);
+        const target = id('cue target ID');
+        context = scope === 'block' ? { blockId: target } : scope === 'line' ? { lineId: target } : {};
+        const fieldToken = command[cursor++], field = fieldToken?.value;
+        const value: StageCue = {};
+        let lowered: CueField | undefined;
+        if (fieldToken?.kind !== 'atom') syntax('Cue field must be a supported bare field name.', 'DSL_CUE_FIELD', fieldToken?.span ?? span);
+        else if (field === 'background' || field === 'portrait' || field === 'cg' || field === 'music' || field === 'ambience') {
+          lowered = field;
+          value[field] = take('null') ? null : id('asset ID');
+        } else if (field === 'sound' || field === 'voice') {
+          lowered = field;
+          if (take('null')) syntax(`${field} requires an asset ID; null cannot clear this cue.`, 'DSL_CUE_VALUE');
+          else value[field] = id('asset ID');
+        } else if (field === 'pause') {
+          lowered = 'pauseMs';
+          const token = command[cursor++], duration = token?.kind === 'atom' && numberPattern.test(token.value) ? Number(token.value) : NaN;
+          if (!Number.isSafeInteger(duration) || duration < 0 || duration > 30000) syntax('Cue pause must be an integer from 0 to 30000 ms.', 'DSL_CUE_VALUE', token?.span ?? span);
+          else value.pauseMs = duration;
+        } else if (field === 'effect') {
+          lowered = 'effect';
+          const token = command[cursor++], type = token?.value;
+          if (token?.kind !== 'atom' || (type !== 'fade' && type !== 'flash' && type !== 'shake')) syntax('Cue effect must be fade, flash or shake.', 'DSL_CUE_VALUE', token?.span ?? span);
+          else {
+            value.effect = { type };
+            if (cursor < command.length) {
+              const durationToken = command[cursor++], duration = durationToken?.kind === 'atom' && numberPattern.test(durationToken.value) ? Number(durationToken.value) : NaN;
+              if (!Number.isSafeInteger(duration) || duration < 0 || duration > 2000) syntax('Cue effect duration must be an integer from 0 to 2000 ms.', 'DSL_CUE_VALUE', durationToken?.span ?? span);
+              else value.effect.durationMs = duration;
+            }
+          }
+        } else syntax(`Unsupported cue field: ${field ?? ''}`, 'DSL_CUE_FIELD', fieldToken?.span ?? span);
+        if (done() && lowered && (scope === 'block' || scope === 'line')) {
+          budget(++cueCount <= configured.maxCues, 'DSL_CUE_BUDGET', span);
+          if (halted) break;
+          const key = JSON.stringify([scope, target, lowered]);
+          cues.push({ scope, target, field: lowered, value, span, duplicate: cueKeys.has(key) }); cueKeys.add(key);
+        }
+        break;
       }
       case 'choice': {
         const owner = beginExit('choice', true), name = id('choice ID'), label = text('Choice text'); expect('->'); const target = id('target block ID');
@@ -373,6 +424,30 @@ export function compileTextScript(source: string, options: TextScriptOptions = {
     });
   }
   for (const check of semanticChecks) { if (halted) break; check(); }
+  if (cues.length && !halted) {
+    // Legacy scripts need no cue-target indexes or per-line owner/path records.
+    // Resolve forward cue references with one bounded pass only when cues exist.
+    const blockIndex = new Map<string, DraftBlock>(), lineIndex = new Map<string, { owner: DraftBlock; line: ScriptLine; path: (string | number)[] }>();
+    for (const owner of blocks) {
+      blockIndex.set(owner.id, owner);
+      owner.lines.forEach((line, index) => lineIndex.set(line.id, { owner, line, path: [...owner.path, 'lines', index] }));
+    }
+    for (const cue of cues) {
+      if (halted) break;
+      const line = cue.scope === 'line' ? lineIndex.get(cue.target) : undefined;
+      const owner = cue.scope === 'block' ? blockIndex.get(cue.target) : line?.owner;
+      const identity: Identity = { ...(owner ? { blockId: owner.id } : cue.scope === 'block' ? { blockId: cue.target } : {}),
+        ...(cue.scope === 'line' ? { lineId: cue.target } : {}) };
+      const path = owner ? [...(line?.path ?? owner.path), 'cue', cue.field] : undefined;
+      if (cue.duplicate) { report('DSL_DUPLICATE_CUE', `Duplicate cue field for ${cue.scope} ${cue.target}: ${cue.field}`, cue.span, { ...identity, ...(path ? { path } : {}) }); continue; }
+      if (!owner) { report('DSL_UNKNOWN_CUE_TARGET', `Unknown ${cue.scope} cue target: ${cue.target}`, cue.span, identity); continue; }
+      if (cue.scope === 'block' && !owner.lines.length && ['sound', 'voice', 'pauseMs', 'effect'].includes(cue.field)) {
+        report('DSL_CUE_ROUTING_BLOCK', `${cue.field} requires a block with dialogue.`, cue.span, { ...identity, path }); continue;
+      }
+      const target = line?.line ?? owner; target.cue = { ...target.cue, ...cue.value };
+      map('cue', `${cue.scope}:${cue.target}:${cue.field}`, path!, cue.span, identity);
+    }
+  }
   // Reachability is structural (all authored branch/choice edges), not a claim of playable coverage.
   if (!diagnostics.some(item => item.severity === 'error')) {
     const edges = new Map<string, string[]>();
@@ -388,7 +463,8 @@ export function compileTextScript(source: string, options: TextScriptOptions = {
       { severity: 'warning', path: owner.path, blockId: owner.id });
   }
   if (halted || diagnostics.some(item => item.severity === 'error')) return { ok: false, diagnostics, sourceMap };
-  program.blocks = blocks.map(owner => ({ id: owner.id, ...(owner.title !== undefined ? { title: owner.title } : {}), lines: owner.lines, exit: owner.exit! } as ScriptBlock));
+  program.blocks = blocks.map(owner => ({ id: owner.id, ...(owner.title !== undefined ? { title: owner.title } : {}), lines: owner.lines,
+    ...(owner.cue ? { cue: owner.cue } : {}), exit: owner.exit! } as ScriptBlock));
   try { new ScriptEngine(program); }
   catch (error) {
     report('DSL_PROGRAM_INVALID', error instanceof Error ? error.message : 'Existing ScriptEngine rejected the lowered program.', eofSpan);
@@ -396,3 +472,6 @@ export function compileTextScript(source: string, options: TextScriptOptions = {
   }
   return { ok: true, program, diagnostics, sourceMap };
 }
+
+export { checkTextScriptProject } from './text/project.js';
+export type { TextScriptProjectContext } from './text/project.js';

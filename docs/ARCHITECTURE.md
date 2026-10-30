@@ -1,5 +1,9 @@
 # 架构与接口
 
+## v1.3.0 作者演出前端
+
+script/text.ts 将显式 cue block / cue line 编译为已有 StageCue，保留原 VM、路由与存档。script/text/project.ts 是可选纯清单检查，核对身份、资源 ID / kind，返回 DSL 范围和候选来源，不读取文件或启动设备。Studio、Agent、CLI 复用两阶段接口；玩家包按已有作者模块边界排除 text.js 与 text/ 目录，Studio 包保留它们。参考取舍与边界见 [P3 契约](P3_DEVELOPMENT.md)。
+
 ## v1.2.2 缓存身份与模块归属
 
 SceneLoop 的稳定缓存身份与临时读取 URL 分开，MediaDirector 为 BGM / 环境音使用 AssetCatalog.sourceURL；既有两参数 select 调用继续以 URL 为身份。Blob 仍按消费者生命周期撤销，不延长 speculative URL 生命周期，解码缓存仍独立受两曲 / 32 MiB 限制。

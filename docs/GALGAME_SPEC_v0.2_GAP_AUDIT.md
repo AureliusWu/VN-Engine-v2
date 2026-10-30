@@ -1,5 +1,7 @@
 # GALGAME SPEC v0.2 差距审计
 
+本文保留 0.4.0 等历史基线，不是当前待办清单。v1.3.0 的实际能力与本轮取舍见 [参考对照](REFERENCE-MINING-v1.3.0.md) 和 [当前路线图](ROADMAP.md)，不能重复实施下文已经完成的阶段。
+
 原始审计基线：`3075a7480fe43423a1516dc1328cf84f4cac1742`，2026-10-27；路线 QA 见 [原计划](OPTIMIZATION-ROUTE-QA.md)，当前 0.4 作者工作台与逐提交验收见 [版本计划](OPTIMIZATION-v0.4.0.md)。规范正文来自用户提供的交接文件，见 [GALGAME SPEC v0.2](GALGAME_SPEC_v0.2.md)。当前引擎为 `0.4.0 alpha`；本表不代表任何作品已达到 RELEASE。
 
 状态：`PASS` 表示所描述的有限能力有实现和证据；`PARTIAL` 表示有一部分；`ENGINE_GAP` 表示缺少明确的引擎能力；`UNVERIFIED` 表示没有对应证据；`N/A` 只在具体项目明确不适用时使用。状态不因接口存在而提升。v0.1 原机器契约仍为 `GALGAME_SPEC-v0.1`。
