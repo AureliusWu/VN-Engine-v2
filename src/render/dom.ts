@@ -179,6 +179,8 @@ export class DOMRenderer {
     if (this.disposed) return;
     const snapshot = this.session.getView(), frame = snapshot.frame, previous = this.lastView;
     if (snapshot === previous) return;
+    const focusedAction = this.document.activeElement as HTMLElement | null;
+    const restoreActionFocus = !!focusedAction && this.actions.contains(focusedAction);
     this.lastView = snapshot;
     if (snapshot.settings.opacity !== previous?.settings.opacity) this.element.style.setProperty('--vn-opacity', String(snapshot.settings.opacity));
     if (snapshot.settings.fontScale !== previous?.settings.fontScale) this.element.style.setProperty('--vn-font-scale', String(snapshot.settings.fontScale));
@@ -253,6 +255,14 @@ export class DOMRenderer {
       if (snapshot.ready && snapshot.miniGame) this.miniGameControls(snapshot);
       else if (snapshot.ready) for (const action of frame.actions) { const button = this.button(action.label, () => this.session.act(action.id)); button.dataset.action = action.id; if (action.tone) button.dataset.tone = action.tone; button.disabled = snapshot.paused; this.actions.append(button); }
       if (snapshot.ready && frame.ending) this.actions.append(this.el('span', frame.ending === 'failure' ? '调查需要重新核对' : '已到达结局'));
+      if (restoreActionFocus && this.modal.hidden) {
+        // Replaced controls must not drop keyboard reading onto document.body.
+        // Keep a surviving switch/next control; removed or disabled controls fall back to the reading host.
+        const replacement = !snapshot.paused && !snapshot.hidden ? [...this.actions.querySelectorAll<HTMLButtonElement>('button:not(:disabled)')].find(button =>
+          focusedAction.dataset.control ? button.dataset.control === focusedAction.dataset.control && button.dataset.input === focusedAction.dataset.input
+            : !!focusedAction.dataset.action && button.dataset.action === focusedAction.dataset.action) : undefined;
+        (replacement ?? this.element).focus({ preventScroll: true });
+      }
     }
     if (entered || snapshot.paused !== previous?.paused) {
       for (const id of ['auto', 'skip', 'continue', 'save', 'load', 'quick-save', 'quick-load', 'gallery', 'endings', 'history', 'evidence', 'settings', 'hide', 'restart', 'title']) this.buttons.get(id)!.disabled = snapshot.paused;

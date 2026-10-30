@@ -61,6 +61,14 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
+          name: r5-stability-evidence
+          path: |
+            test-results/r5-*/
+            test-results/r4-acceptance-*/R5_ACCEPTANCE_PANEL_REPORT.json
+            test-results/r4-acceptance-*/r5-input-read*.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
           name: r4-review-evidence
           path: |
             test-results/r4-acceptance-*/studio-ai-*.png

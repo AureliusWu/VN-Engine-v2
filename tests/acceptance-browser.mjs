@@ -11,8 +11,93 @@ const root=await fs.mkdtemp(path.resolve('test-results/r4-acceptance-')),{projec
 const source=await writeQaFixture(root,project,picture),sourceBytes=await fs.readFile(source);
 const server=await createDemoServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
 const base='http://127.0.0.1:'+server.address().port;let browser;
+async function verifyReadFailureRecovery(browser) {
+  const page=await browser.newPage();
+  try {
+    await page.route('**/r5-panel-asset.svg',route=>route.fulfill({body:picture,contentType:'image/svg+xml'}));
+    await page.goto(base+'/editor/');await page.waitForSelector('body[data-editor-ready=true]');
+    await page.evaluate(async source=>{
+      const {createAcceptancePanel}=await import('/editor/acceptance.mjs');
+      const host=document.createElement('main'),footer=document.createElement('p');document.body.replaceChildren(host,footer);
+      const state={source,pending:0,mode:'normal',release:undefined,statuses:[]};
+      const run=async fn=>{state.pending++;try{await fn();}catch(error){ctx.status(error.message,true);}finally{state.pending--;}};
+      const ctx={project:()=>JSON.parse(state.source),source:()=>state.source,assetURL:()=> '/r5-panel-asset.svg',
+        element:(tag,text,attrs={})=>{const node=document.createElement(tag);if(text!==undefined)node.textContent=text;for(const [key,value]of Object.entries(attrs))node.setAttribute(key,value);return node;},
+        action:(label,callback)=>{const button=document.createElement('button');button.textContent=label;button.addEventListener('click',()=>run(callback));return button;},
+        run,status:(text,error=false)=>{footer.textContent=text;state.statuses.push({text,error});},download:text=>state.saved=JSON.parse(text),issue:()=>{}};
+      const read=File.prototype.arrayBuffer;
+      const readText=File.prototype.text;state.openReads={};
+      File.prototype.text=function(){
+        if(!this.name.startsWith('r5-open-'))return readText.call(this);
+        return new Promise((resolve,reject)=>{state.openReads[this.name]=fail=>{delete state.openReads[this.name];if(fail)reject(Error('R5 synthetic document read failed'));else readText.call(this).then(resolve,reject);};});
+      };
+      File.prototype.arrayBuffer=function(){
+        if(this.name!=='room.svg'||state.mode==='normal')return read.call(this);
+        const mode=state.mode;state.mode='normal';
+        if(mode==='fail')throw Error('TIMEOUT: R5 synthetic evidence read failed');
+        return new Promise((resolve,reject)=>{state.release=fail=>{state.release=undefined;if(fail)reject(Error('TIMEOUT: R5 late evidence read failed'));else read.call(this).then(resolve,reject);};});
+      };
+      state.ctx=ctx;state.panel=createAcceptancePanel(ctx);state.render=()=>{host.replaceChildren();state.panel.render(host);};state.render();window.r5Acceptance=state;
+    },sourceBytes.toString());
+    const panel=page.locator('main'),verify=panel.getByRole('button',{name:'核对 AI 终审',exact:true});
+    const settled=()=>page.waitForFunction(()=>window.r5Acceptance.pending===0);
+    const pass=async()=>{await panel.locator('[data-ai-status=PASS]').waitFor();await settled();assert.equal(await page.evaluate(()=>window.r5Acceptance.ctx.qa?.release),'PASS');};
+    await panel.locator('[data-ai-acceptance-file]').setInputFiles(path.join(root,'acceptance.json'));await settled();
+    await panel.locator('[data-ai-acceptance-evidence]').setInputFiles(root);await pass();
+    await page.evaluate(()=>window.r5Acceptance.mode='fail');await verify.click();await settled();
+    await page.screenshot({path:path.join(root,'r5-input-read-failure.png'),fullPage:true});
+    assert.equal(await panel.locator('[data-ai-status]').getAttribute('data-ai-status'),'BLOCKED','A failed input read must finish with an explicit blocked panel');
+    assert.match(await panel.innerText(),/TIMEOUT: R5 synthetic evidence read failed/);
+    assert.notEqual(await page.evaluate(()=>window.r5Acceptance.ctx.qa?.release),'PASS','Failed reads must clear the previous QA pass');
+    await verify.click();await pass();assert.doesNotMatch(await panel.innerText(),/read failed/);
+    // The most recently selected document owns the open operation, regardless of read completion order.
+    const acceptance=JSON.parse(await fs.readFile(path.join(root,'acceptance.json'),'utf8'));
+    const documentFile=(name,model)=>{const document=structuredClone(acceptance);for(const review of document.reviews)review.model=model;return{name,mimeType:'application/json',buffer:Buffer.from(JSON.stringify(document))};};
+    const picker=panel.locator('[data-ai-acceptance-file]');
+    await picker.setInputFiles(documentFile('r5-open-A.json','R5 older A'));await page.waitForFunction(()=>!!window.r5Acceptance.openReads['r5-open-A.json']);
+    await picker.setInputFiles(documentFile('r5-open-B.json','R5 newer B'));await page.waitForFunction(()=>!!window.r5Acceptance.openReads['r5-open-B.json']);
+    const beforeOpen=await page.evaluate(()=>JSON.stringify(window.r5Acceptance.statuses));
+    await page.evaluate(()=>window.r5Acceptance.openReads['r5-open-A.json']());await page.waitForFunction(()=>window.r5Acceptance.pending===1);
+    await page.screenshot({path:path.join(root,'r5-document-open-order.png'),fullPage:true});
+    assert.notEqual(await page.evaluate(()=>window.r5Acceptance.panel.report?.checks[0]?.model),'R5 older A','An older document must not open after a newer selection has begun');
+    assert.equal(await page.evaluate(()=>JSON.stringify(window.r5Acceptance.statuses)),beforeOpen);
+    await page.evaluate(()=>window.r5Acceptance.openReads['r5-open-B.json']());await pass();
+    assert.equal(await page.evaluate(()=>window.r5Acceptance.panel.report?.checks[0]?.model),'R5 newer B');
+    await picker.setInputFiles(documentFile('r5-open-failed.json','R5 failed open'));await page.waitForFunction(()=>!!window.r5Acceptance.openReads['r5-open-failed.json']);
+    await page.evaluate(()=>window.r5Acceptance.openReads['r5-open-failed.json'](true));await settled();
+    assert.equal(await page.evaluate(()=>window.r5Acceptance.panel.report?.checks[0]?.model),'R5 newer B','A failed read preserves the current document and report');
+    await panel.getByRole('button',{name:'保存 AI 终审文档',exact:true}).click();await settled();
+    assert.equal(await page.evaluate(()=>window.r5Acceptance.saved.reviews[0].model),'R5 newer B');
+    await picker.setInputFiles(documentFile('r5-open-cancelled.json','R5 cancelled open'));await page.waitForFunction(()=>!!window.r5Acceptance.openReads['r5-open-cancelled.json']);
+    const chooser=page.waitForEvent('filechooser');await panel.getByRole('button',{name:'打开 AI 终审文档',exact:true}).click();await(await chooser).setFiles([]);
+    await page.evaluate(()=>window.r5Acceptance.openReads['r5-open-cancelled.json']());await settled();
+    assert.equal(await page.evaluate(()=>window.r5Acceptance.panel.report?.checks[0]?.model),'R5 newer B','Cancelling a newer picker must preserve the current review and supersede older pending reads');
+    // An older non-abortable File read may fail after a newer verification succeeds.
+    await page.evaluate(()=>window.r5Acceptance.mode='defer');await verify.click();await page.waitForFunction(()=>!!window.r5Acceptance.release);
+    assert.notEqual(await page.evaluate(()=>window.r5Acceptance.ctx.qa?.release),'PASS','In-flight verification must not retain the previous QA pass');
+    await verify.click();await panel.locator('[data-ai-status=PASS]').waitFor();
+    const completed=await page.evaluate(()=>JSON.stringify(window.r5Acceptance.statuses));
+    await page.evaluate(()=>window.r5Acceptance.release(true));await pass();
+    assert.equal(await page.evaluate(()=>JSON.stringify(window.r5Acceptance.statuses)),completed,'A superseded failure must not overwrite the new completion status');
+    // Source invalidation and leaving the panel discard both late results and late errors.
+    for(const invalidate of ['source','leave']){
+      await page.evaluate(()=>window.r5Acceptance.mode='defer');await verify.click();await page.waitForFunction(()=>!!window.r5Acceptance.release);
+      const before=await page.evaluate(invalidate=>{const state=window.r5Acceptance;if(invalidate==='source'){state.source+='\n';state.panel.changed();}else state.panel.leave();state.render();return JSON.stringify(state.statuses);},invalidate);
+      await page.evaluate(()=>window.r5Acceptance.release(true));await settled();
+      assert.equal(await panel.locator('[data-ai-status]').getAttribute('data-ai-status'),'BLOCKED');
+      assert.doesNotMatch(await panel.innerText(),/正在核对|late evidence read failed/);
+      assert.notEqual(await page.evaluate(()=>window.r5Acceptance.ctx.qa?.release),'PASS');
+      assert.equal(await page.evaluate(()=>JSON.stringify(window.r5Acceptance.statuses)),before);
+      if(invalidate==='source')await page.evaluate(()=>{const state=window.r5Acceptance;state.source=state.source.slice(0,-1);state.panel.changed();state.render();});
+      await verify.click();await pass();
+    }
+    await page.screenshot({path:path.join(root,'r5-input-read-recovered.png'),fullPage:true});
+    await fs.writeFile(path.join(root,'R5_ACCEPTANCE_PANEL_REPORT.json'),JSON.stringify({status:'PASS',syntheticReviewFixtures:true,checks:['Input read failure shows BLOCKED with the actual reason and clears the old QA pass','Retry verifies the same document and current files successfully','Most recently selected document wins delayed reads; failed reads preserve the current document and report','Pending reads invalidate old QA; superseded errors cannot overwrite a newer pass','Source changes and leaving the panel discard late read errors']},null,2)+'\n');
+  } finally {await page.close({runBeforeUnload:false});}
+}
 try {
   browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH});
+  await verifyReadFailureRecovery(browser);
   const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];let hold=false,releaseRead,readStarted;
   page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
   await page.route('**/assets/room.svg',async route=>{if(hold){readStarted?.();await new Promise(resolve=>releaseRead=resolve);}try{await route.fulfill({body:picture,contentType:'image/svg+xml'});}catch{}});

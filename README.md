@@ -1,12 +1,14 @@
 # VN Engine v2
 
-**自研叙事引擎 · v0.8.0 alpha · 缺陷修复与 AI 模拟审阅**
+**自研叙事引擎 · v0.8.1 alpha · R5 实机测试与稳定性优化**
 
 从《雨停之前》《湿性愈合》《“网”恋》《回路》中沉淀规则，并补齐自己的剧本解释器、播放调度、画面渲染、输入控制、媒体与离线打包。现在能直接执行、绘制和打包作品；主运行链无需 Ren’Py 或其他游戏引擎。
 
 ![VN Engine Studio](docs/previews/studio-desktop.png)
 
 迁移是最后阶段，**仅在用户主动、明确提出后执行**；当前持续优化引擎本体。
+
+0.8.1 按本机 Studio / 播放器操作发现的问题，修复聚焦输入保存、异步打开覆盖、鼠标到键盘的阅读焦点、动作音效暂停恢复与 AI 审核错误状态。范围与实际验证见 [R5 计划](docs/R5_PLAN.md) 和 [R5 验证](docs/VALIDATION-v0.8.1.md)。
 
 0.8 新增 [AI 模拟内容终审](docs/AI_ACCEPTANCE.md)：独立 acceptance.json、实际正文 / 图片 / 音频与源哈希绑定、SDK / CLI 和 Studio / Windows 接入，文案、美术与听感采用 AI 模拟审阅。修复审核过期、Neutral 继承、成品启动与离线依赖、目录别名误判等五类缺陷。实际技术验收与内容观察范围见 [R4 验证](docs/VALIDATION-v0.8.0.md)；引擎 alpha、作品终审、测试包与 GitHub Release 分别记录。
 
