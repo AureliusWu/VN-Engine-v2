@@ -70,7 +70,7 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "91b8d4277d7becb1d49754b70470a7db3da180453e66fbeefbf691a3025c03ef"
+      "targetSha256": "93a5ec0568e9014e38fd0e22006842e19cf2195a9bf344f7567694b2cd9f1431"
     },
     {
       "target": "editor/collections.mjs",
@@ -418,7 +418,7 @@
       "target": "hosts/windows/VNEngine.Windows.csproj",
       "mode": "new",
       "origins": [],
-      "targetSha256": "548e24c138025684fe1f83c7beba2fa8cf23ff9046f85f8cfdcc6168d2e6c0bf"
+      "targetSha256": "80baed7656d01c59b5e24e6714679f15076c8b43d6cc536d9b9c694de7a7af38"
     },
     {
       "target": "licenses/Healing-LICENSE.txt",
@@ -963,7 +963,7 @@
       "target": "src/render/dom.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "39ed689e749c5c67f9261044a41b88414ec4f1e57b25d3b189fe714f2e78bef7"
+      "targetSha256": "874abdd14b3c19f233a8b17ab1df52891f920089c61e7c0da4c4bc870193d095"
     },
     {
       "target": "src/render/key-visual.ts",
@@ -987,7 +987,7 @@
       "target": "src/runtime/media.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "56eea71f0493aa7609dead8c70243ac6ea182a11968e22a1df5732235318df56"
+      "targetSha256": "008caa26939a91107db783c2b1a6f102f3d3fe5853d61c8f4eee0e1d1c851224"
     },
     {
       "target": "src/runtime/project.ts",
@@ -1146,7 +1146,7 @@
       "target": "src/version.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "17b14a73ffbc301402f36db99c5d01511c340c4c3e85e8dfcbea6368373775f3"
+      "targetSha256": "e7df490ae02002612530f40219ff1486d58ef0f85d49004ca3db403f20f94a74"
     },
     {
       "target": "tools/acceptance-node.mjs",
@@ -1266,13 +1266,19 @@
       "target": "tools/package-game.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "3e48852f9ce537164f56d984f58f8260479d10d1a36dbfc4885543bf5a873497"
+      "targetSha256": "a4f54c9c614a146a02861bb3c02870096121975668d107cb991b15609ec2674e"
+    },
+    {
+      "target": "tools/package-output.mjs",
+      "mode": "new",
+      "targetSha256": "5fca62d3fc9116846b53082ef68ec883fe34bb4cebcff40759177066ce21393c",
+      "origins": []
     },
     {
       "target": "tools/package-studio.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "4c6978438e189ed4b51b15f07e188996481b93489acd0902502f9c8e33a934e3"
+      "targetSha256": "a412facdeff7b100d04bdbe856a4cdb7cb5510b28fdecf2bb9e51bfa2af97b06"
     },
     {
       "target": "tools/probe-assets.mjs",

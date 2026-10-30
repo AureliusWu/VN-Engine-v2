@@ -1,0 +1,111 @@
+{
+  "round": "R6",
+  "date": "2026-10-30",
+  "engineVersion": "0.8.2",
+  "baselineCommit": "b297a570e0156183b334552cd469ba8621abc78d",
+  "provenanceFiles": 179,
+  "manual": {
+    "environment": "Windows Edge, actual controlled browser at http://127.0.0.1:4173/editor/",
+    "observedVersionAfterFix": "0.8.2",
+    "jsonActiveTab": "PASS: unapplied title survives repeated active-tab click; applying updates the actual project heading",
+    "hiddenKeyboard": "PASS: mouse hide, H restore, H hide, mouse restore, numeric 1 reaches the actual ending",
+    "subjectiveListening": "UNVERIFIED",
+    "physicalMobileDevices": "UNVERIFIED"
+  },
+  "local": {
+    "browser": "Microsoft Edge 156.0.4314.50, isolated headless profiles",
+    "nodeCheck": {
+      "total": 246,
+      "passed": 242,
+      "fixtureSetupFailed": 4,
+      "skipped": 0,
+      "reason": "Windows EPERM creating existing symbolic-link fixtures"
+    },
+    "python": {
+      "passed": 6,
+      "failed": 0
+    },
+    "schemas": "PASS",
+    "sampleSpecifications": 4,
+    "studioGroupsPassed": 6,
+    "runtimeGroupsPassed": 4,
+    "mediaAndStabilityNodePassed": 25,
+    "packageTestsPassed": 13,
+    "completeBrowserSuite": "PASS",
+    "completeEditorSuite": "PASS",
+    "fourSampleQa": {
+      "preCommitRoutes": "PASS",
+      "preCommitFiles": "PASS",
+      "preCommitDecoding": "PASS",
+      "preCommitBuild": "FAIL_NO_COMMIT_LOCK",
+      "reason": "UNVERIFIED is intentionally rejected as a final build identity",
+      "lockedSourceResultLocation": "R6 PR validation record and exact-head CI artifacts"
+    },
+    "logs": [
+      "test-results/r6-check-final.log",
+      "test-results/r6-browser-final.log",
+      "test-results/r6-editor-final.log"
+    ],
+    "reports": [
+      "test-results/r6-studio/r6-studio-browser.json",
+      "test-results/r6-runtime/r6-runtime-browser.json",
+      "test-results/r6-package/package-tests.xml"
+    ]
+  },
+  "preservedFailures": [
+    {
+      "scope": "Original active JSON tab",
+      "log": "test-results/r6-studio-before.log",
+      "result": "raw-text preservation assertion fails"
+    },
+    {
+      "scope": "First Studio fix debounce gap",
+      "log": "test-results/r6-studio-debounce-before.log",
+      "result": "immediate storage assertion fails with held draft timer",
+      "resolution": "synchronously persist confirmed discard"
+    },
+    {
+      "scope": "Original media Node",
+      "log": "test-results/r6-baseline-media.log",
+      "failed": 3
+    },
+    {
+      "scope": "Original runtime browser",
+      "report": "test-results/r6-baseline/r6-runtime/r6-runtime-browser.json",
+      "passedGroups": 2,
+      "failedGroups": 2
+    },
+    {
+      "scope": "Original packaging",
+      "log": "test-results/r6-package-before.log",
+      "passed": 1,
+      "failed": 6
+    },
+    {
+      "scope": "Initial path validator",
+      "reason": "sorted-adjacent comparison misses a / a-foo / A/b",
+      "resolution": "check every path ancestor"
+    },
+    {
+      "scope": "Local pre-commit sample QA",
+      "log": "test-results/r6-qa-final.log",
+      "reason": "Build identity differs from current source/engine or has no commit lock",
+      "resolution": "Validate again after the source commit using its actual SHA; retain the unlocked failure"
+    }
+  ],
+  "deliveryEvidence": {
+    "location": "Merged R6 PR description and main GitHub Actions",
+    "mainActions": "https://github.com/AureliusWu/VN-Engine-v2/actions?query=branch%3Amain",
+    "required": [
+      "exact-head PR core/browser/windows success",
+      "merged PR",
+      "exact merged-main Engine/Windows success",
+      "clean identical local/remote main and no temporary branches"
+    ]
+  },
+  "limitations": [
+    "Manual observations, headless HTML media checks and actual native CI are distinct evidence.",
+    "Empty target replacement has a short rmdir-to-rename gap; portable Node checks are not an OS sandbox against malicious concurrent ancestor replacement.",
+    "Synthetic projects do not approve formal content. Four formal games were not migrated. No GitHub Release is created."
+  ]
+}

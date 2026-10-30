@@ -1,10 +1,11 @@
 import {loadAcceptanceOptions} from './acceptance-node.mjs';
-import { mkdir, readFile, writeFile, readdir, stat, realpath } from 'node:fs/promises';
+import { readFile, readdir, realpath } from 'node:fs/promises';
 import { resolve, dirname, relative, sep } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { createProject, localAssetPath, ENGINE_VERSION, validateProjectCompliance, ReleaseArtGateError, ReleaseQaGateError, ReleaseRouteGateError } from '../dist/index.js';
 import { fingerprintFiles, renderWorker } from './pwa.mjs';
+import { checkOutputDirectory, publishOutputDirectory, validateOutputPaths } from './package-output.mjs';
 
 const repository = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const escape = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
@@ -25,9 +26,7 @@ function buildTimestamp() {
 /** Bundle local author data with our compiled runtime; no game engine downloads. */
 export async function packageGame(projectFile, output, options = {}) {
   const source = resolve(projectFile), sourceRoot = await realpath(dirname(source)), destination = resolve(output);
-  let existing;
-  try { existing = await stat(destination); } catch (error) { if (error.code !== 'ENOENT') throw error; }
-  if (existing && (!existing.isDirectory() || (await readdir(destination)).length)) throw new Error('Output must be a new or empty directory; existing files are preserved');
+  await checkOutputDirectory(destination);
   const sourceBytes=await readFile(source);
   const project = JSON.parse(sourceBytes);
   const complianceMode = process.env.VN_RELEASE_BUILD === '1' ? 'release' : 'development';
@@ -37,7 +36,7 @@ export async function packageGame(projectFile, output, options = {}) {
   for (const asset of project.assets) {
     if (!localAssetPath(asset.src)) throw new Error('Asset must be a local relative path');
     if (asset.kind === 'font' && !asset.license) throw new Error('Bundled font needs its own license record');
-    if (/^(lib\/|index.html$|app.mjs$|project.json$|sw.js$|build-manifest.json$|manifest.webmanifest$|icon.svg$|LICENSE.txt$)/.test(asset.src)) throw new Error('Asset path collides with a generated file');
+    if (/^(lib(?:\/|$)|index\.html$|app\.mjs$|project\.json$|sw\.js$|build-manifest\.json$|manifest\.webmanifest$|icon\.svg$|LICENSE\.txt$)/i.test(asset.src)) throw new Error('Asset path collides with a generated file');
     const path = await realpath(resolve(sourceRoot, asset.src));
     if (!path.startsWith(sourceRoot + sep)) throw new Error('Asset symlink leaves the project directory');
     const bytes = await readFile(path);
@@ -45,7 +44,7 @@ export async function packageGame(projectFile, output, options = {}) {
     if (asset.sha256 && asset.sha256 !== digest) throw new Error(`Asset checksum mismatch: ${asset.id}`);
     files.set(asset.src, bytes);
     if (asset.license) {
-      if (!localAssetPath(asset.license.src) || /^(lib\/|index.html$|app.mjs$|project.json$|sw.js$|build-manifest.json$|manifest.webmanifest$|icon.svg$|LICENSE.txt$)/.test(asset.license.src)) throw new Error('Invalid or conflicting license path');
+      if (!localAssetPath(asset.license.src) || /^(lib(?:\/|$)|index\.html$|app\.mjs$|project\.json$|sw\.js$|build-manifest\.json$|manifest\.webmanifest$|icon\.svg$|LICENSE\.txt$)/i.test(asset.license.src)) throw new Error('Invalid or conflicting license path');
       const license = await realpath(resolve(sourceRoot, asset.license.src));
       if (!license.startsWith(sourceRoot + sep)) throw new Error('License leaves the project directory');
       files.set(asset.license.src, await readFile(license));
@@ -72,6 +71,7 @@ catch(failure){error.textContent='启动未完成：'+failure.message;}
   files.set('icon.svg', Buffer.from('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" rx="36" fill="#1d393e"/><path d="M48 136V56h22l52 54V56h22v80h-22L70 82v54z" fill="#c2ebd5"/></svg>'));
   files.set('manifest.webmanifest', Buffer.from(JSON.stringify({ id: './', name: project.title, short_name: project.title, start_url: './', scope: './', display: 'standalone', background_color: '#111820', theme_color: '#1d393e', icons: [{ src: 'icon.svg', sizes: 'any', type: 'image/svg+xml', purpose: 'any' }] })));
   files.set('LICENSE.txt', await readFile(resolve(repository, 'LICENSE')));
+  validateOutputPaths(files.keys());
   const bytes = [...files].map(([name, bytes]) => ({ name, bytes }));
   const version = fingerprintFiles(bytes);
   files.set('sw.js', Buffer.from(renderWorker({ namespace: 'vn-self-' + project.game, version, urls: [...files.keys()] })));
@@ -94,8 +94,7 @@ catch(failure){error.textContent='启动未完成：'+failure.message;}
   files.set('build-manifest.json', Buffer.from(JSON.stringify(metadata, null, 2) + '\n'));
   await options.onPhase?.('snapshot-ready');
   if(!sourceBytes.equals(await readFile(source)))throw Error('SOURCE_CONFLICT: Project changed during build');
-  await mkdir(destination, { recursive: true });
-  for (const [name, bytes] of files) { const path = resolve(destination, name); if (!path.startsWith(destination + sep)) throw new Error('Unsafe output path'); await mkdir(dirname(path), { recursive: true }); await writeFile(path, bytes); }
+  await publishOutputDirectory(destination, files);
   return { output: destination, files: files.size, game: project.game, fingerprint: version };
 }
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

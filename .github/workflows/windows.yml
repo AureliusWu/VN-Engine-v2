@@ -30,12 +30,24 @@ jobs:
       - name: Verify R5 authoring, focus and audio regressions on Windows
         run: |
           node --test tests/runtime-media.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tests/r5-studio-browser.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tests/r5-runtime-browser.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tests/r5-feedback-browser.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tests/acceptance-browser.mjs
       - name: Execute AI CLI flows and machine error checks on Windows
         run: node tools/test-agent-cli.mjs test-results/agent-cli
+      - name: Verify R6 drafts, hidden focus, first cues and portable output protection
+        run: |
+          New-Item -ItemType Directory -Force test-results/r6-package | Out-Null
+          node --test --test-reporter=spec --test-reporter-destination=stdout --test-reporter=junit --test-reporter-destination=test-results/r6-package/package-tests.xml tests/r6-package.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tests/r6-studio-browser.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tests/r6-runtime-browser.mjs
       - name: Execute six-discipline creative CLI flow with actual media probes and draft release gate
         run: node tools/creative-example.mjs test-results/creative-cli --cli --no-preview
       - name: Execute R3 two-revision CLI flow with source-bound feedback and new audio bytes
@@ -43,6 +55,7 @@ jobs:
       - name: Bundle local editor and independent engine sample
         run: |
           node tools/package-studio.mjs build/windows/site
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           node tools/package-game.mjs examples/runtime/campus.json build/windows/demo-game
       - name: Include source-bound creative sample for native WebView2 checks
         shell: pwsh
@@ -90,6 +103,7 @@ jobs:
           path: |
             test-results/windows/*.json
             test-results/windows/*.png
+            test-results/r6-*/
             test-results/agent-cli/
             test-results/creative-cli/CREATIVE_REPORT.json
             test-results/creative-cli/MEDIA_REPORT.json

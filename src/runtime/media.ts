@@ -14,6 +14,7 @@ export class MediaDirector {
   private musicBus: GainNode;
   private ambienceBus: GainNode;
   private effect?: HTMLAudioElement;
+  private pendingEffect?: string;
   private effectPaused = false;
   private effectAttempt = 0;
   private visit = -1;
@@ -92,15 +93,19 @@ export class MediaDirector {
     if (snapshot.visit !== this.visit) {
       this.visit = snapshot.visit; this.stopEffect();
       const source = settings.soundEffects ? this.audioURL(frame.stage.sound) : undefined;
-      if (source && ['start', 'advance', 'action'].includes(snapshot.reason) && this.playable) {
-        try {
-          const player = this.createAudio(source); this.effect = player; player.volume = settings.masterVolume * settings.seVolume;
-          player.onended = () => { if (this.effect === player) this.stopEffect(); };
-          player.onerror = () => { if (this.effect === player) { this.stopEffect(); this.options.onError?.('动作音效暂时无法播放'); } };
-          this.playEffect(player);
-        } catch { this.stopEffect(); this.options.onError?.('动作音效暂时不可用，可以继续阅读'); }
-      }
+      if (source && ['start', 'advance', 'action'].includes(snapshot.reason)) this.pendingEffect = source;
     } else if (!settings.soundEffects) this.stopEffect();
+    if (this.pendingEffect && this.playable) {
+      // A title/new-game panel may still pause the first visit. Consume its cue only once it becomes readable.
+      // Clear before creating/playing so a failure or reentrant notification cannot schedule it again.
+      const source = this.pendingEffect; this.pendingEffect = undefined;
+      try {
+        const player = this.createAudio(source); this.effect = player; player.volume = settings.masterVolume * settings.seVolume;
+        player.onended = () => { if (this.effect === player) this.stopEffect(); };
+        player.onerror = () => { if (this.effect === player) { this.stopEffect(); this.options.onError?.('动作音效暂时无法播放'); } };
+        this.playEffect(player);
+      } catch { this.stopEffect(); this.options.onError?.('动作音效暂时不可用，可以继续阅读'); }
+    }
     if (this.effect) {
       const player = this.effect; player.volume = settings.masterVolume * settings.seVolume;
       if (player.ended) this.stopEffect();
@@ -162,7 +167,7 @@ export class MediaDirector {
     } catch { this.options.onError?.('声音尚未启用，可再次点击声音按钮'); }
   }
   private stopEffect() {
-    this.effectAttempt++; this.effectPaused = false;
+    this.pendingEffect = undefined; this.effectAttempt++; this.effectPaused = false;
     const player = this.effect; if (!player) return; this.effect = undefined;
     player.onended = null; player.onerror = null; player.pause(); player.removeAttribute('src'); player.load();
   }

@@ -244,7 +244,12 @@ export class DOMRenderer {
       else this.text.textContent = snapshot.text;
     }
     if (snapshot.hidden !== previous?.hidden) {
+      const hidingFocus = !!focusedAction && (snapshot.hidden
+        ? this.reading.contains(focusedAction) || this.toolbar.contains(focusedAction) || this.hotspots.contains(focusedAction)
+        : this.restoreButton.contains(focusedAction));
       this.reading.hidden = snapshot.hidden; this.toolbar.hidden = snapshot.hidden; this.restoreButton.hidden = !snapshot.hidden; this.hotspots.hidden = snapshot.hidden;
+      // A hidden toolbar/restore button must not strand keyboard input on that button or document.body.
+      if (hidingFocus && this.modal.hidden) this.element.focus({ preventScroll: true });
     }
     if (entered || snapshot.ready !== previous?.ready || snapshot.paused !== previous?.paused) for (const button of this.hotspots.querySelectorAll('button')) button.disabled = !snapshot.ready || snapshot.paused;
     if (entered && snapshot.miniGameError) this.notify(snapshot.miniGameError);

@@ -350,14 +350,18 @@ function renderAssets() {
   });
 }
 function switchTab(next) {
-  if (tab === 'source' && next !== 'source' && $('source').value !== savedSource && !confirm('JSON 面板有尚未应用的文本，仍要切换吗？')) return;
+  const enteringSource = next === 'source' && tab !== 'source';
+  const discardingSource = tab === 'source' && next !== 'source' && $('source').value !== savedSource;
+  if (discardingSource && !confirm('JSON 面板有尚未应用的文本，仍要切换吗？')) return;
   if(next!=='production')production.leave();
   tab = next; for (const name of ['story', 'structure', 'assets', 'collections', 'routes', 'production', 'source']) { $(name + '-panel').hidden = name !== tab; document.querySelector(`[data-tab=${name}]`).setAttribute('aria-pressed', String(name === tab)); }
-  if (tab === 'assets') renderAssets(); if (tab === 'source') { $('source').value = model.serialize(true); savedSource = $('source').value; }
+  if (tab === 'assets') renderAssets(); if (enteringSource) { $('source').value = model.serialize(true); savedSource = $('source').value; }
   if (tab === 'collections') renderCollections();
   if (tab === 'structure') renderStructure();
   if (tab === 'routes') routes.render();
   if (tab === 'production') production.render();
+  syncDirty();
+  if (discardingSource) saveDraft();
 }
 function renderStructure() {
   renderStructureEditor($('structure-list'), { element, field, action, model, project: model.getView().project, mutate, set,
