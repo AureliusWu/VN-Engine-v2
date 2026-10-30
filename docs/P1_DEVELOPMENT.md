@@ -6,6 +6,8 @@
 
 `createResourcePlan(project, position?, options?)` 是纯只读查询，返回冻结的 `vn-resource-plan-v1`。支持四类项目，输出 active / candidates、资源 ID / kind / src、owner、统一 SourceOrigin、距离、已知估算与未知项、访问预算和截断标记。静态图对条件分支取候选，不执行条件、driver 或自定义 presentation callback。当前实际 frame.stage 是 active 的权威输入；缺少当前舞台或动态演出时明确报告 unknown，不把静态猜测称为精确依赖。深度、访问数和候选数有界；只规范化已访问节点 / 台词，不复制完整剧本。估算字节来自可选宿主提示，不冒充实际解码内存。
 
+v1.2.1 的调查图在内部区分章节 ID 与节点 ID，即使两者包含 `/` 也不会相互覆盖。调用方可传实际 frame 的 `sceneId + lineId` 或显式 `chapterId + sceneId`；只给一个有多种拆分的组合 ID 时返回 `unknown-position`，不猜测章节。公开 lineId、owner、来源路径和舞台键沿用既有格式，这不改变存档协议。
+
 `ResourcePrefetcher` 只下载编码字节。默认预算为并发 2、队列 32、单次 2 MiB、编码缓存加在途预留 8 MiB。宿主可设置更低 / 更高的有限预算。流式读取检查实际长度，不能依靠 Content-Length 绕过上限；超过限制或失败则退出该次意图，仅在新计划后重试。相同 asset ID 共享工作；改变分支、暂停、隐藏或 dispose 取消过期候选。不遵守 abort 的注入 loader 仍占用物理槽和预算，直到 settle，旧响应不能发布。
 
 当前资源不会被预取驱逐。`retain(owner, ids)` / `release(owner)` 为宿主提供额外持有；释放须在消费者停止使用 URL 后进行。Blob URL 仅在已缓存资源成为 active / retained 时按需创建，安全释放后撤销；speculative 数据本身不创建图片、字体或媒体元素。原有 BGM 的两轨 / 32 MiB 解码 LRU 继续独立工作。这里的预算是编码载荷与在途预留，不是 JS 堆、浏览器 HTTP / SW cache、GPU 图像、流媒体缓冲或总进程内存上限。

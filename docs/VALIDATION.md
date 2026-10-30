@@ -1,5 +1,9 @@
 # 引擎验证记录
 
+## v1.2.1 本地与云端联调
+
+修复调查资源定位，统一完整本地 / CI 浏览器与作者专项入口；[本轮验证](VALIDATION-v1.2.1.md) 区分旧码失败、修复回归、Windows 本地符号链接限制及相同提交的云端证据。四作没有迁移。
+
 ## v1.2.0 P1 资源计划与文本 DSL
 
 本轮只改引擎，不迁移四作。预算预取、JSON IR 编译前端、来源 / owner、Studio / Agent、兼容与真实浏览器 / 包证据见 [1.2.0 验证](VALIDATION-v1.2.0.md)。本机完整核心保留 4 项 Windows symlink EPERM 限制；computer-use 捕获原生窗口超时、恢复失败，该项未计通过。Linux 核心与 Windows 实际 WebView2 / 进程重启的最终状态以本轮 PR 和 main 工作流为准。

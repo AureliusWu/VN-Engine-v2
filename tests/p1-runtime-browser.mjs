@@ -91,6 +91,44 @@ try {
     assert.ok(!(await page.locator('.vn-background').getAttribute('src')).startsWith('blob:'));
     await page.unroute('**/assets/p1-b.svg');
   });
+  await check('Investigation prefix chapters use the actual frame for prefetch, display and restore', async () => {
+    const before = count.b;
+    await page.evaluate(async () => {
+      globalThis.p1Game?.dispose();
+      const api = await import('./lib/index.js');
+      const chapter = (id, order) => ({ id, order, title: id, entryNode: 'start', evidence: {}, requiredEvidence: [], nodes: {
+        start: { kind: 'choice', text: '章节资源选择', location: '', time: '', progress: 0, actions: [{ id: 'go', label: '继续调查', next: 'end' }] },
+        end: { kind: 'ending', text: '章节资源完成', location: '', time: '', progress: 100, outcome: 'complete', actions: [] }
+      } });
+      const project = { schema: 1, game: 'p1-prefix-browser', version: '1', title: '章节资源', type: 'investigation',
+        assets: ['a', 'b', 'c'].map(id => ({ id, kind: 'background', src: `assets/p1-${id}.svg` })),
+        chapters: [chapter('a', 1), chapter('a/b', 0)], settings: { textDelayMs: 0 },
+        stage: { nodes: { 'a/start': { background: 'c' }, 'a/end': { background: 'c' }, 'a/b/start': { background: 'a' }, 'a/b/end': { background: 'b' } } }
+      };
+      globalThis.p1Game = api.mountGame(document.getElementById('game'), project, { storage: null, audio: false,
+        prefetch: { maxConcurrent: 1, maxTransferBytes: 4096, maxBytes: 8192, plan: { maxDepth: 1, maxVisits: 4 } } });
+    });
+    const initial = await snapshot();
+    assert.deepEqual(initial.plan.candidates.map(item => item.assetId), ['b']);
+    assert.equal(initial.plan.candidates[0].origins[0].chapterId, 'a/b');
+    assert.ok(!initial.plan.unknown.some(item => item.reason === 'unknown-position'));
+    await page.waitForFunction(() => p1Game.resourceSnapshot().cache.ready === 1);
+    assert.equal(count.b, before + 1);
+    const saved = await page.evaluate(() => p1Game.session.save());
+    await page.getByRole('button', { name: '继续调查', exact: true }).click();
+    await page.waitForFunction(() => {
+      const image = document.querySelector('.vn-background');
+      return image?.src.startsWith('blob:') && image.naturalWidth > 0 && !image.hidden;
+    });
+    assert.equal(await page.locator('.vn-background').getAttribute('src').then(value => value.startsWith('blob:')), true);
+    assert.equal(count.b, before + 1);
+    assert.equal(await page.evaluate(() => p1Game.session.getView().frame.lineId), 'a/b/end');
+    await page.evaluate(saved => p1Game.session.restore(saved), saved);
+    assert.deepEqual(await page.evaluate(() => p1Game.session.save()), saved);
+    assert.equal(await page.evaluate(() => p1Game.session.getView().frame.lineId), 'a/b/start');
+    assert.deepEqual((await snapshot()).plan.candidates.map(item => item.assetId), ['b']);
+    await page.screenshot({ path: output + '/investigation-prefix-player.png', fullPage: true });
+  });
   await check('Hidden mount cancels speculation and disposal releases cached bytes and URLs', async () => {
     await mount({ enabled: true }); await page.waitForFunction(() => p1Game.resourceSnapshot().cache.ready === 1);
     await page.evaluate(() => window.dispatchEvent(new CustomEvent('vn-engine-host-visibility', { detail: { hidden: true } })));

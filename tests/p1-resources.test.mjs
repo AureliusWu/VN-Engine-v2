@@ -2,6 +2,8 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createResourcePlan, RESOURCE_PLAN_VERSION } from '../dist/assets/plan.js';
 import { ResourcePrefetcher, fetchResourceBytes } from '../dist/assets/prefetch.js';
+import { InvestigationEngine } from '../dist/investigation/engine.js';
+import { InvestigationDriver } from '../dist/runtime/drivers.js';
 
 const asset = (id, kind = 'background') => ({ id, kind, src: `assets/${id.replaceAll('/', '-')}.bin` });
 const base = (type = 'script') => ({ schema: 1, game: 'p1-resources', version: 'story-v1', title: 'Resource fixture', type,
@@ -93,6 +95,67 @@ test('investigation and Rain plans preserve chapter/response origins and do not 
   assert.deepEqual(rainPlan.candidates[0].origins[0].path, ['story', 'nodes', 0, 'choices', 0, 'response', 0, 'bgm']);
   const responsePlan = createResourcePlan(rain, { sceneId: '@response/one/go', lineId: 'response', stage: { music: 'music' } });
   assert.equal(responsePlan.candidates[0].assetId, 'next');
+});
+
+test('investigation resource positions distinguish prefix chapters and colliding combined IDs', () => {
+  const node = (next) => ({ kind: next ? 'dialogue' : 'ending', text: 'Investigation fixture', location: '', time: '',
+    progress: next ? 0 : 100, actions: next ? [{ id: 'go', label: 'Go', next }] : [],
+    ...(next ? {} : { outcome: 'complete', requiresEvidence: [] }) });
+  for (const colliding of [false, true]) for (const reverse of [false, true]) {
+    const first = { id: 'a', order: 0, title: 'First', entryNode: colliding ? 'b/start' : 'start', evidence: {}, requiredEvidence: [],
+      nodes: { [colliding ? 'b/start' : 'start']: node('a-only'), 'a-only': node() } };
+    const second = { id: 'a/b', order: 1, title: 'Second', entryNode: 'start', evidence: {}, requiredEvidence: [],
+      nodes: { start: node('end'), end: node() } };
+    const project = { ...base('investigation'), chapters: reverse ? [second, first] : [first, second],
+      stage: { nodes: { 'a/a-only': { background: 'branch' }, 'a/b/end': { background: 'next' } } } };
+    const driver = new InvestigationDriver(project.game, project.version, new InvestigationEngine(project.chapters), project.stage);
+    const check = (position, expected, chapterId, nodeId) => {
+      const result = createResourcePlan(project, position, { maxDepth: 1 });
+      assert.deepEqual(result.candidates.map(item => item.assetId), [expected], JSON.stringify({ colliding, reverse, position, result }));
+      assert.ok(!result.unknown.some(item => item.reason === 'unknown-position'));
+      assert.equal(result.candidates[0].origins[0].chapterId, chapterId);
+      assert.equal(result.candidates[0].origins[0].nodeId, nodeId);
+      const path = result.candidates[0].origins[0].path;
+      assert.equal(path.reduce((value, key) => value[key], project), expected);
+    };
+    const firstFrame = driver.frame();
+    check(firstFrame, 'branch', 'a', 'a-only');
+    check({}, 'branch', 'a', 'a-only');
+    check({ chapterId: 'a', sceneId: first.entryNode }, 'branch', 'a', 'a-only');
+    assert.equal(driver.advance(), true);
+    assert.equal(driver.act('@chapter:a/b'), true);
+    const secondFrame = driver.frame();
+    assert.equal(secondFrame.sceneId, 'start'); assert.equal(secondFrame.lineId, 'a/b/start');
+    if (colliding) assert.equal(firstFrame.lineId, secondFrame.lineId);
+    check(secondFrame, 'next', 'a/b', 'end');
+    check({ chapterId: 'a/b', sceneId: 'start' }, 'next', 'a/b', 'end');
+    if (colliding) {
+      const ambiguous = createResourcePlan(project, { lineId: 'a/b/start' });
+      assert.deepEqual(ambiguous.candidates, []);
+      assert.ok(ambiguous.unknown.some(item => item.reason === 'unknown-position'));
+    } else check({ lineId: 'a/b/start' }, 'next', 'a/b', 'end');
+    const save = driver.save(); driver.reset(); driver.restore(save);
+    assert.deepEqual(driver.frame(), secondFrame);
+    check(driver.frame(), 'next', 'a/b', 'end');
+  }
+});
+
+test('missing resource target diagnostics keep public node owners for every project type', () => {
+  const missing = 'missing/target';
+  const projects = [
+    { ...base('script'), program: { schema: 1, game: 'p1-resources', version: 'story-v1', entry: 'start', variables: {},
+      blocks: [{ id: 'start', lines: [{ id: 'one', speaker: 'N', text: 'One' }], exit: { type: 'jump', next: missing } }] } },
+    { ...base('narrative'), scenes: [{ id: 'start', lines: [{ id: 'one', speaker: 'N', text: 'One' }], next: missing }] },
+    { ...base('rain'), story: { entry: 'start', nodes: [{ id: 'start', lines: [{ id: 'one', speaker: 'n', text: 'One' }], next: missing }] } },
+    { ...base('investigation'), chapters: [{ id: 'a/b', order: 0, entryNode: 'start', nodes: {
+      start: { actions: [{ next: missing }] }
+    } }] }
+  ];
+  for (const project of projects) {
+    const result = createResourcePlan(project);
+    const target = result.unknown.find(item => item.reason === 'missing-target');
+    assert.equal(target?.owner, `node:${project.type === 'investigation' ? 'a/b/' : ''}${missing}`, project.type);
+  }
 });
 
 test('unknown source positions preserve actual active media and never pretend to be the entry', () => {

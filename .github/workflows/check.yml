@@ -44,21 +44,10 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npx playwright install --with-deps chromium
-      - run: npm run test:browser
-      - name: Run the complete focused Studio suite
-        run: npm run test:editor
-      - name: Verify P0 runtime evidence, source binding and Studio lifecycle
-        run: |
-          node tests/p0-runtime-browser.mjs
-          node tests/p0-studio-browser.mjs
-          node tests/p0-preview-browser.mjs
+      - name: Run the complete browser and Studio suite, including P0 and P1
+        run: npm run test:browser
       - name: Require authored routes and generate source-bound alpha QA reports with decode and standalone checks
         run: node tools/qa-samples.mjs
-      - name: Verify P1 budgeted resource reuse and text author frontend
-        run: |
-          node tests/p1-runtime-browser.mjs
-          node tests/p1-studio-browser.mjs
-          node tests/p1-package-browser.mjs
       - uses: actions/upload-artifact@v4
         with:
           name: alpha-qa-reports

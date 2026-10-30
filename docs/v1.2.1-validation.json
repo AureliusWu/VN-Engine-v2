@@ -1,0 +1,125 @@
+{
+  "schema": 1,
+  "date": "2026-10-30",
+  "engineVersion": "1.2.1",
+  "baseCommit": "e3db4c4f3735e67469f16183c38c9197da72ad0c",
+  "scope": {
+    "sourceGamesMigrated": false,
+    "publicRuntimeOrSaveFormatChanged": false,
+    "newDependencies": false,
+    "releaseOrTagCreated": false
+  },
+  "regressions": {
+    "chapterPrefixAndCombinedIdCollision": "Old Node and real Chromium assertions failed; fixed Node/Chromium pass",
+    "missingTargetOwner": "Old internal key leaked to owner; four-project-type regression now passes",
+    "entryPoints": {
+      "browserScripts": 41,
+      "editorScripts": 19,
+      "p0p1BrowserScripts": 6,
+      "editorSubsetOfBrowser": true
+    }
+  },
+  "local": {
+    "nodeVersion": "v24.14.0",
+    "check": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 325,
+      "pass": 321,
+      "fail": 4,
+      "skipped": 0,
+      "reason": "Same four Windows EPERM failures creating symlink fixtures as baseline; no tests bypassed",
+      "log": "test-results/v1.2.1-check-final.log"
+    },
+    "p1Node": {
+      "status": "PASS",
+      "total": 38,
+      "skipped": 0,
+      "log": "test-results/v1.2.1-p1-final.log"
+    },
+    "completeBrowserSuite": {
+      "status": "PASS",
+      "log": "test-results/v1.2.1-browser-final.log",
+      "cleanBuild": true
+    },
+    "completeEditorSuite": {
+      "status": "PASS",
+      "log": "test-results/v1.2.1-editor-final.log",
+      "cleanBuild": true
+    },
+    "python": {
+      "status": "PASS",
+      "total": 6
+    },
+    "schemas": "PASS",
+    "provenance": {
+      "status": "PASS",
+      "files": 194
+    },
+    "projectSchemas": {
+      "status": "PASS",
+      "total": 4
+    },
+    "prefixBrowserCases": 7,
+    "independentReview": "PASS after image wait and public diagnostic owner fixes"
+  },
+  "performance": {
+    "node": "v24.14.0",
+    "method": "same process; 300 warmups, 5 alternating samples of 1000 plans; 65-node investigation; static stage; 32 depth",
+    "baseline": {
+      "millisecondsPerPlan": [
+        0.13407889999999997,
+        0.1161146,
+        0.12362220000000002,
+        0.1081051,
+        0.11699929999999995
+      ],
+      "median": 0.11699929999999995,
+      "worst": 0.13407889999999997
+    },
+    "current": {
+      "millisecondsPerPlan": [
+        0.14223720000000004,
+        0.16032039999999995,
+        0.12206849999999997,
+        0.1300461999999999,
+        0.11837200000000007
+      ],
+      "median": 0.1300461999999999,
+      "worst": 0.16032039999999995
+    },
+    "growth": 0.11151263298156433,
+    "verdict": "WARN",
+    "scope": "Local planner microbenchmark only; no network, renderer, device or total-memory claim"
+  },
+  "evidence": [
+    "test-results/investigation-prefix-old-code.log",
+    "test-results/prefix-browser-old.log",
+    "test-results/investigation-owner-old-code.log",
+    "test-results/p1-runtime/REPORT.json",
+    "test-results/p1-runtime/investigation-prefix-player.png"
+  ],
+  "ci": {
+    "status": "Not predeclared; verify exact pushed SHA",
+    "report": "test-results/v1.2.1-cloud.json",
+    "required": [
+      "Engine checks/core",
+      "Engine checks/browser",
+      "Windows native host/windows"
+    ]
+  },
+  "manualSystemDialogs": "NOT_RUN",
+  "physicalDevices": "NOT_RUN",
+  "subjectiveListening": "NOT_RUN",
+  "sourceHashBasis": "UTF-8 text normalized from CRLF to LF to match Git content",
+  "sourceSha256": {
+    "src/assets/plan.ts": "4a03f6eb5ff608cfb9fdfaddf6821318720b997c0422df988a09714a1045255d",
+    "tests/p1-resources.test.mjs": "dbc85476a58cd89db02bbfbe66be0a0a968d9c36976960388887194daf1b3f87",
+    "tests/p1-runtime-browser.mjs": "a51db8f03403613b100c85bf33da8f55da17461ace3f2a8c67e4c2fcd161a021",
+    "src/version.ts": "6bc5e0fd9b0153a1cc20d58669d51f537320e8fb84d89f0eabb7e2c242311f68",
+    "hosts/windows/VNEngine.Windows.csproj": "908aaaed19967c7922edcd8931d75151d495787013dc8fbb29b2a27bbe6f0919",
+    "package.json": "c9f0c8f1788a0d7091a23d01a5ed733c3ef59022646004c074410652732d3ca7",
+    "package-lock.json": "7e550318f4e59d04f28150473ace764498cae745bcf6fa5e3e1d1a1523725c03",
+    ".github/workflows/check.yml": "3eef07f41d9ece94ed42f48efcc55dece062b4c79de29ab1ac1ba1b4bcc094cb",
+    ".github/workflows/windows.yml": "ed2b6061455e5c35a019ae45dda4d54046cd9183ff430fbfc06c599052e67ab3"
+  }
+}

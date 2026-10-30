@@ -20,7 +20,7 @@ export type ResourcePlan = DeepReadonly<{ contract: typeof RESOURCE_PLAN_VERSION
 type Ref = { id: string; kind: AssetKind; path: (string | number)[]; dependencies?: string[] };
 type PlannedLine = { id: string; cue?: StageCue; cuePath?: (string | number)[]; refs?: Ref[]; path: (string | number)[] };
 type Lines = { length: number; at: (index: number) => PlannedLine | undefined; findId: (id: string) => number };
-type Node = { key: string; id: string; chapterId?: string; path: (string | number)[]; cue?: StageCue; cuePath?: (string | number)[];
+type Node = { key: string; lookupKey?: string; id: string; chapterId?: string; path: (string | number)[]; cue?: StageCue; cuePath?: (string | number)[];
   lines: Lines; refs?: Ref[]; next: Iterable<string> };
 
 const limit = (value: number | undefined, fallback: number, max: number) => {
@@ -50,8 +50,12 @@ function lazyLines<T>(source: readonly T[], id: (line: T, index: number) => stri
 }
 
 /** Lazy static graph: normalize only visited nodes/lines, never the full author project. */
-function graph(project: EngineProject): { get: (key: string) => Node | undefined; entry: string; defaults?: StageCue } {
+function graph(project: EngineProject): { get: (key: string) => Node | undefined;
+  positionKey: (position: ResourcePosition) => string | undefined; defaults?: StageCue } {
   const cache = new Map<string, Node>();
+  // Chapter and node IDs may both contain '/'. Keep their public identities intact,
+  // but never use that ambiguous concatenation as the graph/cache identity.
+  const investigationKey = (chapterId: string, nodeId: string) => JSON.stringify([chapterId, nodeId]);
   const make = (key: string): Node | undefined => {
     if (project.type === 'script') {
       const index = project.program.blocks.findIndex(block => block.id === key), block = project.program.blocks[index]; if (!block) return;
@@ -78,13 +82,16 @@ function graph(project: EngineProject): { get: (key: string) => Node | undefined
           for (const choice of scene.choices ?? []) yield choice.next; })() };
     }
     if (project.type === 'investigation') {
-      const index = project.chapters.findIndex(chapter => key.startsWith(`${chapter.id}/`)), chapter = project.chapters[index]; if (!chapter) return;
-      const id = key.slice(chapter.id.length + 1), node = Object.hasOwn(chapter.nodes, id) ? chapter.nodes[id] : undefined; if (!node) return;
+      const [chapterId, id] = JSON.parse(key) as [string, string];
+      const index = project.chapters.findIndex(chapter => chapter.id === chapterId), chapter = project.chapters[index]; if (!chapter) return;
+      const node = Object.hasOwn(chapter.nodes, id) ? chapter.nodes[id] : undefined; if (!node) return;
+      const publicKey = `${chapterId}/${id}`;
       const path = ['chapters', index, 'nodes', id];
-      return { key, id, chapterId: chapter.id, path, cue: project.stage?.nodes?.[key], cuePath: ['stage', 'nodes', key],
-        lines: lazyLines([id], () => key, () => ({ id: key, path })),
-        next: (function* () { for (const action of node.actions) yield `${chapter.id}/${action.next}`;
-          if (node.outcome === 'complete') for (const next of project.chapters) if (next.order > chapter.order) yield `${next.id}/${next.entryNode}`; })() };
+      return { key: publicKey, lookupKey: key, id, chapterId: chapter.id, path,
+        cue: project.stage?.nodes?.[publicKey], cuePath: ['stage', 'nodes', publicKey],
+        lines: lazyLines([id], () => publicKey, () => ({ id: publicKey, path })),
+        next: (function* () { for (const action of node.actions) yield investigationKey(chapter.id, action.next);
+          if (node.outcome === 'complete') for (const next of project.chapters) if (next.order > chapter.order) yield investigationKey(next.id, next.entryNode); })() };
     }
     const index = project.story.nodes.findIndex(node => node.id === key || (key.startsWith('@response/') && node.choices?.some(choice => `@response/${node.id}/${choice.id}` === key)));
     const node = project.story.nodes[index]; if (!node) return;
@@ -115,9 +122,36 @@ function graph(project: EngineProject): { get: (key: string) => Node | undefined
         ...(node.ambient ? { ambience: node.ambient } : {}), ...(node.sprite ? { portrait: `heroine/${node.sprite}` } : {}) } };
   };
   const firstChapter = project.type === 'investigation' ? project.chapters.reduce<(typeof project.chapters)[number] | undefined>((first, chapter) => !first || chapter.order < first.order ? chapter : first, undefined) : undefined;
+  const entry = project.type === 'script' ? project.program.entry : project.type === 'rain' ? project.story.entry : project.type === 'narrative'
+    ? project.entry ?? (project.adapter ? 'arrival' : project.scenes[0]?.id ?? '')
+    : firstChapter ? investigationKey(firstChapter.id, firstChapter.entryNode) : '';
+  const positionKey = (position: ResourcePosition): string | undefined => {
+    if (project.type !== 'investigation') return position.sceneId ?? entry;
+    if (position.chapterId !== undefined) {
+      const chapter = project.chapters.find(item => item.id === position.chapterId); if (!chapter) return;
+      const nodeId = position.sceneId ?? (position.lineId?.startsWith(`${chapter.id}/`) ? position.lineId.slice(chapter.id.length + 1) : chapter.entryNode);
+      return Object.hasOwn(chapter.nodes, nodeId) ? investigationKey(chapter.id, nodeId) : undefined;
+    }
+    // Runtime frames provide the node ID separately from the full line ID. Together
+    // they identify the exact chapter even when another pair has the same line ID.
+    if (position.sceneId && position.lineId && position.sceneId !== position.lineId) {
+      const chapter = project.chapters.find(item => position.lineId === `${item.id}/${position.sceneId}` && Object.hasOwn(item.nodes, position.sceneId!));
+      return chapter ? investigationKey(chapter.id, position.sceneId) : undefined;
+    }
+    const compound = position.lineId ?? position.sceneId;
+    if (compound === undefined) return entry;
+    let match: string | undefined;
+    for (const chapter of project.chapters) if (compound.startsWith(`${chapter.id}/`)) {
+      const nodeId = compound.slice(chapter.id.length + 1);
+      if (Object.hasOwn(chapter.nodes, nodeId)) {
+        if (match !== undefined) return; // A compound ID alone cannot disambiguate this position.
+        match = investigationKey(chapter.id, nodeId);
+      }
+    }
+    return match;
+  };
   return { get: key => { let node = cache.get(key); if (!node) { node = make(key); if (node) cache.set(key, node); } return node; },
-    entry: project.type === 'script' ? project.program.entry : project.type === 'rain' ? project.story.entry : project.type === 'narrative'
-      ? project.entry ?? (project.adapter ? 'arrival' : project.scenes[0]?.id ?? '') : firstChapter ? `${firstChapter.id}/${firstChapter.entryNode}` : '',
+    positionKey,
     defaults: project.type === 'script' || project.type === 'rain' ? project.defaults : project.stage?.defaults };
 }
 
@@ -125,7 +159,7 @@ function graph(project: EngineProject): { get: (key: string) => Node | undefined
 export function createResourcePlan(project: EngineProject, position: ResourcePosition = {}, options: ResourcePlanOptions = {}): ResourcePlan {
   const budget = { maxDepth: limit(options.maxDepth, 2, 32), maxVisits: limit(options.maxVisits, 64, 4096), maxAssets: limit(options.maxAssets, 32, 512) };
   if (options.sourceSha256 !== undefined && !/^[a-f0-9]{64}$/.test(options.sourceSha256)) throw Error('Invalid source SHA256');
-  const { get: getNode, entry, defaults } = graph(project);
+  const { get: getNode, positionKey, defaults } = graph(project);
   const active = new Map<string, ResourcePlanAsset>(), candidates = new Map<string, ResourcePlanAsset>();
   const references = new WeakMap<ResourcePlanAsset, { owners: Set<string>; origins: Set<string> }>();
   const unknown: { assetId?: string; owner: string; reason: string; origin: SourceOrigin }[] = [];
@@ -160,9 +194,8 @@ export function createResourcePlan(project: EngineProject, position: ResourcePos
       target.set(asset.id, item);
     }
   };
-  let startKey = position.chapterId && position.sceneId ? `${position.chapterId}/${position.sceneId}` : position.sceneId ?? entry;
-  if (project.type === 'investigation' && !getNode(startKey) && position.lineId) startKey = position.lineId;
-  let start = getNode(startKey);
+  const startKey = positionKey(position);
+  let start = startKey === undefined ? undefined : getNode(startKey);
   const lineIndex = start && position.lineId ? start.lines.findId(position.lineId) : position.line ?? 0;
   if (!Number.isSafeInteger(lineIndex) || lineIndex < 0 || (start && start.lines.length > 0 && lineIndex >= start.lines.length)) start = undefined;
   const startLine = Math.max(0, lineIndex), current = start?.lines.at(startLine);
@@ -189,12 +222,16 @@ export function createResourcePlan(project: EngineProject, position: ResourcePos
     return true;
   };
   if (start) {
-    if (startLine + 1 < start.lines.length) enqueue(start.key, startLine + 1, 0, 1);
+    if (startLine + 1 < start.lines.length) enqueue(start.lookupKey ?? start.key, startLine + 1, 0, 1);
     else for (const key of start.next) if (!enqueue(key, 0, 1, 1)) break;
   }
   while (queue.length && visits < budget.maxVisits) {
     const step = queue.shift()!, node = getNode(step.key); visits++;
-    if (!node) { if (unknown.length < budget.maxAssets) unknown.push({ owner: `node:${step.key}`, reason: 'missing-target', origin: origin() }); continue; }
+    if (!node) {
+      const publicKey = project.type === 'investigation' ? (JSON.parse(step.key) as [string, string]).join('/') : step.key;
+      if (unknown.length < budget.maxAssets) unknown.push({ owner: `node:${publicKey}`, reason: 'missing-target', origin: origin() });
+      continue;
+    }
     const line = node.lines.at(step.line);
     if (step.line === 0) {
       if (node.cuePath) add(cueRefs(node.cue, node.cuePath), node, undefined, step.distance, candidates);
@@ -202,7 +239,7 @@ export function createResourcePlan(project: EngineProject, position: ResourcePos
       add(cueRefs(defaults, project.type === 'narrative' || project.type === 'investigation' ? ['stage', 'defaults'] : ['defaults']), node, undefined, step.distance, candidates);
     }
     if (line) { if (line.cuePath) add(cueRefs(line.cue, line.cuePath), node, line, step.distance, candidates); add(line.refs ?? [], node, line, step.distance, candidates); }
-    if (step.line + 1 < node.lines.length) enqueue(node.key, step.line + 1, step.depth, step.distance + 1);
+    if (step.line + 1 < node.lines.length) enqueue(node.lookupKey ?? node.key, step.line + 1, step.depth, step.distance + 1);
     else for (const key of node.next) if (!enqueue(key, 0, step.depth + 1, step.distance + 1)) break;
   }
   const listed = [...active.values(), ...candidates.values()];
