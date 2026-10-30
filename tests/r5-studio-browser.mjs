@@ -1,3 +1,4 @@
+import { listenBrowserServer } from '../tools/browser-server.mjs';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { readFile, mkdir, writeFile } from 'node:fs/promises';
@@ -5,7 +6,7 @@ import { createDemoServer } from '../tools/serve.mjs';
 import { newProject } from '../dist/editor/index.js';
 
 const server = await createDemoServer();
-await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+await listenBrowserServer(server);
 const base = `http://127.0.0.1:${server.address().port}`;
 let browser;
 const checks = [], errors = [];

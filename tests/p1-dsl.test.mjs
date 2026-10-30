@@ -133,6 +133,40 @@ test('duplicates, missing explicit IDs, empty dialogue and misplaced declaration
   failure(minimal.replace('version "1"\n', ''), 'DSL_METADATA');
 });
 
+test('inherited Object names remain valid numeric and boolean conditions with canonical routes', () => {
+  for (const name of ['toString', 'valueOf', 'hasOwnProperty']) for (const numeric of [true, false]) {
+    const initial = numeric ? 0 : false, matched = numeric ? 1 : true;
+    const expression = numeric ? `${name} >= 1 && ${name} == 1` : `${name} == true`;
+    const source = `vn-script 1\ngame "inherited-names"\nversion "1"\nentry start\nvar ${name} ${numeric ? 'number' : 'boolean'} ${initial}\n`
+      + `block start\nline first "N" "Choose"\nchoice yes "Yes" -> route with set ${name} ${matched}\nchoice no "No" -> route with set ${name} ${initial}\n`
+      + `block route\nbranch\nwhen ${expression} -> good\nelse -> neutral\n`
+      + 'block good\nline good-line "N" "Good"\nend good\nblock neutral\nline neutral-line "N" "Neutral"\nend neutral\n';
+    const condition = { [name]: numeric ? { gte: 1, eq: 1 } : { eq: true } };
+    const expected = { schema: 1, game: 'inherited-names', version: '1', entry: 'start', variables: { [name]: { initial } }, blocks: [
+      { id: 'start', lines: [{ id: 'first', speaker: 'N', text: 'Choose' }], exit: { type: 'choice', choices: [
+        { id: 'yes', text: 'Yes', next: 'route', effects: [{ op: 'set', key: name, value: matched }] },
+        { id: 'no', text: 'No', next: 'route', effects: [{ op: 'set', key: name, value: initial }] }
+      ] } },
+      { id: 'route', lines: [], exit: { type: 'branch', routes: [{ when: condition, next: 'good' }, { next: 'neutral' }] } },
+      { id: 'good', lines: [{ id: 'good-line', speaker: 'N', text: 'Good' }], exit: { type: 'end', ending: 'good' } },
+      { id: 'neutral', lines: [{ id: 'neutral-line', speaker: 'N', text: 'Neutral' }], exit: { type: 'end', ending: 'neutral' } }
+    ] };
+    const compiled = success(source).program;
+    assert.deepEqual(compiled, expected);
+    const actualEngine = new ScriptEngine(compiled), expectedEngine = new ScriptEngine(expected);
+    for (const choice of ['yes', 'no']) {
+      const actual = actualEngine.choose(actualEngine.initial(), choice);
+      const direct = expectedEngine.choose(expectedEngine.initial(), choice);
+      assert.equal(actual.blockId, choice === 'yes' ? 'good' : 'neutral');
+      assert.deepEqual(actual, direct);
+      assert.deepEqual(actualEngine.replay(actual.decisions, actual.blockId, actual.line), direct);
+      assert.deepEqual(actualEngine.encode(actual), expectedEngine.encode(direct));
+    }
+    failure(source.replace(expression, `${expression} && ${name} == ${matched}`), 'DSL_CONDITION');
+    if (numeric) failure(source.replace(`${name} >= 1`, `${name} >= 1 && ${name} >= 0`), 'DSL_CONDITION');
+  }
+});
+
 test('variable bounds/types/condition operators and prototype keys are checked without coercion', () => {
   failure(example.replace('number 0 min 0 max 10', 'number 12 min 0 max 10'), 'DSL_VARIABLE_BOUNDS');
   failure(example.replace('boolean false', 'boolean false min 0'), 'DSL_VARIABLE_BOUNDS');

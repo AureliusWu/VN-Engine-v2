@@ -104,10 +104,12 @@ export class MediaDirector {
     this.bus.gain.value = settings.masterVolume;
     this.musicBus.gain.value = settings.music ? settings.bgmVolume : 0;
     this.ambienceBus.gain.value = settings.ambience ? settings.ambienceVolume : 0;
-    this.music.select(settings.music ? this.audioURL(frame.stage.music, 'stage.music', snapshot) : undefined,
-      this.effectContext('stage.music', frame.stage.music, snapshot));
-    this.ambience.select(settings.ambience ? this.audioURL(frame.stage.ambience, 'stage.ambience', snapshot) : undefined,
-      this.effectContext('stage.ambience', frame.stage.ambience, snapshot));
+    const musicURL = settings.music ? this.audioURL(frame.stage.music, 'stage.music', snapshot) : undefined;
+    const ambienceURL = settings.ambience ? this.audioURL(frame.stage.ambience, 'stage.ambience', snapshot) : undefined;
+    this.music.select(musicURL, this.effectContext('stage.music', frame.stage.music, snapshot),
+      musicURL && frame.stage.music ? this.assets.sourceURL(frame.stage.music, 'audio') : undefined);
+    this.ambience.select(ambienceURL, this.effectContext('stage.ambience', frame.stage.ambience, snapshot),
+      ambienceURL && frame.stage.ambience ? this.assets.sourceURL(frame.stage.ambience, 'audio') : undefined);
     if (changedPlayback) void this.reconcileGraph();
     try {
       this.voice.configure(settings.voiceEnabled, settings.masterVolume * settings.voiceVolume, this.playable, this.playable, false);

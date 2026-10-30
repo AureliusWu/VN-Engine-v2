@@ -38,6 +38,45 @@ test('decoded music is bounded by track count and the combined PCM byte budget',
   assert.equal(downloads, 7);
 });
 
+test('stable track identities reuse decoded bytes across temporary URL changes without restarting current playback', async t => {
+  const old = globalThis.fetch; t.after(() => { globalThis.fetch = old; });
+  const downloads = []; globalThis.fetch = async url => { downloads.push(url); return response(); };
+  const { loop, context, sources } = loopSetup(); t.after(() => loop.dispose());
+  loop.select('blob:a-first', undefined, '/music/a.wav'); await tick();
+  loop.select('blob:a-renewed', undefined, '/music/a.wav'); await tick();
+  assert.equal(sources.length, 1); assert.equal(sources[0].stops, 0);
+  assert.equal(context.decodes, 1); assert.deepEqual(downloads, ['blob:a-first']);
+  loop.select('blob:b-first', undefined, '/music/b.wav'); await tick();
+  loop.select('blob:a-returned', undefined, '/music/a.wav'); await tick();
+  assert.equal(context.decodes, 2); assert.equal(sources.length, 3);
+  assert.deepEqual(downloads, ['blob:a-first', 'blob:b-first']);
+  loop.select('blob:c', undefined, '/music/c.wav'); await tick();
+  loop.select('blob:b-returned', undefined, '/music/b.wav'); await tick();
+  assert.equal(context.decodes, 4); // The original two-track LRU still evicts B after A then C.
+  context.decodeAudioData = async () => { context.decodes++; return { length: 5 * 1024 * 1024, numberOfChannels: 1 }; };
+  for (const [url, identity] of [['blob:large-a', '/large-a'], ['blob:large-b', '/large-b'], ['blob:large-a-return', '/large-a']]) {
+    loop.select(url, undefined, identity); await tick();
+  }
+  assert.equal(downloads.length, 7); // Two 20 MiB entries still exceed the unchanged 32 MiB budget.
+});
+
+test('pending requests merge by stable track identity while real selection changes cancel stale downloads', async t => {
+  const old = globalThis.fetch; t.after(() => { globalThis.fetch = old; });
+  const requests = [];
+  globalThis.fetch = (url, options) => new Promise(resolve => requests.push({ url, signal: options.signal, resolve }));
+  const { loop, context, sources } = loopSetup(); t.after(() => loop.dispose());
+  loop.select('blob:pending-a', undefined, '/music/a.wav');
+  loop.select('blob:renewed-a', undefined, '/music/a.wav');
+  assert.equal(requests.length, 1); assert.equal(requests[0].signal.aborted, false);
+  requests[0].resolve(response()); await tick();
+  assert.equal(context.decodes, 1); assert.equal(sources.length, 1);
+  loop.select('blob:shared-transport', undefined, '/music/b.wav');
+  loop.select('blob:shared-transport', undefined, '/music/c.wav');
+  assert.equal(requests.length, 3); assert.equal(requests[1].signal.aborted, true);
+  requests[1].resolve(response()); await tick(); assert.equal(context.decodes, 1);
+  requests[2].resolve(response()); await tick(); assert.equal(context.decodes, 2); assert.equal(sources.length, 2);
+});
+
 test('cancelled decode cannot populate a new scene and dispose prevents retries', async t => {
   const old = globalThis.fetch; t.after(() => { globalThis.fetch = old; });
   let downloads = 0; globalThis.fetch = async () => { downloads++; return response(); };

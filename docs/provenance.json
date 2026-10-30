@@ -442,7 +442,7 @@
       "target": "hosts/windows/VNEngine.Windows.csproj",
       "mode": "new",
       "origins": [],
-      "targetSha256": "908aaaed19967c7922edcd8931d75151d495787013dc8fbb29b2a27bbe6f0919"
+      "targetSha256": "51ba0b07e4261b19dc5637d3f7c4130232fa4b985aa9a2325e77eab2add87b60"
     },
     {
       "target": "licenses/Healing-LICENSE.txt",
@@ -727,7 +727,7 @@
     {
       "target": "src/audio/scene-loop.ts",
       "mode": "adapted",
-      "targetSha256": "5f23243330a0d7df1d6d4cd3d7bbaadf669ff96c0999ca342980ab76b9803711",
+      "targetSha256": "304f18054d7cfc804476ddf08b628daa673f9d14ec880e4300dbd54deea66215",
       "origins": [
         {
           "repository": "AureliusWu/NetLove",
@@ -1053,7 +1053,7 @@
       "target": "src/runtime/media.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "cf53016c85df6916dedf2b61c182ffc3b5271311c394ca43e96cfad41727dce5"
+      "targetSha256": "96989b82691893e2fde356a3e4bd7cf73441d852ff64134cf7a9c3c2aea7a100"
     },
     {
       "target": "src/runtime/project.ts",
@@ -1106,7 +1106,7 @@
     {
       "target": "src/script/text.ts",
       "mode": "new",
-      "targetSha256": "22e5977e410f64d65b460be63a8862a63f3716e0237d39c125c9f1b027df2c63",
+      "targetSha256": "ea326f683501166690fecca715cb9c2b6d592a3dc72682ae23415d53c1e778b2",
       "origins": []
     },
     {
@@ -1230,7 +1230,7 @@
       "target": "src/version.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "6bc5e0fd9b0153a1cc20d58669d51f537320e8fb84d89f0eabb7e2c242311f68"
+      "targetSha256": "4f289760cd0f376bd2060eb39d9c7f484740549590b7f78f7582e27cc66bccf4"
     },
     {
       "target": "tools/acceptance-node.mjs",
@@ -1259,7 +1259,7 @@
     {
       "target": "tools/agent-ports.mjs",
       "mode": "new",
-      "targetSha256": "510ca97511bd007a93625269e5a8cb84009fc93d8c5d945015acb29247ab4ed4",
+      "targetSha256": "08716f5c13c67047b8f342e0832879ac6519ce10e9e8357f1647c969347f0ef5",
       "origins": []
     },
     {
@@ -1285,6 +1285,12 @@
       "mode": "new",
       "origins": [],
       "targetSha256": "c2c0328eb60dfb30cb14a43c0bbdeb7c0bd7b1340a78b23294105cfb785f010c"
+    },
+    {
+      "target": "tools/browser-server.mjs",
+      "mode": "new",
+      "targetSha256": "2c41a515d678e7e2f53a570e5bc8ef59d6ed74423eb4f77238b0ccd0739098bd",
+      "origins": []
     },
     {
       "target": "tools/check-provenance.mjs",
@@ -1314,6 +1320,12 @@
       "target": "tools/compile-script.mjs",
       "mode": "new",
       "targetSha256": "76d1558a41f1f262dfec1b6a57cd3bffe353e5666165593861700297dbcdce1d",
+      "origins": []
+    },
+    {
+      "target": "tools/compiled-modules.mjs",
+      "mode": "new",
+      "targetSha256": "634b811abc14f7301ff853aed8ae105ac50fdebeee89a0087879e606bcd85b78",
       "origins": []
     },
     {
@@ -1356,7 +1368,7 @@
       "target": "tools/package-game.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "663f08f6b2643440b515f0bf8aeca67a1bae86a0fb948ba18c677aea1e7158a6"
+      "targetSha256": "93d990c8e79b8cff08283865108b8ac9b702febf6b1638fc8144135d4692c8ba"
     },
     {
       "target": "tools/package-output.mjs",
@@ -1368,7 +1380,7 @@
       "target": "tools/package-studio.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "a412facdeff7b100d04bdbe856a4cdb7cb5510b28fdecf2bb9e51bfa2af97b06"
+      "targetSha256": "b822cbe44c74613ce0c72d564ddd7bad7b38465e8e8513851262a66940591c02"
     },
     {
       "target": "tools/probe-assets.mjs",
@@ -1392,7 +1404,7 @@
     {
       "target": "tools/qa-report.mjs",
       "mode": "new",
-      "targetSha256": "aae15eda412a87ef44f002c9c081f92a9683dedf02464ec43d798b5f207b8888",
+      "targetSha256": "a35163b654bcbadac9b812278faf8be8e1940cd07c5bfa1fdf1753fdd1c42be4",
       "origins": []
     },
     {

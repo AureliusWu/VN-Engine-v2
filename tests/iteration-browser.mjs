@@ -1,3 +1,4 @@
+import { listenBrowserServer } from '../tools/browser-server.mjs';
 import assert from 'node:assert/strict';
 import {promises as fs} from 'node:fs';
 import path from 'node:path';
@@ -8,7 +9,7 @@ await fs.mkdir('test-results',{recursive:true});const root=await fs.mkdtemp(path
 for(const transport of ['sdk','cli'])flows.push(await runIterationExample(path.join(root,transport),{transport}));
 const evidence={status:'PASS',engineCommit:flows[0].engineCommit,engineVersion:flows[0].engineVersion,flows:flows.map(({review,...r})=>r),offline:[],playback:{},syntheticFeedback:true,humanAcceptance:'UNVERIFIED',artStatus:'DRAFT'};
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.png':'image/png','.wav':'audio/wav','.txt':'text/plain','.woff2':'font/woff2','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'};
-const server=createServer(async(req,res)=>{try{const match=/^\/revisions\/(sdk|cli)\/(.*)$/.exec(new URL(req.url,'http://test/').pathname);if(!match)throw Error('Unknown path');const dir=path.join(root,match[1],'latest-game'),file=path.resolve(dir,decodeURIComponent(match[2]||'index.html'));if(!file.startsWith(dir+path.sep))throw Error('Unsafe path');res.writeHead(200,{'Content-Type':mime[path.extname(file)]??'application/octet-stream','Cache-Control':'no-store'});res.end(await fs.readFile(file));}catch{res.writeHead(404);res.end();}});await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=`http://127.0.0.1:${server.address().port}`;let browser;
+const server=createServer(async(req,res)=>{try{const match=/^\/revisions\/(sdk|cli)\/(.*)$/.exec(new URL(req.url,'http://test/').pathname);if(!match)throw Error('Unknown path');const dir=path.join(root,match[1],'latest-game'),file=path.resolve(dir,decodeURIComponent(match[2]||'index.html'));if(!file.startsWith(dir+path.sep))throw Error('Unsafe path');res.writeHead(200,{'Content-Type':mime[path.extname(file)]??'application/octet-stream','Cache-Control':'no-store'});res.end(await fs.readFile(file));}catch{res.writeHead(404);res.end();}});await listenBrowserServer(server);const origin=`http://127.0.0.1:${server.address().port}`;let browser;
 try{
  browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH});
  for(const flow of flows){

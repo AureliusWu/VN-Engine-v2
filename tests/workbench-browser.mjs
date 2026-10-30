@@ -1,3 +1,4 @@
+import { listenBrowserServer } from '../tools/browser-server.mjs';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
@@ -10,7 +11,7 @@ import { EditorModel, newProject } from '../dist/editor/index.js';
 import { ENGINE_VERSION, runRouteSuite } from '../dist/index.js';
 
 const out = process.env.VN_ENGINE_TEST_OUTPUT ?? 'test-results'; await mkdir(out, { recursive: true });
-const server = await createDemoServer(); await new Promise(r => server.listen(0, '127.0.0.1', r));
+const server = await createDemoServer(); await listenBrowserServer(server);
 const checks = [], errors = [], passed = label => { checks.push(label); console.log('PASS', label); }; let browser, standalone;
 try {
   browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, args: ['--no-sandbox'] });
@@ -103,7 +104,7 @@ try {
       if (!path.startsWith(build.output + sep)) throw Error(); const bytes = await readFile(path);
       response.writeHead(200, { 'Content-Type': { '.js': 'text/javascript', '.mjs': 'text/javascript', '.html': 'text/html', '.css': 'text/css', '.json': 'application/json', '.woff2': 'font/woff2', '.svg': 'image/svg+xml' }[extname(path)] ?? 'application/octet-stream' }); response.end(bytes);
     } catch { response.writeHead(404); response.end(); }
-  }); await new Promise(r => standalone.listen(0, '127.0.0.1', r));
+  }); await listenBrowserServer(standalone);
   const packaged = await browser.newPage(); packaged.on('pageerror', error => errors.push(error.message));
   await packaged.goto(`http://127.0.0.1:${standalone.address().port}/workbench/editor/`); await packaged.waitForSelector('body[data-editor-ready=true]'); await packaged.locator('[data-tab=structure]').click();
   assert.equal(await packaged.locator('#version').innerText(), ENGINE_VERSION); await packaged.getByLabel('变量 trust ID', { exact: true }).fill('renamed'); await packaged.getByLabel('变量 trust ID', { exact: true }).blur();

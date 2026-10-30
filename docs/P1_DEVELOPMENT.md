@@ -12,6 +12,8 @@ v1.2.1 的调查图在内部区分章节 ID 与节点 ID，即使两者包含 `/
 
 当前资源不会被预取驱逐。`retain(owner, ids)` / `release(owner)` 为宿主提供额外持有；释放须在消费者停止使用 URL 后进行。Blob URL 仅在已缓存资源成为 active / retained 时按需创建，安全释放后撤销；speculative 数据本身不创建图片、字体或媒体元素。原有 BGM 的两轨 / 32 MiB 解码 LRU 继续独立工作。这里的预算是编码载荷与在途预留，不是 JS 堆、浏览器 HTTP / SW cache、GPU 图像、流媒体缓冲或总进程内存上限。
 
+v1.2.2 将 BGM / 环境音的解码缓存绑定到稳定 sourceURL，临时 Blob URL 更换不会使回访重复解码。同身份不重启当前播放；宿主直接调用 SceneLoop 时可提供可选第三参数 cacheIdentity，并负责在内容变化时更新身份。旧调用仍以 URL 为身份。
+
 `mountGame(root, project, {prefetch:{maxConcurrent:2,maxQueued:8,maxTransferBytes:2097152,maxBytes:8388608,plan:{maxDepth:2,maxVisits:64,maxAssets:64}}})` 显式启用；默认 / `false` 不预取。挂载独占 scheduler，按新 visit 更新计划，普通打字 / 设置通知不会重新下载失败候选。AssetCatalog 保留 `sourceURL()`，`url()` 可在实际渲染时复用已预取的 Blob，避免再次请求同一来源。订阅完成后再释放旧消费者 URL。`resourceSnapshot()` 返回 enabled、plan、cache，既不写存档也不改变路线。独立重读驱动不共享主会话的 speculative 状态。
 
 Studio“资源计划”页默认关闭，显式设置预算并刷新预览后才启用；按 requestId / revision / source SHA 采集实际挂载计划与缓存指标。来源过期或 DSL 候选与当前 JSON 不同，不能标记为当前工程证据。Agent `inspect {kind:"resources",position?,plan?}` 仅查询计划，不 fetch；大结果沿用分页、字节预算和 SHA 绑定游标。

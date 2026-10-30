@@ -6,12 +6,13 @@ const MAX_CACHED_BYTES = 32 * 1024 * 1024;
 /** Bounded local music cache; scene changes cancel obsolete downloads. */
 export class SceneLoop {
   private wanted?: string;
+  private wantedIdentity?: string;
   private source?: AudioBufferSourceNode;
   private level?: GainNode;
   private generation = 0;
   private disposed = false;
   private buffers = new Map<string, { buffer: AudioBuffer; bytes: number }>();
-  private pending?: { url: string; controller: AbortController; promise: Promise<AudioBuffer> };
+  private pending?: { identity: string; controller: AbortController; promise: Promise<AudioBuffer> };
   private evidence?: RuntimeEffectContext;
   private evidencePhase?: RuntimeEffectPhase;
   private evidenceAttempt = 1;
@@ -23,14 +24,16 @@ export class SceneLoop {
     if (this.evidence) appendRuntimeEffect({ ...this.evidence, attempt: this.evidenceAttempt }, phase, code);
   }
 
-  select(url?: string, evidence?: RuntimeEffectContext) {
+  /** A host may use a stable source identity while rotating temporary encoded-byte URLs. */
+  select(url?: string, evidence?: RuntimeEffectContext, cacheIdentity?: string) {
     if (this.disposed) return;
-    if (url !== this.wanted) {
+    const identity = url ? cacheIdentity ?? url : undefined;
+    if (identity !== this.wantedIdentity) {
       if (this.wanted && !['cancelled', 'settled', 'failed'].includes(this.evidencePhase ?? '')) this.record('cancelled', 'MEDIA_SELECTION_CHANGED');
       this.generation++;
       this.cancelDownload();
       this.release();
-      this.wanted = url;
+      this.wantedIdentity = identity;
       this.evidence = evidence; this.evidenceAttempt = 1; this.evidencePhase = undefined;
       if (url) this.record('scheduled');
     } else if (evidence && evidence.visit !== this.evidence?.visit) {
@@ -41,16 +44,17 @@ export class SceneLoop {
         this.record('scheduled');
       }
     }
+    this.wanted = url;
     void this.ensure();
   }
 
   async ensure() {
-    const url = this.wanted, generation = this.generation;
-    if (!url || this.source || this.disposed || this.context.state !== 'running') return;
+    const url = this.wanted, identity = this.wantedIdentity, generation = this.generation;
+    if (!url || identity === undefined || this.source || this.disposed || this.context.state !== 'running') return;
     if (this.evidencePhase === 'failed' && !this.pending) { this.evidenceAttempt++; this.record('scheduled'); }
     try {
-      const buffer = await this.load(url);
-      if (generation !== this.generation || url !== this.wanted || this.source || this.disposed || this.context.state !== 'running') return;
+      const buffer = await this.load(url, identity);
+      if (generation !== this.generation || identity !== this.wantedIdentity || this.source || this.disposed || this.context.state !== 'running') return;
       const source = this.context.createBufferSource(), level = this.context.createGain();
       source.buffer = buffer;
       source.loop = true;
@@ -64,18 +68,18 @@ export class SceneLoop {
       this.record('started');
     } catch {
       // A missing file does not block dialogue, saves or later playback retries.
-      if (generation === this.generation && url === this.wanted && !this.disposed && this.evidencePhase !== 'failed') this.record('failed', 'AUDIO_LOAD_OR_START_FAILED');
+      if (generation === this.generation && identity === this.wantedIdentity && !this.disposed && this.evidencePhase !== 'failed') this.record('failed', 'AUDIO_LOAD_OR_START_FAILED');
     }
   }
 
-  private load(url: string): Promise<AudioBuffer> {
-    const cached = this.buffers.get(url);
+  private load(url: string, identity: string): Promise<AudioBuffer> {
+    const cached = this.buffers.get(identity);
     if (cached) {
-      this.buffers.delete(url);
-      this.buffers.set(url, cached);
+      this.buffers.delete(identity);
+      this.buffers.set(identity, cached);
       return Promise.resolve(cached.buffer);
     }
-    if (this.pending?.url === url) return this.pending.promise;
+    if (this.pending?.identity === identity) return this.pending.promise;
     const controller = new AbortController();
     const promise = (async () => {
       const response = await fetch(url, { signal: controller.signal });
@@ -86,7 +90,7 @@ export class SceneLoop {
       if (!controller.signal.aborted && !this.disposed) {
         const size = buffer.length * buffer.numberOfChannels * Float32Array.BYTES_PER_ELEMENT;
         if (Number.isFinite(size) && size > 0 && size <= MAX_CACHED_BYTES) {
-          this.buffers.set(url, { buffer, bytes: size });
+          this.buffers.set(identity, { buffer, bytes: size });
           let total = [...this.buffers.values()].reduce((sum, item) => sum + item.bytes, 0);
           while (this.buffers.size > MAX_CACHED_TRACKS || total > MAX_CACHED_BYTES) {
             const oldest = this.buffers.keys().next().value!;
@@ -97,7 +101,7 @@ export class SceneLoop {
       }
       return buffer;
     })();
-    const request = { url, controller, promise };
+    const request = { identity, controller, promise };
     this.pending = request;
     request.promise = promise.finally(() => { if (this.pending === request) this.pending = undefined; });
     return request.promise;
@@ -124,6 +128,7 @@ export class SceneLoop {
     this.generation++;
     this.cancelDownload();
     this.wanted = undefined;
+    this.wantedIdentity = undefined;
     this.release();
     this.buffers.clear();
   }

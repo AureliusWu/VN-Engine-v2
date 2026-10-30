@@ -1,25 +1,15 @@
 import {loadAcceptanceOptions} from './acceptance-node.mjs';
-import { readFile, readdir, realpath } from 'node:fs/promises';
-import { resolve, dirname, relative, sep } from 'node:path';
+import { readFile, realpath } from 'node:fs/promises';
+import { resolve, dirname, sep } from 'node:path';
 import { pathToFileURL, fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
 import { createProject, localAssetPath, ENGINE_VERSION, validateProjectCompliance, ReleaseArtGateError, ReleaseQaGateError, ReleaseRouteGateError } from '../dist/index.js';
 import { fingerprintFiles, renderWorker } from './pwa.mjs';
 import { checkOutputDirectory, publishOutputDirectory, validateOutputPaths } from './package-output.mjs';
+import { listCompiledModules } from './compiled-modules.mjs';
 
 const repository = resolve(fileURLToPath(new URL('..', import.meta.url)));
 const escape = text => String(text).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
-async function modules(directory) {
-  const result = [];
-  for (const entry of await readdir(directory, { withFileTypes: true })) {
-    if (entry.isDirectory() && ['editor', 'agent'].includes(entry.name)) continue;
-    // The optional text author frontend is never part of a JSON-IR player.
-    if (directory === resolve(repository, 'dist/script') && (entry.name === 'text.js' || entry.name === 'text')) continue;
-    const path = resolve(directory, entry.name);
-    if (entry.isDirectory()) result.push(...await modules(path)); else if (entry.name.endsWith('.js')) result.push(path);
-  }
-  return result;
-}
 function buildTimestamp() {
   const epoch = Number(process.env.SOURCE_DATE_EPOCH);
   return Number.isFinite(epoch) && epoch >= 0 ? new Date(epoch * 1000).toISOString() : new Date().toISOString();
@@ -59,9 +49,8 @@ export async function packageGame(projectFile, output, options = {}) {
     if(createHash('sha256').update(files.get(name)).digest('hex')!==acceptanceOptions.acceptanceContext.binding.assets.find(a=>a.id===id)?.sha256)throw Error('Acceptance differs from packaged asset snapshot: '+id);
   }
   files.set('project.json', Buffer.from(JSON.stringify(project, null, 2) + '\n'));
-  for (const path of await modules(resolve(repository, 'dist'))) {
-    const name = 'lib/' + relative(resolve(repository, 'dist'), path).split(sep).join('/');
-    files.set(name, Buffer.from((await readFile(path, 'utf8')).replace(/^\/\/# sourceMappingURL=.*$/gm, '')));
+  for (const { relativePath, path } of await listCompiledModules(repository, { target: 'game' })) {
+    files.set('lib/' + relativePath, Buffer.from((await readFile(path, 'utf8')).replace(/^\/\/# sourceMappingURL=.*$/gm, '')));
   }
   files.set('index.html', Buffer.from(`<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${escape(project.title)}</title><link rel="manifest" href="manifest.webmanifest"><style>html,body{margin:0;background:#111820}main{max-width:1280px;margin:auto;padding:10px}#status{font:12px VNRuntime,system-ui,sans-serif;color:#c0dfd1;margin:8px}#error{font:16px VNRuntime,system-ui,sans-serif;color:#ffd8c2;white-space:pre-wrap}</style></head><body><main id="game"></main><p id="status" role="status">正在下载离线资源</p><p id="error" role="alert"></p><script type="module" src="./app.mjs"></script></body></html>`));
   files.set('app.mjs', Buffer.from(`import {mountGame} from './lib/index.js';

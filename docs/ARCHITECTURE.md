@@ -1,5 +1,11 @@
 # 架构与接口
 
+## v1.2.2 缓存身份与模块归属
+
+SceneLoop 的稳定缓存身份与临时读取 URL 分开，MediaDirector 为 BGM / 环境音使用 AssetCatalog.sourceURL；既有两参数 select 调用继续以 URL 为身份。Blob 仍按消费者生命周期撤销，不延长 speculative URL 生命周期，解码缓存仍独立受两曲 / 32 MiB 限制。
+
+tools/compiled-modules.mjs 从当前 src 的非声明 TypeScript 模块映射到必需 dist JS，玩家保留作者模块排除，Studio 保留作者模块；两类打包和玩家 QA 共用集合。清单不遍历 / 清理 dist 遗留项，也不证明编译新鲜度。JSON IR 与存档不变。
+
 ## v1.2.0 P1 资源与作者前端
 
 assets/plan.ts 提供有界只读资源计划，assets/prefetch.ts 独立管理编码字节与取消；mount 以显式 opt-in 将缓存接入 AssetCatalog，不更改 driver / replay / save。script/text.ts 是可选纯编译器，只输出已有 ScriptProgram 与独立 source map，独立玩家包排除该作者模块。Studio 与 Agent 共用两者，预算、语法和边界见 [P1 约定](P1_DEVELOPMENT.md)。

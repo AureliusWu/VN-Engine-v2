@@ -1,3 +1,4 @@
+import { listenBrowserServer } from '../tools/browser-server.mjs';
 import { chromium } from 'playwright';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile, mkdtemp, readFile } from 'node:fs/promises';
@@ -8,7 +9,7 @@ import { createDemoServer } from '../tools/serve.mjs';
 import { packageGame } from '../tools/package-game.mjs';
 
 const out = process.env.VN_ENGINE_TEST_OUTPUT ?? 'test-results'; await mkdir(out, { recursive: true });
-const server = await createDemoServer(); await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+const server = await createDemoServer(); await listenBrowserServer(server);
 const base = `http://127.0.0.1:${server.address().port}`;
 const checks = [], errors = []; let browser, standalone;
 const passed = value => { checks.push(value); console.log('PASS', value); };
@@ -141,7 +142,7 @@ try {
       const path = resolve(build.output, pathname.slice(6) || 'index.html'); if (!path.startsWith(build.output + sep)) throw new Error();
       const bytes = await readFile(path); const type = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.html': 'text/html', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2', '.wav': 'audio/wav', '.webmanifest': 'application/manifest+json' }[extname(path)] ?? 'text/plain'; response.writeHead(200, { 'Content-Type': type }); response.end(bytes);
     } catch { response.writeHead(404); response.end(); }
-  }); await new Promise(resolve => standalone.listen(0, '127.0.0.1', resolve));
+  }); await listenBrowserServer(standalone);
   const packagedContext = await browser.newContext(); await packagedContext.addInitScript(() => localStorage.setItem('vn-engine:vn-self-rain:settings', JSON.stringify({ textDelayMs: 0, voiceEnabled: false, music: false })));
   const packagedPage = await packagedContext.newPage(); packagedPage.on('pageerror', error => errors.push(error.message));
   await packagedPage.goto(`http://127.0.0.1:${standalone.address().port}/play/`); await packagedPage.waitForSelector('.vn-engine'); await packagedPage.locator('.vn-actions').getByRole('button', { name: '保留信任', exact: true }).click();

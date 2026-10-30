@@ -326,7 +326,7 @@ export function compileTextScript(source: string, options: TextScriptOptions = {
             if (op !== '>=' && op !== '==') syntax('Condition operator must be >= or ==.', 'DSL_CONDITION');
             if (forbidden.has(key)) syntax('Reserved variable name.', 'DSL_RESERVED_VARIABLE');
             if (op === '>=' && typeof value !== 'number') syntax('>= requires a number.', 'DSL_CONDITION');
-            const previous = when[key];
+            const previous = Object.hasOwn(when, key) ? when[key] : undefined;
             if (previous && typeof previous !== 'object') syntax('Duplicate condition.', 'DSL_CONDITION');
             const rule = typeof previous === 'object' ? previous : {};
             const field = op === '>=' ? 'gte' : 'eq';

@@ -1,3 +1,4 @@
+import { listenBrowserServer } from '../tools/browser-server.mjs';
 import assert from 'node:assert/strict';
 import {promises as fs} from 'node:fs';
 import path from 'node:path';
@@ -11,7 +12,7 @@ const files=new Map();for(const [name,file,type]of [['image.png','examples/creat
 const p=newProject('script');p.game='vn-iteration-studio';p.version='iteration-1';p.settings={textDelayMs:0};p.ui={schema:1,preset:'dusk'};
 p.assets=[{id:'picture',kind:'background',src:'assets/r3/image.png',status:'DRAFT',sha256:hash(files.get('image.png').bytes),provenance:{method:'generated',tool:'R2 image generation',sourceSha256:hash(files.get('image.png').bytes),notes:'Reused technical fixture'}},{id:'score',kind:'audio',src:'assets/r3/memory.wav',status:'DRAFT',sha256:hash(files.get('memory.wav').bytes)},{id:'font',kind:'font',src:'assets/r3/font.woff2',license:{name:'SIL OFL',src:'assets/r3/OFL.txt'},sha256:hash(files.get('font.woff2').bytes),status:'DRAFT'}];p.font='font';p.defaults={background:'picture',music:'score'};
 p.production={schema:1,extension:{retained:true},brief:{premise:'A revision in the bookshop',tone:'Quiet',extension:'keep'},characters:[{id:'an',name:'An',description:'Bookseller',extension:42}],beats:[{id:'arrival',summary:'An opening',characters:['an'],tasks:['story'],targets:[{nodeId:'start',lineId:'start-1'}]}],tasks:['art','music','ui','sfx','text','story'].map(kind=>({id:kind,kind,brief:kind+' task',state:'planned',characters:['an'],targets:[{nodeId:'start',lineId:'start-1'}],...(kind!=='story'?{dependsOn:['story']}:{}),...(kind==='art'?{assets:['picture']}:{})}))};
-const server=await createDemoServer();await new Promise(r=>server.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${server.address().port}`;let browser;const checks=[],errors=[];let held=false,releaseRead,readStarted;
+const server=await createDemoServer();await listenBrowserServer(server);const base=`http://127.0.0.1:${server.address().port}`;let browser;const checks=[],errors=[];let held=false,releaseRead,readStarted;
 try{
  browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH});const page=await browser.newPage({viewport:{width:1440,height:1000}});page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
  await page.route('**/assets/r3/**',async route=>{const file=files.get(new URL(route.request().url()).pathname.split('/').at(-1));if(!file)return route.abort();if(held&&new URL(route.request().url()).pathname.endsWith('image.png')){readStarted?.();await new Promise(r=>releaseRead=r);}try{await route.fulfill({body:file.bytes,contentType:file.type});}catch{/* The editor may cancel the pending read. */}});

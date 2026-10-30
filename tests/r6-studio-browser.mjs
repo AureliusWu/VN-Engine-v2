@@ -1,3 +1,4 @@
+import { listenBrowserServer } from '../tools/browser-server.mjs';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
@@ -6,7 +7,7 @@ import { createDemoServer } from '../tools/serve.mjs';
 const output = (process.env.VN_ENGINE_TEST_OUTPUT ?? 'test-results') + '/r6-studio';
 await mkdir(output, { recursive: true });
 const server = await createDemoServer();
-await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+await listenBrowserServer(server);
 let browser;
 const checks = [], errors = [], confirmations = [];
 let confirmReplacement = false;

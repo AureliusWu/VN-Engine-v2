@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createHash } from 'node:crypto';
 import { ENGINE_VERSION } from '../dist/index.js';
 import { checkOutputDirectory, publishOutputDirectory } from './package-output.mjs';
+import { listCompiledModules } from './compiled-modules.mjs';
 const repository = fileURLToPath(new URL('..', import.meta.url));
 
 export async function packageStudio(output) {
@@ -20,7 +21,10 @@ export async function packageStudio(output) {
       else if (!/\.(map|d\.ts)$/.test(name)) files.push({ name, bytes: await readFile(resolve(repository, path)) });
     }
   }
-  await visit('editor', 'editor/'); await visit('dist', 'lib/'); await visit('examples/runtime', 'samples/');
+  await visit('editor', 'editor/');
+  for (const { relativePath, path } of await listCompiledModules(repository, { target: 'studio' }))
+    files.push({ name: 'lib/' + relativePath, bytes: await readFile(path) });
+  await visit('examples/runtime', 'samples/');
   files.push({ name: 'LICENSE.txt', bytes: await readFile(resolve(repository, 'LICENSE')) });
   const index=files.find(f=>f.name==='editor/index.html');
   index.bytes=Buffer.from(index.bytes.toString('utf8').replace('</body>','<script type="module" src="./offline.mjs"></script></body>'));

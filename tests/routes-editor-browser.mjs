@@ -1,9 +1,10 @@
+import { listenBrowserServer } from '../tools/browser-server.mjs';
 import {chromium} from 'playwright';
 import assert from 'node:assert/strict';
 import {mkdir,readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {createDemoServer} from '../tools/serve.mjs';
-const server=await createDemoServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));let browser;
+const server=await createDemoServer();await listenBrowserServer(server);let browser;
 try{
   browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1350,height:1000},acceptDownloads:true}),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
   await page.goto(`http://127.0.0.1:${server.address().port}/editor/`);await page.waitForSelector('body[data-editor-ready=true]');

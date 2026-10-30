@@ -1,3 +1,4 @@
+import { listenBrowserServer } from '../tools/browser-server.mjs';
 import assert from 'node:assert/strict';
 import {promises as fs} from 'node:fs';
 import path from 'node:path';
@@ -13,9 +14,9 @@ const project=JSON.parse(await fs.readFile(path.join(root,'sdk/project.json'),'u
 const evidence={status:'PASS',engineCommit:flows[0].engineCommit,engineVersion:flows[0].engineVersion,flows:flows.map(({media,...r})=>r),playback:{},offline:[],negative:[],humanAcceptance:'UNVERIFIED',artStatus:'DRAFT'};
 for(const flow of flows){assert.equal(flow.disciplines.length,6);assert.equal(flow.assetStatus,'DRAFT');assert.equal(flow.releaseStatus,'BLOCKED');assert.ok(flow.restoreChecks>=8);}
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.png':'image/png','.wav':'audio/wav','.txt':'text/plain','.woff2':'font/woff2','.svg':'image/svg+xml','.webmanifest':'application/manifest+json'};
-const demo=await createDemoServer();await new Promise(r=>demo.listen(0,'127.0.0.1',r));const base=`http://127.0.0.1:${demo.address().port}`;
+const demo=await createDemoServer();await listenBrowserServer(demo);const base=`http://127.0.0.1:${demo.address().port}`;
 const server=createServer(async(req,res)=>{try{const match=/^\/stories\/(sdk|cli)\/(.*)$/.exec(new URL(req.url,'http://test/').pathname);if(!match)throw Error('Unknown path');const dir=path.join(root,match[1],'game'),file=path.resolve(dir,decodeURIComponent(match[2]||'index.html'));if(!file.startsWith(dir+path.sep))throw Error('Unsafe path');res.writeHead(200,{'Content-Type':mime[path.extname(file)]??'application/octet-stream','Cache-Control':'no-store'});res.end(await fs.readFile(file));}catch{res.writeHead(404);res.end();}});
-await new Promise(r=>server.listen(0,'127.0.0.1',r));const origin=`http://127.0.0.1:${server.address().port}`;let browser;
+await listenBrowserServer(server);const origin=`http://127.0.0.1:${server.address().port}`;let browser;
 try{
  browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH});
  const context=await browser.newContext({viewport:{width:1280,height:950}});const page=await context.newPage(),errors=[];page.on('pageerror',e=>errors.push(e.message));

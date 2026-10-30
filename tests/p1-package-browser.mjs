@@ -1,3 +1,4 @@
+import { listenBrowserServer } from '../tools/browser-server.mjs';
 import assert from 'node:assert/strict';
 import { createServer } from 'node:http';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
@@ -25,7 +26,7 @@ const server = createServer(async (request, response) => {
     response.end(await readFile(file));
   } catch { response.writeHead(404).end(); }
 });
-await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+await listenBrowserServer(server);
 let browser;
 try {
   browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}), args: ['--no-sandbox'] });

@@ -1,3 +1,4 @@
+import { listenBrowserServer } from '../tools/browser-server.mjs';
 import assert from 'node:assert/strict';
 import {chromium} from 'playwright';
 import {mkdir,readFile} from 'node:fs/promises';
@@ -5,7 +6,7 @@ import {createDemoServer} from '../tools/serve.mjs';
 import {newProject} from '../dist/editor/model.js';
 
 const out=process.env.VN_ENGINE_TEST_OUTPUT??'test-results/p1-studio';await mkdir(out,{recursive:true});
-const server=await createDemoServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));let browser;
+const server=await createDemoServer();await listenBrowserServer(server);let browser;
 try{
   browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,args:['--no-sandbox']});
   const page=await browser.newPage({viewport:{width:1360,height:1000},acceptDownloads:true}),errors=[];

@@ -1,3 +1,4 @@
+import { listenBrowserServer } from '../tools/browser-server.mjs';
 import {createServer} from 'node:http';
 import {packageStudio} from '../tools/package-studio.mjs';
 import assert from 'node:assert/strict';
@@ -9,7 +10,7 @@ import { qaFixture, writeQaFixture } from './qa-fixture.mjs';
 await fs.mkdir('test-results',{recursive:true});
 const root=await fs.mkdtemp(path.resolve('test-results/r4-acceptance-')),{project,picture}=qaFixture();
 const source=await writeQaFixture(root,project,picture),sourceBytes=await fs.readFile(source);
-const server=await createDemoServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));
+const server=await createDemoServer();await listenBrowserServer(server);
 const base='http://127.0.0.1:'+server.address().port;let browser;
 async function verifyReadFailureRecovery(browser) {
   const page=await browser.newPage();
@@ -151,7 +152,7 @@ try {
     const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.svg':'image/svg+xml','.css':'text/css','.woff2':'font/woff2','.png':'image/png'}[path.extname(file)]??'application/octet-stream';
     const bytes=await fs.readFile(file);res.writeHead(200,{'Content-Type':mime});res.end(bytes);
   }catch{res.writeHead(404);res.end();}});
-  await new Promise(resolve=>offlineServer.listen(0,'127.0.0.1',resolve));let offlineContext;
+  await listenBrowserServer(offlineServer);let offlineContext;
   try{
     offlineContext=await browser.newContext();const first=await offlineContext.newPage(),url='http://127.0.0.1:'+offlineServer.address().port+'/studio/nested/editor/index.html';
     await first.goto(url);await first.waitForSelector('body[data-editor-ready=true]');

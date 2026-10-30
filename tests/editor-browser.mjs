@@ -1,3 +1,4 @@
+import { listenBrowserServer } from '../tools/browser-server.mjs';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { mkdir, mkdtemp, readFile, writeFile } from 'node:fs/promises';
@@ -9,7 +10,7 @@ import { newProject } from '../dist/editor/index.js';
 import { packageStudio } from '../tools/package-studio.mjs';
 
 const out = process.env.VN_ENGINE_TEST_OUTPUT ?? 'test-results'; await mkdir(out, { recursive: true });
-const server = await createDemoServer(); await new Promise(r => server.listen(0, '127.0.0.1', r)); const base = `http://127.0.0.1:${server.address().port}`;
+const server = await createDemoServer(); await listenBrowserServer(server); const base = `http://127.0.0.1:${server.address().port}`;
 const errors = [], checks = [], passed = text => { checks.push(text); console.log('PASS', text); }; let browser, standalone;
 try {
   browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH, args: ['--no-sandbox'] });
@@ -115,7 +116,7 @@ try {
     try { const name = decodeURIComponent(new URL(request.url, 'http://localhost').pathname).replace(/^\//, ''), path = resolve(build.output, name.endsWith('/') ? name + 'index.html' : name); if (!path.startsWith(build.output + sep)) throw Error();
       const bytes = await readFile(path), type = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.html': 'text/html', '.css': 'text/css', '.json': 'application/json', '.svg': 'image/svg+xml', '.woff2': 'font/woff2' }[extname(path)] ?? 'application/octet-stream'; response.writeHead(200, { 'Content-Type': type }); response.end(bytes);
     } catch { response.writeHead(404); response.end(); }
-  }); await new Promise(r => standalone.listen(0, '127.0.0.1', r));
+  }); await listenBrowserServer(standalone);
   const packaged = await browser.newPage(), requests = []; packaged.on('pageerror', e => errors.push(e.message)); packaged.on('request', r => requests.push(r.url()));
   await packaged.goto(`http://127.0.0.1:${standalone.address().port}/editor/`); await packaged.waitForSelector('body[data-preview-revision]'); assert.equal(await packaged.locator('#diagnostic-count').innerText(), '通过');
   assert.ok(requests.every(url => url.startsWith(`http://127.0.0.1:${standalone.address().port}/`))); await packaged.close();

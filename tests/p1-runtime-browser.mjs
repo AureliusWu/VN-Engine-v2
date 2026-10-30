@@ -1,3 +1,4 @@
+import { listenBrowserServer } from '../tools/browser-server.mjs';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { chromium } from 'playwright';
@@ -5,7 +6,7 @@ import { createDemoServer } from '../tools/serve.mjs';
 
 const output = (process.env.VN_ENGINE_TEST_OUTPUT ?? 'test-results') + '/p1-runtime';
 await mkdir(output, { recursive: true });
-const server = await createDemoServer(); await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
+const server = await createDemoServer(); await listenBrowserServer(server);
 const checks = [], errors = []; let browser;
 const svg = label => `<svg xmlns="http://www.w3.org/2000/svg" width="640" height="360"><rect width="640" height="360" fill="#173d45"/><text x="32" y="80" fill="white">${label}</text></svg>`;
 try {

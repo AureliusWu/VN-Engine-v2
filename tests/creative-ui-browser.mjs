@@ -1,8 +1,9 @@
+import { listenBrowserServer } from '../tools/browser-server.mjs';
 import assert from 'node:assert/strict';
 import { promises as fs } from 'node:fs';
 import { chromium } from 'playwright';
 import { createDemoServer } from '../tools/serve.mjs';
-const server=await createDemoServer();await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const base=`http://127.0.0.1:${server.address().port}`;let browser;
+const server=await createDemoServer();await listenBrowserServer(server);const base=`http://127.0.0.1:${server.address().port}`;let browser;
 try{
  browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH});const page=await browser.newPage({viewport:{width:1280,height:900}});
  await page.route('**/creative-ui',route=>route.fulfill({contentType:'text/html',body:'<!doctype html><meta charset="utf-8"><style>body{margin:0}main{max-width:1280px}</style><main id="game"></main>'}));await page.goto(base+'/creative-ui');

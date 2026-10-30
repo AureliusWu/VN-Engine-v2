@@ -4,10 +4,11 @@ import {posix} from 'node:path';
 import { readFile, writeFile, mkdir, realpath } from 'node:fs/promises';
 import { createHash } from 'node:crypto';
 import { dirname, resolve, sep, extname } from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
 import { isDeepStrictEqual } from 'node:util';
 import { validateProjectCompliance, assessProductionArt, assessQaEvidence, assessDeclaredQaEvidence, ReleaseArtGateError, ReleaseQaGateError, runRouteSuite, ReleaseRouteGateError, localAssetPath, isRecord, ENGINE_VERSION } from '../dist/index.js';
 import { probeAssets } from './probe-assets.mjs';
+import { listCompiledModules } from './compiled-modules.mjs';
 
 const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 const errorText = error => error instanceof Error ? error.message : String(error);
@@ -102,6 +103,10 @@ async function inspectBuild(directory, project, sourceSha256) {
     const required=['index.html','app.mjs','project.json','lib/index.js','sw.js','manifest.webmanifest','icon.svg','LICENSE.txt',...project.assets.flatMap(a=>[a.src,...(a.license?[a.license.src]:[])])];
     const entries=new Set(manifest.files.map(e=>e.name));
     for(const name of required)if(!entries.has(name))throw Error('Required build file missing from manifest: '+name);
+    const expectedModules = new Set((await listCompiledModules(fileURLToPath(new URL('..', import.meta.url)), { target: 'game' })).map(module => 'lib/' + module.relativePath));
+    const packagedModules = [...entries].filter(name => name.startsWith('lib/'));
+    if (packagedModules.length !== expectedModules.size || packagedModules.some(name => !expectedModules.has(name)))
+      throw Error('Packaged runtime modules differ from current source modules');
     for (const entry of manifest.files) {
       try {
         if (names.has(entry.name)) throw Error('Duplicate build file'); names.add(entry.name);

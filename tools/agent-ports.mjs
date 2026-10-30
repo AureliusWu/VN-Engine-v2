@@ -8,6 +8,7 @@ import { execFileSync } from 'node:child_process';
 import { AgentError, AGENT_LIMITS } from '../dist/agent/index.js';
 import { runRouteSuite } from '../dist/regression/suite.js';
 import { packageGame } from './package-game.mjs';
+import { listenBrowserServer } from './browser-server.mjs';
 const repository = fileURLToPath(new URL('..',import.meta.url));
 const sha = bytes => createHash('sha256').update(bytes).digest('hex');
 async function newOutput(value) { const output = path.resolve(value); try { const stat = await fs.lstat(output); if (!stat.isDirectory() || stat.isSymbolicLink() || (await fs.readdir(output)).length) throw new AgentError('OUTPUT_EXISTS','Output must be new or empty'); } catch(e) { if(e.code!=='ENOENT')throw e; } await fs.mkdir(output,{recursive:true}); return output; }
@@ -16,7 +17,7 @@ export function commitIdentity() {
  for(const value of [process.env.VN_ENGINE_COMMIT,process.env.GITHUB_SHA])if(value && value!==commit)throw new AgentError('BUILD_IDENTITY_CONFLICT','Environment commit differs from checked-out engine');
  return commit;
 }
-async function listen(server) { await new Promise((resolve,reject)=>{server.once('error',reject);server.listen(0,'127.0.0.1',resolve)}); return `http://127.0.0.1:${server.address().port}/`; }
+async function listen(server) { await listenBrowserServer(server); return `http://127.0.0.1:${server.address().port}/`; }
 export function createAgentPorts({sourceFile,readAsset,acceptanceOptions={}}) {
  return {
   async build(document,request,identity) {

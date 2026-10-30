@@ -1,3 +1,4 @@
+import { listenBrowserServer } from '../tools/browser-server.mjs';
 import assert from 'node:assert/strict';
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
@@ -30,7 +31,7 @@ for(const type of ['vn','chat']){const source=path.join(root,'sdk',type,'project
 const mime={'.html':'text/html','.js':'text/javascript','.mjs':'text/javascript','.json':'application/json','.svg':'image/svg+xml','.woff2':'font/woff2','.webmanifest':'application/manifest+json','.png':'image/png','.wav':'audio/wav','.ogg':'audio/ogg','.webm':'video/webm'};
 const directories=new Map();for(const transport of ['sdk','cli'])for(const type of ['script','investigation'])directories.set(`${transport}-${type}`,path.join(root,transport,type,'game'));
 const server=createServer(async(req,res)=>{try{const url=new URL(req.url,'http://test/'),match=/^\/stories\/([^/]+)\/(.*)$/.exec(url.pathname);if(!match||!directories.has(match[1]))throw Error('Unknown route');const base=directories.get(match[1]),file=path.resolve(base,decodeURIComponent(match[2]||'index.html'));if(!file.startsWith(base+path.sep))throw Error('Unsafe path');res.writeHead(200,{'Content-Type':mime[path.extname(file)]??'application/octet-stream','Cache-Control':'no-store'});res.end(await fs.readFile(file));}catch{res.writeHead(404);res.end();}});
-await new Promise(resolve=>server.listen(0,'127.0.0.1',resolve));const origin=`http://127.0.0.1:${server.address().port}`;let browser;
+await listenBrowserServer(server);const origin=`http://127.0.0.1:${server.address().port}`;let browser;
 try{
  browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH});
  for(const [name]of directories){const context=await browser.newContext();try{let page=await context.newPage();const url=origin+`/stories/${name}/`;await page.goto(url);await page.waitForFunction(()=>document.getElementById('status')?.textContent==='已下载，可离线游玩');await page.evaluate(()=>navigator.serviceWorker.ready);await page.reload();await page.waitForFunction(()=>navigator.serviceWorker.controller&&document.querySelector('.vn-engine'));await page.screenshot({path:path.join(root,name+'-nested.png')});await page.close();await context.setOffline(true);page=await context.newPage();await page.goto(url);await page.waitForFunction(()=>document.querySelector('.vn-engine'));assert.equal(await page.locator('#error').innerText(),'');await page.screenshot({path:path.join(root,name+'-offline.png')});evidence.nestedOffline.push({name,path:`/stories/${name}/`,status:'PASS',reopened:true});}finally{await context.close();}}

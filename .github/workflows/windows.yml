@@ -31,6 +31,8 @@ jobs:
         run: node --test tests/iteration.test.mjs tests/acceptance.test.mjs tests/qa-report.test.mjs
       - name: Verify P1 DSL, resource budgets and real renderer reuse on Windows
         run: npm run test:p1
+      - name: Verify stable decoded audio identities and source-based package modules
+        run: node --test tests/audio.test.mjs tests/browser-server.test.mjs tests/compiled-modules.test.mjs tests/package-modules.test.mjs
       - name: Verify R5 authoring, focus and audio regressions on Windows
         run: |
           node --test tests/runtime-media.test.mjs
@@ -121,6 +123,8 @@ jobs:
             test-results/v1-*/
             test-results/p0-*/
             test-results/p1-*/
+            test-results/resource-audio/
+            test-results/package-modules-browser/
             test-results/agent-cli/
             test-results/creative-cli/CREATIVE_REPORT.json
             test-results/creative-cli/MEDIA_REPORT.json
