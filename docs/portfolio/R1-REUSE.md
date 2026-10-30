@@ -67,3 +67,5 @@ R1 各仓新增 `.vn/workflow.json`、本仓 `VN-WORKFLOW-R1.md` 与 AGENTS 链�
 另安装个人技能 `vn-production-workflow`（VN 制作与验收），包括工作流、六仓适配参考、资源接入与续接/发布方法，以及同字节审计脚本。脚本来源/版本/哈希随技能参考保存；更新工具时同时核对技能脚本。技能目录负责其生命周期，GitHub 保留中央流程与实际验证记录。
 
 本轮真实验证与限制只写入 [R1-VALIDATION.md](R1-VALIDATION.md)。后续优化先记录新问题及收益，再决定通用化；专属效果和没有跨作实证的方法保留在作品内。
+
+R1 已写回六仓；同实现提交的六仓清单、引擎核心/完整浏览器及 Windows 原生 CI 全部成功。提交与工件回执见 [R1-DELIVERY.json](R1-DELIVERY.json)。

@@ -39,13 +39,32 @@
     "sharedFilesPerPeer": 15,
     "sharedPeers": 3,
     "skillValidation": "PASS",
-    "skillForwardTest": "completed-with-sparse-checkout-rule-refinement"
+    "skillForwardTest": "completed-with-sparse-checkout-rule-refinement",
+    "engineCompleteBrowserCi": "PASS",
+    "engineWindowsWebView2AndRestartCi": "PASS"
   },
   "notExecuted": [
-    "complete-browser-suite",
-    "windows-native-suite",
+    "five-game-complete-runtime-and-release-suites",
     "physical-device",
     "human-playtest"
   ],
-  "releaseStatus": "NOT_ASSESSED"
+  "releaseStatus": "NOT_ASSESSED",
+  "implementationCommit": "8f30979e10bf2f8df602ed41be05d4371aedd63e",
+  "ciRuns": [
+    {
+      "id": 41082878233,
+      "name": "VN portfolio workflow inventory",
+      "conclusion": "success"
+    },
+    {
+      "id": 41082878184,
+      "name": "Engine checks",
+      "conclusion": "success"
+    },
+    {
+      "id": 41082878074,
+      "name": "Windows native host",
+      "conclusion": "success"
+    }
+  ]
 }

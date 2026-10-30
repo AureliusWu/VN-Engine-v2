@@ -1,0 +1,190 @@
+{
+  "schema": "vn-workflow-delivery-v1",
+  "recordedOn": "2026-10-30",
+  "status": "PASS",
+  "implementationCommit": "8f30979e10bf2f8df602ed41be05d4371aedd63e",
+  "repositories": [
+    {
+      "repository": "AureliusWu/Rain",
+      "implementationCommit": "45757e10eaad97e719db53411476f42c5a216026",
+      "paths": [
+        "AGENTS.md",
+        "CHANGELOG.md",
+        "docs/STATUS.md",
+        "docs/TEST_PLAN.md",
+        ".vn/workflow.json",
+        "docs/production/VN-WORKFLOW-R1.md"
+      ],
+      "verification": "GitHub branch head and compare API verified"
+    },
+    {
+      "repository": "AureliusWu/Healing",
+      "implementationCommit": "704cdb3374b99b0b80846d0b34bd7415fb32f0f2",
+      "paths": [
+        "AGENTS.md",
+        ".vn/workflow.json",
+        "docs/production/VN-WORKFLOW-R1.md"
+      ],
+      "verification": "GitHub branch head and compare API verified"
+    },
+    {
+      "repository": "AureliusWu/NetLove",
+      "implementationCommit": "1368812ad46341257243466fa1b4dc5e249656c3",
+      "paths": [
+        "AGENTS.md",
+        ".vn/workflow.json",
+        "docs/production/VN-WORKFLOW-R1.md",
+        "docs/STATUS.md"
+      ],
+      "verification": "GitHub branch head and compare API verified"
+    },
+    {
+      "repository": "AureliusWu/Circuit",
+      "implementationCommit": "af712e5bda85212300291504d46ffaa53f7b96b2",
+      "paths": [
+        "AGENTS.md",
+        ".vn/workflow.json",
+        "docs/production/VN-WORKFLOW-R1.md"
+      ],
+      "verification": "GitHub branch head and compare API verified"
+    },
+    {
+      "repository": "AureliusWu/RESET",
+      "implementationCommit": "35cc81c3c2691a380d135e16ab58e0c0876592b2",
+      "paths": [
+        "AGENTS.md",
+        ".vn/workflow.json",
+        "docs/production/VN-WORKFLOW-R1.md",
+        "docs/PRODUCTION_STATUS.md"
+      ],
+      "verification": "GitHub branch head and compare API verified"
+    },
+    {
+      "repository": "AureliusWu/VN-Engine-v2",
+      "implementationCommit": "8f30979e10bf2f8df602ed41be05d4371aedd63e",
+      "paths": [
+        "AGENTS.md",
+        "CHANGELOG.md",
+        "docs/VALIDATION.md",
+        "docs/provenance.json",
+        "package.json",
+        "tools/vn_portfolio.py",
+        "tests/portfolio/test_workflow.py",
+        ".vn/workflow.json",
+        ".github/workflows/vn-portfolio.yml",
+        "docs/production/VN-WORKFLOW-R1.md",
+        "docs/portfolio/R1-REUSE.md",
+        "docs/portfolio/R1-BASELINES.json",
+        "docs/portfolio/R1-AUDIT.json",
+        "docs/portfolio/R1-VALIDATION.md",
+        "docs/portfolio/R1-VALIDATION.json"
+      ],
+      "verification": "GitHub branch head and compare API verified"
+    }
+  ],
+  "runs": [
+    {
+      "id": 41082878233,
+      "name": "VN portfolio workflow inventory",
+      "headSha": "8f30979e10bf2f8df602ed41be05d4371aedd63e",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/41082878233"
+    },
+    {
+      "id": 41082878184,
+      "name": "Engine checks",
+      "headSha": "8f30979e10bf2f8df602ed41be05d4371aedd63e",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/41082878184"
+    },
+    {
+      "id": 41082878074,
+      "name": "Windows native host",
+      "headSha": "8f30979e10bf2f8df602ed41be05d4371aedd63e",
+      "status": "completed",
+      "conclusion": "success",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/41082878074"
+    }
+  ],
+  "skill": {
+    "name": "vn-production-workflow",
+    "displayName": "VN 制作与验收",
+    "state": "installed-and-remote-verified",
+    "auditorImplementationCommit": "8f30979e10bf2f8df602ed41be05d4371aedd63e"
+  },
+  "gameRuntimeChanged": false,
+  "gameReleaseCreated": false,
+  "physicalDeviceValidation": "NOT_RUN",
+  "humanPlaytest": "NOT_RUN",
+  "note": "This receipt records the tested implementation and the five peer integration commits. A later documentation-only closure preserves these identities and does not claim a new runtime verification.",
+  "artifacts": [
+    {
+      "id": 12991470044,
+      "name": "VNEngine-Studio-win-x64",
+      "digest": "sha256:39f34c38bcebec52077dbeba3e1cf8843bc8dea64c8ea84fe903449fee3f780a",
+      "runId": 41082878074
+    },
+    {
+      "id": 12989913291,
+      "name": "windows-native-evidence",
+      "digest": "sha256:d4522ee1a37aef0fd1e02c9734515ded8d50a453b015b3297ee9865c2062d260",
+      "runId": 41082878074
+    },
+    {
+      "id": 12990736831,
+      "name": "alpha-qa-reports",
+      "digest": "sha256:9804e4c7fda7526f2a8a24481f108bc873b4da23ce4470410de326ec92ff4225",
+      "runId": 41082878184
+    },
+    {
+      "id": 12990437970,
+      "name": "r6-stability-evidence",
+      "digest": "sha256:cfc5ca27968cb0a50462fae50de74bd96b50a826ddebcb2bb72d2638b861ce06",
+      "runId": 41082878184
+    },
+    {
+      "id": 12990268305,
+      "name": "p1-resource-dsl-evidence",
+      "digest": "sha256:9297c0adefea784b1ade9126bbbadee53501a22e9c2e7f7069c49003a57b4e1c",
+      "runId": 41082878184
+    },
+    {
+      "id": 12990117316,
+      "name": "vn-engine-standalone-samples",
+      "digest": "sha256:00fb39810de2eae8cd838952401d2e87a9acdd96e0d0ad3fca0901cad11e56b5",
+      "runId": 41082878184
+    },
+    {
+      "id": 12990088497,
+      "name": "engine-browser-evidence",
+      "digest": "sha256:538387630e60a38520dff4a05b41e8372bede49761b9f823e3982ee961bffae7",
+      "runId": 41082878184
+    },
+    {
+      "id": 12989563977,
+      "name": "r5-stability-evidence",
+      "digest": "sha256:143bf94bd4a8c3351fba1518fa91c21c95c05e288ae697358bdee67955e544f6",
+      "runId": 41082878184
+    },
+    {
+      "id": 12989553982,
+      "name": "p0-runtime-evidence",
+      "digest": "sha256:ddd41214fe69c1e897a94210b1846d0a05bbb72c63bfed3aca28b8e9729b6c61",
+      "runId": 41082878184
+    },
+    {
+      "id": 12989549131,
+      "name": "r4-review-evidence",
+      "digest": "sha256:51be7b624d4e8c283e7ef9ccdda347111ee03d1e7a4eddd8a224f7906b59b8fa",
+      "runId": 41082878184
+    },
+    {
+      "id": 12989509355,
+      "name": "v1-release-evidence",
+      "digest": "sha256:f6638468bb24a3a67612a84c47c352a58723835f12c283640f1d1f8f5d8d1729",
+      "runId": 41082878184
+    }
+  ]
+}

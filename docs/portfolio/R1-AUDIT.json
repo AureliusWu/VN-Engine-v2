@@ -84,8 +84,8 @@
         }
       ],
       "shared": null,
-      "commit": "f065ea784752d9c7335638e3b383afd12cf98bd0",
-      "dirty": true,
+      "commit": "8f30979e10bf2f8df602ed41be05d4371aedd63e",
+      "dirty": false,
       "identity": "checkout",
       "profileSha256": "73024272c963c60a03f50952f0715bbe617f67228f0760343ee4049476f8fce5",
       "kind": "engine",
@@ -176,8 +176,8 @@
           "docs/production/READ-HISTORY.md": "2d9070b6dee781321f9ef80839e8f7eb296a16a4c48a1d7787646ad05cf39c30"
         }
       },
-      "commit": "7ea82a4ae4724aebe6f087060f57cb50482384d3",
-      "dirty": true,
+      "commit": "45757e10eaad97e719db53411476f42c5a216026",
+      "dirty": false,
       "identity": "checkout",
       "profileSha256": "5fd024180d93356aa0e76c3702ad8092aa05ab19e9802bef51b00ad7934ed54a",
       "kind": "game",
@@ -270,8 +270,8 @@
           "docs/production/READ-HISTORY.md": "2d9070b6dee781321f9ef80839e8f7eb296a16a4c48a1d7787646ad05cf39c30"
         }
       },
-      "commit": "1978ec9d85a72000bb848359e8d4a4b69bf44f1e",
-      "dirty": true,
+      "commit": "704cdb3374b99b0b80846d0b34bd7415fb32f0f2",
+      "dirty": false,
       "identity": "checkout",
       "profileSha256": "48ba524f1c79ca8330574b4de6b11c85c20538d8b9fd9073e1cacd55da1e0d97",
       "kind": "game",
@@ -352,8 +352,8 @@
           "docs/production/READ-HISTORY.md": "2d9070b6dee781321f9ef80839e8f7eb296a16a4c48a1d7787646ad05cf39c30"
         }
       },
-      "commit": "d345b054bf4323a6cfd75e51d2dbb36d8da1a81e",
-      "dirty": true,
+      "commit": "1368812ad46341257243466fa1b4dc5e249656c3",
+      "dirty": false,
       "identity": "checkout",
       "profileSha256": "0214cd8d8566c754bb9d3495f706a9c3291134899e76a3ba80bf05aab5eb6b98",
       "kind": "game",
@@ -475,8 +475,8 @@
         }
       ],
       "shared": null,
-      "commit": "72ea0b28d7b1a56d23c352ab4dcaf579d6db39ca",
-      "dirty": true,
+      "commit": "af712e5bda85212300291504d46ffaa53f7b96b2",
+      "dirty": false,
       "identity": "checkout",
       "profileSha256": "c18668aff22c7ef399ed4aa12cb04137803804097e8dc12ac583e0df2b0eaa1d",
       "kind": "game",
@@ -593,8 +593,8 @@
         }
       ],
       "shared": null,
-      "commit": "45996c5445eb9ef9a60448e77673260ea3f7ce0d",
-      "dirty": true,
+      "commit": "35cc81c3c2691a380d135e16ab58e0c0876592b2",
+      "dirty": false,
       "identity": "checkout",
       "profileSha256": "76940fa0e38ab0f535af61d4bb736ee9d8f80bd13466ac39876f96bfa4d399f9",
       "kind": "game",
@@ -602,5 +602,14 @@
       "status": "PASS"
     }
   ],
-  "evidenceNote": "R1 working trees over exact R1-BASELINES.json commits before publication. Dirty state is explicit. Machine paths redacted to repository names. This inventory does not assert runtime or release quality."
+  "sourceEvidence": {
+    "repository": "AureliusWu/VN-Engine-v2",
+    "implementationCommit": "8f30979e10bf2f8df602ed41be05d4371aedd63e",
+    "workflowRunId": 41082878233,
+    "jobId": 124156309637,
+    "artifactId": 12990701391,
+    "artifactDigest": "sha256:716d0a7f735f55e5c4f759d518f2bb3dfef4732b0f0459a734036ae8fe6baa80",
+    "runUrl": "https://github.com/AureliusWu/VN-Engine-v2/actions/runs/41082878233",
+    "note": "Decoded from the completed workflow job's JSON output. Only absolute roots redacted; repository, commit, clean-state and inspected hashes retained. Raw ZIP artifact retains original report."
+  }
 }
