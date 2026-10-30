@@ -1,5 +1,9 @@
 # 架构与接口
 
+## v1.2.0 P1 资源与作者前端
+
+assets/plan.ts 提供有界只读资源计划，assets/prefetch.ts 独立管理编码字节与取消；mount 以显式 opt-in 将缓存接入 AssetCatalog，不更改 driver / replay / save。script/text.ts 是可选纯编译器，只输出已有 ScriptProgram 与独立 source map，独立玩家包排除该作者模块。Studio 与 Agent 共用两者，预算、语法和边界见 [P1 约定](P1_DEVELOPMENT.md)。
+
 ## v1.1.0 P0 内建语义与运行证据
 
 runtime/semantics.ts 是冻结的内建政策目录，区分脚本出口、玩家操作和舞台 cue，不接受项目 handler，也不替代现有 validator。runtime/evidence.ts 提供可选有界 pull/drain buffer；Session、音频与 DOM 宿主写入捕获的访问 / 尝试身份，不同步调用外部消费者。

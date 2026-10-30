@@ -1,0 +1,28 @@
+# Original engine-only example. Not a migration of an existing work.
+vn-script 1
+game "p1-dsl-demo"
+version "1"
+entry start
+
+var trust number 0 min 0 max 10
+var consent boolean false
+
+block start "开场 / Opening"
+  line hello "旁白" "你好，world。\n请选择一条路线。"
+  choice accept "继续 / Continue" -> route with add trust 2, set consent true
+  choice decline "离开 / Leave" -> neutral
+
+# Hidden routing retains the current ScriptEngine semantics.
+block route
+  branch
+  when trust >= 2 && consent == true -> good
+  else -> neutral
+
+block good
+  line good-line "旁白" """第一行：完成。
+Second line: stable IDs survive formatting edits."""
+  end good
+
+block neutral
+  line neutral-line "旁白" "暂时停在这里。"
+  end neutral

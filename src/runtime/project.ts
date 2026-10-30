@@ -31,12 +31,12 @@ export type EngineProject = ProjectBase & (
   | { type: 'rain'; story: RainStory; defaults?: StageCue }
   | { type: 'investigation'; chapters: readonly InvestigationChapter[]; stage?: InvestigationStage }
 );
-export function createProject(project: EngineProject, baseURL: string | URL, options: { clock?: Clock; settings?: Partial<RuntimeSettings>; assetURL?: (path: string) => string; initialPause?: string; readProgress?: ReadProgressPort; evidence?: RuntimeEvidence } = {}) {
+export function createProject(project: EngineProject, baseURL: string | URL, options: { clock?: Clock; settings?: Partial<RuntimeSettings>; assetURL?: (path: string) => string; assetCacheURL?: (assetId: string) => string | undefined; initialPause?: string; readProgress?: ReadProgressPort; evidence?: RuntimeEvidence } = {}) {
   if (project.schema !== 1 || !project.game || !project.version || !project.title || !Array.isArray(project.assets)) throw new Error('Invalid engine project');
   validateProjectUI(project.ui); validateCreativeProject(project);
   if (project.titleScreen !== undefined && typeof project.titleScreen !== 'boolean') throw new Error('titleScreen must be boolean');
   if (project.routeTests !== undefined) validateRouteSuite(project.routeTests);
-  const assets = new AssetCatalog(project.assets, baseURL, options.assetURL);
+  const assets = new AssetCatalog(project.assets, baseURL, options.assetURL, options.assetCacheURL);
   if (project.collections !== undefined) {
     if (!isRecord(project.collections)) throw new Error('Invalid collection metadata');
     const endings = new Set(projectEndings(project));

@@ -70,7 +70,7 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "73d208d0c12a34ae00025fd3702ad7a2062803d710722e25b95aec0fe2357f2a"
+      "targetSha256": "71cd4c451853445034c5fb53e49aff104ce4b64835a002a61cdf550ff7c2e5d2"
     },
     {
       "target": "editor/async-operation.mjs",
@@ -94,7 +94,7 @@
       "target": "editor/index.html",
       "mode": "new",
       "origins": [],
-      "targetSha256": "bd8874e4ab1f1b53d3abeb17a2d55a0cacd6005609d36dd82931149e0c76a584"
+      "targetSha256": "d6ceb2b174eec419966cbfcaaf7473ffd93e9fffd1e22f5b6f91a06ec99f019e"
     },
     {
       "target": "editor/logic.mjs",
@@ -142,12 +142,18 @@
       "target": "editor/preview.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "3eae1dfb6a9cd389c43223351e67c32edb0d71ef2b7fb52dab4fdd9d509e2529"
+      "targetSha256": "a69876d45f9212d56710cee03b7e34d7d0d29d8c721ffa9dc39d0d71aaa87afb"
     },
     {
       "target": "editor/production.mjs",
       "mode": "new",
       "targetSha256": "faa031251bf42e25f23925036ffb968188c2b14aad18f26e5326f427e6e36190",
+      "origins": []
+    },
+    {
+      "target": "editor/resources.mjs",
+      "mode": "new",
+      "targetSha256": "2d6c4bec40b9909aa25db5d6113f06b4fcc84de0dbc01655902f8e1c68838c6f",
       "origins": []
     },
     {
@@ -185,13 +191,19 @@
           "sha256": "b2aaf73b7acc23d746b110f1caeaecc93d4292824979af44e96000200591b2a7"
         }
       ],
-      "targetSha256": "905130ac81570f90bf546e6e62ebe6e85268b1673d64814ca88b004189ee1bbd"
+      "targetSha256": "cc875ba7359ea31da855a6a5a60aa40769e837ad5d52624e118b5fe5e7b62c3a"
     },
     {
       "target": "editor/style.css",
       "mode": "new",
       "origins": [],
-      "targetSha256": "c246fc6c5f83e7dbc4a5ecf1569dd9f88cdbe12c01cc23d451af7a370eec9f3f"
+      "targetSha256": "94c9050634918c6de983cc9e2d1a4ac1289314ec868d2e9eb80cc0ade926670f"
+    },
+    {
+      "target": "editor/text-script.mjs",
+      "mode": "new",
+      "targetSha256": "58cbc40044be578ee9a0c12208d7092b821c1855fe49bc7968b5b8aaed20d5cd",
+      "origins": []
     },
     {
       "target": "examples/agent/assets/agent.woff2",
@@ -430,7 +442,7 @@
       "target": "hosts/windows/VNEngine.Windows.csproj",
       "mode": "new",
       "origins": [],
-      "targetSha256": "18c6701eb87093a4eb348fa66c51567dde3787d6895fc2ca1efef63646e079bf"
+      "targetSha256": "b277198eb6f9228512693e7e4b065ff0ed3d71fd5a93c8c1d6f91de55f7d9b43"
     },
     {
       "target": "licenses/Healing-LICENSE.txt",
@@ -493,7 +505,7 @@
     {
       "target": "schemas/vn-agent-v1.request.schema.json",
       "mode": "new",
-      "targetSha256": "b256e504f067208c32294d648d55531be06a0db350c9e103406982142f150413",
+      "targetSha256": "1b713cbacb8a91ece63b440fa69fa3c70696a5e8400b46ba1ea5cb8342002d2e",
       "origins": []
     },
     {
@@ -647,26 +659,38 @@
     {
       "target": "src/agent/runtime-inspection.ts",
       "mode": "new",
-      "targetSha256": "19cb461cf11bad296464ef08cb76c6c0e8a094fe9cf0999912dd0c9e250ed67f",
+      "targetSha256": "74ae3394ac4020e3da8faa4b21cadaccbc999601ca96a5ce3012d7bee91a6ba4",
       "origins": []
     },
     {
       "target": "src/agent/schema.ts",
       "mode": "new",
-      "targetSha256": "bcfce010fcde2e4b9eec1442f81b23aaf189aa27431f337e9fe49acdab877803",
+      "targetSha256": "5dd9308b82b461562fe272bb589423bea22e42659e30f5390e15dc7a608b9396",
       "origins": []
     },
     {
       "target": "src/agent/sdk.ts",
       "mode": "new",
-      "targetSha256": "672f67d753b0609e4ecb5134ed84a6f6c20ff4cc01baa22a164973a6474909b3",
+      "targetSha256": "2c0b144864b36e3547ce7dc4f81c2e36bf1b2055498b3a9a5d9d83cf36cf115a",
       "origins": []
     },
     {
       "target": "src/assets/catalog.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "2647e9992e3abf91301516ac7cf608ead2ac629f47c53b47be9bd8104c820a26"
+      "targetSha256": "c94aa64c18ab6857482c4a076eb465a8fc92ce5ca9a0c220bae60cffbe041a51"
+    },
+    {
+      "target": "src/assets/plan.ts",
+      "mode": "new",
+      "targetSha256": "25b2d848b0fc5cb4a557a92f71c4c61db19a8b4c5d33e34854c0ea9f04bf7b60",
+      "origins": []
+    },
+    {
+      "target": "src/assets/prefetch.ts",
+      "mode": "new",
+      "targetSha256": "adeb9836591f0ad7d3c51e8391b0934a8322ae17d34c76e417fa9929989ddb46",
+      "origins": []
     },
     {
       "target": "src/audio/catalog.ts",
@@ -807,7 +831,7 @@
     {
       "target": "src/index.ts",
       "mode": "new",
-      "targetSha256": "0ea8201570c2aac25ce8e1f0c4ced4fbdf6d9400b2164410c88419c2c90cc5a3",
+      "targetSha256": "6bc68b858cf09b22951a156f6fb1b73ef255c2412b0cf1dc69dc7362b3af4906",
       "origins": []
     },
     {
@@ -999,7 +1023,13 @@
       "target": "src/render/mount.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "cfa465cca262d51c7a847f3578d5c921299c03eb4c4ad5cc5234c59562f2f377"
+      "targetSha256": "9a286bcc0118628d9f152de329921e083363cc8f66c18338d3271482c66600d0"
+    },
+    {
+      "target": "src/render/resources.ts",
+      "mode": "new",
+      "targetSha256": "d0af252722cc61c82c000d178b963fced407e5851aaeb56b7304ac700aea4f98",
+      "origins": []
     },
     {
       "target": "src/runtime/drivers.ts",
@@ -1029,7 +1059,7 @@
       "target": "src/runtime/project.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "64cbf96fa0a32d64afda1d7e9e87c9a2f2ca4817b54fb536a95c539d1995c1e5"
+      "targetSha256": "373cdc308be73c1e8df3c144c78dafbd24bd212f20e511560c0957c53786204f"
     },
     {
       "target": "src/runtime/read.ts",
@@ -1072,6 +1102,12 @@
       "mode": "new",
       "origins": [],
       "targetSha256": "7d54cb1b1f53fbc62c57aad1d8cf29a0ef60f23936b625aad52896e5aa89e1f7"
+    },
+    {
+      "target": "src/script/text.ts",
+      "mode": "new",
+      "targetSha256": "22e5977e410f64d65b460be63a8862a63f3716e0237d39c125c9f1b027df2c63",
+      "origins": []
     },
     {
       "target": "src/script/types.ts",
@@ -1194,7 +1230,7 @@
       "target": "src/version.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "c76cbfeabc57af7ed290dc8b3c393c2cec64b49b3e47ff62b94a857841c86cf8"
+      "targetSha256": "1cd3a61a88211b39737061c89e51860aa844372d21059f7bc1dbb0917644b102"
     },
     {
       "target": "tools/acceptance-node.mjs",
@@ -1217,7 +1253,7 @@
     {
       "target": "tools/agent-node.mjs",
       "mode": "new",
-      "targetSha256": "f6357db42291238778f16f0e68e66a5bfa30e9593b4bb55443583aa8ae68c0c8",
+      "targetSha256": "8aff9fbad68cafe9493e4e6abd04c120fa042ea6e799bc69080e70b9644b3d2c",
       "origins": []
     },
     {
@@ -1275,6 +1311,12 @@
       "origins": []
     },
     {
+      "target": "tools/compile-script.mjs",
+      "mode": "new",
+      "targetSha256": "76d1558a41f1f262dfec1b6a57cd3bffe353e5666165593861700297dbcdce1d",
+      "origins": []
+    },
+    {
       "target": "tools/creative-example.mjs",
       "mode": "new",
       "targetSha256": "8a1f410aa1f12b30d1823a6a93534073ef8c43c34280740e1324294338d279e0",
@@ -1314,7 +1356,7 @@
       "target": "tools/package-game.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "a4f54c9c614a146a02861bb3c02870096121975668d107cb991b15609ec2674e"
+      "targetSha256": "663f08f6b2643440b515f0bf8aeca67a1bae86a0fb948ba18c677aea1e7158a6"
     },
     {
       "target": "tools/package-output.mjs",

@@ -15,12 +15,14 @@ import { inspectItems, referenceItems, agentProjectDiagnostics } from './project
 import { runtimeInspectionItems } from './runtime-inspection.js';
 import { RUNTIME_SEMANTICS_VERSION } from '../runtime/semantics.js';
 import { createSourceResolver } from '../source/origin.js';
+import { compileTextScript, TEXT_SCRIPT_FORMAT } from '../script/text.js';
 
 export function agentCapabilities() {
   return { protocol: AGENT_PROTOCOL, extensions:[CREATIVE_EXTENSION,'vn-author-review-v1','vn-content-impact-v1','vn-ai-acceptance-v1'], limits: AGENT_LIMITS, commands: Object.keys(COMMAND_SCHEMAS), operations: OPERATION_DEFINITIONS.map(schema => schema.properties.op.const),
     templates: ['vn', 'chat', 'script', 'investigation'], templateTypes: { vn: 'narrative', chat: 'narrative', script: 'script', investigation: 'investigation' }, projectTypes: ['narrative', 'script', 'investigation', 'rain'],
     compatibility: { projectSchema: 1, editorSchema: 1, saveSchema: 1, saveEnvelopeSchema:2, savePayloadSchema:1, rain: 'native-format-read-validate-test-preview-build' },
-    runtimeInspection:{semanticsVersion:RUNTIME_SEMANTICS_VERSION,kinds:['semantics','source','evidence'],evidenceContract:'vn-runtime-evidence-v1',importedEvidenceAcceptance:'UNVERIFIED',sourceIdentity:'stable IDs and JSON path; source SHA binding'},
+    runtimeInspection:{semanticsVersion:RUNTIME_SEMANTICS_VERSION,kinds:['semantics','source','evidence','resources'],evidenceContract:'vn-runtime-evidence-v1',resourceContract:'vn-resource-plan-v1',importedEvidenceAcceptance:'UNVERIFIED',sourceIdentity:'stable IDs and JSON path; source SHA binding'},
+    textScript:{format:TEXT_SCRIPT_FORMAT,command:'script.compile',readOnly:true,output:'paged ScriptProgram, diagnostics and independent source map; no project writes'},
     operationScopes: { variable: ['script'], chapter: ['investigation'], evidence: ['investigation'], action: ['investigation'], line: ['narrative','script'], choice: ['narrative','script'], exit: ['script'], rainNodes: 'native-read-only' },
     hostPorts: ['readAsset', 'preview', 'build', 'probe', 'importsPrepared','readEvidence','acceptanceBundle'],
     schemas: {
@@ -40,7 +42,7 @@ function page(response: AgentResponse, items: any[], request: AgentRequest, sha:
     index = cursor.index; offset = cursor.offset;
   }
   const token = (i: number, o: number) => encodeURIComponent(JSON.stringify({ sha, query, index: i, offset: o }));
-  const data: any = { kind: p.kind ?? 'overview', total: items.length, items: [], truncated: false, nextCursor: null };
+  const data: any = { kind: p.kind ?? (request.command==='script.compile'?'script.compile':'overview'), total: items.length, items: [], truncated: false, nextCursor: null };
   const fits = () => utf8Bytes(JSON.stringify({ ...response, data })) <= maxBytes;
   while (index < items.length && data.items.length < limit) {
     const text = JSON.stringify(items[index]); if (offset > text.length) throw new AgentError('INVALID_CURSOR', 'Cursor offset exceeds the item');
@@ -125,6 +127,16 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
     if (utf8Bytes(JSON.stringify(request)) > AGENT_LIMITS.inputBytes) throw new AgentError('BUDGET_EXCEEDED', 'Request exceeds byte budget', {}, 'UNVERIFIED');
     const params = request.params; check();
     if (request.command === 'capabilities') { response.data = params.schema ? { schema: ({ request: AGENT_REQUEST_SCHEMA, response: AGENT_RESPONSE_SCHEMA, operation: AGENT_OPERATION_SCHEMA, production:PRODUCTION_SCHEMA, ui:UI_SCHEMA,feedback:FEEDBACK_DOCUMENT_SCHEMA,acceptance:AI_ACCEPTANCE_SCHEMA } as any)[params.schema] } : agentCapabilities(); return result; }
+    if(request.command==='script.compile'){
+      const compiled=compileTextScript(params.source,{fileName:params.fileName});check();
+      response.ok=compiled.ok;response.status=compiled.ok?'PASS':'FAIL';
+      if(!compiled.ok)response.diagnostics.push({code:'DSL_COMPILE_FAILED',severity:'error',message:'Text script compilation failed; detailed source ranges are in the paginated diagnostic items'});
+      const items:any[]=[{id:'compile-summary',format:TEXT_SCRIPT_FORMAT,ok:compiled.ok,diagnostics:compiled.diagnostics.length,sourceMap:compiled.sourceMap.length,readOnly:true},
+        ...(compiled.program?[{id:'program',program:compiled.program}]:[]),
+        ...compiled.diagnostics.map((diagnostic,index)=>({id:'diagnostic-'+index,kind:'diagnostic',...diagnostic})),
+        ...compiled.sourceMap.map((entry,index)=>({id:'source-map-'+index,kind:'source-map',entry}))];
+      page(response,items,request,await sourceHash(JSON.stringify([params.source,params.fileName??null])));check();return result;
+    }
     if(request.command==='probe'){if(!context.probe)throw new AgentError('HOST_PORT_REQUIRED','Probe requires the Node host or an injected decoder',{},'UNVERIFIED');const output=await context.probe(request);response.data=output.data;response.artifacts=output.artifacts;response.status=output.status;response.ok=output.status==='PASS';response.diagnostics=output.diagnostics;result.report=output.data;check();return result;}
     if (request.command === 'init') {
       const project = newProject(params.type); project.game = params.game; project.version = params.storyVersion; project.title = params.title;
@@ -180,12 +192,13 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
       response.data={applied:false,dryRun:!!params.dryRun,reviewSha256:reviewSha,candidateReviewSha256:after,item:next.items.find(i=>i.id===params.id),filesVerified:binding.filesVerified,scope:{releaseApproval:false,humanIdentityAuthenticated:false}};return result;
     }
     if (request.command === 'inspect' || request.command === 'refs') {
-      if(request.command==='inspect'&&['semantics','source','evidence'].includes(params.kind)){
+      if(request.command==='inspect'&&['semantics','source','evidence','resources'].includes(params.kind)){
         const inspection=runtimeInspectionItems(project,params,sha);response.diagnostics=inspection.diagnostics;
         if(inspection.unverified){response.status='UNVERIFIED';response.ok=false;}
         if(params.id&&!inspection.items.length)throw new AgentError('NOT_FOUND','No matching runtime inspection item');
         const items=params.query?inspection.items.filter(item=>JSON.stringify(item).toLocaleLowerCase().includes(params.query.toLocaleLowerCase())):inspection.items;
-        page(response,items,request,sha+(params.kind==='evidence'?':'+await sourceHash(JSON.stringify(params.document)):''));check();return result;
+        const binding=params.kind==='evidence'?await sourceHash(JSON.stringify(params.document)):params.kind==='resources'?await sourceHash(JSON.stringify([params.position??null,params.plan??null])):null;
+        page(response,items,request,sha+(binding?':'+binding:''));check();return result;
       }
       let items = request.command === 'inspect' ? inspectItems(project, params.kind ?? 'overview', params.id, params.chapterId) : referenceItems(before, params.kind, params.id, params.chapterId);
       if(request.command==='inspect') {

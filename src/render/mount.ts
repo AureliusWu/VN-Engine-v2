@@ -10,8 +10,10 @@ import { createMetaStateStore } from '../meta/state.js';
 import type { StoragePort } from '../storage/store.js';
 import { DOMRenderer } from './dom.js';
 import type { RuntimeEvidence } from '../runtime/evidence.js';
+import { bindResources, type MountPrefetchOptions } from './resources.js';
+export type { MountPrefetchOptions } from './resources.js';
 
-export type MountOptions = { baseURL?: string | URL; storage?: StoragePort | null; audio?: boolean; assetURL?: (path: string) => string; evidence?: RuntimeEvidence };
+export type MountOptions = { baseURL?: string | URL; storage?: StoragePort | null; audio?: boolean; assetURL?: (path: string) => string; evidence?: RuntimeEvidence; prefetch?: MountPrefetchOptions | false };
 
 /** Replay is a separate driver/session with no persistence or meta subscriptions. */
 function mountReplay(root: HTMLElement, project: EngineProject, saved: unknown, baseURL: string | URL, options: MountOptions, settings: Partial<RuntimeSettings>) {
@@ -63,10 +65,13 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
     const result = readProgress.flush();
     if (!['saved', 'clean'].includes(result.status) && !readWarning) { renderer?.notify('已读记录暂未保存，可以继续阅读'); readWarning = true; }
   };
-  const { session, assets } = createProject(project, baseURL, { assetURL: options.assetURL, evidence: options.evidence, initialPause: project.titleScreen ? 'title' : 'mount', readProgress: {
+  let resources: ReturnType<typeof bindResources> | undefined;
+  const { session, assets } = createProject(project, baseURL, { assetURL: options.assetURL, assetCacheURL: id => resources?.url(id), evidence: options.evidence, initialPause: project.titleScreen ? 'title' : 'mount', readProgress: {
     has: signature => readProgress.has(signature),
     mark: signature => { readProgress.mark(signature); if (storage && readProgress.dirty && readTimer === undefined) readTimer = globalThis.setTimeout(flushRead, 250); }
   } });
+  try { resources = bindResources(project, session, assets, options.prefetch); }
+  catch (error) { session.dispose(); throw error; }
   let started = !project.titleScreen;
   const persistence = bindSessionPersistence(session, createSaveContract({ game: project.game, gameVersion: project.version, storage }));
   const validatePayload = (value: unknown) => {
@@ -132,12 +137,12 @@ export function mountGame(root: HTMLElement, project: EngineProject, options: Mo
     startAtTitle: project.titleScreen, onBegin: () => { started = true; },
     beginReplay: (target, saved) => mountReplay(target, project, saved, baseURL, options, session.getView().settings), onUnlockAudio: unlockAudio,
     onCgPresented: id => { if (started && !session.getView().pauseReasons.includes('title') && session.getView().reason !== 'rollback') meta.unlockCg(id); } }); }
-  catch (error) { disconnectProgress(); disconnectRead(); if (readTimer !== undefined) globalThis.clearTimeout(readTimer); session.dispose(); throw error; }
+  catch (error) { disconnectProgress(); disconnectRead(); resources.dispose(); if (readTimer !== undefined) globalThis.clearTimeout(readTimer); session.dispose(); throw error; }
   const view = root.ownerDocument.defaultView;
   const hostVisibility = (event: Event) => { const hidden = (event as CustomEvent<unknown>).detail; if (hidden && typeof hidden === 'object' && 'hidden' in hidden && typeof hidden.hidden === 'boolean') session.pause('native-host', hidden.hidden); };
   view?.addEventListener('vn-engine-host-visibility', hostVisibility);
   view?.addEventListener('pagehide', flushRead); session.pause('mount', false);
-  return { session, renderer, assets, persistence, backup, continuation, readProgress, meta, unlockAudio, get audioActive() { return !!media; }, dispose() {
-    if (disposed) return; disposed = true; disconnectProgress(); disconnectRead(); flushRead(); view?.removeEventListener('pagehide', flushRead); view?.removeEventListener('vn-engine-host-visibility', hostVisibility); media?.dispose(); session.dispose(); renderer?.dispose(); if (context) void context.close().catch(() => {});
+  return { session, renderer, assets, persistence, backup, continuation, readProgress, meta, unlockAudio, resourceSnapshot: resources.snapshot, get audioActive() { return !!media; }, dispose() {
+    if (disposed) return; disposed = true; disconnectProgress(); disconnectRead(); flushRead(); view?.removeEventListener('pagehide', flushRead); view?.removeEventListener('vn-engine-host-visibility', hostVisibility); media?.dispose(); session.dispose(); renderer?.dispose(); resources?.dispose(); if (context) void context.close().catch(() => {});
   } };
 }

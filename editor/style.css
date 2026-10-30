@@ -11,3 +11,4 @@
 .evidence-events li small{display:block;color:var(--muted);overflow-wrap:anywhere}
 .evidence-events li button{margin:.25rem .5rem}
 .evidence-semantics{display:grid;gap:.5rem;margin-top:.75rem}
+.author-actions{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.dsl-output,.resource-cache{white-space:pre-wrap;overflow-wrap:anywhere;max-height:240px;overflow:auto;font-size:11px;background:#101923;padding:10px;border:1px solid var(--line);border-radius:6px}.dsl-diagnostics button,.dsl-ranges button{white-space:normal;text-align:left;overflow-wrap:anywhere}.resource-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px}.resource-controls>.check{grid-column:1/-1}.resource-candidates li{margin:8px 0;overflow-wrap:anywhere}.resource-candidates button{margin-left:8px}#text-script-list,#resources-list{padding:0 18px 18px}#text-script-list>textarea{min-height:230px;font-family:Consolas,monospace}

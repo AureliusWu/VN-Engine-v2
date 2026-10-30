@@ -22,7 +22,7 @@ test('P0 runtime inspection is an additive read-only capability with existing sa
   assert.equal(capabilities.data.compatibility.saveSchema,1);
   assert.equal(capabilities.data.compatibility.saveEnvelopeSchema,2);
   assert.equal(capabilities.data.compatibility.savePayloadSchema,1);
-  assert.deepEqual(capabilities.data.runtimeInspection.kinds,['semantics','source','evidence']);
+  for(const kind of ['semantics','source','evidence'])assert.ok(capabilities.data.runtimeInspection.kinds.includes(kind));
   const source=serialize(project()),result=await executeAgentRequest(request('semantics',{limit:100}),{source});
   assert.equal(result.response.status,'PASS');assert.equal(result.candidate,undefined);assert.equal(result.reviewCandidate,undefined);
   const descriptors=result.response.data.items;

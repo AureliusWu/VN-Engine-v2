@@ -37,6 +37,15 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
       - name: Verify R3/R4 feedback recovery, AI acceptance and standalone dependency checks on Windows
         run: node --test tests/iteration.test.mjs tests/acceptance.test.mjs tests/qa-report.test.mjs
+      - name: Verify P1 DSL, resource budgets and real renderer reuse on Windows
+        run: |
+          node --test tests/p1-agent.test.mjs tests/p1-dsl.test.mjs tests/p1-resources.test.mjs tests/p1-integration.test.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tests/p1-runtime-browser.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tests/p1-studio-browser.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tests/p1-package-browser.mjs
       - name: Verify R5 authoring, focus and audio regressions on Windows
         run: |
           node --test tests/runtime-media.test.mjs
@@ -126,6 +135,7 @@ jobs:
             test-results/r6-*/
             test-results/v1-*/
             test-results/p0-*/
+            test-results/p1-*/
             test-results/agent-cli/
             test-results/creative-cli/CREATIVE_REPORT.json
             test-results/creative-cli/MEDIA_REPORT.json

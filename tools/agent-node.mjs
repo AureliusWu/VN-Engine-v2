@@ -69,7 +69,7 @@ export async function runAgentFileRequestInProcess(input, options = {}) {
     request = validateAgentRequest(input);
     if(request.command.startsWith('feedback.')||['acceptance.inspect','acceptance.import'].includes(request.command))return await (await import('./feedback-node.mjs')).runFeedbackFileRequest(request,options);
     if(request.command==='probe'){const {probeAgentFiles}=await import('./agent-probe.mjs');const result=await executeAgentRequest(request,{probe:probeAgentFiles});if(request.params.output&&result.report){const output=path.resolve(request.params.output);await fs.mkdir(path.dirname(output),{recursive:true});const handle=await fs.open(output,'wx',0o600);try{await handle.writeFile(JSON.stringify({...result.report,protocol:result.response.protocol,engineVersion:result.response.engineVersion,requestId:request.requestId},null,2)+'\n');await handle.sync();}finally{await handle.close();}result.response.artifacts.push({kind:'media-probe-report',path:output,sha256:await current(output)});}return result.response;}
-    if (request.command === 'capabilities') return (await executeAgentRequest(request)).response;
+    if (request.command === 'capabilities' || request.command === 'script.compile') return (await executeAgentRequest(request)).response;
     const target = request.command === 'init' ? request.params.output ?? request.project : request.project;
     if (typeof target !== 'string' || !target.trim()) throw new AgentError('PROJECT_REQUIRED', 'Provide project path (init also accepts params.output)');
     const file = await filePath(target), root = path.dirname(file), write = request.command === 'init' || request.command === 'apply' && !request.params.dryRun;

@@ -1,5 +1,9 @@
 # 引擎验证记录
 
+## v1.2.0 P1 资源计划与文本 DSL
+
+本轮只改引擎，不迁移四作。预算预取、JSON IR 编译前端、来源 / owner、Studio / Agent、兼容与真实浏览器 / 包证据见 [1.2.0 验证](VALIDATION-v1.2.0.md)。本机完整核心保留 4 项 Windows symlink EPERM 限制；computer-use 捕获原生窗口超时、恢复失败，该项未计通过。Linux 核心与 Windows 实际 WebView2 / 进程重启的最终状态以本轮 PR 和 main 工作流为准。
+
 ## v1.1.0 P0 内建语义与运行证据
 
 本轮仅优化引擎，不迁移四作。内建描述、source-bound 事件、Agent / Studio 与媒体生命周期的实际验证分别记录于 [1.1.0 验证](VALIDATION-v1.1.0.md)；路线逻辑、真实浏览器与 Windows 原生结果分开。实机控制工具本轮因无法可靠识别 Windows 浏览器 URL 而停止，该操作不记为通过，也不以其他 UI 工具绕过。

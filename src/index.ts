@@ -32,6 +32,8 @@ export * from './stage/cues.js';
 export * from './stage/timeline.js';
 export * from './stage/key-visual.js';
 export * from './assets/catalog.js';
+export * from './assets/plan.js';
+export * from './assets/prefetch.js';
 export * from './script/types.js';
 export * from './script/engine.js';
 export * from './adapters/rain-runtime.js';
