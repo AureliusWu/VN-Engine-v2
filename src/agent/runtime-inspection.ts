@@ -3,9 +3,19 @@ import { runtimeSemantics } from '../runtime/semantics.js';
 import { resolveSourceOrigin } from '../source/origin.js';
 import { assessRuntimeEvidenceReport, readRuntimeEvidenceReport } from '../runtime/evidence-report.js';
 import { AgentError, type AgentDiagnostic } from './protocol.js';
+import { createResourcePlan } from '../assets/plan.js';
 
 /** Read-only adapters: evidence never authorises writes or proves an acceptance PASS. */
 export function runtimeInspectionItems(project: EngineProject, params: Record<string, any>, sha: string) {
+  if(params.kind==='resources'){
+    const plan=createResourcePlan(project,params.position??{},{...params.plan,sourceSha256:sha});
+    const items:any[]=[{id:'resource-plan',contract:plan.contract,game:plan.game,storyVersion:plan.storyVersion,position:plan.position,budget:plan.budget,estimates:plan.estimates,truncated:plan.truncated,visits:plan.visits,readOnly:true,scope:{staticOnly:true,assetBytesVerified:false,fetch:false},
+      active:plan.active.length,candidates:plan.candidates.length,unknown:plan.unknown.length},
+      ...plan.active.map(asset=>({id:'active:'+asset.assetId,scope:'active',...asset})),
+      ...plan.candidates.map(asset=>({id:'candidate:'+asset.assetId,scope:'candidate',...asset})),
+      ...plan.unknown.map((value,index)=>({id:'unknown:'+index,scope:'unknown',value}))];
+    return {items:params.id?items.filter(item=>item.id===params.id):items,diagnostics:[] as AgentDiagnostic[],unverified:false};
+  }
   if (params.kind === 'semantics') {
     const catalogue = runtimeSemantics();
     return {items: catalogue.entries.filter(item => !params.id || item.id === params.id), diagnostics: [] as AgentDiagnostic[], unverified: false};

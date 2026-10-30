@@ -10,6 +10,8 @@ import { nativeHost, nativeRequest } from './native.mjs';
 import { createFieldEdits, createOpenGate } from './operations.mjs';
 import { createAsyncOperation } from './async-operation.mjs';
 import { createEvidencePanel } from './evidence.mjs';
+import { createTextScriptPanel } from './text-script.mjs';
+import { createResourcesPanel } from './resources.mjs';
 
 const $ = id => document.getElementById(id);
 const DRAFT_KEY = 'vn-engine-studio:draft:v1';
@@ -56,7 +58,7 @@ const valueAt = path => path.reduce((v, key) => v?.[key], model.getView().projec
 const graphNode = () => model.graph().nodes.find(n => n.key === selected);
 const unappliedSource = () => tab === 'source' && $('source').value !== savedSource;
 function syncDirty() {
-  const unsaved = model.dirty || fieldEdits.dirty || unappliedSource();
+  const unsaved = model.dirty || fieldEdits.dirty || unappliedSource() || textScript.dirty;
   document.body.dataset.dirty = String(unsaved || production.dirty);
   $('save-state').textContent = unsaved ? '● 未保存' : '已保存';
 }
@@ -91,13 +93,21 @@ const evidence = createEvidencePanel($('evidence-list'), {element,action,source:
   frame:()=>$('preview'),revision:()=>revision,ready:()=>previewReady&&Number(document.body.dataset.previewRevision)===revision,
   navigate:origin=>{const node=model.graph().nodes.find(n=>n.id===origin.nodeId&&n.chapter===origin.chapterId);if(!node)throw Error('此来源没有对应的可编辑节点');selected=node.key;switchTab('story');renderGraph(model.graph());renderInspector();}
 });
+const textScript=createTextScriptPanel($('text-script-list'),{element,action,project:()=>model.getView().project,
+  changed:()=>{workspaceVersion++;syncDirty();scheduleDraft();},apply:program=>set(['program'],program,true),
+  preview:program=>preview({candidate:{...structuredClone(model.getView().project),program}})
+});
+const resources=createResourcesPanel($('resources-list'),{element,action,source:projectSource,project:()=>model.getView().project,
+  preview:()=>preview(),frame:()=>$('preview'),revision:()=>revision,ready:()=>previewReady&&Number(document.body.dataset.previewRevision)===revision,
+  navigate:origin=>{const node=model.graph().nodes.find(n=>n.id===origin.nodeId&&n.chapter===origin.chapterId);if(!node)throw Error('此来源没有对应的可编辑节点');selected=node.key;switchTab('story');renderGraph(model.graph());renderInspector();}
+});
 function mutate(fn, inspector = false) { fn(); update(inspector); status('更改已记录，可撤销'); }
 function set(path, value, inspector = false) { mutate(() => model.set(path, value), inspector); }
 function scheduleDraft() {
   clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 350);
 }
 function saveDraft() {
-  try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ schema: 1, document: JSON.parse(model.serialize()), authorReview: production.getReview(), productionDraft: production.getDraft(), source: unappliedSource() ? $('source').value : undefined, pendingFields: fieldEdits.snapshot(), editorTab: tab, selectedNode: selected, productionView: document.querySelector('[data-production-view][aria-pressed=true]')?.dataset.productionView, baseURL: baseURL.startsWith(location.origin + '/') ? baseURL : undefined, at: new Date().toISOString() })); }
+  try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ schema: 1, document: JSON.parse(model.serialize()), authorReview: production.getReview(), productionDraft: production.getDraft(), textScriptDraft:textScript.getDraft(), source: unappliedSource() ? $('source').value : undefined, pendingFields: fieldEdits.snapshot(), editorTab: tab, selectedNode: selected, productionView: document.querySelector('[data-production-view][aria-pressed=true]')?.dataset.productionView, baseURL: baseURL.startsWith(location.origin + '/') ? baseURL : undefined, at: new Date().toISOString() })); }
   catch { status('本地草稿无法保存，请使用“保存工程”保留更改', true); }
 }
 function clearResources(nextBase = new URL('./', location.href).href) {
@@ -112,12 +122,12 @@ function replace(input, options = {}) {
   // Fully parse before touching the current editor or its resources.
   opening.invalidate(); assetBinding.invalidate(); fieldEdits.reset();
   clearResources(options.baseURL); if (options.files) resourceFiles = new Set(options.files); model = next;
-  identityProject=model.serialize(true);identitySource=typeof input==='string'&&!JSON.parse(input).format?input:identityProject;production.reset(incomingReview,{detached:options.draft});evidence.reset();selected = model.graph().nodes[0]?.key;
+  identityProject=model.serialize(true);identitySource=typeof input==='string'&&!JSON.parse(input).format?input:identityProject;production.reset(incomingReview,{detached:options.draft});evidence.reset();textScript.reset();resources.reset();selected = model.graph().nodes[0]?.key;
   savedSource = ''; tab = 'story'; renderProject(); update(true); switchTab('story');
   if (options.draft) { model.markUnsaved(); document.body.dataset.dirty = 'true'; $('save-state').textContent = '● 未保存'; status('草稿已恢复；请重新绑定本地资源目录'); }
   else status('工程已打开');
 }
-function canReplace() { return (!model.dirty && !production.dirty && !fieldEdits.dirty && !unappliedSource()) || confirm('当前更改尚未保存。仍要替换当前工程吗？本地草稿只保留一份。'); }
+function canReplace() { return (!model.dirty && !production.dirty && !textScript.dirty && !fieldEdits.dirty && !unappliedSource()) || confirm('当前更改尚未保存。仍要替换当前工程吗？本地草稿只保留一份。'); }
 function renderProject() {
   const root = $('project-fields'); root.replaceChildren();
   const project = model.getView().project;
@@ -128,7 +138,7 @@ function renderProject() {
 }
 function update(inspector = false) {
   workspaceVersion++;
-  routes.changed();production.changed();evidence.changed();
+  routes.changed();production.changed();evidence.changed();textScript.changed();resources.changed();
   const startup = document.querySelector('#project-fields [aria-label="启动界面"]'); if (startup) startup.value = model.getView().project.titleScreen ? 'title' : 'story';
   const graph = model.graph(); if (!graph.nodes.some(n => n.key === selected)) selected = graph.nodes[0]?.key;
   $('project-name').textContent = model.getView().project.title || '未命名作品'; syncDirty(); document.body.dataset.projectType = model.getView().project.type;
@@ -361,13 +371,15 @@ function switchTab(next) {
   const discardingSource = tab === 'source' && next !== 'source' && $('source').value !== savedSource;
   if (discardingSource && !confirm('JSON 面板有尚未应用的文本，仍要切换吗？')) return;
   if(next!=='production')production.leave();
-  tab = next; for (const name of ['story', 'structure', 'assets', 'collections', 'routes', 'production', 'evidence', 'source']) { $(name + '-panel').hidden = name !== tab; document.querySelector(`[data-tab=${name}]`).setAttribute('aria-pressed', String(name === tab)); }
+  tab = next; for (const name of ['story', 'structure', 'assets', 'collections', 'routes', 'production', 'evidence', 'text-script', 'resources', 'source']) { $(name + '-panel').hidden = name !== tab; document.querySelector(`[data-tab=${name}]`).setAttribute('aria-pressed', String(name === tab)); }
   if (tab === 'assets') renderAssets(); if (enteringSource) { $('source').value = model.serialize(true); savedSource = $('source').value; }
   if (tab === 'collections') renderCollections();
   if (tab === 'structure') renderStructure();
   if (tab === 'routes') routes.render();
   if (tab === 'production') production.render();
   if (tab === 'evidence') void evidence.render();
+  if (tab === 'text-script') textScript.render();
+  if (tab === 'resources') resources.render();
   syncDirty();
   if (discardingSource) saveDraft();
 }
@@ -391,11 +403,12 @@ function renderCollections() {
 }
 function preview(options={}) {
   clearTimeout(previewTimer); if (!previewReady) return;
-  const errors = model.diagnostics(resourceFiles).filter(d => d.severity === 'error');
+  const previewProject=options.candidate??JSON.parse(model.serialize(true));
+  const errors = (options.candidate?new EditorModel(previewProject):model).diagnostics(resourceFiles).filter(d => d.severity === 'error');
   if (errors.length) { $('preview-state').textContent = '先修复工程错误；当前保留上次有效预览'; return; }
   const current = ++revision; $('preview-state').textContent = '正在刷新…';
   routes.recording(false);if(routeRequest){clearTimeout(routeRequest.timer);routeRequest.reject(Error('预览已刷新，请重新录制'));routeRequest=undefined;}
-  $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'render', project: JSON.parse(model.serialize(true)), sourceText:projectSource(), baseURL, urls: resourceURLs.size ? Object.fromEntries(resourceURLs) : undefined, revision: current, recordRoute:options.recordRoute===true }, location.origin);
+  $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'render', project: previewProject, sourceText:options.candidate?JSON.stringify(previewProject,null,2)+'\n':projectSource(), baseURL, urls: resourceURLs.size ? Object.fromEntries(resourceURLs) : undefined, revision: current, recordRoute:options.recordRoute===true,prefetch:resources.options() }, location.origin);
 }
 window.addEventListener('message', event => {
   if (event.source !== $('preview').contentWindow || event.origin !== location.origin || event.data?.source !== 'vn-engine-preview') return;
@@ -458,7 +471,8 @@ const commands = {
     replace(draft.document, { baseURL: draft.baseURL ?? new URL('./', location.href).href, draft: true, authorReview:draft.authorReview });
     production.restoreDraft(draft.productionDraft);
     if (model.graph().nodes.some(node => node.key === draft.selectedNode)) { selected = draft.selectedNode; renderGraph(model.graph()); renderInspector(); }
-    if (['story','structure','assets','collections','routes','production','evidence','source'].includes(draft.editorTab)) switchTab(draft.editorTab);
+    if(typeof draft.textScriptDraft==='string')textScript.restore(draft.textScriptDraft);
+    if (['story','structure','assets','collections','routes','production','evidence','text-script','resources','source'].includes(draft.editorTab)) switchTab(draft.editorTab);
     if (tab === 'production' && draft.productionView) { const button = [...document.querySelectorAll('[data-production-view]')].find(node => node.dataset.productionView === draft.productionView); if (button) await actionCallbacks.get(button)?.(); }
     if (typeof draft.source === 'string') { switchTab('source'); $('source').value = draft.source; }
     fieldEdits.restore(draft.pendingFields); syncDirty(); $('draft-banner').hidden = true;
@@ -484,7 +498,7 @@ window.addEventListener('keydown', event => {
   if (event.key.toLowerCase() === 's') { event.preventDefault(); run(commands.save); }
   if (event.key.toLowerCase() === 'z' && !typing) { event.preventDefault(); run(event.shiftKey ? commands.redo : commands.undo); }
 });
-window.addEventListener('beforeunload', event => { if (model.dirty || production.dirty || fieldEdits.dirty || unappliedSource()) { saveDraft(); event.preventDefault(); event.returnValue = ''; } });
+window.addEventListener('beforeunload', event => { if (model.dirty || production.dirty || textScript.dirty || fieldEdits.dirty || unappliedSource()) { saveDraft(); event.preventDefault(); event.returnValue = ''; } });
 window.addEventListener('pagehide', () => { clearTimeout(draftTimer); clearTimeout(previewTimer); for (const url of resourceURLs.values()) URL.revokeObjectURL(url); });
 window.addEventListener('vn-engine-host-visibility', event => { if (typeof event.detail?.hidden !== 'boolean') return; nativeHidden = event.detail.hidden;if(nativeHidden)production.stopMedia(); $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'visibility', hidden: nativeHidden }, location.origin); });
 $('version').textContent = ENGINE_VERSION; $('host-label').textContent = nativeHost ? 'Windows 原生宿主' : '浏览器工作区';
@@ -492,5 +506,5 @@ try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { const value = JSON
 selected = model.graph().nodes[0]?.key; renderProject(); update(true); status('编辑器已就绪'); document.body.dataset.editorReady = 'true';
 const connectPreview = () => $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'connect' }, location.origin);
 $('preview').addEventListener('load', connectPreview); connectPreview();
-window.addEventListener('pagehide',()=>{routes.dispose();production.dispose();evidence.dispose();});
+window.addEventListener('pagehide',()=>{routes.dispose();production.dispose();evidence.dispose();textScript.dispose();resources.dispose();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)production.stopMedia();});

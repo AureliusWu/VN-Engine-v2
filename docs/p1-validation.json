@@ -1,0 +1,42 @@
+{
+  "schema": 1,
+  "engineVersion": "1.2.0",
+  "date": "2026-10-30",
+  "baseCommit": "4620a7a1b5625ed7ba93332df12291b9c5b2638f",
+  "scope": {
+    "sourceGamesMigrated": false,
+    "jsonIRChanged": false,
+    "replayOrSaveFormatChanged": false,
+    "upstreamImplementationCopied": false,
+    "textParserPackagedInPlayer": false,
+    "prefetchDefault": "disabled"
+  },
+  "local": {
+    "node": { "total": 323, "pass": 319, "fail": 4, "reason": "Existing symlink fixture creation returns Windows EPERM; assertions retained" },
+    "p1Node": { "total": 36, "pass": 36, "dsl": 13, "resources": 16, "agent": 4, "integration": 3 },
+    "completeBrowserSuite": "PASS; final budget-input fix separately verified by P1 Studio",
+    "completeEditorSuite": "PASS",
+    "p1RuntimeCases": 6,
+    "p1Studio": "PASS including invalid unapplied/applied budget and stale candidate source",
+    "p1Package": "PASS both routes, nested deployment, offline new page, parser absent",
+    "p0RuntimeCases": 5,
+    "p0Studio": "PASS",
+    "p0SdkPreview": "PASS",
+    "python": 6,
+    "provenance": 194,
+    "projectSchemas": 4,
+    "qaSamples": "post-commit lock required; corresponding source-bound QA reports and CI are authoritative"
+  },
+  "manualWindows": {
+    "status": "UNVERIFIED",
+    "hostVersion": "1.1.0",
+    "studioVersion": "1.2.0",
+    "windowDiscovered": true,
+    "firstError": "FrameArrived timed out: timed out waiting on channel",
+    "recoveryError": "window capture timed out: timed out waiting on channel",
+    "furtherAppInput": false,
+    "otherUIFallback": false
+  },
+  "physicalListening": "UNVERIFIED",
+  "ci": "Verify exact PR head and final main Engine checks plus Windows native host; not predeclared by this file"
+}

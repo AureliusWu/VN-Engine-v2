@@ -17,7 +17,8 @@ export class AssetCatalog {
   private urls = new Map<string, string>();
   private readonly baseHref: string;
   get baseURL(): URL { return new URL(this.baseHref); }
-  constructor(assets: readonly Asset[], baseURL: string | URL, resolveURL?: (path: string) => string) {
+  constructor(assets: readonly Asset[], baseURL: string | URL, resolveURL?: (path: string) => string,
+    private readonly cachedURL?: (assetId: string) => string | undefined) {
     const base = new URL(baseURL); this.baseHref = base.href;
     if (!['http:', 'https:', 'file:'].includes(base.protocol) || !base.pathname.endsWith('/')) throw new Error('Asset base must be a directory URL');
     for (const asset of assets) {
@@ -37,6 +38,14 @@ export class AssetCatalog {
     return asset;
   }
   get(id: string, kind?: AssetKind): Asset { return this.copy(this.require(id, kind)); }
-  url(id: string, kind?: AssetKind): string { this.require(id, kind); return this.urls.get(id)!; }
+  /** Original host URL, independent of the optional encoded-byte cache. */
+  sourceURL(id: string, kind?: AssetKind): string { this.require(id, kind); return this.urls.get(id)!; }
+  url(id: string, kind?: AssetKind): string {
+    const original = this.sourceURL(id, kind), cached = this.cachedURL?.(id);
+    if (cached === undefined) return original;
+    const url = new URL(cached);
+    if (!['http:', 'https:', 'file:', 'blob:'].includes(url.protocol)) throw new Error('Unsupported cached asset URL');
+    return url.href;
+  }
   list(): Asset[] { return [...this.entries.values()].map(asset => this.copy(asset)); }
 }

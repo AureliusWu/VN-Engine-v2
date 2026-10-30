@@ -13,6 +13,8 @@ async function modules(directory) {
   const result = [];
   for (const entry of await readdir(directory, { withFileTypes: true })) {
     if (entry.isDirectory() && ['editor', 'agent'].includes(entry.name)) continue;
+    // The optional text author frontend is never part of a JSON-IR player.
+    if (directory === resolve(repository, 'dist/script') && (entry.name === 'text.js' || entry.name === 'text')) continue;
     const path = resolve(directory, entry.name);
     if (entry.isDirectory()) result.push(...await modules(path)); else if (entry.name.endsWith('.js')) result.push(path);
   }

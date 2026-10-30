@@ -18,6 +18,15 @@ window.addEventListener('message', event => {
       reply('captured-evidence',{revision,requestId,report});
     }catch(error){reply('captured-evidence',{revision,requestId,error:error.message});}})();return;
   }
+  if(event.data.type==='capture-plan'){
+    const {revision,requestId}=event.data,selected=mounted,source=currentSource;
+    void(async()=>{try{
+      if(!selected||revision!==currentRevision||typeof requestId!=='string'||requestId.length>128)throw Error('预览已更新，请重新采集');
+      const sourceSha256=await sourceHash(source);
+      if(selected!==mounted||revision!==currentRevision)throw Error('预览已更新，请重新采集');
+      reply('captured-plan',{revision,requestId,sourceSha256,snapshot:selected.resourceSnapshot()});
+    }catch(error){reply('captured-plan',{revision,requestId,error:error.message});}})();return;
+  }
   if (event.data.type === 'capture-replay') {
     try { if (!mounted || event.data.revision !== currentRevision) throw new Error('预览已更新，请重试'); reply('captured-replay', { revision: event.data.revision, saved: mounted.session.save() }); }
     catch (error) { reply('captured-replay', { revision: event.data.revision, error: error.message }); } return;
@@ -32,7 +41,7 @@ window.addEventListener('message', event => {
   try {
     const recording=event.data.recordRoute===true;
     evidence=new RuntimeEvidence({sessionId:'studio-'+revision+'-'+crypto.randomUUID()});
-    mounted = mountGame(document.getElementById('game'), recording?{...project,titleScreen:false,settings:{...project.settings,textDelayMs:0}}:project, { baseURL, storage: null, evidence, ...(recording?{audio:false}:{}), ...(urls ? { assetURL: path => urls[path] ?? new URL(path, baseURL).href } : {}) });
+    mounted = mountGame(document.getElementById('game'), recording?{...project,titleScreen:false,settings:{...project.settings,textDelayMs:0}}:project, { baseURL, storage: null, evidence,prefetch:event.data.prefetch??false, ...(recording?{audio:false}:{}), ...(urls ? { assetURL: path => urls[path] ?? new URL(path, baseURL).href } : {}) });
     currentProject=project;currentSource=typeof event.data.sourceText==='string'?event.data.sourceText:JSON.stringify(project,null,2)+'\n';
     if(recording)recorder=createRouteRecorder(mounted.session,project.type,message=>reply('recording-invalidated',{revision,message}));
     mounted.session.pause('native-host', hidden);
