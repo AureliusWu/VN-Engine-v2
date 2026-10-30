@@ -12,11 +12,15 @@ import { AGENT_PROTOCOL, AGENT_LIMITS, AgentError, agentResponse, failAgent, sou
 import { AGENT_REQUEST_SCHEMA, AGENT_RESPONSE_SCHEMA, AGENT_OPERATION_SCHEMA, COMMAND_SCHEMAS, OPERATION_DEFINITIONS, validateAgentRequest, assertAgentJSON } from './schema.js';
 import { applyAgentOperation } from './operations.js';
 import { inspectItems, referenceItems, agentProjectDiagnostics } from './project.js';
+import { runtimeInspectionItems } from './runtime-inspection.js';
+import { RUNTIME_SEMANTICS_VERSION } from '../runtime/semantics.js';
+import { createSourceResolver } from '../source/origin.js';
 
 export function agentCapabilities() {
   return { protocol: AGENT_PROTOCOL, extensions:[CREATIVE_EXTENSION,'vn-author-review-v1','vn-content-impact-v1','vn-ai-acceptance-v1'], limits: AGENT_LIMITS, commands: Object.keys(COMMAND_SCHEMAS), operations: OPERATION_DEFINITIONS.map(schema => schema.properties.op.const),
     templates: ['vn', 'chat', 'script', 'investigation'], templateTypes: { vn: 'narrative', chat: 'narrative', script: 'script', investigation: 'investigation' }, projectTypes: ['narrative', 'script', 'investigation', 'rain'],
-    compatibility: { projectSchema: 1, editorSchema: 1, saveSchema: 1, rain: 'native-format-read-validate-test-preview-build' },
+    compatibility: { projectSchema: 1, editorSchema: 1, saveSchema: 1, saveEnvelopeSchema:2, savePayloadSchema:1, rain: 'native-format-read-validate-test-preview-build' },
+    runtimeInspection:{semanticsVersion:RUNTIME_SEMANTICS_VERSION,kinds:['semantics','source','evidence'],evidenceContract:'vn-runtime-evidence-v1',importedEvidenceAcceptance:'UNVERIFIED',sourceIdentity:'stable IDs and JSON path; source SHA binding'},
     operationScopes: { variable: ['script'], chapter: ['investigation'], evidence: ['investigation'], action: ['investigation'], line: ['narrative','script'], choice: ['narrative','script'], exit: ['script'], rainNodes: 'native-read-only' },
     hostPorts: ['readAsset', 'preview', 'build', 'probe', 'importsPrepared','readEvidence','acceptanceBundle'],
     schemas: {
@@ -27,7 +31,7 @@ export function agentCapabilities() {
 }
 function page(response: AgentResponse, items: any[], request: AgentRequest, sha: string) {
   const p = request.params, limit = p.limit ?? 20, maxBytes = p.maxBytes ?? AGENT_LIMITS.defaultOutputBytes;
-  const query = JSON.stringify([request.command, p.kind ?? 'overview', p.id ?? null, p.chapterId ?? null,p.query??null,p.characterId??null,p.taskKind??null]);
+  const query = JSON.stringify([request.command, p.kind ?? 'overview', p.id ?? null, p.chapterId ?? null,p.query??null,p.characterId??null,p.taskKind??null,p.selector??null]);
   let index = 0, offset = 0;
   if (p.cursor) {
     let cursor: any; try { cursor = JSON.parse(decodeURIComponent(p.cursor)); } catch { throw new AgentError('INVALID_CURSOR', 'Cursor is not valid'); }
@@ -69,6 +73,19 @@ function differences(before: any, after: any) {
     if (a && b && typeof a === 'object' && typeof b === 'object' && Array.isArray(a) === Array.isArray(b)) for (const key of new Set([...Object.keys(a), ...Object.keys(b)])) walk(a[key], b[key], [...path, Array.isArray(a) ? Number(key) : key]);
     else { const item = { path, change: a === undefined ? 'added' : b === undefined ? 'removed' : 'changed', before: preview(a), after: preview(b) }; if (utf8Bytes(JSON.stringify([...changes, item])) <= 8192) changes.push(item); else truncated = true; }
   }; walk(before, after, []); return { changes, truncated };
+}
+function diagnosticOrigins(project: EngineProject, diagnostics: AgentDiagnostic[], sha?: string): AgentDiagnostic[] {
+  try {
+    const resolve=createSourceResolver(project,sha);
+    return diagnostics.map(item=>{
+      let origin=resolve(item);
+      if(!origin.path&&(item.nodeId||item.assetId))origin=resolve({nodeId:item.nodeId,chapterId:item.chapterId,assetId:item.assetId});
+      return {...item,origin};
+    });
+  } catch {
+    // Broken author data still needs its original diagnostic; locating it is best effort.
+    return diagnostics.map(item=>({...item,origin:{game:project.game,storyVersion:project.version,...(sha?{sourceSha256:sha}:{})}}));
+  }
 }
 async function resources(project: EngineProject, context: AgentContext, check: () => void): Promise<AgentDiagnostic[]> {
   const diagnostics: AgentDiagnostic[] = [];
@@ -163,6 +180,13 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
       response.data={applied:false,dryRun:!!params.dryRun,reviewSha256:reviewSha,candidateReviewSha256:after,item:next.items.find(i=>i.id===params.id),filesVerified:binding.filesVerified,scope:{releaseApproval:false,humanIdentityAuthenticated:false}};return result;
     }
     if (request.command === 'inspect' || request.command === 'refs') {
+      if(request.command==='inspect'&&['semantics','source','evidence'].includes(params.kind)){
+        const inspection=runtimeInspectionItems(project,params,sha);response.diagnostics=inspection.diagnostics;
+        if(inspection.unverified){response.status='UNVERIFIED';response.ok=false;}
+        if(params.id&&!inspection.items.length)throw new AgentError('NOT_FOUND','No matching runtime inspection item');
+        const items=params.query?inspection.items.filter(item=>JSON.stringify(item).toLocaleLowerCase().includes(params.query.toLocaleLowerCase())):inspection.items;
+        page(response,items,request,sha+(params.kind==='evidence'?':'+await sourceHash(JSON.stringify(params.document)):''));check();return result;
+      }
       let items = request.command === 'inspect' ? inspectItems(project, params.kind ?? 'overview', params.id, params.chapterId) : referenceItems(before, params.kind, params.id, params.chapterId);
       if(request.command==='inspect') {
         if(params.characterId){const character=project.production?.characters?.find(c=>c.id===params.characterId);if(!character)throw new AgentError('NOT_FOUND','Character does not exist');items=items.filter(item=>params.kind==='characters'?item.id===character.id:['text','content'].includes(params.kind)?item.speaker===character.name:item.value?.characters?.includes(character.id));}
@@ -185,6 +209,7 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
     }
     response.diagnostics = agentProjectDiagnostics(model); check();
     response.diagnostics.push(...await resources(model.getView().project as EngineProject, context, check));
+    response.diagnostics=diagnosticOrigins(model.getView().project as EngineProject,response.diagnostics,request.command==='apply'||request.command==='impact'?undefined:sha);
     if (response.diagnostics.some(d => d.severity === 'error')) { response.ok = false; response.status = 'FAIL'; response.data = { validated: false }; return result; }
     if (request.command === 'apply'||request.command==='impact') {
       if (response.diagnostics.some(d => d.code === 'ASSETS_UNVERIFIED')) throw new AgentError('ASSETS_UNVERIFIED', 'Asset bytes must be validated before preparing a write', {}, 'UNVERIFIED');
@@ -206,6 +231,7 @@ export async function executeAgentRequest(input: unknown, context: AgentContext 
       response.data = { coverage: report.coverage, restoreChecks: report.restoreChecks, operationsUsed: report.operationsUsed,
         cases: report.cases.map(test => ({ id: test.id, status: test.status, stepsExecuted: test.stepsExecuted, ...(test.failure ? { failure: test.failure } : {}), ...(test.final ? { final: { sceneId: test.final.sceneId, lineId: test.final.lineId, ending: test.final.ending } } : {}) })) };
       for (const test of report.cases) if (test.status !== 'PASS') response.diagnostics.push({ code: test.status === 'UNVERIFIED' ? 'BUDGET_EXCEEDED' : 'ROUTE_FAILED', severity: 'error', message: test.failure?.message ?? 'Route is unverified', nodeId: test.final?.sceneId, path: ['routeTests', 'cases', report.cases.indexOf(test), 'steps', Math.max(0, (test.failure?.step ?? 1) - 1)] });
+      response.diagnostics=diagnosticOrigins(project,response.diagnostics,sha);
     } else if (request.command === 'preview' || request.command === 'build') {
       const port = context[request.command]; if (!port) throw new AgentError('HOST_PORT_REQUIRED', 'Inject ' + request.command + ' or use the Node SDK', {}, 'UNVERIFIED');
       const output = await port(before, request, response.project); response.data = output.data; response.artifacts = output.artifacts;

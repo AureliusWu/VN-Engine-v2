@@ -1,6 +1,6 @@
 {
   "name": "@aureliuswu/vn-engine-v2",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Self-developed narrative engine: script VM, VN/chat/investigation runtimes, DOM player and offline game builds",
   "private": true,
   "type": "module",
@@ -26,6 +26,7 @@
     "./agent/node": "./tools/agent-node.mjs"
   },
   "scripts": {
+    "test:p0": "npm run build && node --test tests/p0-agent.test.mjs tests/p0-evidence.test.mjs tests/p0-media.test.mjs tests/p0-report.test.mjs tests/p0-semantics.test.mjs && node tests/p0-runtime-browser.mjs && node tests/p0-studio-browser.mjs && node tests/p0-preview-browser.mjs",
     "build": "tsc -p tsconfig.json",
     "test": "npm run build && node --test tests/*.test.mjs",
     "test:renpy": "python -m unittest discover -s tests/renpy -v",

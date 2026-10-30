@@ -1,0 +1,46 @@
+{
+  "schema": 1,
+  "engineVersion": "1.1.0",
+  "date": "2026-10-30",
+  "baseCommit": "972a2f0d5770b9b83b13bd09bdb4d50f47f48d3e",
+  "scope": {
+    "sourceGamesMigrated": false,
+    "saveFormatChanged": false,
+    "upstreamImplementationCopied": false,
+    "manualWindowsInput": "STOPPED_URL_POLICY",
+    "physicalListening": "UNVERIFIED",
+    "nativeCI": "corresponding PR/main Windows workflow"
+  },
+  "local": {
+    "node": {
+      "total": 287,
+      "pass": 283,
+      "fail": 4,
+      "reason": "Existing symlink fixture creation returns Windows EPERM; assertions retained"
+    },
+    "p0Node": {
+      "total": 36,
+      "pass": 36
+    },
+    "browser": "PASS",
+    "editor": "PASS",
+    "p0BrowserCases": 5,
+    "p0Studio": "PASS",
+    "p0SdkPreview": "PASS",
+    "python": 6,
+    "provenance": 187,
+    "projectSchemas": 4
+  },
+  "files": {
+    "src/runtime/semantics.ts": "f2b460b07bed85f4d17c9df53dbcbcda9fdba97afea1b4037b8a5246e65a74e5",
+    "src/runtime/evidence.ts": "8c347362072faaa9e35537dbe35cc5a2c5b4faf28481df5ff958539e89d7d94e",
+    "src/runtime/evidence-report.ts": "633ae3aa90a8b9459ef054d91456a0dfbc4d67a06f93e328becc10507636d3b8",
+    "src/runtime/session.ts": "d5d51d0569be39c3d1faebd13c907f9f30449c1bc5c62f4fb29794f4767804d4",
+    "src/runtime/media.ts": "cf53016c85df6916dedf2b61c182ffc3b5271311c394ca43e96cfad41727dce5",
+    "src/source/origin.ts": "ad6e47b3cb82eec201397a6e5bce60edc697d34f1106ccc818fb36ec470497d3",
+    "src/render/dom.ts": "4aea23a8f09e8387eea9fdfe91f0893d219ec19864172a5cd26ca6ecb347f705",
+    "src/agent/sdk.ts": "672f67d753b0609e4ecb5134ed84a6f6c20ff4cc01baa22a164973a6474909b3",
+    "editor/evidence.mjs": "a276c1a00ba66d856de0b3c18c7e246655a65f67a67576160f4e7cd8eb8de0f4",
+    "tools/agent-ports.mjs": "510ca97511bd007a93625269e5a8cb84009fc93d8c5d945015acb29247ab4ed4"
+  }
+}

@@ -9,6 +9,7 @@ import { ENGINE_VERSION } from '../lib/index.js';
 import { nativeHost, nativeRequest } from './native.mjs';
 import { createFieldEdits, createOpenGate } from './operations.mjs';
 import { createAsyncOperation } from './async-operation.mjs';
+import { createEvidencePanel } from './evidence.mjs';
 
 const $ = id => document.getElementById(id);
 const DRAFT_KEY = 'vn-engine-studio:draft:v1';
@@ -86,6 +87,10 @@ const production = createProductionPanel($('production-list'), {element,action,f
     input??=$('inspector').querySelector('[aria-label="节点 ID"]');input?.scrollIntoView({block:'center'});input?.focus();
   }
 });
+const evidence = createEvidencePanel($('evidence-list'), {element,action,source:projectSource,project:()=>model.getView().project,download,
+  frame:()=>$('preview'),revision:()=>revision,ready:()=>previewReady&&Number(document.body.dataset.previewRevision)===revision,
+  navigate:origin=>{const node=model.graph().nodes.find(n=>n.id===origin.nodeId&&n.chapter===origin.chapterId);if(!node)throw Error('此来源没有对应的可编辑节点');selected=node.key;switchTab('story');renderGraph(model.graph());renderInspector();}
+});
 function mutate(fn, inspector = false) { fn(); update(inspector); status('更改已记录，可撤销'); }
 function set(path, value, inspector = false) { mutate(() => model.set(path, value), inspector); }
 function scheduleDraft() {
@@ -107,7 +112,7 @@ function replace(input, options = {}) {
   // Fully parse before touching the current editor or its resources.
   opening.invalidate(); assetBinding.invalidate(); fieldEdits.reset();
   clearResources(options.baseURL); if (options.files) resourceFiles = new Set(options.files); model = next;
-  identityProject=model.serialize(true);identitySource=typeof input==='string'&&!JSON.parse(input).format?input:identityProject;production.reset(incomingReview,{detached:options.draft});selected = model.graph().nodes[0]?.key;
+  identityProject=model.serialize(true);identitySource=typeof input==='string'&&!JSON.parse(input).format?input:identityProject;production.reset(incomingReview,{detached:options.draft});evidence.reset();selected = model.graph().nodes[0]?.key;
   savedSource = ''; tab = 'story'; renderProject(); update(true); switchTab('story');
   if (options.draft) { model.markUnsaved(); document.body.dataset.dirty = 'true'; $('save-state').textContent = '● 未保存'; status('草稿已恢复；请重新绑定本地资源目录'); }
   else status('工程已打开');
@@ -123,7 +128,7 @@ function renderProject() {
 }
 function update(inspector = false) {
   workspaceVersion++;
-  routes.changed();production.changed();
+  routes.changed();production.changed();evidence.changed();
   const startup = document.querySelector('#project-fields [aria-label="启动界面"]'); if (startup) startup.value = model.getView().project.titleScreen ? 'title' : 'story';
   const graph = model.graph(); if (!graph.nodes.some(n => n.key === selected)) selected = graph.nodes[0]?.key;
   $('project-name').textContent = model.getView().project.title || '未命名作品'; syncDirty(); document.body.dataset.projectType = model.getView().project.type;
@@ -356,12 +361,13 @@ function switchTab(next) {
   const discardingSource = tab === 'source' && next !== 'source' && $('source').value !== savedSource;
   if (discardingSource && !confirm('JSON 面板有尚未应用的文本，仍要切换吗？')) return;
   if(next!=='production')production.leave();
-  tab = next; for (const name of ['story', 'structure', 'assets', 'collections', 'routes', 'production', 'source']) { $(name + '-panel').hidden = name !== tab; document.querySelector(`[data-tab=${name}]`).setAttribute('aria-pressed', String(name === tab)); }
+  tab = next; for (const name of ['story', 'structure', 'assets', 'collections', 'routes', 'production', 'evidence', 'source']) { $(name + '-panel').hidden = name !== tab; document.querySelector(`[data-tab=${name}]`).setAttribute('aria-pressed', String(name === tab)); }
   if (tab === 'assets') renderAssets(); if (enteringSource) { $('source').value = model.serialize(true); savedSource = $('source').value; }
   if (tab === 'collections') renderCollections();
   if (tab === 'structure') renderStructure();
   if (tab === 'routes') routes.render();
   if (tab === 'production') production.render();
+  if (tab === 'evidence') void evidence.render();
   syncDirty();
   if (discardingSource) saveDraft();
 }
@@ -389,7 +395,7 @@ function preview(options={}) {
   if (errors.length) { $('preview-state').textContent = '先修复工程错误；当前保留上次有效预览'; return; }
   const current = ++revision; $('preview-state').textContent = '正在刷新…';
   routes.recording(false);if(routeRequest){clearTimeout(routeRequest.timer);routeRequest.reject(Error('预览已刷新，请重新录制'));routeRequest=undefined;}
-  $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'render', project: JSON.parse(model.serialize(true)), baseURL, urls: resourceURLs.size ? Object.fromEntries(resourceURLs) : undefined, revision: current, recordRoute:options.recordRoute===true }, location.origin);
+  $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'render', project: JSON.parse(model.serialize(true)), sourceText:projectSource(), baseURL, urls: resourceURLs.size ? Object.fromEntries(resourceURLs) : undefined, revision: current, recordRoute:options.recordRoute===true }, location.origin);
 }
 window.addEventListener('message', event => {
   if (event.source !== $('preview').contentWindow || event.origin !== location.origin || event.data?.source !== 'vn-engine-preview') return;
@@ -452,7 +458,7 @@ const commands = {
     replace(draft.document, { baseURL: draft.baseURL ?? new URL('./', location.href).href, draft: true, authorReview:draft.authorReview });
     production.restoreDraft(draft.productionDraft);
     if (model.graph().nodes.some(node => node.key === draft.selectedNode)) { selected = draft.selectedNode; renderGraph(model.graph()); renderInspector(); }
-    if (['story','structure','assets','collections','routes','production','source'].includes(draft.editorTab)) switchTab(draft.editorTab);
+    if (['story','structure','assets','collections','routes','production','evidence','source'].includes(draft.editorTab)) switchTab(draft.editorTab);
     if (tab === 'production' && draft.productionView) { const button = [...document.querySelectorAll('[data-production-view]')].find(node => node.dataset.productionView === draft.productionView); if (button) await actionCallbacks.get(button)?.(); }
     if (typeof draft.source === 'string') { switchTab('source'); $('source').value = draft.source; }
     fieldEdits.restore(draft.pendingFields); syncDirty(); $('draft-banner').hidden = true;
@@ -486,5 +492,5 @@ try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { const value = JSON
 selected = model.graph().nodes[0]?.key; renderProject(); update(true); status('编辑器已就绪'); document.body.dataset.editorReady = 'true';
 const connectPreview = () => $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'connect' }, location.origin);
 $('preview').addEventListener('load', connectPreview); connectPreview();
-window.addEventListener('pagehide',()=>{routes.dispose();production.dispose();});
+window.addEventListener('pagehide',()=>{routes.dispose();production.dispose();evidence.dispose();});
 document.addEventListener('visibilitychange',()=>{if(document.hidden)production.stopMedia();});

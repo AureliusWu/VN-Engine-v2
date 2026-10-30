@@ -1,5 +1,11 @@
 # 架构与接口
 
+## v1.1.0 P0 内建语义与运行证据
+
+runtime/semantics.ts 是冻结的内建政策目录，区分脚本出口、玩家操作和舞台 cue，不接受项目 handler，也不替代现有 validator。runtime/evidence.ts 提供可选有界 pull/drain buffer；Session、音频与 DOM 宿主写入捕获的访问 / 尝试身份，不同步调用外部消费者。
+
+source/origin.ts 为同一工程版本建立稳定 ID / JSON path 索引；evidence-report.ts 读取数据、限制预算并重新核对来源。当前 source SHA 才允许定位；过期或未绑定报告移除可点击路径。报告是外部声明，不能成为存档权威或自动验收 PASS。Studio 与 Agent 复用这些模块，具体接口与范围见 [P0 约定](P0_DEVELOPMENT.md)。
+
 v1.0.0 主链由本仓库自研模块承担。解释器/状态机 → 玩法驱动 → 播放调度 → DOM/媒体宿主 → 独立离线构建，均能在没有外部游戏引擎的情况下工作。
 
 | 层 | 入口 | 责任 |

@@ -4,6 +4,7 @@ import { RollbackHistory, type RollbackOptions } from './rollback.js';
 import { MiniGameSession, validateMiniGame, type MiniGameSnapshot } from '../minigame/session.js';
 import { isRecord } from '../storage/save.js';
 import { readSignature, type ReadProgressPort } from './read.js';
+import { appendRuntimeEvidence, type RuntimeEvidence, type RuntimeEvidenceInput } from './evidence.js';
 
 export type RuntimeSettings = {
   textDelayMs: number; autoDelayMs: number; skipDelayMs: number; reducedMotion: boolean;
@@ -70,14 +71,31 @@ export class RuntimeSession {
   private miniGame?: MiniGameSession;
   private miniGameError?: string;
   private readonly readProgress?: ReadProgressPort;
-  constructor(readonly driver: RuntimeDriver, options: { settings?: Partial<RuntimeSettings>; clock?: Clock; rollback?: RollbackOptions; initialPause?: string; readProgress?: ReadProgressPort } = {}) {
+  readonly evidence?: RuntimeEvidence;
+  constructor(readonly driver: RuntimeDriver, options: { settings?: Partial<RuntimeSettings>; clock?: Clock; rollback?: RollbackOptions; initialPause?: string; readProgress?: ReadProgressPort; evidence?: RuntimeEvidence } = {}) {
     this.clock = options.clock ?? systemClock; this.settings = Object.freeze(runtimeSettings(options.settings ?? {}));
     this.rollbackHistory = new RollbackHistory(options.rollback);
     this.readProgress = options.readProgress;
+    this.evidence = options.evidence;
     if (options.initialPause) this.pauses.add(options.initialPause);
     this.enter('start');
   }
   private readonly clock: Clock;
+  private record(input: Omit<RuntimeEvidenceInput, 'visit' | 'sceneId' | 'lineId'>, view?: RuntimeView) {
+    if (!this.evidence) return;
+    const frame = view?.frame ?? this.current;
+    appendRuntimeEvidence(this.evidence, { ...input, visit: view?.visit ?? this.visit, sceneId: frame.sceneId, lineId: frame.lineId });
+  }
+  /** Internal hosts can report effects for a captured view; no observer callback is invoked. */
+  recordEffect(input: Omit<RuntimeEvidenceInput, 'type' | 'visit' | 'sceneId' | 'lineId'>, view?: RuntimeView) {
+    if (!this.evidence) return;
+    try {
+      const descriptors = Object.getOwnPropertyDescriptors(input);
+      if (Object.values(descriptors).some(property => !Object.hasOwn(property, 'value'))) return;
+      const data = Object.fromEntries(Object.entries(descriptors).map(([key, property]) => [key, property.value]));
+      this.record({ ...data, type: 'effect', reason: data.reason ?? view?.reason ?? this.reason }, view);
+    } catch { /* Optional evidence never prevents playback. */ }
+  }
   subscribe(listener: () => void): () => void { if (this.disposed) return () => {}; this.listeners.add(listener); return () => { this.listeners.delete(listener); }; }
   getSnapshot(): RuntimeSnapshot {
     return structuredClone(this.getView()) as RuntimeSnapshot;
@@ -113,7 +131,8 @@ export class RuntimeSession {
     }
     this.generation++;
   }
-  private enter(reason: VisitReason, restoredMiniGame?: MiniGameSession) {
+  private enter(reason: VisitReason, restoredMiniGame?: MiniGameSession, input?: Pick<RuntimeEvidenceInput, 'input' | 'outcome' | 'actionId' | 'index'>) {
+    const inputOrigin = input && this.evidence ? this.getView() : undefined;
     this.cancel(); this.current = freezeData(structuredClone(this.driver.frame())); this.visit++; this.reason = reason;
     this.miniGame = restoredMiniGame; this.miniGameError = undefined;
     if (!this.miniGame && this.current.stage.miniGame) try {
@@ -131,6 +150,8 @@ export class RuntimeSession {
     this.hold = typeof pause === 'number' && Number.isFinite(pause) ? Math.max(0, Math.min(30000, pause)) : 0;
     if (!this.eligibleSkip || this.current.actions.length || !this.current.canAdvance) this.skipping = false;
     this.markRead();
+    if (input) this.record({ ...input, type: 'input', reason }, inputOrigin);
+    this.record({ type: 'navigation', reason });
     this.emit(); this.schedule();
   }
   private schedule() {
@@ -152,7 +173,7 @@ export class RuntimeSession {
       } else if (kind === 'hold') this.hold = 0;
       else {
         this.autoRemaining = undefined;
-        if (this.driver.advance()) { this.enter('advance'); return; }
+        if (this.driver.advance()) { this.enter('advance', undefined, { input: kind, outcome: 'advanced' }); return; }
         this.automatic = false; this.skipping = false;
       }
       this.emit(); this.schedule();
@@ -161,23 +182,25 @@ export class RuntimeSession {
   }
   next(): boolean {
     if (this.disposed || this.pauses.size || this.hidden) return false;
-    if (this.count < this.glyphs.length) { this.cancel(); this.count = this.glyphs.length; this.displayed = this.current.text; this.markRead(); this.emit(); this.schedule(); return true; }
+    if (this.count < this.glyphs.length) { this.cancel(); this.count = this.glyphs.length; this.displayed = this.current.text; this.markRead(); this.record({ type: 'input', input: 'next', outcome: 'text-completed', reason: this.reason }); this.emit(); this.schedule(); return true; }
     if (this.miniGame) return false;
     if (this.hold > 0 || !this.current.canAdvance || !this.driver.advance()) return false;
-    this.enter('advance'); return true;
+    this.enter('advance', undefined, { input: 'next', outcome: 'advanced' }); return true;
   }
   act(id: string): boolean {
     if (this.disposed || this.miniGame || this.pauses.size || this.hidden || this.count < this.glyphs.length || this.hold > 0
       || !this.current.actions.some(action => action.id === id) || !this.driver.act(id)) return false;
-    this.enter('action'); return true;
+    this.enter('action', undefined, { input: 'action', outcome: 'action-applied', actionId: id }); return true;
   }
   pause(reason: string, paused: boolean) {
     if (this.disposed || !reason || this.pauses.has(reason) === paused) return;
-    this.cancel(); if (paused) this.pauses.add(reason); else this.pauses.delete(reason); this.markRead(); this.emit(); this.schedule();
+    this.cancel(); if (paused) this.pauses.add(reason); else this.pauses.delete(reason); this.markRead();
+    this.record({ type: 'lifecycle', reason: paused ? 'pause' : 'resume', input: reason }); this.emit(); this.schedule();
   }
   hide(hidden: boolean) {
     if (this.disposed || this.hidden === hidden) return;
-    this.cancel(); this.hidden = hidden; this.markRead(); this.emit(); this.schedule();
+    this.cancel(); this.hidden = hidden; this.markRead();
+    this.record({ type: 'lifecycle', reason: hidden ? 'hidden' : 'visible' }); this.emit(); this.schedule();
   }
   setAuto(enabled: boolean) { if (this.disposed) return; this.cancel(); this.automatic = enabled; this.autoRemaining = undefined; this.skipping = false; this.emit(); this.schedule(); }
   setSkip(enabled: boolean): boolean {
@@ -213,18 +236,20 @@ export class RuntimeSession {
     } catch { this.rollbackHistory.clear(); }
   }
   private miniGameReady() { return !this.disposed && !this.hidden && !this.pauses.size && this.count >= this.glyphs.length && this.hold <= 0; }
-  private changeMiniGame(change: (game: MiniGameSession) => boolean) {
+  private changeMiniGame(change: (game: MiniGameSession) => boolean, input: string, index?: number) {
     if (!this.miniGameReady() || !this.miniGame || !change(this.miniGame)) return false;
-    this.cancel(); this.automatic = false; this.skipping = false; this.checkpoint(true); this.emit(); this.schedule(); return true;
+    this.cancel(); this.automatic = false; this.skipping = false; this.checkpoint(true);
+    this.record({ type: 'input', input, outcome: 'mini-revised', ...(index === undefined ? {} : { index }), reason: this.reason });
+    this.emit(); this.schedule(); return true;
   }
-  startMiniGame() { return this.changeMiniGame(game => game.start()); }
-  playMiniGame(index: number) { return this.changeMiniGame(game => game.play(index)); }
-  skipMiniGame() { return this.changeMiniGame(game => game.skip()); }
-  abortMiniGame() { return this.changeMiniGame(game => game.abort()); }
+  startMiniGame() { return this.changeMiniGame(game => game.start(), 'mini-start'); }
+  playMiniGame(index: number) { return this.changeMiniGame(game => game.play(index), 'mini-input', index); }
+  skipMiniGame() { return this.changeMiniGame(game => game.skip(), 'mini-skip'); }
+  abortMiniGame() { return this.changeMiniGame(game => game.abort(), 'mini-abort'); }
   finishMiniGame() {
     const action = this.miniGame?.resultAction();
     if (!this.miniGameReady() || !action || !this.current.actions.some(item => item.id === action) || !this.driver.act(action)) return false;
-    this.enter('action'); return true;
+    this.enter('action', undefined, { input: 'mini-finish', outcome: 'action-applied', actionId: action }); return true;
   }
   private restoreDriver(value: unknown): MiniGameSession | undefined {
     if (!isRecord(value) || value.vnMiniGame === undefined) { this.driver.restore(value); return undefined; }
@@ -252,6 +277,6 @@ export class RuntimeSession {
     for (const entry of this.driver.history(false)) this.read.add(readSignature(entry));
     this.enter('restore', miniGame);
   }
-  restart() { if (!this.disposed) { this.driver.reset(); this.enter('start'); } }
-  dispose() { if (this.disposed) return; this.cancel(); this.rollbackHistory.clear(); this.miniGame = undefined; this.disposed = true; this.listeners.clear(); }
+  restart() { if (!this.disposed) { this.driver.reset(); this.enter('start', undefined, { input: 'restart', outcome: 'restarted' }); } }
+  dispose() { if (this.disposed) return; this.cancel(); this.rollbackHistory.clear(); this.miniGame = undefined; this.record({ type: 'lifecycle', reason: 'dispose' }); this.disposed = true; this.listeners.clear(); }
 }

@@ -13,6 +13,7 @@ import type { PresentationTimeline, StageLayer, StageLayerAsset, StageVideo, Sta
 import { resolvePresentationTimeline } from '../stage/timeline.js';
 import { DOM_STYLE } from './dom-style.js';
 import { KeyVisualLayer } from './key-visual.js';
+import { VisualEvidence, type VisualEvidenceAttempt } from './evidence.js';
 
 export type DOMRendererOptions = { ui?: ProjectUI; title?: string; font?: string; storage?: StoragePort | null; persistence?: ReturnType<typeof bindSessionPersistence>;
   backup?: ReturnType<typeof createSaveBackup>;
@@ -40,7 +41,7 @@ export class DOMRenderer {
   private cg: HTMLImageElement;
   private video: HTMLVideoElement;
   private videoFallback: HTMLImageElement;
-  private videoState?: { cue: StageVideo; attempt: number; finished: boolean };
+  private videoState?: { cue: StageVideo; attempt: number; finished: boolean; evidence?: VisualEvidenceAttempt };
   private effect: HTMLElement;
   private chat: HTMLElement;
   private currentBubble: HTMLElement;
@@ -58,7 +59,8 @@ export class DOMRenderer {
   private visit = -1;
   private actionsKey = '';
   private disposed = false;
-  private probes = new Map<HTMLImageElement, { id: string; probe: HTMLImageElement }>();
+  private probes = new Map<HTMLImageElement, { id: string; probe: HTMLImageElement; ready: boolean; evidence?: VisualEvidenceAttempt }>();
+  private visualEvidence: VisualEvidence;
   private lastFocus?: HTMLElement;
   private panelCleanup?: () => void;
   private replayReturn?: () => void;
@@ -78,9 +80,10 @@ export class DOMRenderer {
   private chatPinned = true;
   private scrollFrame?: number;
   private layerNodes!: Record<StageLayer, HTMLElement>;
-  private timeline?: { value: PresentationTimeline; elapsed: number; previousTime?: number; frame?: number; finished: boolean };
+  private timeline?: { value: PresentationTimeline; elapsed: number; previousTime?: number; frame?: number; finished: boolean; started: boolean; paused: boolean; evidence?: VisualEvidenceAttempt };
   private keyVisualLayer!: KeyVisualLayer;
   constructor(readonly root: HTMLElement, readonly session: RuntimeSession, readonly assets: AssetCatalog, readonly options: DOMRendererOptions = {}) {
+    this.visualEvidence = new VisualEvidence(session);
     this.document = root.ownerDocument;
     this.hasStarted = !options.startAtTitle;
     this.saveKey = `vn-engine:${session.driver.game}:save:1`; this.settingsKey = `vn-engine:${session.driver.game}:settings`;
@@ -135,7 +138,7 @@ export class DOMRenderer {
     this.status = this.el('span', '', 'vn-status'); this.status.setAttribute('role', 'status'); this.toolbar.append(this.status);
     this.modal = this.el('div', undefined, 'vn-modal'); this.modal.hidden = true; this.modal.setAttribute('role', 'dialog'); this.modal.setAttribute('aria-modal', 'true');
     host.append(this.stage, this.toolbar, this.modal); root.append(host);
-    this.keyVisualLayer = new KeyVisualLayer(host, this.stage, (image, id) => this.paint(image, id, 'ui'), message => this.notify(message));
+    this.keyVisualLayer = new KeyVisualLayer(host, this.stage, (image, id) => this.paint(image, id, 'ui'), message => this.notify(message), this.visualEvidence);
     this.onVisibility = () => session.pause('background', this.document.visibilityState === 'hidden');
     this.onKey = event => this.key(event); this.onPointer = () => options.onUnlockAudio?.();
     this.onChatScroll = () => { this.chatPinned = this.chat.scrollHeight - this.chat.scrollTop - this.chat.clientHeight < 24; };
@@ -163,22 +166,31 @@ export class DOMRenderer {
   private image(className: string) { const image = this.el('img', undefined, className); image.hidden = true; image.alt = ''; image.draggable = false; return image; }
   private paint(image: HTMLImageElement, id: string | null | undefined, kind: AssetKind) {
     const previous = this.probes.get(image);
-    if ((previous?.id ?? '') === (id ?? '')) return;
-    if (previous) { previous.probe.onload = null; previous.probe.onerror = null; previous.probe.removeAttribute('src'); this.probes.delete(image); }
+    if ((previous?.id ?? '') === (id ?? '')) { if (id) this.visualEvidence.record(previous?.evidence, 'retained', undefined, this.session.getView()); return; }
+    if (previous) { if (!previous.ready) this.visualEvidence.record(previous.evidence, 'cancelled', 'IMAGE_REPLACED'); previous.probe.onload = null; previous.probe.onerror = null; previous.probe.removeAttribute('src'); this.probes.delete(image); }
     image.hidden = true; image.removeAttribute('src'); image.dataset.asset = id ?? '';
     if (!id) return;
+    const evidence = this.visualEvidence.begin(kind === 'background' ? 'stage.background' : kind === 'cg' ? 'stage.cg' : kind === 'ui' ? 'stage.keyVisual' : 'stage.portrait', this.session.getView(), id);
     try {
       const asset = this.assets.get(id, kind), source = this.assets.url(id, kind), probe = this.document.createElement('img');
-      const request = { id, probe }; this.probes.set(image, request);
-      probe.onload = () => { if (!this.disposed && this.probes.get(image) === request) { image.src = source; image.alt = asset.alt ?? ''; image.hidden = false; } };
+      const request = { id, probe, ready: false, evidence }; this.probes.set(image, request);
+      probe.onload = () => { if (!this.disposed && this.probes.get(image) === request) { request.ready = true; image.src = source; image.alt = asset.alt ?? ''; image.hidden = false; this.visualEvidence.record(evidence, 'settled'); } };
       probe.onerror = () => {
         if (this.disposed || this.probes.get(image) !== request) return;
         // Only a later real visit retries a failed asset; typing ticks do not repaint images.
         this.probes.delete(image); probe.onload = null; probe.onerror = null; probe.removeAttribute('src'); image.dataset.asset = '';
+        this.visualEvidence.record(evidence, 'failed', 'IMAGE_LOAD_FAILED');
         this.notify(`画面资源未能载入：${asset.alt ?? id}，可以继续阅读`);
       };
       probe.src = source;
-    } catch { this.notify(`未配置画面资源：${id}，可以继续阅读`); }
+    } catch { this.visualEvidence.record(evidence, 'failed', 'ASSET_UNAVAILABLE'); this.notify(`未配置画面资源：${id}，可以继续阅读`); }
+  }
+  private observeAnimation(animation: Animation, snapshot: RuntimeView) {
+    const evidence = this.visualEvidence.begin('stage.effect', snapshot); if (!evidence) return;
+    let terminal = false;
+    this.visualEvidence.record(evidence, 'started');
+    animation.addEventListener('finish', () => { if (!terminal) { terminal = true; this.visualEvidence.record(evidence, 'settled'); } }, { once: true });
+    animation.addEventListener('cancel', () => { if (!terminal) { terminal = true; this.visualEvidence.record(evidence, 'cancelled'); } }, { once: true });
   }
   private render() {
     if (this.disposed) return;
@@ -225,9 +237,12 @@ export class DOMRenderer {
       this.clearSceneEffects();
       if (!this.reducedMotion(snapshot) && ['start', 'advance', 'action'].includes(snapshot.reason) && frame.stage.effect) {
         const effect = frame.stage.effect, duration = Math.max(0, Math.min(2000, effect.durationMs ?? 450));
-        if (effect.type === 'flash') { this.effect.style.background = '#fff'; this.effect.animate([{ opacity: .8 }, { opacity: 0 }], { duration, fill: 'forwards' }); }
-        else if (effect.type === 'fade') { this.effect.style.background = '#10212a'; this.effect.animate([{ opacity: 1 }, { opacity: 0 }], { duration, fill: 'forwards' }); }
-        else if (effect.type === 'shake') this.stage.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(0)' }], { duration });
+        if (effect.type === 'flash') { this.effect.style.background = '#fff'; this.observeAnimation(this.effect.animate([{ opacity: .8 }, { opacity: 0 }], { duration, fill: 'forwards' }), snapshot); }
+        else if (effect.type === 'fade') { this.effect.style.background = '#10212a'; this.observeAnimation(this.effect.animate([{ opacity: 1 }, { opacity: 0 }], { duration, fill: 'forwards' }), snapshot); }
+        else if (effect.type === 'shake') this.observeAnimation(this.stage.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(0)' }], { duration }), snapshot);
+      } else if (frame.stage.effect) {
+        const evidence = this.visualEvidence.begin('stage.effect', snapshot);
+        this.visualEvidence.record(evidence, 'suppressed', this.reducedMotion(snapshot) ? 'REDUCED_MOTION' : 'RESTORED_VISIT');
       }
     }
     if (this.reducedMotion(snapshot)) {
@@ -307,7 +322,7 @@ export class DOMRenderer {
     }
   }
   private clearVideo() {
-    if (this.videoState) this.videoState.attempt++;
+    if (this.videoState) { this.videoState.attempt++; if (!this.videoState.finished) this.visualEvidence.record(this.videoState.evidence, 'cancelled', 'VIDEO_REPLACED'); }
     this.videoState = undefined; this.video.onended = null; this.video.onerror = null;
     this.video.pause(); this.video.hidden = true; this.video.removeAttribute('src'); this.video.load();
     this.paint(this.videoFallback, null, 'cg');
@@ -315,6 +330,7 @@ export class DOMRenderer {
   private fallbackVideo(active: NonNullable<DOMRenderer['videoState']>, failed: boolean) {
     if (this.videoState !== active || active.finished) return;
     active.finished = true; active.attempt++; this.video.onended = null; this.video.onerror = null;
+    this.visualEvidence.record(active.evidence, failed ? 'failed' : 'suppressed', failed ? 'VIDEO_PLAY_FAILED' : 'PRESENTATION_POLICY');
     this.video.pause(); this.video.hidden = true; this.video.removeAttribute('src'); this.video.load();
     const fallback = active.cue.fallback;
     this.videoFallback.classList.toggle('vn-video-fallback-background', fallback?.kind === 'background');
@@ -329,16 +345,18 @@ export class DOMRenderer {
   }
   private playVideo(active: NonNullable<DOMRenderer['videoState']>) {
     const attempt = ++active.attempt;
+    if (active.evidence) active.evidence.attempt = attempt;
     try {
       const result = this.video.play();
-      void result?.catch(() => { if (this.videoState === active && active.attempt === attempt && !this.session.getView().paused) this.fallbackVideo(active, true); });
+      void result?.then(() => { if (this.videoState === active && active.attempt === attempt && !active.finished && !this.disposed && !this.session.getView().paused) this.visualEvidence.record(active.evidence, attempt === 1 ? 'started' : 'resumed'); })
+        .catch(() => { if (this.videoState === active && active.attempt === attempt && !this.session.getView().paused) this.fallbackVideo(active, true); });
     } catch { if (!this.session.getView().paused) this.fallbackVideo(active, true); }
   }
   private updateVideo(snapshot: RuntimeView, previous: RuntimeView | undefined, entered: boolean) {
     if (entered) {
       this.clearVideo();
       const cue = snapshot.frame.stage.video; if (!cue) return;
-      const active: NonNullable<DOMRenderer['videoState']> = { cue, attempt: 0, finished: false }; this.videoState = active;
+      const active: NonNullable<DOMRenderer['videoState']> = { cue, attempt: 0, finished: false, evidence: this.visualEvidence.begin('stage.video', snapshot, cue.asset) }; this.videoState = active;
       const reduce = this.reducedMotion(snapshot);
       if (reduce || snapshot.skipping || ['restore', 'reread', 'rollback'].includes(snapshot.reason)) { this.fallbackVideo(active, false); return; }
       try {
@@ -348,6 +366,7 @@ export class DOMRenderer {
         this.video.onended = () => {
           if (this.videoState !== active || active.finished) return;
           active.finished = true; this.video.hidden = true; this.video.onended = null; this.video.onerror = null;
+          this.visualEvidence.record(active.evidence, 'settled');
           this.video.removeAttribute('src'); this.video.load();
         };
         if (!snapshot.paused) this.playVideo(active);
@@ -358,7 +377,7 @@ export class DOMRenderer {
     if (this.reducedMotion(snapshot) || snapshot.skipping) { this.fallbackVideo(active, false); return; }
     if (snapshot.settings.masterVolume !== previous?.settings.masterVolume || snapshot.settings.videoVolume !== previous?.settings.videoVolume) this.video.volume = snapshot.settings.masterVolume * snapshot.settings.videoVolume;
     if (snapshot.paused !== previous?.paused) {
-      if (snapshot.paused) { active.attempt++; this.video.pause(); }
+      if (snapshot.paused) { active.attempt++; this.video.pause(); this.visualEvidence.record(active.evidence, 'paused'); }
       else this.playVideo(active);
     }
   }
@@ -384,6 +403,7 @@ export class DOMRenderer {
   }
   private updateTimeline(snapshot: RuntimeView, entered: boolean) {
     if (entered) {
+      if (this.timeline && !this.timeline.finished) this.visualEvidence.record(this.timeline.evidence, 'cancelled', 'TIMELINE_REPLACED');
       this.stopTimeline(); this.timeline = undefined; this.camera.style.removeProperty('transform');
       for (const node of Object.values(this.layerNodes)) { node.style.removeProperty('transform'); node.style.removeProperty('opacity'); }
       const state = snapshot.frame.stage.presentationState;
@@ -392,24 +412,28 @@ export class DOMRenderer {
         const node = this.layerNodes[name as StageLayer]; if (!node || !item || (item.target && node.dataset.asset !== item.target)) continue;
         const value = item.transform; node.style.transform = `translate(${value.x}px, ${value.y}px) scale(${value.scale})`; node.style.opacity = String(value.opacity);
       }
-      if (snapshot.frame.stage.timeline) this.timeline = { value: snapshot.frame.stage.timeline, elapsed: 0, finished: false };
+      if (snapshot.frame.stage.timeline) this.timeline = { value: snapshot.frame.stage.timeline, elapsed: 0, finished: false, started: false, paused: false, evidence: this.visualEvidence.begin('stage.timeline', snapshot) };
     }
     const active = this.timeline; if (!active || active.finished) return;
     const view = this.document.defaultView, reduce = this.reducedMotion(snapshot);
     if (reduce || snapshot.skipping || ['restore', 'reread', 'rollback'].includes(snapshot.reason) || active.value.durationMs === 0) {
-      this.stopTimeline(); active.elapsed = active.value.durationMs; this.paintTimeline(active.elapsed); active.finished = true; return;
+      this.stopTimeline(); active.elapsed = active.value.durationMs; this.paintTimeline(active.elapsed); active.finished = true; this.visualEvidence.record(active.evidence, 'settled', 'FINAL_STATE_APPLIED'); return;
     }
-    if (snapshot.paused || !view) { this.stopTimeline(); return; }
+    if (snapshot.paused || !view) {
+      if (active.started && !active.paused) this.visualEvidence.record(active.evidence, 'paused');
+      active.paused = true; this.stopTimeline(); return;
+    }
     if (active.frame !== undefined) return;
+    this.visualEvidence.record(active.evidence, active.started ? 'resumed' : 'started'); active.started = true; active.paused = false;
     this.paintTimeline(active.elapsed);
     const tick = (time: number) => {
       if (this.disposed || this.timeline !== active) return;
       active.frame = undefined;
       if (this.session.getView().paused) { active.previousTime = undefined; return; }
-      if (view.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { active.elapsed = active.value.durationMs; this.paintTimeline(active.elapsed); active.finished = true; return; }
+      if (view.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { active.elapsed = active.value.durationMs; this.paintTimeline(active.elapsed); active.finished = true; this.visualEvidence.record(active.evidence, 'settled', 'FINAL_STATE_APPLIED'); return; }
       if (active.previousTime !== undefined) active.elapsed = Math.min(active.value.durationMs, active.elapsed + Math.max(0, time - active.previousTime));
       active.previousTime = time; this.paintTimeline(active.elapsed);
-      if (active.elapsed >= active.value.durationMs) { active.finished = true; active.previousTime = undefined; }
+      if (active.elapsed >= active.value.durationMs) { active.finished = true; active.previousTime = undefined; this.visualEvidence.record(active.evidence, 'settled'); }
       else active.frame = view.requestAnimationFrame(tick);
     };
     active.frame = view.requestAnimationFrame(tick);
@@ -711,12 +735,13 @@ export class DOMRenderer {
   }
   dispose() {
     if (this.disposed) return; this.disposed = true; this.panelCleanup?.(); this.panelCleanup = undefined; this.replayReturn = undefined; this.disconnect(); this.session.pause('panel', false);
+    if (this.timeline && !this.timeline.finished) this.visualEvidence.record(this.timeline.evidence, 'cancelled', 'RENDERER_DISPOSED');
     this.document.removeEventListener('visibilitychange', this.onVisibility); this.element.removeEventListener('keydown', this.onKey); this.element.removeEventListener('pointerdown', this.onPointer);
     this.motionQuery?.removeEventListener?.('change', this.onMotion);
     this.chat.removeEventListener('scroll', this.onChatScroll); this.cancelScroll(); this.stopTimeline(); this.timeline = undefined; this.clearVideo();
     this.readingSize?.disconnect(); this.readingSize = undefined;
     this.keyVisualLayer?.dispose();
-    for (const { probe } of this.probes.values()) { probe.onload = null; probe.onerror = null; probe.removeAttribute('src'); } this.probes.clear();
+    for (const { probe, ready, evidence } of this.probes.values()) { if (!ready) this.visualEvidence.record(evidence, 'cancelled', 'RENDERER_DISPOSED'); probe.onload = null; probe.onerror = null; probe.removeAttribute('src'); } this.probes.clear();
     for (const animation of this.animations()) animation.cancel(); this.element.remove();
   }
 }
