@@ -58,5 +58,7 @@ PR head 为 `8cdab361dd41bdb1e9258f45603b7d6c9a1bf62a`，CI 实际检出 / 构�
 - 首轮本地全量在旧 authoring 测试要求无效输入仍导出旧数据时失败。按 R5 合同补充阻断 / 输入保留 / 修正后完整字节一致的回归，并对工作台的旧类型 / 边界 / 效果预期作相同调整。
 - 首轮 Engine run 40907811878 的 225 项 Node 与 6 项 Python 通过，但最后制作面板变更的来源哈希未刷新；已补齐并重新核对 178 项来源。
 - Engine run 40908495514 的核心通过，旧 creative 浏览器断言把合法 SE 续播产生的第二次 playing 当作重播而失败。修订为实际对象身份、暂停位置 / 时间推进及读档不增播放调用；没有关闭续播或放宽一次性访问规则。
+- PR #1 最终 head `7feafbc1c1a8beff2d860aea3fe035fa0f80e816` 的 [Engine 40911487059](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40911487059) 和 [Windows 40911487427](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40911487427) 均通过并合并。合并提交 `8fbb6ebb6df6ca3b7571a6256f95cf7e32ec5813` 的 [Windows 40980122266](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40980122266) 通过，但 [Engine 40980122043](https://github.com/AureliusWu/VN-Engine-v2/actions/runs/40980122043) 在完整浏览器通过后的第二次 Studio 套件暴露目录绑定测试时序问题：`setInputFiles` 返回不代表 `File.text()` 与工程替换完成，立即绑定目录会递增工作区版本并取消迟到打开，旧校园背景又能满足旧 `naturalWidth > 0` 等待，最后得到 44 个资源错误。
+- 收尾修正仅涉及测试与记录：为目录工程设置独立标题，用受控 `File.text()` 屏障确保覆盖慢读取，释放后等待工程身份再绑定目录；预览要求实际 400×200 图片，导出再核对标题、资源和相对路径。本机 `node tests/editor-browser.mjs` 完整 10 组通过，不以重跑失败 CI 代替修正；运行时代码保持不变。
 
-最终交付由 [PR #1 的最新检查](https://github.com/AureliusWu/VN-Engine-v2/pull/1/checks) 和合并后 main 的 Engine / Windows 检查再次确认；本页的确切实现证据不沿用 R4。
+最终交付以收尾修正 PR 与合并后 [main 的 Engine / Windows 检查](https://github.com/AureliusWu/VN-Engine-v2/actions?query=branch%3Amain) 再次确认；本页的确切实现证据不沿用 R4，保留历史失败而不把第一次合并的失败 CI 标为通过。

@@ -96,6 +96,16 @@
   },
   "preservedFailures": [
     {
+      "runId": 40980122043,
+      "commit": "8fbb6ebb6df6ca3b7571a6256f95cf7e32ec5813",
+      "reason": "The directory test bound assets before asynchronous project reading completed, invalidating the pending open; an old background satisfied the weak image wait",
+      "resolution": "Use a controlled slow File.text barrier, await the project title, verify the actual 400x200 image and exported relative assets/defaults",
+      "localEditorBrowserGroupsPassed": 10,
+      "runtimeCodeChanged": false,
+      "windowsRunId": 40980122266,
+      "windowsConclusion": "success"
+    },
+    {
       "runId": 40907811878,
       "reason": "Final production source hash was not refreshed; Node 225 and Python 6 passed",
       "resolution": "Refreshed and verified all 178 provenance records"
