@@ -1,5 +1,9 @@
 # 架构与接口
 
+## v1.4.0 作者后台任务
+
+editor/text-compile-task.mjs 监督一个可取消、有期限的 module Worker；text-compile-worker.mjs 执行既有纯语法 / 清单 API 与 JSON 格式化。text-script.mjs 仅接收当前文本 / 清单的结果，应用前再次核对身份，无关更新复用结果。失败不切回主线程同步编译。作者模块由 Studio 缓存，玩家构建继续排除 editor。公共编译 API、VM 和存档不变，见 [P4 契约](P4_DEVELOPMENT.md)。
+
 ## v1.3.0 作者演出前端
 
 script/text.ts 将显式 cue block / cue line 编译为已有 StageCue，保留原 VM、路由与存档。script/text/project.ts 是可选纯清单检查，核对身份、资源 ID / kind，返回 DSL 范围和候选来源，不读取文件或启动设备。Studio、Agent、CLI 复用两阶段接口；玩家包按已有作者模块边界排除 text.js 与 text/ 目录，Studio 包保留它们。参考取舍与边界见 [P3 契约](P3_DEVELOPMENT.md)。

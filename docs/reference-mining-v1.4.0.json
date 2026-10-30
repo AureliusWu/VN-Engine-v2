@@ -1,0 +1,466 @@
+{
+  "contract": "vn-reference-mining-v1",
+  "targetVersion": "1.4.0",
+  "researchStatus": "COMPLETE",
+  "implementationAcceptance": "PENDING_SEPARATE_VALIDATION",
+  "observedDate": "2026-10-30",
+  "timezone": "Asia/Shanghai",
+  "engineBaseline": {
+    "version": "1.3.0",
+    "commitSha": "2135b8b27850811e388384b841308ff5b2d7e305"
+  },
+  "freshnessPolicy": "Yarn and ink reuse v1.3.0 research pins; they are fixed snapshots, not newly checked live heads. Inky master was read and pinned during this research on 2026-10-30. No stars were collected.",
+  "referenceMaterialAccess": {
+    "localVnCheckoutUsed": false,
+    "officialRemoteSourceUsed": true,
+    "upstreamClonePerformed": false,
+    "upstreamBuildExecuted": false,
+    "priorInventory": {
+      "document": "docs/reference-mining-v1.3.0.json",
+      "path": "D:\\AI项目\\参考资料",
+      "vnEngineSnapshotsFound": false,
+      "refreshedForThisDocument": false,
+      "note": "The prior actual inventory found no VN snapshot. This document does not claim a fresh inventory or local reading of upstream VN source."
+    }
+  },
+  "repositories": [
+    {
+      "repository": "YarnSpinnerTool/YarnSpinner",
+      "commitSha": "c5215f86dd5a6761aecbdc9f60f6a6108f91f919",
+      "pinOrigin": "v1.3.0 fixed official reference",
+      "liveHeadRechecked": false,
+      "license": {
+        "label": "MIT",
+        "evidence": "Copyright/license headers in the retrieved compiler files; pinned v1.3.0 license record",
+        "url": "https://github.com/YarnSpinnerTool/YarnSpinner/blob/c5215f86dd5a6761aecbdc9f60f6a6108f91f919/LICENSE.md"
+      }
+    },
+    {
+      "repository": "inkle/inky",
+      "commitSha": "3d46aa92bf1572797f35d338bf75e37bb047f2e3",
+      "pinOrigin": "Official master branch observed and pinned on 2026-10-30 during this research",
+      "branchObserved": "master",
+      "license": {
+        "label": "MIT",
+        "sourceId": "inky-license",
+        "url": "https://github.com/inkle/inky/blob/3d46aa92bf1572797f35d338bf75e37bb047f2e3/README.md#L159"
+      }
+    },
+    {
+      "repository": "inkle/ink",
+      "commitSha": "35c63e52f1d36060930dc7ed3cfba38ea224b528",
+      "pinOrigin": "v1.3.0 fixed official reference",
+      "liveHeadRechecked": false,
+      "license": {
+        "label": "MIT",
+        "evidence": "Pinned v1.3.0 license record; not reread during this documentation step",
+        "url": "https://github.com/inkle/ink/blob/35c63e52f1d36060930dc7ed3cfba38ea224b528/LICENSE.txt"
+      }
+    }
+  ],
+  "sources": [
+    {
+      "id": "yarn-job",
+      "repository": "YarnSpinnerTool/YarnSpinner",
+      "commitSha": "c5215f86dd5a6761aecbdc9f60f6a6108f91f919",
+      "path": "YarnSpinner.Compiler/CompilationJob.cs",
+      "blobSha": "982aad7c49ba77acc5ed728857fef29274e84ea5",
+      "url": "https://github.com/YarnSpinnerTool/YarnSpinner/blob/c5215f86dd5a6761aecbdc9f60f6a6108f91f919/YarnSpinner.Compiler/CompilationJob.cs",
+      "access": "Official GitHub remote read only; fixed SHA",
+      "retrievedLines": {
+        "start": 1,
+        "end": 240
+      },
+      "reviewedRanges": [
+        {
+          "start": 14,
+          "end": 54
+        },
+        {
+          "start": 82,
+          "end": 103
+        },
+        {
+          "start": 147,
+          "end": 152
+        },
+        {
+          "start": 168,
+          "end": 218
+        }
+      ],
+      "concept": "Named source inputs and task-scoped CancellationToken",
+      "scopeNote": "Only lines 1-240 were requested; no claim of reviewing the remainder."
+    },
+    {
+      "id": "yarn-phases",
+      "repository": "YarnSpinnerTool/YarnSpinner",
+      "commitSha": "c5215f86dd5a6761aecbdc9f60f6a6108f91f919",
+      "path": "YarnSpinner.Compiler/Compiler.cs",
+      "blobSha": "55c2d05ee252e9d03184b80feaf75bab744f6360",
+      "url": "https://github.com/YarnSpinnerTool/YarnSpinner/blob/c5215f86dd5a6761aecbdc9f60f6a6108f91f919/YarnSpinner.Compiler/Compiler.cs",
+      "access": "Official GitHub remote read only; fixed SHA",
+      "retrievedLines": {
+        "start": 1,
+        "end": 1762
+      },
+      "reviewedRanges": [
+        {
+          "start": 36,
+          "end": 53
+        },
+        {
+          "start": 97,
+          "end": 145
+        },
+        {
+          "start": 298,
+          "end": 352
+        },
+        {
+          "start": 378,
+          "end": 407
+        },
+        {
+          "start": 445,
+          "end": 450
+        },
+        {
+          "start": 618,
+          "end": 624
+        }
+      ],
+      "concept": "Cancellation checks across compiler phases and bounded type-solver failure",
+      "scopeNote": "Full file retrieved; only listed ranges inspected. The release-build 10-second watchdog covers type solving, not a proven total compiler deadline."
+    },
+    {
+      "id": "inky-sessions",
+      "repository": "inkle/inky",
+      "commitSha": "3d46aa92bf1572797f35d338bf75e37bb047f2e3",
+      "path": "app/renderer/liveCompiler.js",
+      "blobSha": "07978b96a9012235f67f84e75422f1428b521f05",
+      "url": "https://github.com/inkle/inky/blob/3d46aa92bf1572797f35d338bf75e37bb047f2e3/app/renderer/liveCompiler.js",
+      "access": "Official GitHub remote read only; fixed SHA",
+      "retrievedLines": {
+        "start": 1,
+        "end": 421
+      },
+      "reviewedRanges": [
+        {
+          "start": 53,
+          "end": 69
+        },
+        {
+          "start": 84,
+          "end": 158
+        },
+        {
+          "start": 192,
+          "end": 234
+        },
+        {
+          "start": 270,
+          "end": 305
+        }
+      ],
+      "concept": "Superseded-session stop, session-bound result acceptance and delayed live compilation",
+      "scopeNote": "Full file retrieved; listed ranges inspected. This is Inky's child-process architecture, not evidence of browser Worker usage."
+    },
+    {
+      "id": "inky-process-lifecycle",
+      "repository": "inkle/inky",
+      "commitSha": "3d46aa92bf1572797f35d338bf75e37bb047f2e3",
+      "path": "app/main-process/inklecate.js",
+      "blobSha": "991bdf748a71ed7d9ba2f83d5e350434223e3a4f",
+      "url": "https://github.com/inkle/inky/blob/3d46aa92bf1572797f35d338bf75e37bb047f2e3/app/main-process/inklecate.js",
+      "access": "Official GitHub remote read only; fixed SHA",
+      "retrievedLines": {
+        "start": 1,
+        "end": 368
+      },
+      "reviewedRanges": [
+        {
+          "start": 50,
+          "end": 107
+        },
+        {
+          "start": 277,
+          "end": 317
+        }
+      ],
+      "concept": "Independent compiler process and explicit session termination",
+      "scopeNote": "Full file retrieved; listed ranges inspected. Temporary-file writes and Electron IPC are not adopted."
+    },
+    {
+      "id": "inky-license",
+      "repository": "inkle/inky",
+      "commitSha": "3d46aa92bf1572797f35d338bf75e37bb047f2e3",
+      "path": "README.md",
+      "blobSha": "4fcbc0e36168f40f48e5438e2e889175a08a83fc",
+      "url": "https://github.com/inkle/inky/blob/3d46aa92bf1572797f35d338bf75e37bb047f2e3/README.md",
+      "access": "Official GitHub remote read only; fixed SHA",
+      "retrievedLines": {
+        "start": 1,
+        "end": 175
+      },
+      "reviewedRanges": [
+        {
+          "start": 159,
+          "end": 174
+        }
+      ],
+      "concept": "MIT license declaration",
+      "scopeNote": "Full file retrieved; license section inspected."
+    },
+    {
+      "id": "ink-include-boundary",
+      "repository": "inkle/ink",
+      "commitSha": "35c63e52f1d36060930dc7ed3cfba38ea224b528",
+      "path": "compiler/InkParser/InkParser_Include.cs",
+      "blobSha": "9490c2fcaf98fc40731eec2a52a01ec126fe36e4",
+      "url": "https://github.com/inkle/ink/blob/35c63e52f1d36060930dc7ed3cfba38ea224b528/compiler/InkParser/InkParser_Include.cs",
+      "access": "Official GitHub remote read only; fixed SHA",
+      "retrievedLines": {
+        "start": 1,
+        "end": 77
+      },
+      "reviewedRanges": [
+        {
+          "start": 1,
+          "end": 76
+        }
+      ],
+      "concept": "Include resolution, active-file recursion detection and per-file parser origin",
+      "scopeNote": "This source does not establish a global security/resource budget for a multi-file author project."
+    },
+    {
+      "id": "ink-injected-file-handler",
+      "repository": "inkle/ink",
+      "commitSha": "35c63e52f1d36060930dc7ed3cfba38ea224b528",
+      "path": "compiler/FileHandler.cs",
+      "blobSha": "51a60bb47deb596ba7d1f48c1d070df41ae189dc",
+      "url": "https://github.com/inkle/ink/blob/35c63e52f1d36060930dc7ed3cfba38ea224b528/compiler/FileHandler.cs",
+      "access": "Official GitHub remote read only; fixed SHA",
+      "retrievedLines": {
+        "start": 1,
+        "end": 25
+      },
+      "reviewedRanges": [
+        {
+          "start": 1,
+          "end": 25
+        }
+      ],
+      "concept": "Separate filename resolution and content loading",
+      "scopeNote": "Default filesystem access is not adopted into the pure compiler."
+    }
+  ],
+  "localSources": [
+    {
+      "id": "local-studio-dsl",
+      "path": "editor/text-script.mjs",
+      "blobSha": "9c8ef0d0e4b5c709a06a601d20398e0afaf5776b",
+      "reviewedRanges": [
+        {
+          "start": 1,
+          "end": 66
+        }
+      ],
+      "concept": "Synchronous compile and contextual candidate checking; explicit apply and single undo",
+      "repository": "AureliusWu/VN-Engine-v2",
+      "commitSha": "2135b8b27850811e388384b841308ff5b2d7e305",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/blob/2135b8b27850811e388384b841308ff5b2d7e305/editor/text-script.mjs",
+      "access": "Local v1.3.0 worktree read while HEAD matched this commit; blob identity checked via git rev-parse"
+    },
+    {
+      "id": "local-route-supervisor",
+      "path": "editor/routes.mjs",
+      "blobSha": "97b730bc64e510e79fcb42a51536b3d45a47d732",
+      "reviewedRanges": [
+        {
+          "start": 1,
+          "end": 61
+        }
+      ],
+      "concept": "Worker identity, request ID, terminate, 30-second deadline, source-change invalidation and dispose",
+      "repository": "AureliusWu/VN-Engine-v2",
+      "commitSha": "2135b8b27850811e388384b841308ff5b2d7e305",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/blob/2135b8b27850811e388384b841308ff5b2d7e305/editor/routes.mjs",
+      "access": "Local v1.3.0 worktree read while HEAD matched this commit; blob identity checked via git rev-parse"
+    },
+    {
+      "id": "local-route-worker",
+      "path": "editor/route-worker.mjs",
+      "blobSha": "f6af9c4e71adc8eb486f6c441f286401558dffe3",
+      "reviewedRanges": [
+        {
+          "start": 1,
+          "end": 10
+        }
+      ],
+      "concept": "Explicit data message and source-bound route report",
+      "repository": "AureliusWu/VN-Engine-v2",
+      "commitSha": "2135b8b27850811e388384b841308ff5b2d7e305",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/blob/2135b8b27850811e388384b841308ff5b2d7e305/editor/route-worker.mjs",
+      "access": "Local v1.3.0 worktree read while HEAD matched this commit; blob identity checked via git rev-parse"
+    },
+    {
+      "id": "local-agent-supervisor",
+      "path": "tools/agent-node.mjs",
+      "blobSha": "8135b290ef0cd7e767ecb0805bdd43647601dd7c",
+      "reviewedRanges": [
+        {
+          "start": 139,
+          "end": 166
+        }
+      ],
+      "concept": "Node worker supervision with AbortSignal, deadline and cleanup",
+      "repository": "AureliusWu/VN-Engine-v2",
+      "commitSha": "2135b8b27850811e388384b841308ff5b2d7e305",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/blob/2135b8b27850811e388384b841308ff5b2d7e305/tools/agent-node.mjs",
+      "access": "Local v1.3.0 worktree read while HEAD matched this commit; blob identity checked via git rev-parse"
+    },
+    {
+      "id": "local-sync-compiler",
+      "path": "src/script/text.ts",
+      "blobSha": "36fe128e3fd4e02277d904c8bdca502b80c7b8ac",
+      "reviewedRanges": [
+        {
+          "start": 20,
+          "end": 37
+        },
+        {
+          "start": 61,
+          "end": 109
+        },
+        {
+          "start": 255,
+          "end": 324
+        }
+      ],
+      "concept": "Existing pure synchronous API and source/token/structure budgets",
+      "repository": "AureliusWu/VN-Engine-v2",
+      "commitSha": "2135b8b27850811e388384b841308ff5b2d7e305",
+      "url": "https://github.com/AureliusWu/VN-Engine-v2/blob/2135b8b27850811e388384b841308ff5b2d7e305/src/script/text.ts",
+      "access": "Local v1.3.0 worktree read while HEAD matched this commit; blob identity checked via git rev-parse"
+    }
+  ],
+  "decisions": [
+    {
+      "id": "author-worker",
+      "status": "ADOPT_FOR_IMPLEMENTATION",
+      "sourceIds": [
+        "yarn-job",
+        "yarn-phases",
+        "inky-sessions",
+        "inky-process-lifecycle",
+        "local-route-supervisor",
+        "local-route-worker"
+      ],
+      "direction": "Run existing syntax compilation and project-catalog checks in an author-only browser Worker; preserve explicit preview/apply flow and one undoable application.",
+      "why": "Separate long synchronous author work from the UI event loop without changing runtime interpretation."
+    },
+    {
+      "id": "task-lifecycle",
+      "status": "ADOPT_FOR_IMPLEMENTATION",
+      "sourceIds": [
+        "inky-sessions",
+        "inky-process-lifecycle",
+        "local-route-supervisor",
+        "local-agent-supervisor"
+      ],
+      "direction": "Bind tasks to request identity, source and current project/catalog context. Superseding compile, cancellation, reset and dispose invalidate the old task; terminate CPU-bound workers and reject late responses.",
+      "why": "Cancellation messages alone cannot preempt synchronous code occupying a worker event loop; terminating the worker and checking identity address different failure modes."
+    },
+    {
+      "id": "sync-compatibility",
+      "status": "PRESERVE",
+      "sourceIds": [
+        "local-sync-compiler",
+        "local-studio-dsl"
+      ],
+      "direction": "Keep compileTextScript/checkTextScriptProject synchronous pure APIs, DSL grammar, IR, source map and existing budgets; keep CLI/Agent contracts and runtime/save/replay behavior compatible.",
+      "why": "The first deliverable is author-host scheduling and lifecycle, not a new compiler or VM."
+    },
+    {
+      "id": "multi-file",
+      "status": "DEFERRED_NOT_IMPLEMENTED_THIS_ROUND",
+      "sourceIds": [
+        "yarn-job",
+        "ink-include-boundary",
+        "ink-injected-file-handler"
+      ],
+      "direction": "Do not add include syntax, file IO, namespace rules or multi-file project format in v1.4.0.",
+      "requiredBeforeLaterAdoption": [
+        "Versioned named-source input contract and deterministic order",
+        "Cross-file duplicate IDs, forward references and include-cycle rules",
+        "Per-file UTF-16 source ranges and source identity",
+        "Aggregate file/source/token/structure/cue/diagnostic budgets",
+        "Independent CLI/Agent/Studio, package and save/replay validation"
+      ],
+      "why": "Per-file budget repetition can multiply total resource use; file origin and resolution require independent design."
+    },
+    {
+      "id": "upstream-architecture",
+      "status": "REJECT_FOR_THIS_SCOPE",
+      "sourceIds": [
+        "inky-process-lifecycle",
+        "ink-injected-file-handler"
+      ],
+      "direction": "Do not add Electron IPC, an external inklecate process, temporary upstream project files, arbitrary filesystem loading, upstream runtime dependencies or copied compiler implementation.",
+      "why": "Use concepts with an original browser-worker implementation inside the self-developed engine."
+    }
+  ],
+  "performanceScope": {
+    "target": "Studio main-thread responsiveness and bounded task lifecycle",
+    "rawCompilerSpeedupClaimed": false,
+    "prior7000CueWarning": "The v1.3.0 optimized 7000-cue total author workload warning is separate historical evidence; moving work to a Worker does not prove lower total latency.",
+    "requiredMeasurement": [
+      "Retain comparable total compilation timing",
+      "Measure real UI event-loop responsiveness and cancellation",
+      "Record transfer/clone/render overhead separately where measured"
+    ]
+  },
+  "implementationPolicy": {
+    "newCode": "Original implementation; provenance classification new where applicable",
+    "copiedUpstreamImplementation": false,
+    "upstreamDependenciesInstalled": false,
+    "upstreamBuildExecuted": false,
+    "gameMigrationAuthorized": false,
+    "referenceDocumentsAreAcceptanceEvidence": false
+  },
+  "requiredValidation": [
+    {
+      "scope": "Compiler compatibility",
+      "status": "PENDING",
+      "checks": [
+        "Worker and synchronous compiler/context output equivalence",
+        "Existing DSL/cue diagnostics, budgets and UTF-16 ranges remain unchanged",
+        "No input mutation or implicit IO"
+      ]
+    },
+    {
+      "scope": "Worker lifecycle and Studio",
+      "status": "PENDING",
+      "checks": [
+        "Real large-source UI responsiveness",
+        "Superseded and wrong-ID response rejection",
+        "Source/project identity/catalog change invalidation",
+        "Cancellation, timeout, error, reset and dispose cleanup",
+        "Explicit application and single undo; failure preserves current JSON",
+        "Worker unavailable or failed startup produces a clear bounded failure"
+      ]
+    },
+    {
+      "scope": "Delivery and platforms",
+      "status": "PENDING",
+      "checks": [
+        "Fresh generated Studio nested deployment and offline new-page Worker loading",
+        "Author worker/compiler excluded from generated player bundle",
+        "Complete local Node/browser/editor and sample technical QA",
+        "Exact-SHA Linux CI",
+        "Windows build, actual WebView2 and full process restart separately recorded; preset picker paths are not manual system-dialog acceptance"
+      ]
+    }
+  ]
+}

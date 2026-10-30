@@ -116,6 +116,7 @@ try {
     const edited = script.replace('背景、立绘和声音来自同一份演出文本。', text); assert.notEqual(edited, script);
     await page.getByLabel('文本 DSL 内容', { exact: true }).fill(edited.replace('cue line hello voice greeting', 'cue line hello voice missing-voice'));
     await page.locator('[data-dsl-command=compile]').click();
+    await page.waitForSelector('#text-script-list[data-dsl-state=invalid]');
     assert.equal(await page.locator('[data-dsl-command=apply]').isDisabled(), true);
     assert.match(await page.locator('[data-dsl-diagnostic]').allTextContents().then(values => values.join('\n')), /DSL_ASSET_MISSING/);
     await page.getByLabel('文本 DSL 内容', { exact: true }).fill(edited);

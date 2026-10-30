@@ -27,7 +27,8 @@ try {
     const [download] = await Promise.all([page.waitForEvent('download'), page.locator('[data-command=export]').click()]);
     return JSON.parse(await readFile(await download.path(), 'utf8'));
   };
-  const compile = async text => { await input.fill(text); await page.locator('[data-dsl-command=compile]').click(); };
+  const settled = () => page.waitForSelector('#text-script-list[data-dsl-state=success],#text-script-list[data-dsl-state=invalid]');
+  const compile = async text => { await input.fill(text); await page.locator('[data-dsl-command=compile]').click(); await settled(); };
   const check = async (name, run) => { await run(); checks.push(name); console.log('PASS', name); };
   await page.locator('[data-tab=text-script]').click();
   const candidate = source.replace('背景、立绘和声音来自同一份演出文本。', '候选演出文本，尚未改变当前工程。');
@@ -66,9 +67,11 @@ try {
     const card = page.locator('.asset-card').filter({ has: page.getByRole('heading', { name: 'greeting', exact: true }) });
     await card.getByRole('button', { name: '移除资源条目', exact: true }).click();
     await page.locator('[data-tab=text-script]').click();
+    await settled();
     assert.equal(await page.locator('[data-dsl-command=apply]').isDisabled(), true);
     assert.match(await page.locator('.dsl-diagnostics').innerText(), /DSL_ASSET_MISSING/);
     await page.locator('[data-command=undo]').click();
+    await settled();
     assert.equal(await page.locator('[data-dsl-command=apply]').isEnabled(), true);
     assert.deepEqual((await exported()).program, project.program);
     await compile(source.replace('game "vn-stage-dsl"', 'game "different"'));

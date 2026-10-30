@@ -41,10 +41,12 @@ try{
   assert.equal(applied.sourceMap,undefined);assert.equal(applied.source,undefined);
   await page.locator('[data-command=undo]').click();assert.deepEqual((await exportProject()).program,project.program);
   await page.getByLabel('文本 DSL 内容',{exact:true}).fill(valid+'\neval "unsafe"');await page.locator('[data-dsl-command=compile]').click();
+  await page.waitForSelector('#text-script-list[data-dsl-state=invalid]');
   assert.equal(await page.locator('[data-dsl-command=apply]').isDisabled(),true);assert.match(await page.locator('[data-dsl-status]').innerText(),/编译失败/);
   await page.locator('[data-dsl-diagnostic]').first().click();assert.equal(await page.getByLabel('文本 DSL 内容',{exact:true}).evaluate(e=>e.selectionEnd>e.selectionStart),true);
   assert.deepEqual((await exportProject()).program,project.program);
   await page.getByLabel('文本 DSL 内容',{exact:true}).fill(valid.replace('game "p1-studio"','game "different"'));await page.locator('[data-dsl-command=compile]').click();
+  await page.waitForSelector('#text-script-list[data-dsl-state=invalid]');
   assert.equal(await page.locator('[data-dsl-command=apply]').isDisabled(),true);assert.match(await page.locator('[data-dsl-status]').innerText(),/不匹配/);
   assert.deepEqual((await exportProject()).program,project.program);
   await page.locator('[data-tab=resources]').click();assert.equal(await page.getByLabel('启用预览预算预取',{exact:true}).isChecked(),false);

@@ -1,0 +1,519 @@
+{
+  "schema": 1,
+  "date": "2026-10-30",
+  "engineVersion": "1.4.0",
+  "baseCommit": "2135b8b27850811e388384b841308ff5b2d7e305",
+  "scope": {
+    "sourceGamesMigrated": false,
+    "publicDataOrSaveFormatChanged": false,
+    "pureCompileApiChanged": false,
+    "newDependencies": false,
+    "releaseOrTagCreated": false,
+    "referenceCodeCopied": false
+  },
+  "plan": "docs/PLAN-v1.4.0.md",
+  "research": "docs/reference-mining-v1.4.0.json",
+  "local": {
+    "nodeVersion": "v24.14.0",
+    "check": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 381,
+      "pass": 377,
+      "fail": 4,
+      "skipped": 0,
+      "reason": "Same four Windows EPERM symlink fixture failures as baseline; assertions unchanged",
+      "log": "test-results/v140-check-final.log"
+    },
+    "completeBrowserSuite": {
+      "status": "PASS",
+      "scripts": 48,
+      "log": "test-results/v140-browser-final.log"
+    },
+    "completeEditorSuite": {
+      "status": "PASS",
+      "scripts": 21,
+      "log": "test-results/v140-editor-final.log",
+      "includes": "Final running-only heartbeat assertion"
+    },
+    "python": {
+      "status": "PASS",
+      "total": 6
+    },
+    "schemaSync": "PASS",
+    "provenance": {
+      "status": "PASS",
+      "files": 199
+    },
+    "projectSchemas": {
+      "status": "PASS",
+      "total": 5
+    },
+    "residualLog": "test-results/v140-residual-checks.log",
+    "focusedNode": {
+      "status": "PASS",
+      "p4Cases": 14
+    },
+    "p4BrowserReports": {
+      "studio": {
+        "status": "PASS",
+        "checks": [
+          "A running real compilation can be cancelled; a deliberately late callback cannot revive it; retry applies in one undo",
+          "Text edits cancel held work and the prior result never selects or applies the new text",
+          "JSON workspace replacement and New Project both reject held results from the prior workspace",
+          "Resource identity/kind changes replace a held job and automatically recheck without candidate preview; title edits reuse the result",
+          "Explicit worker-error and shortened-timeout simulations preserve data and allow a real retry",
+          "An unwrapped real worker compiles 7000 cues while the main thread keeps serving heartbeats"
+        ],
+        "scope": {
+          "controlledLifecycle": "Only the DSL Worker is wrapped; hold/pass execute the real parser, then callbacks may be deliberately delivered after termination.",
+          "errorAndTimeout": "Explicit simulated worker error/hang; only the 10000 ms task timer is shortened to 40 ms.",
+          "realLargeWorker": "Separate unwrapped browser context, 7000 cues; functional verification, not a replacement performance sample.",
+          "deviceAndListening": "UNVERIFIED"
+        },
+        "controlled": {
+          "workers": 14,
+          "terminated": 14,
+          "heldCallbacks": 7,
+          "forcedCallbacks": 7
+        },
+        "realWorkers": [
+          "http://127.0.0.1:60449/editor/text-compile-worker.mjs"
+        ],
+        "errors": [],
+        "browser": "153.0.8010.12",
+        "report": "test-results/p4-studio/REPORT.json"
+      },
+      "package": {
+        "status": "PASS",
+        "checks": [
+          "Studio includes the worker/task/compiler/context modules; the player excludes all author modules",
+          "Generated nested Studio performs an actual module-worker compile, candidate preview, explicit apply and export",
+          "A new offline Studio page repeats the real worker compile/apply/export using cached modules and newly bound local assets"
+        ],
+        "scope": {
+          "actualModuleWorker": true,
+          "generatedStudio": true,
+          "nestedDeployment": true,
+          "offlineNewPage": true,
+          "localFileInputs": "automated project and resource-directory inputs; no manual system-dialog claim",
+          "physicalDevice": "UNVERIFIED",
+          "physicalListening": "UNVERIFIED"
+        },
+        "run": "D:\\AI项目\\VN-Engine-v2\\test-results\\p4-package\\run-sC9vRj",
+        "workers": [
+          "http://127.0.0.1:55913/nested/studio/editor/text-compile-worker.mjs",
+          "http://127.0.0.1:55913/nested/studio/editor/text-compile-worker.mjs"
+        ],
+        "errors": [],
+        "playerFiles": 84,
+        "studioFiles": 131,
+        "workerAndTaskCached": true,
+        "authorModulesPackagedInPlayer": false,
+        "browser": "153.0.8010.12",
+        "report": "test-results/p4-package/REPORT.json"
+      }
+    },
+    "independentReview": "PASS; task identity/cleanup/envelope, panel context freshness and reset/dispose, player/Studio package boundaries independently inspected"
+  },
+  "originalFailures": [
+    {
+      "report": "test-results/p4-studio/INITIAL_TEST_ASSUMPTION.json",
+      "reason": "Fixture incorrectly expected Apply JSON identity changes to clear DSL draft; corrected to preserve draft and invalidate old candidate, New Project reset covered separately",
+      "retained": true
+    },
+    {
+      "report": "test-results/v140-baseline-performance.json",
+      "reason": "Initial locator.fill actionability timeout; no compile sample formed; same explicit input event setup used in both measured variants",
+      "retained": true
+    }
+  ],
+  "performance": {
+    "functionalStatus": "PASS",
+    "responseVerdict": "PASS",
+    "candidateWallVerdict": "PASS",
+    "previewWallVerdict": "FAIL",
+    "overallPerformanceVerdict": "WARN",
+    "comparison": {
+      "sameWorkload": true,
+      "sameBrowser": true,
+      "metrics": {
+        "clickToPaintMs": {
+          "beforeMedian": 220.90000000223517,
+          "afterMedian": 13.100000001490116,
+          "deltaPercent": -94.06971480246375
+        },
+        "maxGapMs": {
+          "beforeMedian": 265.30000000074506,
+          "afterMedian": 138.09999999776483,
+          "deltaPercent": -47.94572182533848
+        },
+        "candidateReadyWallMs": {
+          "beforeMedian": 281.2561999999998,
+          "afterMedian": 297.39339999999993,
+          "deltaPercent": 5.7375446301273225
+        },
+        "previewReadyWallMs": {
+          "beforeMedian": 282.77189999999973,
+          "afterMedian": 341.5039999999999,
+          "deltaPercent": 20.77013310021265
+        }
+      }
+    },
+    "performanceThresholds": {
+      "wallRegressionFailPercent": 20,
+      "newLongTaskWarnMs": 200
+    },
+    "performanceLimits": [
+      "Only three fixed local samples; directional rather than statistically conclusive.",
+      "Main-thread responsiveness improved; total candidate preview wall time regressed beyond the default 20 percent threshold.",
+      "Worker startup/result transfer and the existing main-thread candidate validation/render chain remain in the measured workflow.",
+      "No sample was discarded or rerun to improve the verdict."
+    ],
+    "before": {
+      "schema": 1,
+      "engineVersion": "1.3.0",
+      "commit": "2135b8b",
+      "recordedAt": "2026-10-30T10:59:29.880Z",
+      "node": "v24.14.0",
+      "platform": "win32",
+      "viewport": {
+        "width": 1360,
+        "height": 1000
+      },
+      "fixture": {
+        "lines": 7000,
+        "cues": 7000,
+        "sourceCharacters": 627857,
+        "sourceSha256": "a420507a744229ae037b1d2c596bc28ce2f48866cd11481a9aeb346ecca45886",
+        "inputMethod": "generated fixture sets textarea.value and dispatches input; compile button uses real click",
+        "generator": "7000 sequential lines l0..l6999, each 40 U+754C characters, one cue line <id> background room per line; identity large-author/1"
+      },
+      "browserSamples": [
+        {
+          "index": 0,
+          "candidateReadyWallMs": 351.17989999999986,
+          "previewReadyWallMs": 353.08349999999996,
+          "clickToPaintMs": 240.89999999850988,
+          "maxGapMs": 303.3999999985099,
+          "intervalSamples": 11,
+          "longTasks": [
+            {
+              "start": -0.30000000074505806,
+              "duration": 241
+            }
+          ],
+          "status": "PASS"
+        },
+        {
+          "index": 1,
+          "candidateReadyWallMs": 281.2561999999998,
+          "previewReadyWallMs": 282.77189999999973,
+          "clickToPaintMs": 220.90000000223517,
+          "maxGapMs": 265.30000000074506,
+          "intervalSamples": 9,
+          "longTasks": [
+            {
+              "start": -0.30000000074505806,
+              "duration": 221
+            }
+          ],
+          "status": "PASS"
+        },
+        {
+          "index": 2,
+          "candidateReadyWallMs": 280.6804000000002,
+          "previewReadyWallMs": 282.6862000000001,
+          "clickToPaintMs": 218,
+          "maxGapMs": 264.6000000014901,
+          "intervalSamples": 9,
+          "longTasks": [
+            {
+              "start": 0,
+              "duration": 217
+            }
+          ],
+          "status": "PASS"
+        }
+      ],
+      "errors": [],
+      "setupFailures": [
+        {
+          "operation": "Playwright locator.fill of 627857 character source",
+          "result": "30 second actionability timeout; no timing sample retained; this is not a compiler latency sample"
+        }
+      ],
+      "nodeComponentFixture": {
+        "lines": 8000,
+        "cues": 8000,
+        "sourceCharacters": 717857,
+        "scope": "Different workload; Node component data is not directly comparable with browser samples",
+        "samples": [
+          {
+            "compileMs": 182.46720000000002,
+            "contextMs": 125.61169999999998,
+            "jsonPreviewMs": 8.058899999999994,
+            "totalMs": 316.13779999999997
+          },
+          {
+            "compileMs": 191.76079999999996,
+            "contextMs": 135.0919,
+            "jsonPreviewMs": 7.726499999999987,
+            "totalMs": 334.57919999999996
+          },
+          {
+            "compileMs": 213.7595,
+            "contextMs": 149.84980000000007,
+            "jsonPreviewMs": 8.47609999999986,
+            "totalMs": 372.08539999999994
+          }
+        ]
+      },
+      "browser": "153.0.8010.12",
+      "status": "PASS"
+    },
+    "after": {
+      "schema": 1,
+      "engineVersion": "1.4.0",
+      "recordedAt": "2026-10-30T11:03:31.221Z",
+      "node": "v24.14.0",
+      "platform": "win32",
+      "viewport": {
+        "width": 1360,
+        "height": 1000
+      },
+      "fixture": {
+        "lines": 7000,
+        "cues": 7000,
+        "sourceCharacters": 627857,
+        "sourceSha256": "a420507a744229ae037b1d2c596bc28ce2f48866cd11481a9aeb346ecca45886",
+        "inputMethod": "generated fixture sets textarea.value and dispatches input; compile button uses real click",
+        "generator": "7000 sequential lines l0..l6999, each 40 U+754C characters, one cue line <id> background room per line; identity large-author/1"
+      },
+      "browserSamples": [
+        {
+          "index": 0,
+          "candidateReadyWallMs": 311.19550000000004,
+          "previewReadyWallMs": 364.5816,
+          "clickToPaintMs": 12.400000002235174,
+          "maxGapMs": 151.10000000149012,
+          "intervalSamples": 21,
+          "longTasks": [
+            {
+              "start": 183.70000000298023,
+              "duration": 98
+            }
+          ],
+          "status": "PASS"
+        },
+        {
+          "index": 1,
+          "candidateReadyWallMs": 296.04529999999977,
+          "previewReadyWallMs": 341.5039999999999,
+          "clickToPaintMs": 14.199999999254942,
+          "maxGapMs": 138.09999999776483,
+          "intervalSamples": 21,
+          "longTasks": [
+            {
+              "start": 181.80000000074506,
+              "duration": 86
+            }
+          ],
+          "status": "PASS"
+        },
+        {
+          "index": 2,
+          "candidateReadyWallMs": 297.39339999999993,
+          "previewReadyWallMs": 340.61789999999974,
+          "clickToPaintMs": 13.100000001490116,
+          "maxGapMs": 137.40000000223517,
+          "intervalSamples": 21,
+          "longTasks": [
+            {
+              "start": 183.5,
+              "duration": 83
+            }
+          ],
+          "status": "PASS"
+        }
+      ],
+      "errors": [],
+      "scope": "Three fixed real Studio worker samples; no Worker wrapping; same source hash/viewport/input event as baseline",
+      "baselineFile": "test-results/v140-baseline-performance.json",
+      "browser": "153.0.8010.12",
+      "workerURLs": [
+        "http://127.0.0.1:55851/editor/text-compile-worker.mjs",
+        "http://127.0.0.1:55851/editor/text-compile-worker.mjs",
+        "http://127.0.0.1:55851/editor/text-compile-worker.mjs"
+      ],
+      "comparison": {
+        "sameWorkload": true,
+        "sameBrowser": true,
+        "metrics": {
+          "clickToPaintMs": {
+            "beforeMedian": 220.90000000223517,
+            "afterMedian": 13.100000001490116,
+            "deltaPercent": -94.06971480246375
+          },
+          "maxGapMs": {
+            "beforeMedian": 265.30000000074506,
+            "afterMedian": 138.09999999776483,
+            "deltaPercent": -47.94572182533848
+          },
+          "candidateReadyWallMs": {
+            "beforeMedian": 281.2561999999998,
+            "afterMedian": 297.39339999999993,
+            "deltaPercent": 5.7375446301273225
+          },
+          "previewReadyWallMs": {
+            "beforeMedian": 282.77189999999973,
+            "afterMedian": 341.5039999999999,
+            "deltaPercent": 20.77013310021265
+          }
+        }
+      },
+      "functionalStatus": "PASS",
+      "responseVerdict": "PASS",
+      "candidateWallVerdict": "PASS",
+      "previewWallVerdict": "FAIL",
+      "overallPerformanceVerdict": "WARN",
+      "performanceThresholds": {
+        "wallRegressionFailPercent": 20,
+        "newLongTaskWarnMs": 200
+      },
+      "performanceLimits": [
+        "Only three fixed local samples; directional rather than statistically conclusive.",
+        "Main-thread responsiveness improved; total candidate preview wall time regressed beyond the default 20 percent threshold.",
+        "Worker startup/result transfer and the existing main-thread candidate validation/render chain remain in the measured workflow.",
+        "No sample was discarded or rerun to improve the verdict."
+      ]
+    }
+  },
+  "runtimeBundleComparison": {
+    "status": "PASS",
+    "method": "Retained final 1.3.0 packages versus fresh current packages, raw/gzipSync per module. Includes all Studio editor JS/CSS and lib JS, excludes generated SW/manifest in the primary comparison. No download latency claim.",
+    "report": "test-results/v140-payload.json",
+    "targets": {
+      "game": {
+        "old": {
+          "libJS": {
+            "files": 68,
+            "rawBytes": 423183,
+            "gzipBytes": 121174
+          },
+          "authorCode": {
+            "files": 0,
+            "rawBytes": 0,
+            "gzipBytes": 0
+          }
+        },
+        "current": {
+          "libJS": {
+            "files": 68,
+            "rawBytes": 423183,
+            "gzipBytes": 121174
+          },
+          "authorCode": {
+            "files": 0,
+            "rawBytes": 0,
+            "gzipBytes": 0
+          }
+        },
+        "primary": {
+          "old": {
+            "rawBytes": 423183,
+            "gzipBytes": 121174
+          },
+          "current": {
+            "rawBytes": 423183,
+            "gzipBytes": 121174
+          },
+          "growth": {
+            "rawPercent": 0,
+            "gzipPercent": 0
+          }
+        },
+        "verdict": "PASS"
+      },
+      "studio": {
+        "old": {
+          "libJS": {
+            "files": 82,
+            "rawBytes": 600686,
+            "gzipBytes": 168403
+          },
+          "authorCode": {
+            "files": 21,
+            "rawBytes": 168937,
+            "gzipBytes": 59824
+          }
+        },
+        "current": {
+          "libJS": {
+            "files": 82,
+            "rawBytes": 600686,
+            "gzipBytes": 168403
+          },
+          "authorCode": {
+            "files": 23,
+            "rawBytes": 177800,
+            "gzipBytes": 62710
+          }
+        },
+        "primary": {
+          "old": {
+            "rawBytes": 769623,
+            "gzipBytes": 228227
+          },
+          "current": {
+            "rawBytes": 778486,
+            "gzipBytes": 231113
+          },
+          "growth": {
+            "rawPercent": 1.1516027977334309,
+            "gzipPercent": 1.264530489381177
+          }
+        },
+        "verdict": "PASS"
+      }
+    }
+  },
+  "cloud": {
+    "status": "PENDING_EXACT_PUSHED_SHA",
+    "evidence": "test-results/v1.4.0-cloud.json"
+  },
+  "limitations": [
+    "Four local symlink fixtures remain EPERM; exact-SHA Linux must execute all 381 without skips",
+    "7000-cue preview total wall median grew 20.77%, default growth-threshold FAIL retained independently of improved response; three samples directional",
+    "Controlled delays, worker error and shortened 10s timer are explicit simulations; unwrapped real workers and offline packages separately exercised",
+    "Physical listening/devices/manual system dialogs and DRAFT content acceptance are separate scopes"
+  ],
+  "sourceHashBasis": "UTF-8 text normalized CRLF to LF to match Git blobs",
+  "sourceSha256": {
+    ".github/workflows/windows.yml": "6f436ffffdce7f240f63ecd9bc4b1eb8e9e726b7d8fe132418d48c6e11e16144",
+    "editor/text-compile-task.mjs": "c6b8dead0e0f1f496fb5290df396d9b05c56699e2fd11f19e7ad53d4f79c89e2",
+    "editor/text-compile-worker.mjs": "7f7bfdca5f4b7c01b17cdd74f829df74f4f2e02765330228e07f48c85c87d43b",
+    "editor/text-script.mjs": "0e51874fa535b672086640dc3c79b6e35c26702af17cdd9bfa1b5d6df7b0d241",
+    "hosts/windows/VNEngine.Windows.csproj": "53db174695093f235af2e10e209cac19fa4d98ef7298418da57ec5d13152c038",
+    "package-lock.json": "831346f3e72d60d540be21e4215000434d1acbf90969dd2e751338f97eece15b",
+    "package.json": "10929d79752b117f3f23f0a7c557b9cf4fb3d5bafcfb3d253b729e0e2329ecca",
+    "src/version.ts": "5430e629738773679ac589e93c99df89db986d4c8236e3f0ca90b5693de1e8f5",
+    "tests/p1-studio-browser.mjs": "3b0eea85caa4e37bc79f280d66d76b12efc0b447aaea3d08946e33a4172efa5d",
+    "tests/p3-package-browser.mjs": "46ccef3ecfd542e2bf2f641537ccafe16086b003c1affb90a5db863b2f23f516",
+    "tests/p3-studio-browser.mjs": "c30327e864c1d6526d60e6e570e5ea05018672ac9adb6d14b92d782d92830af0",
+    "tests/p4-package-browser.mjs": "96bb02dac4c5bdcbb2c30bab2285b61dff63f36655b9675581b9731554e4cd57",
+    "tests/p4-studio-browser.mjs": "295ffb7fba038acd3823a3db30e3c8880a33f45c7518770e2c64e9363acb8c76",
+    "tests/p4-task.test.mjs": "47801a2796b3fb1dca858127b447160f1f1b78f92691d89dd868103fb5d67072"
+  },
+  "evidenceSha256": {
+    "test-results/v140-check-final.log": "746d8ca3b70ed3d986354eee05de320e14ff55c02cf888eb8583b13fdcbe272b",
+    "test-results/v140-browser-final.log": "59c6b07e55b628422f1ddfa1c1b150d094319c9c91120c305bd6ff29aea3c50c",
+    "test-results/v140-editor-final.log": "e974b14e4dbe5027c3724bb730850f82b45193883ebb836b40cf2019e682f153",
+    "test-results/v140-residual-checks.log": "a692297a95e0e5955b19033512ab5732130c054bf7077911880abe1f639a497e",
+    "test-results/v140-baseline-performance.json": "cac674db6d78f9935f6168e774403a7c460f5da6d5dbbb7342e7d399a86b17f2",
+    "test-results/v140-after-performance.json": "3c5eab6be732a57bbeb783fbab712157a360c8e741f838ff5ac2b74de2ff8747",
+    "test-results/v140-payload.json": "df076886c529ae16968669e8600f3de799ed9b546c8968af8462d6e1094b9aa7",
+    "test-results/p4-studio/REPORT.json": "272b11540f7cd386c0a80652657463ce0597caaa13332a55fd59cd6620a55a75",
+    "test-results/p4-package/REPORT.json": "ec5352530fa4651a0d81110b150d190e45c81ebd24fd72d995b74c6b224dbf5d",
+    "test-results/p4-studio/INITIAL_TEST_ASSUMPTION.json": "a233c9276f8cf6f33465991161aa5cee3923a50bf0e783478b77daf2ab60aa9b"
+  }
+}

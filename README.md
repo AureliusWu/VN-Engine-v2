@@ -1,6 +1,6 @@
 # VN Engine v2
 
-**自研叙事引擎 · v1.3.0 · 文本演出与资源诊断**
+**自研叙事引擎 · v1.4.0 · 后台编译与取消保护**
 
 从《雨停之前》《湿性愈合》《“网”恋》《回路》中沉淀规则，并补齐自己的剧本解释器、播放调度、画面渲染、输入控制、媒体与离线打包。现在能直接执行、绘制和打包作品；主运行链无需 Ren’Py 或其他游戏引擎。
 
@@ -8,7 +8,9 @@
 
 迁移是最后阶段，**仅在用户主动、明确提出后执行**；当前持续优化引擎本体。
 
-1.3.0 结合 Ren’Py、WebGAL、Monogatari、Yarn Spinner 与 ink 的官方资料，打通文本 DSL 到已有画面 / 媒体 cue，并在 Studio、Agent、CLI 共用当前资源清单诊断。[研究对照](docs/REFERENCE-MINING-v1.3.0.md)、[实施计划](docs/PLAN-v1.3.0.md)、[使用契约](docs/P3_DEVELOPMENT.md) 和 [验证记录](docs/VALIDATION-v1.3.0.md) 分别记录来源、取舍、接口及真实结果。
+1.4.0 依据 Yarn Spinner、Inky 与 ink 的官方源码对照，将 Studio 的文本编译、资源清单检查和 JSON 格式化移到后台，支持取消、期限与过期结果拒收。[研究对照](docs/REFERENCE-MINING-v1.4.0.md)、[实施计划](docs/PLAN-v1.4.0.md)、[使用契约](docs/P4_DEVELOPMENT.md) 和 [验证记录](docs/VALIDATION-v1.4.0.md) 分别记录来源、取舍、接口及真实结果。
+
+1.3.0 提供文本 DSL 演出声明与 Studio、Agent、CLI 共享清单诊断；语法与纯 API 继续适用，见 [P3 契约](docs/P3_DEVELOPMENT.md)。
 
 1.2.2 改为按当前源码选择打包模块，修复预取音乐回访的重复解码和 DSL 合法变量名误判。[上一轮验证](docs/VALIDATION-v1.2.2.md) 保留独立结果。
 
