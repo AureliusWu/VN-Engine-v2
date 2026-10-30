@@ -1,6 +1,6 @@
 # VN Engine v2
 
-**自研叙事引擎 · v0.8.2 alpha · R6 实机复测与边界保护**
+**自研叙事引擎 · v1.0.0 · 引擎交付版**
 
 从《雨停之前》《湿性愈合》《“网”恋》《回路》中沉淀规则，并补齐自己的剧本解释器、播放调度、画面渲染、输入控制、媒体与离线打包。现在能直接执行、绘制和打包作品；主运行链无需 Ren’Py 或其他游戏引擎。
 
@@ -8,7 +8,9 @@
 
 迁移是最后阶段，**仅在用户主动、明确提出后执行**；当前持续优化引擎本体。
 
-0.8.2 继续实机复测，保护未应用 JSON、隐藏 / 恢复后的阅读焦点、暂停期间新访问的首句音效，以及跨平台打包路径和输出文件。范围见 [R6 计划](docs/R6_PLAN.md)，实际结果见 [R6 验证](docs/VALIDATION-v0.8.2.md)。此前 [R5 验证](docs/VALIDATION-v0.8.1.md) 保留独立证据。
+1.0.0 收敛作者异步操作、存档面板、减少动态、图片恢复及槽位身份问题，明确 [1.x API / 格式兼容约定](docs/V1_COMPATIBILITY.md)。[更新方案](docs/V1_PLAN.md)、[发布说明](docs/RELEASE-v1.0.0.md) 和 [验证记录](docs/VALIDATION-v1.0.0.md) 分别记录范围、产物和实际结果。1.0.0 是引擎版本；作品内容终审、正式游戏迁移与公共发行渠道单独处理。
+
+此前 [R6 验证](docs/VALIDATION-v0.8.2.md) 和 [R5 验证](docs/VALIDATION-v0.8.1.md) 保留独立证据。
 
 0.8 新增 [AI 模拟内容终审](docs/AI_ACCEPTANCE.md)：独立 acceptance.json、实际正文 / 图片 / 音频与源哈希绑定、SDK / CLI 和 Studio / Windows 接入，文案、美术与听感采用 AI 模拟审阅。修复审核过期、Neutral 继承、成品启动与离线依赖、目录别名误判等五类缺陷。实际技术验收与内容观察范围见 [R4 验证](docs/VALIDATION-v0.8.0.md)；引擎 alpha、作品终审、测试包与 GitHub Release 分别记录。
 
@@ -84,6 +86,7 @@ npm run test:browser
 ```
 
 - 0.5.0 的 SDK / CLI、两条端到端、完整浏览器 / 编辑器与 Windows CLI / 原生结果见 [R1 验证](docs/VALIDATION-v0.5.0.md)；保留源 SHA、构建身份和实际人工验收边界，不把旧提交结果作为新证据。
+- 1.0.0 的四阶段收敛、旧版工程 / 存档兼容和当前完整检查见 [v1 验证](docs/VALIDATION-v1.0.0.md)，确切 CI 提交与 run 记录在本次 PR。
 - 0.8.0 的核心、完整浏览器 / Studio、Windows 文件桥 / 进程重启、作品与 Studio 子目录离线复验见 [R4 验证](docs/VALIDATION-v0.8.0.md) 和 [问题关闭表](docs/R4_BUGS.md)。合成审阅只证明协议；实际听感与实体设备未执行时保留 UNVERIFIED。
 - 自研 VM 对照 Rain 原作：26 场景、16 条完整路线、6692 次段落访问；原台词/选项回应顺序、数值/布尔状态、结局与存档重放一致。
 - 浏览器覆盖真实画面、聊天/通话、热点与文书、调查解锁、音频等待、缺图恢复、移动布局、真实断网和独立产物子目录部署。
@@ -95,4 +98,4 @@ npm run test:browser
 
 [v0.4.0 方案与验收](docs/OPTIMIZATION-v0.4.0.md) · [版本说明](docs/RELEASE-v0.4.0.md) · [路线用例与 Studio 录制](docs/ROUTE_QA.md) · [启动 / 标题 / 已读记录](docs/PLAYER_LIFECYCLE.md) · [多槽备份](docs/SAVE_BACKUP.md) · [小游戏协议](docs/MINIGAME.md) · [QA 报告与正式门禁](docs/QA_REPORT.md) · [自研运行时说明](docs/SELF-RUNTIME.md) · [架构](docs/ARCHITECTURE.md) · [四作接入与兼容](docs/MIGRATION.md) · [来源清单](docs/provenance.json) · [许可](THIRD_PARTY_NOTICES.md)
 
-当前已形成可独立运行和打包的自研 alpha。可视化编辑器和 Windows 宿主已提供可用初版；有界时间线、会话回滚、收藏作者工具与小游戏生命周期 v1 已接入，QA_REPORT 汇总技术检查与当前 AI 审阅；协作编辑、更多玩法适配器与签名安装发行仍需后续完善。四个正式项目保持原运行链；迁移需用户主动提出。
+当前交付 1.0.0 自研引擎，公开入口与合法数据的 1.x 兼容边界见 [兼容约定](docs/V1_COMPATIBILITY.md)。Studio、Windows 宿主、有界时间线、会话回滚、收藏作者工具与小游戏生命周期已接入，QA_REPORT 汇总技术检查与当前 AI 审阅；协作编辑、更多玩法适配器与签名安装发行仍需后续独立规划。四个正式项目保持原运行链；迁移需用户主动提出。

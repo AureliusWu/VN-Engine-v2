@@ -140,7 +140,7 @@ export class DOMRenderer {
     this.onKey = event => this.key(event); this.onPointer = () => options.onUnlockAudio?.();
     this.onChatScroll = () => { this.chatPinned = this.chat.scrollHeight - this.chat.scrollTop - this.chat.clientHeight < 24; };
     this.motionQuery = this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)');
-    this.onMotion = () => { if (this.motionQuery?.matches && !this.disposed) { const view = this.session.getView(); this.updateTimeline(view, false); this.updateVideo(view, this.lastView, false); this.keyVisualLayer.update(view, false); } };
+    this.onMotion = () => { if (this.motionQuery?.matches && !this.disposed) { const view = this.session.getView(); this.clearSceneEffects(); this.updateTimeline(view, false); this.updateVideo(view, this.lastView, false); this.keyVisualLayer.update(view, false); } };
     try {
       this.document.addEventListener('visibilitychange', this.onVisibility); host.addEventListener('keydown', this.onKey); host.addEventListener('pointerdown', this.onPointer);
       this.motionQuery?.addEventListener?.('change', this.onMotion);
@@ -171,7 +171,12 @@ export class DOMRenderer {
       const asset = this.assets.get(id, kind), source = this.assets.url(id, kind), probe = this.document.createElement('img');
       const request = { id, probe }; this.probes.set(image, request);
       probe.onload = () => { if (!this.disposed && this.probes.get(image) === request) { image.src = source; image.alt = asset.alt ?? ''; image.hidden = false; } };
-      probe.onerror = () => { if (!this.disposed && this.probes.get(image) === request) this.notify(`画面资源未能载入：${asset.alt ?? id}，可以继续阅读`); };
+      probe.onerror = () => {
+        if (this.disposed || this.probes.get(image) !== request) return;
+        // Only a later real visit retries a failed asset; typing ticks do not repaint images.
+        this.probes.delete(image); probe.onload = null; probe.onerror = null; probe.removeAttribute('src'); image.dataset.asset = '';
+        this.notify(`画面资源未能载入：${asset.alt ?? id}，可以继续阅读`);
+      };
       probe.src = source;
     } catch { this.notify(`未配置画面资源：${id}，可以继续阅读`); }
   }
@@ -217,17 +222,16 @@ export class DOMRenderer {
         if (!frame.actions.some(action => action.id === hotspot.actionId)) continue;
         const button = this.button(hotspot.label, () => this.session.act(hotspot.actionId)); button.style.left = `${hotspot.x}%`; button.style.top = `${hotspot.y}%`; button.dataset.action = hotspot.actionId; this.hotspots.append(button);
       }
-      for (const animation of this.animations()) animation.cancel();
-      this.effect.style.background = 'transparent';
-      if (!snapshot.settings.reducedMotion && ['start', 'advance', 'action'].includes(snapshot.reason) && frame.stage.effect) {
+      this.clearSceneEffects();
+      if (!this.reducedMotion(snapshot) && ['start', 'advance', 'action'].includes(snapshot.reason) && frame.stage.effect) {
         const effect = frame.stage.effect, duration = Math.max(0, Math.min(2000, effect.durationMs ?? 450));
         if (effect.type === 'flash') { this.effect.style.background = '#fff'; this.effect.animate([{ opacity: .8 }, { opacity: 0 }], { duration, fill: 'forwards' }); }
         else if (effect.type === 'fade') { this.effect.style.background = '#10212a'; this.effect.animate([{ opacity: 1 }, { opacity: 0 }], { duration, fill: 'forwards' }); }
         else if (effect.type === 'shake') this.stage.animate([{ transform: 'translateX(0)' }, { transform: 'translateX(-5px)' }, { transform: 'translateX(5px)' }, { transform: 'translateX(0)' }], { duration });
       }
     }
-    if (snapshot.settings.reducedMotion && (!previous?.settings.reducedMotion || entered)) {
-      for (const animation of this.animations()) animation.cancel(); this.effect.style.background = 'transparent';
+    if (this.reducedMotion(snapshot)) {
+      this.clearSceneEffects();
     } else if (entered || snapshot.paused !== previous?.paused) {
       for (const animation of this.animations()) {
         if (snapshot.paused && animation.playState === 'running') animation.pause();
@@ -280,6 +284,10 @@ export class DOMRenderer {
     if (snapshot.skipping !== previous?.skipping) this.buttons.get('skip')!.setAttribute('aria-pressed', String(snapshot.skipping));
   }
   private animations(): Animation[] { return [...(this.effect.getAnimations?.() ?? []), ...(this.stage.getAnimations?.() ?? [])]; }
+  private reducedMotion(snapshot: RuntimeView): boolean { return snapshot.settings.reducedMotion || !!this.motionQuery?.matches; }
+  private clearSceneEffects() {
+    for (const animation of this.animations()) animation.cancel(); this.effect.style.background = 'transparent';
+  }
   private miniGameControls(snapshot: RuntimeView) {
     const game = snapshot.miniGame!;
     const box = this.el('div', undefined, 'vn-minigame'); box.setAttribute('role', 'group'); box.setAttribute('aria-label', '小游戏'); this.actions.append(box);
@@ -331,7 +339,7 @@ export class DOMRenderer {
       this.clearVideo();
       const cue = snapshot.frame.stage.video; if (!cue) return;
       const active: NonNullable<DOMRenderer['videoState']> = { cue, attempt: 0, finished: false }; this.videoState = active;
-      const reduce = snapshot.settings.reducedMotion || !!this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+      const reduce = this.reducedMotion(snapshot);
       if (reduce || snapshot.skipping || ['restore', 'reread', 'rollback'].includes(snapshot.reason)) { this.fallbackVideo(active, false); return; }
       try {
         this.video.src = this.assets.url(cue.asset, 'video'); this.video.muted = cue.muted !== false; this.video.volume = snapshot.settings.masterVolume * snapshot.settings.videoVolume;
@@ -347,7 +355,7 @@ export class DOMRenderer {
       return;
     }
     const active = this.videoState; if (!active || active.finished) return;
-    if (snapshot.settings.reducedMotion || snapshot.skipping || this.document.defaultView?.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { this.fallbackVideo(active, false); return; }
+    if (this.reducedMotion(snapshot) || snapshot.skipping) { this.fallbackVideo(active, false); return; }
     if (snapshot.settings.masterVolume !== previous?.settings.masterVolume || snapshot.settings.videoVolume !== previous?.settings.videoVolume) this.video.volume = snapshot.settings.masterVolume * snapshot.settings.videoVolume;
     if (snapshot.paused !== previous?.paused) {
       if (snapshot.paused) { active.attempt++; this.video.pause(); }
@@ -387,7 +395,7 @@ export class DOMRenderer {
       if (snapshot.frame.stage.timeline) this.timeline = { value: snapshot.frame.stage.timeline, elapsed: 0, finished: false };
     }
     const active = this.timeline; if (!active || active.finished) return;
-    const view = this.document.defaultView, reduce = snapshot.settings.reducedMotion || !!view?.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    const view = this.document.defaultView, reduce = this.reducedMotion(snapshot);
     if (reduce || snapshot.skipping || ['restore', 'reread', 'rollback'].includes(snapshot.reason) || active.value.durationMs === 0) {
       this.stopTimeline(); active.elapsed = active.value.durationMs; this.paintTimeline(active.elapsed); active.finished = true; return;
     }
@@ -444,8 +452,18 @@ export class DOMRenderer {
           if (current.status === 'unavailable') { this.notify('存储暂不可用，未覆盖存档'); return; }
           if (current.status === 'empty') { write(); return; }
           const confirmation = this.el('div', undefined, 'vn-save-confirm');
-          confirmation.append(this.el('span', `确定覆盖槽位 ${index}？`), this.button(`确认覆盖槽位 ${index}`, write), this.button('取消覆盖', show));
+          const cancel = this.button('取消覆盖', () => {
+            const ownedFocus = this.modal.contains(this.document.activeElement);
+            show();
+            if (!ownedFocus) return;
+            const slot = list.querySelector<HTMLButtonElement>(`[data-slot="${index}"] > button`);
+            const target = slot && !slot.disabled ? slot : panel.querySelector<HTMLButtonElement>('.vn-panel-head button:not(:disabled)');
+            target?.focus();
+          });
+          confirmation.append(this.el('span', `确定覆盖槽位 ${index}？`), this.button(`确认覆盖槽位 ${index}`, write), cancel);
+          const ownedFocus = row.contains(this.document.activeElement);
           button.disabled = true; row.append(confirmation);
+          if (ownedFocus) cancel.focus();
         });
         button.disabled = result.status === 'unavailable' || (mode === 'load' && result.status !== 'valid');
         row.append(button); list.append(row);

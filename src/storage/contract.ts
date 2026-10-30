@@ -99,17 +99,24 @@ export function createSaveContract<T = unknown>(options: SaveContractOptions<T>)
     schema: 2, save_version: saveVersion, game, game_version: gameVersion, slot, savedAt: date.toISOString(), payload, summary: saveSummary
   }));
   const write = (slot: string, payload: T, saveSummary?: SaveSummary, date?: Date): WriteResult => store.write(slot, envelope(slot, payload, saveSummary, date));
+  const load = (slot: string): LoadResult<SaveEnvelope<T>> => {
+    const result = store.load(slot);
+    // A structurally valid envelope may still be misplaced or migrated into another slot.
+    return result.status === 'valid' && result.value.slot !== slot
+      ? { status: 'invalid', reason: 'Stored envelope does not match its slot; original bytes retained' }
+      : result;
+  };
 
   return {
     game, gameVersion, saveVersion, manualSlots, namespace,
     decode, envelope,
     keyFor: store.keyFor,
     saveManual(index: number, payload: T, saveSummary?: SaveSummary, date?: Date) { return write(manualSlot(index), payload, saveSummary, date); },
-    loadManual(index: number): LoadResult<SaveEnvelope<T>> { return store.load(manualSlot(index)); },
+    loadManual(index: number): LoadResult<SaveEnvelope<T>> { return load(manualSlot(index)); },
     saveQuick(payload: T, saveSummary?: SaveSummary, date?: Date) { return write('quick', payload, saveSummary, date); },
-    loadQuick(): LoadResult<SaveEnvelope<T>> { return store.load('quick'); },
+    loadQuick(): LoadResult<SaveEnvelope<T>> { return load('quick'); },
     saveAuto(payload: T, saveSummary?: SaveSummary, date?: Date) { return write('auto', payload, saveSummary, date); },
-    loadAuto(): LoadResult<SaveEnvelope<T>> { return store.load('auto'); }
+    loadAuto(): LoadResult<SaveEnvelope<T>> { return load('auto'); }
   };
 }
 
