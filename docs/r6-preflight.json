@@ -1,0 +1,18 @@
+{
+  "round": "R6",
+  "date": "2026-10-30",
+  "baselineCommit": "b297a570e0156183b334552cd469ba8621abc78d",
+  "targetEngineVersion": "0.8.2",
+  "manualEnvironment": "Local Windows Edge, http://127.0.0.1:4173/editor/, actual browser control",
+  "issues": [
+    { "id": "R6-B001", "source": "manual UI and controlled browser reproduction", "steps": "Open Project JSON, edit title without applying, click the already selected Project JSON tab", "observed": "Edited title disappears without a confirmation. A later save also replaces the saved raw source draft." },
+    { "id": "R6-B002", "source": "manual UI and controlled browser reproduction", "steps": "Click Hide Interface in the real preview, press H, click Restore Interface, press H again", "observed": "H does not restore or hide the interface. Controlled focus inspection finds a hidden button, then BODY outside the player." },
+    { "id": "R6-B003", "source": "controlled Node and headless Edge with actual HTML audio", "observed": "After title/new-game confirmation the first cue has no audio player; advancing to another line with the same WAV plays normally." },
+    { "id": "R6-B004", "source": "controlled packageGame snapshot-ready callback", "observed": "An index.html file created after the empty-output check is overwritten by a successful build." },
+    { "id": "R6-B005", "source": "actual Windows filesystem packaging reproduction", "observed": "Index.html asset collides with generated index.html. Build succeeds, but the asset bytes do not match the manifest SHA." }
+  ],
+  "limitations": [
+    "Manual UI observations do not certify subjective audio quality or physical mobile devices.",
+    "Controlled test projects and output folders are separate from the four formal games."
+  ]
+}

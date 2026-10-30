@@ -8,7 +8,7 @@ function setup(options = {}) {
     { id: 'a', lines: [{ id: 'a1', speaker: '甲', text: '播放测试' }, { id: 'a2', speaker: '甲', text: '另一段' }], ending: 'done' }
   ] });
   const driver = new NarrativeDriver(engine, { lines: { a1: { voice: 'voice', sound: 'cue' }, a2: { sound: 'cue' } } });
-  const session = new RuntimeSession(driver, { settings: { textDelayMs: 0 } });
+  const session = new RuntimeSession(driver, { settings: { textDelayMs: 0, ...options.settings }, initialPause: options.initialPause });
   const assets = new AssetCatalog([{ id: 'voice', kind: 'audio', src: 'voice.wav' }, { id: 'cue', kind: 'audio', src: 'cue.wav' }], 'https://example.test/game/');
   const players = [], errors = [];
   const gains = [];
@@ -126,4 +126,56 @@ test('a late successful effect resume stays paused and current resume failures r
   env.session.pause('panel', true); effect.play = () => Promise.reject(new Error('cannot resume'));
   env.session.pause('panel', false); await tick(); assert.equal(effect.paused, true); assert.equal(env.errors.length, 1);
   assert.equal(env.session.next(), true); assert.equal(env.players.filter(player => player.src.endsWith('cue.wav')).length, 2);
+});
+
+test('a first-visit effect waits for title and panel pauses, then starts once and resumes the same player', async t => {
+  const env = setup({ initialPause: 'title', settings: { voiceEnabled: false } });
+  t.after(() => { env.media.dispose(); env.session.dispose(); });
+  const effects = () => env.players.filter(player => player.src.endsWith('cue.wav'));
+  await env.media.unlock(); assert.equal(effects().length, 0);
+  env.session.restart(); env.session.pause('panel', true); env.session.pause('title', false);
+  await tick(); assert.equal(effects().length, 0);
+  env.session.pause('panel', false); await tick();
+  assert.equal(effects().length, 1); const effect = effects()[0]; assert.equal(effect.plays, 1);
+  effect.currentTime = .35; env.session.configure({ opacity: .6 }); env.session.configure({ seVolume: .4 });
+  assert.equal(effect.plays, 1);
+  env.session.pause('panel', true); env.session.pause('panel', false); await tick();
+  assert.equal(effects().length, 1); assert.equal(effect.plays, 2); assert.equal(effect.currentTime, .35);
+  effect.ended = true; effect.onended(); env.session.pause('panel', true); env.session.pause('panel', false); await tick();
+  assert.equal(effects().length, 1); assert.equal(effect.plays, 2);
+});
+
+test('pending effects are cancelled by disable, restore, reread and disposal before playback', async t => {
+  for (const boundary of ['disabled', 'restore', 'reread', 'dispose']) await t.test(boundary, async () => {
+    const env = setup({ initialPause: 'title', settings: { voiceEnabled: false } });
+    try {
+      if (boundary === 'disabled') { env.session.configure({ soundEffects: false }); env.session.configure({ soundEffects: true }); }
+      if (boundary === 'restore') env.session.restore(env.session.save());
+      if (boundary === 'reread') assert.equal(env.session.reread(env.session.history()[0].id), true);
+      if (boundary === 'dispose') env.media.dispose();
+      env.session.pause('title', false); await env.media.unlock(); await tick();
+      assert.equal(env.players.filter(player => player.src.endsWith('cue.wav')).length, 0);
+    } finally { env.media.dispose(); env.session.dispose(); }
+  });
+});
+
+test('only the latest pending visit can start and rollback does not replay its effect', async t => {
+  const env = setup({ initialPause: 'title', settings: { voiceEnabled: false } });
+  t.after(() => { env.media.dispose(); env.session.dispose(); });
+  env.session.restart(); env.session.restart(); env.session.pause('title', false); await tick();
+  const effects = () => env.players.filter(player => player.src.endsWith('cue.wav'));
+  assert.equal(effects().length, 1);
+  env.session.next(); await tick(); assert.equal(effects().length, 2); assert.equal(effects()[0].paused, true);
+  assert.equal(env.session.rollback(), true); env.session.pause('panel', true); env.session.pause('panel', false); await tick();
+  assert.equal(effects().length, 2); assert.equal(effects()[1].paused, true);
+});
+
+test('a failed deferred effect is consumed and cannot be recreated by later settings or pauses', async t => {
+  const env = setup({ initialPause: 'title', settings: { voiceEnabled: false }, play: () => Promise.reject(new Error('decode failed')) });
+  t.after(() => { env.media.dispose(); env.session.dispose(); });
+  env.session.pause('title', false); await tick();
+  assert.equal(env.players.length, 1); assert.equal(env.players[0].plays, 1); assert.equal(env.errors.length, 1);
+  env.session.pause('panel', true); env.session.configure({ seVolume: .5 }); env.session.pause('panel', false);
+  env.session.configure({ soundEffects: false }); env.session.configure({ soundEffects: true }); await tick();
+  assert.equal(env.players.length, 1); assert.equal(env.players[0].plays, 1); assert.equal(env.errors.length, 1);
 });
