@@ -94,7 +94,7 @@
       "target": "editor/index.html",
       "mode": "new",
       "origins": [],
-      "targetSha256": "d6ceb2b174eec419966cbfcaaf7473ffd93e9fffd1e22f5b6f91a06ec99f019e"
+      "targetSha256": "b00fb4049f88349436439e93e08d9c448134b9dab815dadc76b8ad832bafc793"
     },
     {
       "target": "editor/logic.mjs",
