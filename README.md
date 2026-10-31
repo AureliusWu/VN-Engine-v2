@@ -4,114 +4,54 @@
 [![Version](https://img.shields.io/github/v/tag/AureliusWu/VN-Engine-v2?sort=semver&style=flat-square&label=version)](https://github.com/AureliusWu/VN-Engine-v2/tags) [![Build](https://github.com/AureliusWu/VN-Engine-v2/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/AureliusWu/VN-Engine-v2/actions/workflows/check.yml) [![Last commit](https://img.shields.io/github/last-commit/AureliusWu/VN-Engine-v2?style=flat-square)](https://github.com/AureliusWu/VN-Engine-v2/commits/main) [![License](https://img.shields.io/github/license/AureliusWu/VN-Engine-v2?style=flat-square)](LICENSE)
 <!-- project-badges:end -->
 
-**自研叙事引擎 · v1.4.0 · 后台编译与取消保护**
+当前开发版本：`1.4.0`。最新正式 GitHub Release 为 `v1.0.0`。
 
-从《雨停之前》《湿性愈合》《“网”恋》《回路》中沉淀规则，并补齐自己的剧本解释器、播放调度、画面渲染、输入控制、媒体与离线打包。现在能直接执行、绘制和打包作品；主运行链无需 Ren’Py 或其他游戏引擎。
+自研 TypeScript 叙事引擎，包含剧本解释器、状态机、播放器、画面 / 音频调度、作者工具、路线 QA、Windows 宿主与独立 PWA 打包。主运行链不依赖 Ren’Py、Electron 或 Tauri。
 
-![VN Engine Studio](docs/previews/studio-desktop.png)
+## 核心能力
 
-迁移是最后阶段，**仅在用户主动、明确提出后执行**；当前持续优化引擎本体。
+- 条件分支、变量、选择、结局、路线重建与多槽存档。
+- 视觉小说、聊天 / 通话、调查 / 证据 / 推理等不同玩法入口。
+- 背景、立绘、CG、文本、音频与演出效果调度。
+- Studio 可视化编辑、资源诊断、撤销 / 恢复与真实预览。
+- SDK、文件 SDK 与统一 JSON CLI，供 AI / Agent 批量编辑和验证。
+- 路线 QA、内容审阅协议、独立作品构建与 PWA 离线产物。
+- Windows WebView2 宿主与原生文件桥。
 
-1.4.0 依据 Yarn Spinner、Inky 与 ink 的官方源码对照，将 Studio 的文本编译、资源清单检查和 JSON 格式化移到后台，支持取消、期限与过期结果拒收。[研究对照](docs/REFERENCE-MINING-v1.4.0.md)、[实施计划](docs/PLAN-v1.4.0.md)、[使用契约](docs/P4_DEVELOPMENT.md) 和 [验证记录](docs/VALIDATION-v1.4.0.md) 分别记录来源、取舍、接口及真实结果。
+## 运行与验证
 
-1.3.0 提供文本 DSL 演出声明与 Studio、Agent、CLI 共享清单诊断；语法与纯 API 继续适用，见 [P3 契约](docs/P3_DEVELOPMENT.md)。
-
-1.2.2 改为按当前源码选择打包模块，修复预取音乐回访的重复解码和 DSL 合法变量名误判。[上一轮验证](docs/VALIDATION-v1.2.2.md) 保留独立结果。
-
-1.2.1 修复调查资源计划的章节前缀 / 组合身份冲突，统一完整浏览器、编辑器和 CI 的 P0/P1 验收入口。[上一轮验证](docs/VALIDATION-v1.2.1.md) 保留独立结果。
-
-1.2.0 增加默认关闭的预算资源预取、只读资源计划与受限文本 DSL。Studio / Agent 复用同一核心，玩家包继续只接受 JSON IR；接口和范围见 [P1 约定](docs/P1_DEVELOPMENT.md)。
-
-1.1.0 完成 Architecture Mining 的 P0：内建语义目录、有界副作用事件、稳定来源定位与生命周期验证。Studio 的“运行证据”页与 Agent 共享同一核心，保留现有 replay 和存档；[P0 方案与接口](docs/P0_DEVELOPMENT.md)、[验证记录](docs/VALIDATION-v1.1.0.md) 区分静态政策、实际事件与未验证范围。
-
-1.0.0 收敛作者异步操作、存档面板、减少动态、图片恢复及槽位身份问题，明确 [1.x API / 格式兼容约定](docs/V1_COMPATIBILITY.md)。[更新方案](docs/V1_PLAN.md)、[发布说明](docs/RELEASE-v1.0.0.md) 和 [验证记录](docs/VALIDATION-v1.0.0.md) 分别记录范围、产物和实际结果。1.0.0 是引擎版本；作品内容终审、正式游戏迁移与公共发行渠道单独处理。
-
-此前 [R6 验证](docs/VALIDATION-v0.8.2.md) 和 [R5 验证](docs/VALIDATION-v0.8.1.md) 保留独立证据。
-
-0.8 新增 [AI 模拟内容终审](docs/AI_ACCEPTANCE.md)：独立 acceptance.json、实际正文 / 图片 / 音频与源哈希绑定、SDK / CLI 和 Studio / Windows 接入，文案、美术与听感采用 AI 模拟审阅。修复审核过期、Neutral 继承、成品启动与离线依赖、目录别名误判等五类缺陷。实际技术验收与内容观察范围见 [R4 验证](docs/VALIDATION-v0.8.0.md)；引擎 alpha、作品终审、测试包与 GitHub Release 分别记录。
-
-0.7 新增 [内容迭代与制作审阅](docs/ITERATION_DEVELOPMENT.md)：完整内容目录、源 / 素材绑定的影响与反馈，Studio 简报 / 六类任务 / 实际素材试听 / 主题 / 复验重开，SDK / CLI 两轮修订及最新离线包。作者审阅独立保存，不成为玩家数据。历史验收见 [0.7.0](docs/VALIDATION-v0.7.0.md)。
-
-0.6 新增 [AI 内容生产与接入](docs/CREATIVE_DEVELOPMENT.md)：简报、角色、节拍与六类制作任务，实际素材探测 / 内容寻址导入、有限 UI 主题、机械内容审查；SDK 和 CLI 可从创作上下文走到含插画 / 配乐 / 音效的独立可玩样例。素材就绪与内容终审单独记录。
-
-0.5 提供 [AI 开发入口](docs/AI_DEVELOPMENT.md)：可独立导入的 SDK、vn-agent-v1 协议和统一 JSON CLI，覆盖理解工程 → 批量编辑 → 校验 / 路线 → 实际预览 → 独立打包。
-
-0.4 补齐 [作者工作台](docs/OPTIMIZATION-v0.4.0.md)：变量目录、类型化选择效果与调查章节管理，并让引用重命名、删除保护、撤销和路线回归一起工作。0.3 的 [可视化编辑器](docs/EDITOR.md) 与 [Windows 原生宿主](docs/WINDOWS.md) 共用同一套自研执行、资源和渲染链。
-
-## 已实现
-
-| 能力 | 实现 |
-| --- | --- |
-| AI 模拟终审 | vn-ai-acceptance-v1、独立实际输入 / 源字节绑定、缺模态与过期拒绝、历史 / 回执 / 恢复、SDK / CLI / Studio / Windows 共用门禁 |
-| 迭代与审阅 | 内容 / 变体 / 选项 / 动作目录、受影响引用 / 任务 / 语音、独立 review.json、实际文件过期判断和 Studio 闭环 |
-| AI 内容生产 | vn-creative-v1 简报 / 角色 / 节拍 / 六类任务、字节探测与不可变导入、主题、机械审查、完整创作样例 |
-| AI 开发接口 | SDK / Node 文件 SDK / JSON CLI、稳定 ID 批次、SHA 冲突、回执恢复、真实预览与构建 |
-| 剧本执行 | 自研 ScriptEngine：数值/布尔状态、跳转、条件分支、选项回应、结局、路线重建 |
-| 不同玩法 | 校园 VN、聊天/通话、调查/证据/推理、Rain 结构化剧本四种入口 |
-| 自研播放器 | 逐字阅读、停顿、自动、已读快进、后台/面板/隐藏暂停、访问隔离 |
-| 画面与演出 | 背景、立绘、按段落 CG、聊天气泡、通话视图、文书、热点、淡入/闪白/震屏 |
-| 声音 | 循环音乐、环境音、逐段语音与动作音效；换场景取消、面板恢复、缺资源继续 |
-| 系统 | 独立存档、损坏保留、历史搜索/重读、设置、导入导出、全屏、键盘与触控 |
-| 可视化编辑器 | 节点图、台词/分支/资源属性、撤销重做、草稿恢复、真实预览与格式导出 |
-| 条件与证据作者工具 | 类型化条件路由、末项兜底、证据目录与勾选、原子重命名、引用和冲突诊断 |
-| 作者工作台 | 数值 / 布尔变量目录与边界、类型化有序效果、章节新增 / 入口 / 排序 / 引用保护；原子操作与真实路线回归 |
-| 路线 QA | 从头手动录制、用例编辑、Worker 执行 / 取消、失败定位、逐步存读档和结局覆盖；正式候选要求通过 |
-| Windows 宿主 | 原生窗口、文件选择/保存、资源另存、作品哈希检查、持久化、全屏与最小化暂停；实际状态见验证记录 |
-| 独立作品构建 | 自研运行模块 + 本地项目/资源 + PWA + 文件哈希；支持子目录与断网重开 |
-
-核心为 TypeScript，无 React/Electron/Tauri 运行依赖。浏览器是绘制与媒体宿主；状态与执行规则由引擎控制。原 Ren’Py 编译器保留为兼容工具。
-
-## 运行自研引擎
-
-需要 Node.js 22+、npm；完整检查还需 Python 3.10+。
+需要 Node.js 22+；完整检查还需 Python 3.10+。
 
 ```bash
 npm ci
 npm run demo
+npm run check
+npx playwright install chromium
+npm run test:browser
 ```
 
-打开 **http://127.0.0.1:4173/engine/**，切换四种玩法。可视化编辑器在 **http://127.0.0.1:4173/editor/**，原 0.1 诊断页保留在 `/`。
-
-Windows 下载、运行与本地构建见 [Windows 使用说明](docs/WINDOWS.md)。
-
-## 打包独立作品
+独立作品示例：
 
 ```bash
 npm run build:game -- examples/runtime/rain.json build/my-game
 python -m http.server 8000 --directory build/my-game
 ```
 
-访问 http://127.0.0.1:8000，下载完成后可离线游玩。输出目录必须新建或为空。构建结果包含自己写的运行模块和实际资源，不依赖此开发服务器。CI 同时构建四份独立样例并保留为 `vn-engine-standalone-samples` artifact。
+## AI / 维护者入口
 
-```ts
-import { mountGame } from '@aureliuswu/vn-engine-v2';
-const game = mountGame(document.getElementById('game')!, project, {
-  baseURL: new URL('./', location.href), storage: localStorage
-});
-// 路由实际卸载时：game.dispose();
-```
+修改前先读 [AGENTS.md](AGENTS.md)。
 
-目前 `private: true`，通过仓库构建或本地依赖接入，尚未发布 npm 包。
+- 架构：`docs/ARCHITECTURE.md`。
+- 提取与来源：`docs/EXTRACTION.md`、`docs/provenance.json`。
+- 迁移规则：`docs/MIGRATION.md`。
+- AI 开发接口：`docs/AI_DEVELOPMENT.md`。
+- 当前验证：`docs/VALIDATION.md` 及对应版本验证文档。
+- 跨仓制作：`docs/production/VN-WORKFLOW-R1.md`、`.vn/workflow.json`。
 
-## 验证
+当前任务默认只优化引擎本体；**迁移现有作品必须由用户主动、明确提出**，不能把“继续优化”解释为迁移授权。保持各作品的 ID、存档、素材与运行链独立。
 
-```bash
-npm run check
-npx playwright install chromium
-npm run test:browser
-```
+README 不保存逐版本优化流水和完整验收记录；这些内容继续留在 `CHANGELOG.md`、`docs/`、Release 与 Git 历史中。
 
-- 0.5.0 的 SDK / CLI、两条端到端、完整浏览器 / 编辑器与 Windows CLI / 原生结果见 [R1 验证](docs/VALIDATION-v0.5.0.md)；保留源 SHA、构建身份和实际人工验收边界，不把旧提交结果作为新证据。
-- 1.0.0 的四阶段收敛、旧版工程 / 存档兼容和当前完整检查见 [v1 验证](docs/VALIDATION-v1.0.0.md)，确切 CI 提交与 run 记录在本次 PR。
-- 0.8.0 的核心、完整浏览器 / Studio、Windows 文件桥 / 进程重启、作品与 Studio 子目录离线复验见 [R4 验证](docs/VALIDATION-v0.8.0.md) 和 [问题关闭表](docs/R4_BUGS.md)。合成审阅只证明协议；实际听感与实体设备未执行时保留 UNVERIFIED。
-- 自研 VM 对照 Rain 原作：26 场景、16 条完整路线、6692 次段落访问；原台词/选项回应顺序、数值/布尔状态、结局与存档重放一致。
-- 浏览器覆盖真实画面、聊天/通话、热点与文书、调查解锁、音频等待、缺图恢复、移动布局、真实断网和独立产物子目录部署。
-- 原 0.1 的四作提取层对照证据保留；来源文件与新增自研模块分别记录。
+## License
 
-完整证据和范围见 [验证记录](docs/VALIDATION.md)。自研样例的 SVG 与合成测试音用于验证能力，四作正式美术和声音继续在各自仓库维护。
-
-## 使用与后续
-
-[v0.4.0 方案与验收](docs/OPTIMIZATION-v0.4.0.md) · [版本说明](docs/RELEASE-v0.4.0.md) · [路线用例与 Studio 录制](docs/ROUTE_QA.md) · [启动 / 标题 / 已读记录](docs/PLAYER_LIFECYCLE.md) · [多槽备份](docs/SAVE_BACKUP.md) · [小游戏协议](docs/MINIGAME.md) · [QA 报告与正式门禁](docs/QA_REPORT.md) · [自研运行时说明](docs/SELF-RUNTIME.md) · [架构](docs/ARCHITECTURE.md) · [四作接入与兼容](docs/MIGRATION.md) · [来源清单](docs/provenance.json) · [许可](THIRD_PARTY_NOTICES.md)
-
-当前交付 1.0.0 自研引擎，公开入口与合法数据的 1.x 兼容边界见 [兼容约定](docs/V1_COMPATIBILITY.md)。Studio、Windows 宿主、有界时间线、会话回滚、收藏作者工具与小游戏生命周期已接入，QA_REPORT 汇总技术检查与当前 AI 审阅；协作编辑、更多玩法适配器与签名安装发行仍需后续独立规划。四个正式项目保持原运行链；迁移需用户主动提出。
+[MIT License](LICENSE)。
