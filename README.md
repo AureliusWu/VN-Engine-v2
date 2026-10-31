@@ -1,5 +1,9 @@
 # VN Engine v2
 
+<!-- project-badges:start -->
+[![Version](https://img.shields.io/github/v/tag/AureliusWu/VN-Engine-v2?sort=semver&style=flat-square&label=version)](https://github.com/AureliusWu/VN-Engine-v2/tags) [![Build](https://github.com/AureliusWu/VN-Engine-v2/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/AureliusWu/VN-Engine-v2/actions/workflows/check.yml) [![Last commit](https://img.shields.io/github/last-commit/AureliusWu/VN-Engine-v2?style=flat-square)](https://github.com/AureliusWu/VN-Engine-v2/commits/main) [![License](https://img.shields.io/github/license/AureliusWu/VN-Engine-v2?style=flat-square)](LICENSE)
+<!-- project-badges:end -->
+
 **自研叙事引擎 · v1.4.0 · 后台编译与取消保护**
 
 从《雨停之前》《湿性愈合》《“网”恋》《回路》中沉淀规则，并补齐自己的剧本解释器、播放调度、画面渲染、输入控制、媒体与离线打包。现在能直接执行、绘制和打包作品；主运行链无需 Ren’Py 或其他游戏引擎。
