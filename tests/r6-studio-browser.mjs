@@ -323,7 +323,14 @@ try {
   assert.equal(badEncoding[marker], 'X'.charCodeAt(0));
   badEncoding[marker] = 0x80;
   const badAssets = portableBytes({ ...newProject('script'), title: 'Invalid recovery asset', assets: [null] });
-  for (const [bytes, message] of [[badEncoding, 'UTF-8'], [badAssets, 'assets']]) {
+  const badTimeline = (field, entry) => {
+    const project = { ...newProject('script'), title: `Invalid recovery ${field}` };
+    project.program.blocks[0].cue = { timeline: { durationMs: 250, [field]: [entry] } };
+    return portableBytes(project, { productionDraft: { schema: 1, game: project.game, storyVersion: project.version,
+      feedback: { target: '' }, notes: [] } });
+  };
+  for (const [bytes, message] of [[badEncoding, 'UTF-8'], [badAssets, 'assets'],
+    [badTimeline('camera', null), 'timeline.camera'], [badTimeline('animations', 'invalid'), 'timeline.animations']]) {
     await openPortable(guarded, bytes);
     await guarded.waitForFunction(expected => {
       const status = document.querySelector('#status');
@@ -332,7 +339,7 @@ try {
     assert.deepEqual(await mountedState(), beforeMalformed);
     assert.ok((await downloadFrom(guarded, '[data-command=export]')).bytes.equals(originalBytes));
   }
-  passed('Recovery rejects malformed UTF-8 and null assets without changing the mounted workspace');
+  passed('Recovery rejects malformed UTF-8, assets and timeline entries without changing the mounted workspace');
 
   const unicodeProject = { ...newProject('script'), title: '合法替换字符 � 与中文' };
   const unicodeSource = '\r\n' + JSON.stringify(unicodeProject) + '\r\n';
@@ -399,6 +406,60 @@ try {
     await slotPage.close({ runBeforeUnload: false });
   }
   passed('Portable recovery preserves outgoing local drafts through reload and saves later edits to the imported project');
+
+  const discardPage = await openDraftWorkspace();
+  await holdDraftDebounce(discardPage);
+  const discardTitle = discardPage.getByLabel('作品名称', { exact: true });
+  await discardTitle.fill('Outgoing draft to preserve'); await discardTitle.blur();
+  const unappliedPortableJSON = '{ "unapplied portable draft":';
+  await openPortable(discardPage, portableBytes(incoming, { source: unappliedPortableJSON }));
+  await waitRecovered(discardPage);
+  const retained = await draftOf(discardPage);
+  assert.equal(retained.document.project.title, 'Outgoing draft to preserve');
+  assert.equal(await discardPage.locator('#source').inputValue(), unappliedPortableJSON);
+  await discardPage.locator('[data-tab=story]').click();
+  await discardPage.locator('[data-tab=source]').click();
+  assert.equal(JSON.parse(await discardPage.locator('#source').inputValue()).title, incoming.title);
+  assert.deepEqual(await draftOf(discardPage), retained);
+  await discardPage.close({ runBeforeUnload: false });
+  passed('Discarding imported unapplied JSON preserves the outgoing local draft');
+
+  const quotaPage = await openDraftWorkspace();
+  await holdDraftDebounce(quotaPage);
+  const quotaTitle = quotaPage.getByLabel('作品名称', { exact: true });
+  await quotaTitle.fill('Earlier persisted quota fixture'); await quotaTitle.blur();
+  assert.equal(await quotaPage.evaluate(() => draftTimerGate.release()), 1);
+  const quotaSlot = await draftOf(quotaPage);
+  await quotaPage.evaluate(() => {
+    const write = Storage.prototype.setItem;
+    window.restoreDraftStorage = () => { Storage.prototype.setItem = write; };
+    Storage.prototype.setItem = function (key, value) {
+      if (this === localStorage && key === 'vn-engine-studio:draft:v1') throw new DOMException('Fixture quota', 'QuotaExceededError');
+      return write.call(this, key, value);
+    };
+  });
+  await quotaTitle.fill('Latest unsaved quota fixture'); await quotaTitle.blur();
+  for (const replace of [
+    () => quotaPage.locator('[data-command=new]').click(),
+    () => quotaPage.locator('[data-command=sample]').click(),
+    async () => {
+      const [file] = await Promise.all([quotaPage.waitForEvent('filechooser'), quotaPage.locator('[data-command=open]').click()]);
+      await file.setFiles(fileInput('workspace.json', Buffer.from(JSON.stringify(incoming))));
+    }
+  ]) {
+    await quotaPage.evaluate(() => { document.querySelector('#status').textContent = ''; });
+    await replace();
+    await quotaPage.waitForFunction(() => document.querySelector('#status').textContent.includes('当前工程的草稿未能保存，已取消切换'));
+    assert.equal(await quotaTitle.inputValue(), 'Latest unsaved quota fixture');
+    assert.equal(await quotaPage.locator('body').getAttribute('data-dirty'), 'true');
+    assert.deepEqual(await draftOf(quotaPage), quotaSlot);
+  }
+  await quotaPage.evaluate(() => restoreDraftStorage());
+  await quotaPage.locator('[data-command=new]').click();
+  assert.equal(await quotaPage.locator('#status').textContent(), '工程已打开');
+  assert.equal((await draftOf(quotaPage)).document.project.title, 'Latest unsaved quota fixture');
+  await quotaPage.close({ runBeforeUnload: false });
+  passed('Studio blocks new, sample and file replacement when the outgoing draft cannot be written');
 
   assert.deepEqual(errors, []);
   await writeFile(output + '/r6-studio-browser.json', JSON.stringify({ status: 'PASS', checks,

@@ -176,6 +176,28 @@ test('editor rejects non-object assets without committing a replacement while in
   assert.deepEqual(readDocument(project).project.assets, project.assets);
   assert.ok(new EditorModel(project).diagnostics().some(diagnostic => diagnostic.code === 'asset-path'));
 });
+test('editor rejects malformed timeline entries before replacement while scalar errors stay repairable', () => {
+  const script = newProject('script');
+  const model = new EditorModel(script);
+  model.set(['title'], 'Kept edit');
+  const before = model.serialize();
+  script.program.blocks[0].cue = { timeline: { durationMs: 250, camera: [null] } };
+  assert.throws(() => model.replaceProject(script), /program\.blocks\[0\]\.cue\.timeline\.camera/);
+  assert.equal(model.serialize(), before);
+  assert.equal(model.canUndo, true);
+
+  script.program.blocks[0].cue = { timeline: { durationMs: 250, camera: [{ atMs: -1 }] } };
+  script.program.blocks[0].lines[0].cue = { timeline: { durationMs: 250, animations: ['invalid'] } };
+  assert.throws(() => readDocument(script), /program\.blocks\[0\]\.lines\[0\]\.cue\.timeline\.animations/);
+  delete script.program.blocks[0].lines[0].cue;
+  assert.equal(model.replaceProject(script), true);
+  assert.ok(model.diagnostics().some(issue => issue.code === 'timeline' && issue.severity === 'error'));
+
+  const narrative = newProject('vn');
+  narrative.stage = { lines: { 'start-1': { timeline: { durationMs: 250, camera: [[]] } } } };
+  const portable = JSON.stringify({ format: RECOVERY_FORMAT, schema: 1, sourceText: JSON.stringify(narrative), positions: {} });
+  assert.throws(() => readRecovery(portable, { portable: true }), /stage\.lines\["start-1"\]\.timeline\.camera/);
+});
 test('editor diagnoses invalid timelines in unvisited lines and keeps undoable repairs', () => {
   const project = newProject('script');
   project.program.blocks[1].lines[0].cue = { timeline: { durationMs: 100, animations: [{ id: 'enter', layer: 'character', to: { x: 10 }, durationMs: 200 }] } };

@@ -112,6 +112,106 @@ try {
   await recipient.close();
   checks.push('Portable recovery resets the recipient task filter and preserves the pending field through correction and save');
 
+  const studioURL = page.url();
+  const openStudio = async workspace => {
+    workspace.on('pageerror', error => errors.push(error.message));
+    workspace.on('dialog', dialog => dialog.accept());
+    await workspace.goto(studioURL);
+    await workspace.waitForSelector('body[data-editor-ready=true]');
+  };
+  const localSlot = workspace => workspace.evaluate(() => localStorage.getItem('vn-engine-studio:draft:v1'));
+  const autosaveTitle = async (workspace, title) => {
+    const input = workspace.getByLabel('作品名称', { exact: true });
+    await input.fill(title);
+    await input.blur();
+    await workspace.waitForFunction(expected => JSON.parse(localStorage.getItem('vn-engine-studio:draft:v1'))?.document.project.title === expected, title);
+  };
+  await field('task ID story-1', 'story-1');
+  await autosaveTitle(page, 'Imported workspace B');
+  const [portable] = await Promise.all([page.waitForEvent('download'), command('export-recovery')]);
+  const portableFile = { name: portable.suggestedFilename(), mimeType: 'application/json', buffer: await readFile(await portable.path()) };
+  const retainedPage = await browser.newPage();
+  await openStudio(retainedPage);
+  await autosaveTitle(retainedPage, 'Retained local draft A');
+  const [picker] = await Promise.all([
+    retainedPage.waitForEvent('filechooser'), retainedPage.locator('[data-command=import-recovery]').click(),
+  ]);
+  await picker.setFiles(portableFile);
+  await retainedPage.waitForFunction(() => document.querySelector('#status').textContent.includes('原本地草稿可恢复'));
+  assert.equal(await retainedPage.locator('#project-name').innerText(), 'Imported workspace B');
+  const retainedBytes = await localSlot(retainedPage);
+  assert.equal(JSON.parse(retainedBytes).document.project.title, 'Retained local draft A');
+  const restoreLocal = retainedPage.locator('[data-command=restore-draft]');
+  assert.equal(await restoreLocal.isVisible(), true);
+
+  await retainedPage.clock.install();
+  const taskKind = retainedPage.getByLabel('任务种类', { exact: true });
+  await taskKind.selectOption('art');
+  assert.equal(await taskKind.inputValue(), 'art');
+  await retainedPage.locator('[data-production-view=assets]').click();
+  const assetSearch = retainedPage.getByLabel('素材搜索', { exact: true });
+  await assetSearch.fill('filter only');
+  await assetSearch.blur();
+  assert.equal(await assetSearch.inputValue(), 'filter only');
+  await retainedPage.clock.runFor(400);
+  assert.equal(await localSlot(retainedPage), retainedBytes);
+  await restoreLocal.click();
+  await retainedPage.waitForFunction(() => document.querySelector('#status').textContent.startsWith('草稿已恢复'));
+  assert.equal(await retainedPage.locator('#project-name').innerText(), 'Retained local draft A');
+  assert.equal(await restoreLocal.isVisible(), false);
+  await retainedPage.close({ runBeforeUnload: false });
+  checks.push('Production filters preserve the retained local draft and it can be recovered without reloading');
+
+  const staleContext = await browser.newContext();
+  const stalePage = await staleContext.newPage();
+  await openStudio(stalePage);
+  await autosaveTitle(stalePage, 'Startup draft A');
+  await stalePage.reload();
+  await stalePage.waitForSelector('body[data-editor-ready=true]');
+  const draftPrompt = stalePage.locator('#draft-banner');
+  assert.equal(await draftPrompt.isVisible(), true);
+  await autosaveTitle(stalePage, 'Same-tab newer autosave C');
+  assert.equal(await draftPrompt.isVisible(), false);
+
+  await stalePage.reload();
+  await stalePage.waitForSelector('body[data-editor-ready=true]');
+  assert.equal(await draftPrompt.isVisible(), true);
+  const anotherTab = await staleContext.newPage();
+  await openStudio(anotherTab);
+  await autosaveTitle(anotherTab, 'Other-tab newer autosave D');
+  const latestBytes = await localSlot(anotherTab);
+  await stalePage.locator('[data-command=discard-draft]').click();
+  assert.match(await stalePage.locator('#status').textContent(), /本地草稿已变化/);
+  assert.equal(await localSlot(stalePage), latestBytes);
+  await stalePage.locator('[data-command=restore-draft]').click();
+  await stalePage.waitForFunction(() => document.querySelector('#status').textContent.startsWith('草稿已恢复'));
+  assert.equal(await stalePage.locator('#project-name').innerText(), 'Other-tab newer autosave D');
+  await staleContext.close();
+  checks.push('A stale draft banner cannot discard a newer autosave in this or another tab');
+
+  const legacyPage = await browser.newPage({ acceptDownloads: true });
+  await openStudio(legacyPage);
+  const legacyFilter = { key: '[["production-list","","tasks"],"任务搜索",0]', baseline: '', value: 'old filter' };
+  const legacySnapshot = { ...snapshot, pendingFields: [legacyFilter, ...snapshot.pendingFields] };
+  await legacyPage.evaluate(value => localStorage.setItem('vn-engine-studio:draft:v1', value), JSON.stringify(legacySnapshot));
+  await legacyPage.reload();
+  await legacyPage.waitForSelector('body[data-editor-ready=true]');
+  await legacyPage.locator('[data-command=restore-draft]').click();
+  await legacyPage.waitForFunction(() => document.querySelector('#status').textContent.startsWith('草稿已恢复'));
+  assert.equal(await legacyPage.getByLabel('任务搜索', { exact: true }).inputValue(), '');
+  const legacyTaskId = legacyPage.getByLabel('task ID story-1', { exact: true });
+  assert.equal(await legacyTaskId.inputValue(), '');
+  const restoredSlot = JSON.parse(await localSlot(legacyPage));
+  assert.deepEqual(restoredSlot.pendingFields, snapshot.pendingFields);
+  await legacyTaskId.fill('story-from-legacy');
+  await legacyTaskId.blur();
+  const [legacySaved] = await Promise.all([
+    legacyPage.waitForEvent('download'), legacyPage.locator('[data-command=save]').click(),
+  ]);
+  assert.equal(JSON.parse(await readFile(await legacySaved.path(), 'utf8')).project.production.tasks[0].id, 'story-from-legacy');
+  await legacyPage.close({ runBeforeUnload: false });
+  checks.push('Legacy production filter drafts are dropped while real pending author fields remain editable and saveable');
+
   assert.deepEqual(errors, []);
   await writeFile(out + '/r5-feedback-browser.json', JSON.stringify({ status: 'PASS', checks, browser: await browser.version(), mode: 'headless', syntheticFeedback: true }, null, 2) + '\n');
   for (const check of checks) console.log('PASS', check);

@@ -36,6 +36,15 @@ function assertObjectList(value: unknown, path: string): void {
   if (!Array.isArray(value) || !value.every(record)) throw new Error(`工程字段 ${path} 必须为对象列表`);
 }
 
+function assertTimelineEntries(cue: unknown, path: string): void {
+  if (!record(cue) || !record(cue.timeline)) return;
+  // The inspector edits entries as objects. Field values remain available for diagnosis and repair.
+  for (const key of ['animations', 'camera']) {
+    const entries = cue.timeline[key];
+    if (Array.isArray(entries)) assertObjectList(entries, `${path}.timeline.${key}`);
+  }
+}
+
 /** Accept broken links for repair; never accept executable data or an unrecognised root. */
 export function readDocument(input: string | unknown): EditorDocument {
   if (typeof input === 'string' && input.length > 8_000_000) throw new Error('工程超过 8 MB');
@@ -57,9 +66,14 @@ export function readDocument(input: string | unknown): EditorDocument {
   }
   if (project.type === 'script') {
     if (!record(project.program) || !Array.isArray(project.program.blocks) || project.program.blocks.some((b: unknown) => !record(b) || typeof b.id !== 'string' || !Array.isArray(b.lines) || !record(b.exit))) throw new Error('缺少脚本块');
-    project.program.blocks.forEach(({ exit }, i) => {
-      if (exit.type === 'choice') assertObjectList(exit.choices, `program.blocks[${i}].exit.choices`);
-      if (exit.type === 'branch') assertObjectList(exit.routes, `program.blocks[${i}].exit.routes`);
+    project.program.blocks.forEach(({ exit, cue, lines }, i) => {
+      const path = `program.blocks[${i}]`;
+      if (exit.type === 'choice') assertObjectList(exit.choices, `${path}.exit.choices`);
+      if (exit.type === 'branch') assertObjectList(exit.routes, `${path}.exit.routes`);
+      assertTimelineEntries(cue, `${path}.cue`);
+      lines.forEach((line: unknown, j: number) => {
+        if (record(line) && line.cue !== undefined) assertTimelineEntries(line.cue, `${path}.lines[${j}].cue`);
+      });
     });
   }
   if (project.type === 'investigation') {
@@ -71,6 +85,16 @@ export function readDocument(input: string | unknown): EditorDocument {
     });
   }
   if (project.type === 'rain' && !record(project.story)) throw new Error('缺少兼容剧本');
+  if (project.type === 'script' || project.type === 'rain') assertTimelineEntries(project.defaults, 'defaults');
+  if ((project.type === 'narrative' || project.type === 'investigation') && record(project.stage)) {
+    assertTimelineEntries(project.stage.defaults, 'stage.defaults');
+    const plans = project.type === 'narrative' ? ['scenes', 'lines'] : ['nodes'];
+    for (const name of plans) {
+      const plan = project.stage[name];
+      if (!record(plan)) continue;
+      for (const [id, cue] of Object.entries(plan)) assertTimelineEntries(cue, `stage.${name}[${JSON.stringify(id)}]`);
+    }
+  }
   const positions: Record<string, Position> = {};
   if (wrapped && record(value.positions)) for (const [key, point] of Object.entries(value.positions)) {
     if (record(point) && [point.x, point.y].every(n => typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= 100000)) positions[key] = { x: point.x, y: point.y };

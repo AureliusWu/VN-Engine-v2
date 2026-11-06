@@ -1,0 +1,93 @@
+{
+  "schema": 1,
+  "engineVersion": "1.5.2",
+  "baseCommit": "7f4af837c9c9411dd90b661b3a2ba5b70d2f0554",
+  "plan": "docs/PLAN-v1.5.2.md",
+  "baselineCases": [
+    "outgoing-storage-failure",
+    "retained-draft-overwrite",
+    "stale-draft-banner",
+    "timeline-partial-replacement"
+  ],
+  "regressions": {
+    "status": "PASS",
+    "node": "editor rejects malformed timeline entries before replacement while scalar errors stay repairable",
+    "chromium": [
+      "Production filters preserve the retained local draft and it can be recovered without reloading",
+      "A stale draft banner cannot discard a newer autosave in this or another tab",
+      "Legacy production filter drafts are dropped while real pending author fields remain editable and saveable",
+      "Recovery rejects malformed UTF-8, assets and timeline entries without changing the mounted workspace",
+      "Discarding imported unapplied JSON preserves the outgoing local draft",
+      "Studio blocks new, sample and file replacement when the outgoing draft cannot be written"
+    ],
+    "r5Checks": 8,
+    "r6Checks": 17
+  },
+  "local": {
+    "nodeVersion": "v24.14.0",
+    "check": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 393,
+      "pass": 389,
+      "fail": 4,
+      "skipped": 0,
+      "reason": "Windows symlink fixture creation EPERM",
+      "failures": [
+        "symlink import parents are refused; pure SDK requires an explicit import/decoder host",
+        "project symlinks and escaping assets are rejected, imports create no files",
+        "resource symlinks, missing bytes, invalid encoding and report overwrite are structured failures",
+        "build refuses altered assets, escaping symlinks and generated-file collisions before writing output"
+      ]
+    },
+    "editorModel": {
+      "status": "PASS",
+      "total": 27
+    },
+    "pythonRenpy": {
+      "status": "PASS",
+      "total": 6
+    },
+    "schemaSync": "PASS",
+    "provenance": {
+      "status": "PASS",
+      "files": 201
+    },
+    "projectSchemas": {
+      "status": "PASS",
+      "total": 5
+    },
+    "portfolioPython": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 8,
+      "pass": 7,
+      "fail": 1,
+      "reason": "Windows symlink fixture creation WinError 1314"
+    },
+    "workflowInventory": "PASS"
+  },
+  "sourceSha256": {
+    "docs/provenance.json": "f3734f273d510d8e9ba441a8cfd359e4192906db90a6cf91e3440dbd025636eb",
+    "editor/app.mjs": "b4eec5a862d1342b606b6d9de4a41ab1a7750dd819495223bbd015cf9e2c558e",
+    "editor/production.mjs": "e522b17e91f76f886ea13b8756ed2a99f4204c2a631736dd41008bf3ae7c4f62",
+    "hosts/windows/VNEngine.Windows.csproj": "ca181f4319d91b0634fcdc45f0578340f3a5c2121734b4e840b76fc485405815",
+    "package-lock.json": "5423a7a26af1e0bddd350adbd327c522ea58b4beeb434e596ed3d80a7c8c748e",
+    "package.json": "d6d0ff936cd9ab09eb47b121d59ed7bf7daa0af66da725b16558c6c9d895a9ce",
+    "src/editor/model.ts": "0e9665f65d47f7dcfeb36815b5d347e4ca8a13fc4e0ce1b139929b0f6b1eed96",
+    "src/version.ts": "776cf19deb8f3f43cbb235d823264a2e25e377080418c2aea7ed0313e0e3f92e",
+    "tests/editor.test.mjs": "e70dcf622a77c08fd403701e5009977af48484c0ad38cac89b888a1d7146ebb9",
+    "tests/r5-feedback-browser.mjs": "71f6f7a4bb1802f914832a521f4d21d40c8893dd64a2fbf1d9a1ea6c58a87475",
+    "tests/r6-studio-browser.mjs": "c9da8848cc8e28891ed3b6a6438e7899f975be3d3432fac2937492232a44b010"
+  },
+  "evidenceSha256": {
+    "test-results/v152-replace-quota-baseline.json": "e7c3c78cd055a00e476a85b8c44fcaba4ae19c3a7982cb536db1400475060337",
+    "test-results/v152-draft-ownership-baseline.json": "eb9482af4353b5adc20d7da20be1eaddfbdaa2126f4254afc75321165fd6bc26",
+    "test-results/v151-recovery-next-audit.json": "c363d7dfbfdc43d5375781cde6120ae8806e9e1d35846d59bf85f15f0194a5e8",
+    "test-results/v152-final-check.log": "14b605981c08161212780ad45fb6b2d1baafaf3155502e31ae65354740263cfb",
+    "test-results/v152-final-remainder.log": "b7ac5821f52bb5237765950f58f39f376246a8f103b44f2b89f297059cd2c6cc",
+    "test-results/v152-editor-node.log": "43c69dbf4ca353aec8203968366015d519bedcf2d0667afedafd4555d93cc579",
+    "test-results/v152-final-provenance.log": "15ff9762e8f9c1a5e9cf5577b9d20217d7d4cdae3c4e975d6be48e46966c2a49",
+    "test-results/v152-focused-r5-legacy/r5-feedback/r5-feedback-browser.json": "f3f19bb9e25212887f4411044e3711eb88e69da159de8f6a8e7f5bf7c5221928",
+    "test-results/v152-focused/r6-studio/r6-studio-browser.json": "87c536475196f172e4f71b6a34d27ffcd37ec78a8ae49412bcf0c96fbbd1934a"
+  },
+  "delivery": "test-results/v1.5.2-delivery.json"
+}

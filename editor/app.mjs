@@ -16,6 +16,10 @@ import { hasDraftFeedbackTarget } from './review-draft.mjs';
 
 const $ = id => document.getElementById(id);
 const DRAFT_KEY = 'vn-engine-studio:draft:v1';
+const LEGACY_FILTER_FIELDS = new Set(Object.entries({
+  tasks: ['任务搜索', '任务种类', '任务状态', '任务角色'],
+  assets: ['素材搜索', '素材种类', '素材状态']
+}).flatMap(([view, labels]) => labels.map(label => JSON.stringify([['production-list', '', view], label, 0]))));
 let model = new EditorModel(newProject('script')), selected, tab = 'story', draft, draftTimer, previewTimer;
 let baseURL = new URL('../samples/', location.href).href, resourceURLs = new Map(), resourceFiles, previewReady = false, revision = 0, savedSource = '';
 let nativeHidden = false, identitySource = '', identityProject = '';
@@ -54,7 +58,8 @@ function field(parent, label, value, callback, options = {}) {
     input = element('select'); for (const choice of options.choices) { const [id, title] = Array.isArray(choice) ? choice : [choice, choice]; input.append(element('option', title, { value: id })); }
   } else input = element(options.multiline ? 'textarea' : 'input');
   input.setAttribute('aria-label', label); input.value = value ?? ''; if (options.placeholder) input.placeholder = options.placeholder;
-  fieldEdits.bind(input, label, parent, callback);
+  if (options.viewOnly) input.addEventListener('change', () => run(() => callback(input.value)));
+  else fieldEdits.bind(input, label, parent, callback);
   wrap.append(caption, input); parent.append(wrap); return input;
 }
 const valueAt = path => path.reduce((v, key) => v?.[key], model.getView().project);
@@ -128,15 +133,27 @@ function recoveryState() {
 function cancelDraftTimer() {
   clearTimeout(draftTimer); draftTimer = undefined;
 }
-function hasLocalDraft() {
-  try { return localStorage.getItem(DRAFT_KEY) !== null; }
-  catch { return false; }
+function showDraftPrompt(raw) {
+  draft = undefined;
+  $('draft-banner').hidden = true;
+  if (raw) {
+    draft = { raw, snapshot: readRecovery(raw) };
+    $('draft-banner').hidden = false;
+  }
+}
+function selectedDraft() {
+  if (!draft) return;
+  const raw = localStorage.getItem(DRAFT_KEY);
+  if (raw === draft.raw) return draft.snapshot;
+  showDraftPrompt(raw);
+  status('本地草稿已变化，请检查后重试', true);
 }
 function saveDraft() {
   cancelDraftTimer();
   if (uneditedPortableModel === model) return true;
   try {
     localStorage.setItem(DRAFT_KEY, writeRecovery(recoveryState()));
+    showDraftPrompt();
     return true;
   } catch { status('本地草稿无法保存，请导出恢复文件或保存工程', true); return false; }
 }
@@ -151,16 +168,17 @@ function replace(input, options = {}) {
   const incomingReview = options.authorReview;
   if(incomingReview) readAuthorReview(incomingReview,options.draft?{...next.getView().project,game:incomingReview.game,version:incomingReview.storyVersion}:next.getView().project);
   // Validate the replacement before committing a draft or clearing the current resources.
-  const previousDraftSaved = (options.draft && !options.preserveOutgoingDraft) || !workspaceDirty() || saveDraft();
-  if (options.preserveOutgoingDraft && !previousDraftSaved) throw Error('当前工程的草稿未能保存。请先导出恢复文件或保存工程，再打开其他恢复文件');
+  const restoringLocalDraft = options.draft && !options.preserveOutgoingDraft;
+  if (!restoringLocalDraft && workspaceDirty() && !saveDraft()) {
+    throw Error('当前工程的草稿未能保存，已取消切换。请先保存工程，或导出恢复文件后重新打开 Studio');
+  }
   cancelDraftTimer();
   opening.invalidate(); assetBinding.invalidate(); fieldEdits.reset();
   clearResources(options.baseURL); if (options.files) resourceFiles = new Set(options.files); model = next; uneditedPortableModel = undefined;
   identityProject=model.serialize(true);identitySource=options.sourceText ?? (typeof input==='string'&&!JSON.parse(input).format?input:identityProject);production.reset(incomingReview,{detached:options.draft});evidence.reset();textScript.reset();resources.reset();selected = model.graph().nodes[0]?.key;
   savedSource = ''; tab = 'story'; renderProject(); update(true); switchTab('story');
   if (options.draft) { model.markUnsaved(); document.body.dataset.dirty = 'true'; $('save-state').textContent = '● 未保存'; status('草稿已恢复；请重新绑定本地资源目录'); }
-  else if (previousDraftSaved) status('工程已打开');
-  else status('工程已打开；上一个工程的本地草稿未能保存', true);
+  else status('工程已打开');
 }
 function canReplace() { return !workspaceDirty() || confirm('当前更改尚未保存。仍要替换当前工程吗？本地草稿只保留一份。'); }
 function recoveryBaseURL(value) {
@@ -182,13 +200,20 @@ async function restoreRecovery(snapshot, portable = false) {
   }
   if (model !== restoredModel) return;
   if (typeof snapshot.source === 'string') { switchTab('source'); $('source').value = snapshot.source; }
-  const skipped = fieldEdits.restore(snapshot.pendingFields, { onlyBound: portable }); syncDirty();
-  draft = undefined; $('draft-banner').hidden = true;
+  const pendingFields = snapshot.pendingFields?.filter(field => !LEGACY_FILTER_FIELDS.has(field.key));
+  const skipped = fieldEdits.restore(pendingFields, { onlyBound: portable }); syncDirty();
   // If the slot is occupied, the imported file remains B's checkpoint until the first edit.
-  if (portable && hasLocalDraft()) uneditedPortableModel = restoredModel;
+  let retainedMessage = '';
+  try {
+    const retained = portable ? localStorage.getItem(DRAFT_KEY) : null;
+    if (retained !== null) uneditedPortableModel = restoredModel;
+    showDraftPrompt(retained);
+    if (retained) retainedMessage = '；原本地草稿可恢复，保留至本次编辑或保存';
+  } catch {
+    retainedMessage = '；原本地草稿无法读取';
+  }
   if (saveDraft()) {
-    const kept = uneditedPortableModel === restoredModel ? '；原本地草稿保留至本次编辑或保存' : '';
-    const message = portable ? `恢复文件已打开；请重新绑定本地资源目录${kept}` : '草稿已恢复；请重新绑定本地资源目录';
+    const message = portable ? `恢复文件已打开；请重新绑定本地资源目录${retainedMessage}` : '草稿已恢复；请重新绑定本地资源目录';
     status(skipped ? `${message}。有 ${skipped} 个待提交字段无法定位` : message, skipped > 0);
   }
 }
@@ -461,7 +486,7 @@ function switchTab(next) {
   if (tab === 'text-script') textScript.render();
   if (tab === 'resources') resources.render();
   syncDirty();
-  if (discardingSource) { uneditedPortableModel = undefined; saveDraft(); }
+  if (discardingSource) saveDraft();
 }
 function renderStructure() {
   renderStructureEditor($('structure-list'), { element, field, action, model, project: model.getView().project, mutate, set,
@@ -625,8 +650,15 @@ const commands = {
     }
     else { $('asset-directory').value = ''; $('asset-directory').click(); }
   },
-  'restore-draft': async () => { if (draft && canReplace()) await restoreRecovery(draft); },
-  'discard-draft': () => { draft = undefined; $('draft-banner').hidden = true; try { localStorage.removeItem(DRAFT_KEY); } catch {} }
+  'restore-draft': async () => {
+    const snapshot = selectedDraft();
+    if (snapshot && canReplace() && selectedDraft() === snapshot) await restoreRecovery(snapshot);
+  },
+  'discard-draft': () => {
+    if (!selectedDraft()) return;
+    localStorage.removeItem(DRAFT_KEY);
+    showDraftPrompt();
+  }
 };
 // Recovery can preserve pending form text even when that text cannot be committed yet.
 const directCommands = new Set(['new', 'open', 'sample', 'restore-draft', 'discard-draft', 'export-recovery', 'import-recovery']);
@@ -663,7 +695,7 @@ window.addEventListener('pagehide', () => { clearTimeout(draftTimer); clearTimeo
 window.addEventListener('vn-engine-host-visibility', event => { if (typeof event.detail?.hidden !== 'boolean') return; nativeHidden = event.detail.hidden;if(nativeHidden)production.stopMedia(); $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'visibility', hidden: nativeHidden }, location.origin); });
 $('version').textContent = ENGINE_VERSION; $('host-label').textContent = nativeHost ? 'Windows 原生宿主' : '浏览器工作区';
 let draftReadError = false;
-try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { draft = readRecovery(raw); $('draft-banner').hidden = false; } } catch { draftReadError = true; }
+try { showDraftPrompt(localStorage.getItem(DRAFT_KEY)); } catch { draftReadError = true; }
 selected = model.graph().nodes[0]?.key; renderProject(); update(true);
 status(draftReadError ? '本地草稿无法读取，可继续新建或打开工程' : '编辑器已就绪', draftReadError);
 document.body.dataset.editorReady = 'true';
