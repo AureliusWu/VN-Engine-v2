@@ -104,13 +104,15 @@ try {
   await page.route('**/assets/room.svg',async route=>{if(hold){readStarted?.();await new Promise(resolve=>releaseRead=resolve);}try{await route.fulfill({body:picture,contentType:'image/svg+xml'});}catch{}});
   await page.goto(base+'/editor/');await page.waitForSelector('body[data-editor-ready=true]');
   await page.locator('#open-file').setInputFiles({name:'project.json',mimeType:'application/json',buffer:sourceBytes});
-  await page.getByLabel('作品名称',{exact:true}).waitFor();
+  await page.waitForFunction(title=>document.querySelector('#project-name').textContent===title,project.title);
   await page.evaluate(()=>localStorage.setItem('vn-r4-player-sentinel','unchanged'));
   await page.locator('[data-tab=production]').click();
   await page.locator('#production-list').getByRole('button',{name:'验证状态',exact:true}).click();
   const panel=page.locator('#production-list');
   await panel.locator('[data-ai-acceptance-file]').setInputFiles(path.join(root,'acceptance.json'));
-  await panel.locator('[data-ai-status=BLOCKED]').waitFor();
+  // The initial panel is already BLOCKED. Wait for the opened document to be assessed before binding evidence.
+  await panel.locator('[data-ai-scope=text]').filter({hasText:'Acceptance evidence bytes or metadata are missing or changed'}).waitFor();
+  assert.equal(await panel.locator('[data-ai-status]').getAttribute('data-ai-status'),'BLOCKED');
   await panel.locator('[data-ai-acceptance-evidence]').setInputFiles(root);
   await panel.locator('[data-ai-status=PASS]').waitFor();
   assert.match(await panel.innerText(),/AI 模拟终审/);
