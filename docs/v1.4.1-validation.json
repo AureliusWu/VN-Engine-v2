@@ -1,0 +1,392 @@
+{
+  "schema": 1,
+  "date": "2026-11-06",
+  "engineVersion": "1.4.1",
+  "baseCommit": "020cbd913231a4c641addeb211c779d12d929adb",
+  "plan": "docs/PLAN-v1.4.1.md",
+  "research": "docs/PLAN-v1.4.1.md#开源与社区证据",
+  "scope": {
+    "sourceGamesMigrated": false,
+    "publicDataOrSaveFormatChanged": false,
+    "newDependencies": false,
+    "releaseOrTagCreated": false
+  },
+  "local": {
+    "nodeVersion": "v24.14.0",
+    "check": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 381,
+      "pass": 377,
+      "fail": 4,
+      "skipped": 0,
+      "reason": "Windows symlink fixture creation EPERM",
+      "log": "test-results/v141-check.log"
+    },
+    "completeBrowserSuite": {
+      "status": "PASS",
+      "scripts": 48,
+      "log": "test-results/v141-browser.log"
+    },
+    "completeEditorSuite": {
+      "status": "PASS",
+      "scripts": 21,
+      "log": "test-results/v141-editor.log"
+    },
+    "pythonRenpy": {
+      "status": "PASS",
+      "total": 6
+    },
+    "schemaSync": "PASS",
+    "provenance": {
+      "status": "PASS",
+      "files": 200
+    },
+    "projectSchemas": {
+      "status": "PASS",
+      "total": 5
+    },
+    "portfolioPython": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 8,
+      "pass": 7,
+      "fail": 1,
+      "reason": "Windows symlink fixture creation WinError 1314",
+      "log": "test-results/v141-portfolio.log"
+    },
+    "workflowInventory": {
+      "status": "PASS",
+      "scope": "engine checkout only",
+      "log": "test-results/v141-workflow.log"
+    },
+    "p4Studio": {
+      "status": "PASS",
+      "checks": [
+        "A running real compilation can be cancelled; a deliberately late callback cannot revive it; retry applies in one undo",
+        "Text edits cancel held work and the prior result never selects or applies the new text",
+        "JSON workspace replacement and New Project both reject held results from the prior workspace",
+        "Resource identity/kind changes replace a held job and automatically recheck without candidate preview; title edits reuse the result",
+        "Explicit worker-error and shortened-timeout simulations preserve data and allow a real retry",
+        "Real 7000-cue compilation keeps serving heartbeats, bounds source ranges and plays a source-bound candidate"
+      ],
+      "scope": {
+        "controlledLifecycle": "Only the DSL Worker is wrapped; hold/pass execute the real parser, then callbacks may be deliberately delivered after termination.",
+        "errorAndTimeout": "Explicit simulated worker error/hang; only the 10000 ms task timer is shortened to 40 ms.",
+        "realLargeWorker": "Separate unwrapped browser context, 7000 cues; checks worker transfer, candidate play and source-bound evidence.",
+        "deviceAndListening": "UNVERIFIED"
+      },
+      "controlled": {
+        "workers": 14,
+        "terminated": 14,
+        "heldCallbacks": 7,
+        "forcedCallbacks": 7
+      },
+      "realWorkers": [
+        "http://127.0.0.1:61091/editor/text-compile-worker.mjs",
+        "http://127.0.0.1:61091/editor/text-compile-worker.mjs"
+      ],
+      "largeCandidate": {
+        "sourceMapCount": 14006,
+        "transferredRanges": 200,
+        "lineCount": 7000,
+        "candidateSHA": "8bd61b18d24442f3b43fd3bd8f08e5e8c5af978d0f74220054791592189feeb3",
+        "currentSHA": "d5c7f6566b1d156c87cf1a6a0caf73819355470ab388f2dfbafc610536054a5c",
+        "planSHA": "8bd61b18d24442f3b43fd3bd8f08e5e8c5af978d0f74220054791592189feeb3",
+        "firstEvidenceCaptureWallMs": 130.85149999999976,
+        "evidenceBinding": "stale",
+        "playedLine": "l1"
+      },
+      "errors": [],
+      "browser": "153.0.8010.12"
+    },
+    "p4Package": {
+      "status": "PASS",
+      "checks": [
+        "Studio includes the worker/task/compiler/context modules; the player excludes all author modules",
+        "Generated nested Studio performs an actual module-worker compile, candidate preview, explicit apply and export",
+        "A new offline Studio page repeats the real worker compile/apply/export using cached modules and newly bound local assets"
+      ],
+      "scope": {
+        "actualModuleWorker": true,
+        "generatedStudio": true,
+        "nestedDeployment": true,
+        "offlineNewPage": true,
+        "localFileInputs": "automated project and resource-directory inputs; no manual system-dialog claim",
+        "physicalDevice": "UNVERIFIED",
+        "physicalListening": "UNVERIFIED"
+      },
+      "run": "D:\\AI项目\\VN-Engine-v2\\test-results\\p4-package\\run-NZrEJW",
+      "workers": [
+        "http://127.0.0.1:61271/nested/studio/editor/text-compile-worker.mjs",
+        "http://127.0.0.1:61271/nested/studio/editor/text-compile-worker.mjs"
+      ],
+      "errors": [],
+      "playerFiles": 84,
+      "studioFiles": 131,
+      "workerAndTaskCached": true,
+      "authorModulesPackagedInPlayer": false,
+      "browser": "153.0.8010.12"
+    }
+  },
+  "originalFailures": [
+    {
+      "report": "test-results/v141-initial-probe-failure.json",
+      "reason": "Original first-frame observer missed the marker despite rendered ack; same repaired probe used for both variants"
+    }
+  ],
+  "performance": {
+    "schema": 1,
+    "comparison": "1.4.0 to 1.4.1",
+    "fixture": {
+      "lines": 7000,
+      "cues": 7000,
+      "sourceCharacters": 627857,
+      "sourceSha256": "a420507a744229ae037b1d2c596bc28ce2f48866cd11481a9aeb346ecca45886",
+      "inputMethod": "generated fixture sets textarea.value and dispatches input; compile button uses real click",
+      "generator": "7000 sequential lines l0..l6999, each 40 U+754C characters, one cue line <id> background room per line; identity large-author/1",
+      "projectSha256": "d5c7f6566b1d156c87cf1a6a0caf73819355470ab388f2dfbafc610536054a5c"
+    },
+    "environment": {
+      "node": "v24.14.0",
+      "os": "win32",
+      "osRelease": "10.0.26200",
+      "arch": "x64",
+      "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+      "logicalCPUs": 12,
+      "memoryMiB": 16327,
+      "headless": true,
+      "viewport": {
+        "width": 1360,
+        "height": 1000
+      },
+      "cache": "fresh browser context per sample, initial Studio/iframe warm, first compiler Worker per context",
+      "network": "local HTTP; original repository server and bytes; real file and asset-directory inputs",
+      "browser": "153.0.8010.12",
+      "browserExecutableOverride": null
+    },
+    "metrics": {
+      "clickToNextPaintOpportunityMs": {
+        "baseline": {
+          "median": 30.80000001192093,
+          "worst": 31.400000005960464
+        },
+        "after": {
+          "median": 31,
+          "worst": 31.5
+        },
+        "deltaPercent": 0.6493506103950079,
+        "verdict": "PASS"
+      },
+      "candidateReadyMs": {
+        "baseline": {
+          "median": 258.19999998807907,
+          "worst": 261.5
+        },
+        "after": {
+          "median": 180.30000001192093,
+          "worst": 186.40000000596046
+        },
+        "deltaPercent": -30.17041052662848,
+        "verdict": "PASS"
+      },
+      "candidatePreparationMs": {
+        "baseline": {
+          "median": 32,
+          "worst": 33.20000001788139
+        },
+        "after": {
+          "median": 15.5,
+          "worst": 15.900000005960464
+        },
+        "deltaPercent": -51.5625,
+        "verdict": "PASS"
+      },
+      "renderMessageDeliveryMs": {
+        "baseline": {
+          "median": 70.20009765028954,
+          "worst": 74.10004884004593
+        },
+        "after": {
+          "median": 61.49995115399361,
+          "worst": 62.19995120167732
+        },
+        "deltaPercent": -12.393353837820547,
+        "verdict": "PASS"
+      },
+      "iframeCommitMs": {
+        "baseline": {
+          "median": 9.099999994039536,
+          "worst": 9.199999988079071
+        },
+        "after": {
+          "median": 7.799999982118607,
+          "worst": 8
+        },
+        "deltaPercent": -14.285714426070593,
+        "verdict": "PASS"
+      },
+      "iframeToReadyMs": {
+        "baseline": {
+          "median": 8.999951153993607,
+          "worst": 9.099902331829071
+        },
+        "after": {
+          "median": 7.800048798322678,
+          "worst": 7.800097644329071
+        },
+        "deltaPercent": -13.332320755301971,
+        "verdict": "PASS"
+      },
+      "iframeReadyMs": {
+        "baseline": {
+          "median": 372.7999999821186,
+          "worst": 374.5
+        },
+        "after": {
+          "median": 262.5,
+          "worst": 271
+        },
+        "deltaPercent": -29.586909867867263,
+        "verdict": "PASS"
+      },
+      "firstLineMs": {
+        "baseline": {
+          "median": 372.9000976383686,
+          "worst": 374.60004884004593
+        },
+        "after": {
+          "median": 262.49990233778954,
+          "worst": 270.9999511539936
+        },
+        "deltaPercent": -29.605837059244504,
+        "verdict": "PASS"
+      },
+      "firstFrameMs": {
+        "baseline": {
+          "median": 384.00009766221046,
+          "worst": 385.40004885196686
+        },
+        "after": {
+          "median": 270.5999023616314,
+          "worst": 282.09995114803314
+        },
+        "deltaPercent": -29.53129334887115,
+        "verdict": "PASS"
+      },
+      "maxHeartbeatGapMs": {
+        "baseline": {
+          "median": 152.40000000596046,
+          "worst": 154.2000000178814
+        },
+        "after": {
+          "median": 91,
+          "worst": 92.90000000596046
+        },
+        "deltaPercent": -40.2887139130965,
+        "verdict": "PASS"
+      },
+      "longTaskMaxMs": {
+        "baseline": {
+          "median": 102,
+          "worst": 102
+        },
+        "after": {
+          "median": 0,
+          "worst": 0
+        },
+        "deltaPercent": -100,
+        "verdict": "PASS"
+      }
+    },
+    "artifacts": {
+      "v141-baseline-performance.json": "324ab17891194022c40b8796b9409e45a6efe86dccaf211d6f6657cc612d5dd3",
+      "v141-after-performance.json": "75d5ed2e87dc326832f983ccb19c7de3dd2dc31dea3ebea58605b31450fa5d96",
+      "v141-initial-probe-failure.json": "c2a025b02c3750b7e190366ca304c094d5731aafc0d613aeecb8372ecbac1c58"
+    },
+    "initialProbe": {
+      "attempts": 3,
+      "reason": "The initial MutationObserver missed first-line/first-frame marks. Same-revision render acknowledgements were still recorded. Kept separately and excluded from same-method comparison."
+    },
+    "verdict": "PASS",
+    "scope": [
+      "Three fixed local headless Chromium attempts per side, directional evidence for this workload.",
+      "Candidate/ready marks use one aligned monotonic timebase. Neither first frame nor click-to-paint is a compositor timestamp.",
+      "All six first-line observations used the same-revision acknowledgement fallback.",
+      "Preview preparation and render delivery are combined stage observations. The test does not isolate validation, serialization, clone or scheduler time.",
+      "Long Tasks only reports events of at least 50 ms. Zero reports means no observed long task at that threshold, with heartbeat gaps still present."
+    ]
+  },
+  "runtimeBundleComparison": {
+    "status": "PASS",
+    "method": "Retained final 1.4.0 packages versus fresh current packages, raw/gzipSync per module. Includes all Studio editor JS/CSS and lib JS, excludes generated SW/manifest in the primary comparison. No download latency claim.",
+    "report": "test-results/v141-payload.json",
+    "targets": {
+      "game": {
+        "primary": {
+          "old": {
+            "rawBytes": 423183,
+            "gzipBytes": 121174
+          },
+          "current": {
+            "rawBytes": 423183,
+            "gzipBytes": 121174
+          },
+          "growth": {
+            "rawPercent": 0,
+            "gzipPercent": 0
+          }
+        },
+        "verdict": "PASS"
+      },
+      "studio": {
+        "primary": {
+          "old": {
+            "rawBytes": 778486,
+            "gzipBytes": 231113
+          },
+          "current": {
+            "rawBytes": 779139,
+            "gzipBytes": 231350
+          },
+          "growth": {
+            "rawPercent": 0.08388076343055495,
+            "gzipPercent": 0.1025472387966131
+          }
+        },
+        "verdict": "PASS"
+      }
+    }
+  },
+  "cloud": {
+    "status": "PENDING_EXACT_PUSHED_SHA",
+    "evidence": "test-results/v1.4.1-cloud.json"
+  },
+  "sourceHashBasis": "UTF-8 with CRLF normalized to LF to match Git blobs",
+  "sourceSha256": {
+    "editor/app.mjs": "249bbe6bce63e1bbdad79f1fb89f5c8be42ed0bc5d5872d5df80bf9411e36560",
+    "editor/preview.mjs": "f537b14d4bca294140afca9712838e05181f8b0c0da9d9ae295312f1dfc126b1",
+    "editor/text-compile-task.mjs": "8fa5ca3061b71d9f20ec8ff47a7d2e3c68da2c894d167ff0edb44103d6b320cf",
+    "editor/text-compile-worker.mjs": "d1ac8060abdab5fdbdeadc093905996f38dc0197444e88deb452d28db11e4352",
+    "editor/text-script.mjs": "32aacbdff352d8b690c429bf409d892dd9a242f0b7f234c90ae1b980aba82c39",
+    "hosts/windows/VNEngine.Windows.csproj": "eec557e0847cd8734fe38939671c630ab7125690dfd46950bd72193563aa1db6",
+    "package-lock.json": "d2a73802ad10db81dfa50148fd6925ec463e1da89c00fd20c228c20cb5351d41",
+    "package.json": "9511cff967ed216d5ebc33b7c7901f64531860aa076616921ff116015c40e2fb",
+    "src/version.ts": "f48c1db8299f3ad229795ab5681ff8efcda55b992eb6c45fc1c247f9c462a4ed",
+    "tests/p4-studio-browser.mjs": "fbea85879b0dffc9166bf3737b4ead0e23fbaa554c78e619595e1d586dedcdc4",
+    "tests/p4-task.test.mjs": "821ec30819d7684f07c06575c27eff5863ed7fd52795cdd1f8ef6bf76cc6d867"
+  },
+  "evidenceSha256": {
+    "test-results/v141-check.log": "ccb1a6ff359f5cec348f7cf646d7c3e1df625b106b57e87ac55d9ff4a38cb08c",
+    "test-results/v141-browser.log": "ce5546a1f6adc9ab6d9eea822d7fdebb48556ee316852d35aff95f67b523217c",
+    "test-results/v141-editor.log": "d89d5dbef03b365b945f976b174f7ae6e2ec9645991d8cdbc6e1947c963e374e",
+    "test-results/v141-residual.log": "ea0f66c29c6ec08b6c811583220ed352025fc8344324f32dee55862d25a2ff25",
+    "test-results/v141-portfolio.log": "3122ecaa8615626be5bccd8025e9472b02b1565a2e2b467f916bbf97ba82f391",
+    "test-results/v141-workflow.log": "ad7eff42237d2d36e7e10c7ddc1fb2b28c7a3edc9bfe513f635ddb323d912101",
+    "test-results/v141-baseline-performance.json": "324ab17891194022c40b8796b9409e45a6efe86dccaf211d6f6657cc612d5dd3",
+    "test-results/v141-after-performance.json": "75d5ed2e87dc326832f983ccb19c7de3dd2dc31dea3ebea58605b31450fa5d96",
+    "test-results/v141-initial-probe-failure.json": "c2a025b02c3750b7e190366ca304c094d5731aafc0d613aeecb8372ecbac1c58",
+    "test-results/v141-performance-comparison.json": "367ad40cb9946a43a94b7f6713bc34b9a422f8af3c002f610a55e08242c9cdaf",
+    "test-results/v141-payload.json": "c17c5b7559e7838e27a75263ce18c38dec00086324018b251c4d54df37093b3a",
+    "test-results/p4-studio/REPORT.json": "fa8a484071f53a7fca4878b87b794d4dc4ab1859ef13274fba77fc5488a3536c",
+    "test-results/p4-package/REPORT.json": "6308c3e58f04042da4f875b48475e3a349a060536ab25c9ad61690dbaeefa01f"
+  }
+}

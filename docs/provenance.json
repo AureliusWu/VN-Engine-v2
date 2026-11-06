@@ -70,7 +70,7 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "71cd4c451853445034c5fb53e49aff104ce4b64835a002a61cdf550ff7c2e5d2"
+      "targetSha256": "249bbe6bce63e1bbdad79f1fb89f5c8be42ed0bc5d5872d5df80bf9411e36560"
     },
     {
       "target": "editor/async-operation.mjs",
@@ -142,7 +142,7 @@
       "target": "editor/preview.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "a69876d45f9212d56710cee03b7e34d7d0d29d8c721ffa9dc39d0d71aaa87afb"
+      "targetSha256": "f537b14d4bca294140afca9712838e05181f8b0c0da9d9ae295312f1dfc126b1"
     },
     {
       "target": "editor/production.mjs",
@@ -202,19 +202,19 @@
     {
       "target": "editor/text-compile-task.mjs",
       "mode": "new",
-      "targetSha256": "c6b8dead0e0f1f496fb5290df396d9b05c56699e2fd11f19e7ad53d4f79c89e2",
+      "targetSha256": "8fa5ca3061b71d9f20ec8ff47a7d2e3c68da2c894d167ff0edb44103d6b320cf",
       "origins": []
     },
     {
       "target": "editor/text-compile-worker.mjs",
       "mode": "new",
-      "targetSha256": "7f7bfdca5f4b7c01b17cdd74f829df74f4f2e02765330228e07f48c85c87d43b",
+      "targetSha256": "d1ac8060abdab5fdbdeadc093905996f38dc0197444e88deb452d28db11e4352",
       "origins": []
     },
     {
       "target": "editor/text-script.mjs",
       "mode": "new",
-      "targetSha256": "0e51874fa535b672086640dc3c79b6e35c26702af17cdd9bfa1b5d6df7b0d241",
+      "targetSha256": "32aacbdff352d8b690c429bf409d892dd9a242f0b7f234c90ae1b980aba82c39",
       "origins": []
     },
     {
@@ -454,7 +454,7 @@
       "target": "hosts/windows/VNEngine.Windows.csproj",
       "mode": "new",
       "origins": [],
-      "targetSha256": "53db174695093f235af2e10e209cac19fa4d98ef7298418da57ec5d13152c038"
+      "targetSha256": "eec557e0847cd8734fe38939671c630ab7125690dfd46950bd72193563aa1db6"
     },
     {
       "target": "licenses/Healing-LICENSE.txt",
@@ -1248,7 +1248,7 @@
       "target": "src/version.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "5430e629738773679ac589e93c99df89db986d4c8236e3f0ca90b5693de1e8f5"
+      "targetSha256": "f48c1db8299f3ad229795ab5681ff8efcda55b992eb6c45fc1c247f9c462a4ed"
     },
     {
       "target": "tools/acceptance-node.mjs",

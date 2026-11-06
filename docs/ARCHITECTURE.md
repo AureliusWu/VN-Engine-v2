@@ -1,5 +1,9 @@
 # 架构与接口
 
+## v1.4.1 Studio 候选试玩
+
+Studio Worker 在完整编译和目录诊断后只回传前 200 条来源位置及总数。候选沿用工程诊断，iframe 按当前预览 revision 在首次采集时生成来源文本。普通工程继续使用导入时的来源文本参与身份核对。研究和测量见 [升级计划](PLAN-v1.4.1.md) 与 [验证记录](VALIDATION-v1.4.1.md)。
+
 ## v1.4.0 作者后台任务
 
 editor/text-compile-task.mjs 监督一个可取消、有期限的 module Worker；text-compile-worker.mjs 执行既有纯语法 / 清单 API 与 JSON 格式化。text-script.mjs 仅接收当前文本 / 清单的结果，应用前再次核对身份，无关更新复用结果。失败不切回主线程同步编译。作者模块由 Studio 缓存，玩家构建继续排除 editor。公共编译 API、VM 和存档不变，见 [P4 契约](P4_DEVELOPMENT.md)。

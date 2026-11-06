@@ -1,3 +1,5 @@
+export const STUDIO_SOURCE_MAP_LIMIT = 200;
+
 /** One author compile at a time. Importing this module touches no browser device. */
 export function createTextCompileTask({
   createWorker = () => new Worker(new URL('./text-compile-worker.mjs', import.meta.url), { type: 'module' }),
@@ -26,13 +28,15 @@ export function createTextCompileTask({
     const result = message.result;
     return object(result) && typeof result.ok === 'boolean' && typeof message.syntaxOk === 'boolean'
       && Array.isArray(result.diagnostics) && Array.isArray(result.sourceMap)
+      && Number.isSafeInteger(message.sourceMapCount) && message.sourceMapCount >= 0
+      && result.sourceMap.length === Math.min(message.sourceMapCount, STUDIO_SOURCE_MAP_LIMIT)
       && typeof message.output === 'string' && message.output.length <= 100000
       && (!result.ok || (message.syntaxOk && object(result.program)))
       && (!message.syntaxOk || (object(message.identity) && typeof message.identity.game === 'string' && message.identity.game.length > 0
         && typeof message.identity.version === 'string' && message.identity.version.length > 0))
       // Validate the metadata the panel will display, without revalidating the IR.
       && result.diagnostics.every(item => object(item) && typeof item.code === 'string' && typeof item.message === 'string' && span(item.span))
-      && result.sourceMap.slice(0, 200).every(item => object(item) && typeof item.kind === 'string' && typeof item.id === 'string' && span(item.span));
+      && result.sourceMap.every(item => object(item) && typeof item.kind === 'string' && typeof item.id === 'string' && span(item.span));
   };
   const finish = (job, result, failure) => {
     if (!current(job)) return;

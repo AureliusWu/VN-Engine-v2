@@ -7,7 +7,7 @@ class FakeWorker {
   postMessage(message) { this.messages.push(structuredClone(message)); }
   terminate() { this.terminated++; }
   complete(requestId, extra = {}) { this.onmessage?.({ data: { requestId, result: { ok: true, program: { schema: 1 }, diagnostics: [], sourceMap: [] },
-    syntaxOk: true, identity: { game: 'fixture', version: '1' }, output: '{}', ...extra } }); }
+    sourceMapCount: 0, syntaxOk: true, identity: { game: 'fixture', version: '1' }, output: '{}', ...extra } }); }
 }
 function setup(options = {}) {
   const workers = [], timers = new Map(), cleared = [], results = [], failures = [], busy = []; let timerId = 0;
@@ -101,13 +101,14 @@ test('worker construction and postMessage clone failures settle busy state witho
 
 test('malformed active result envelopes fail safely while syntax and catalog failures remain valid results', () => {
   const emptySpan = { start: { offset: 0, line: 1, column: 1 }, end: { offset: 0, line: 1, column: 1 } };
-  const valid = { result: { ok: true, program: {}, diagnostics: [], sourceMap: [] }, syntaxOk: true, identity: { game: 'fixture', version: '1' }, output: '{}' };
+  const valid = { result: { ok: true, program: {}, diagnostics: [], sourceMap: [] }, sourceMapCount: 0, syntaxOk: true, identity: { game: 'fixture', version: '1' }, output: '{}' };
   const malformed = [
     { syntaxOk: undefined }, { syntaxOk: 'true' }, { identity: undefined }, { identity: { game: 'fixture' } }, { identity: { game: '', version: '1' } },
     { output: undefined }, { output: {} }, { output: 'x'.repeat(100001) },
+    { sourceMapCount: undefined }, { sourceMapCount: -1 }, { sourceMapCount: 1 },
     { result: { ...valid.result, diagnostics: null } }, { result: { ...valid.result, sourceMap: {} } },
     { result: { ...valid.result, program: null } }, { result: { ...valid.result, program: [] } },
-    { result: { ...valid.result, diagnostics: [null] } }, { result: { ...valid.result, sourceMap: [{ kind: 'line', id: 'line' }] } }
+    { result: { ...valid.result, diagnostics: [null] } }, { sourceMapCount: 1, result: { ...valid.result, sourceMap: [{ kind: 'line', id: 'line' }] } }
   ];
   for (const changes of malformed) {
     const env = setup(), id = env.task.run(request('A')), worker = env.workers[0];

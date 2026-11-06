@@ -24,7 +24,7 @@ export function createTextScriptPanel(root,ports){
       const request=pending,current=snapshot();
       if(input.value!==request.source){invalidate();return;}
       if(current.key!==request.key){begin(false,current);return;}
-      pending=undefined;compiled=data.result;syntaxOk=data.syntaxOk;identity=data.identity;formatted=data.output;checkedKey=request.key;draw(current.context);
+      pending=undefined;compiled=data.result;syntaxOk=data.syntaxOk;identity=data.identity;formatted=data.output;checkedKey=request.key;draw(current.context,data.sourceMapCount);
       if(compiled.ok&&matches(current.context)&&request.preview){
         try{ports.preview(compiled.program);message.textContent='编译成功 · 正在预览候选；当前 JSON 尚未改变。';}
         catch(error){message.textContent='编译成功；候选预览未启动：'+error.message+'。当前 JSON 保留。';}
@@ -56,18 +56,18 @@ export function createTextScriptPanel(root,ports){
   state('idle');root.setAttribute('aria-busy','false');
   function matches(context){return context.type==='script'&&identity?.game===context.game&&identity?.version===context.version;}
   function locate(span){input.focus();input.setSelectionRange(span.start.offset,span.end.offset);}
-  function draw(context){
+  function draw(context,sourceMapCount){
     diagnostics.replaceChildren();ranges.replaceChildren();result.textContent='';
     if(!compiled){apply.disabled=true;return;}
     for(const item of compiled.diagnostics){
       const row=element('li'),jump=action(`${item.code} · ${item.span.start.line}:${item.span.start.column} · ${item.message}`,()=>locate(item.span));
       jump.dataset.dslDiagnostic='true';row.append(jump);diagnostics.append(row);
     }
-    for(const item of compiled.sourceMap.slice(0,200)){
+    for(const item of compiled.sourceMap){
       const row=element('li'),jump=action(`${item.kind} ${item.id} · ${item.span.start.line}:${item.span.start.column}`,()=>locate(item.span));
       jump.dataset.dslRange='true';row.append(jump);ranges.append(row);
     }
-    if(compiled.sourceMap.length>200)ranges.append(element('li','仅显示前 200 个位置；完整 source map 可由只读 Agent 编译获取。'));
+    if(sourceMapCount>compiled.sourceMap.length)ranges.append(element('li',`仅显示前 ${compiled.sourceMap.length} 个位置（共 ${sourceMapCount} 个）；完整 source map 可由只读 Agent 编译获取。`));
     apply.disabled=!compiled.ok||!matches(context)||compiledText!==input.value||task.busy;
     if(compiled.ok)result.textContent=formatted;
     state(compiled.ok&&matches(context)?'success':'invalid',!syntaxOk?'编译失败 · 当前 JSON 保留。':!matches(context)?'文本 game/version 或工程类型不匹配；拒绝预览和应用。':!compiled.ok?'编译失败 · 当前资源清单检查未通过，当前 JSON 保留。':'编译成功 · 当前资源清单已核对；可显式应用，当前 JSON 尚未改变。');

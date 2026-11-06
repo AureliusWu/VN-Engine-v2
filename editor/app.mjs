@@ -1,4 +1,4 @@
-import { EditorModel, newProject, readAuthorReview, contentCatalogue } from '../lib/editor/index.js';
+import { EditorModel, diagnoseProject, newProject, readAuthorReview, contentCatalogue } from '../lib/editor/index.js';
 import { renderPresentationEditor } from './presentation.mjs';
 import { renderCollectionsEditor } from './collections.mjs';
 import { createRoutesPanel } from './routes.mjs';
@@ -95,7 +95,7 @@ const evidence = createEvidencePanel($('evidence-list'), {element,action,source:
 });
 const textScript=createTextScriptPanel($('text-script-list'),{element,action,project:()=>model.getView().project,
   changed:()=>{workspaceVersion++;syncDirty();scheduleDraft();},apply:program=>set(['program'],program,true),
-  preview:program=>preview({candidate:{...structuredClone(model.getView().project),program}})
+  preview:program=>preview({candidate:{...model.getView().project,program}})
 });
 const resources=createResourcesPanel($('resources-list'),{element,action,source:projectSource,project:()=>model.getView().project,
   preview:()=>preview(),frame:()=>$('preview'),revision:()=>revision,ready:()=>previewReady&&Number(document.body.dataset.previewRevision)===revision,
@@ -403,12 +403,14 @@ function renderCollections() {
 }
 function preview(options={}) {
   clearTimeout(previewTimer); if (!previewReady) return;
-  const previewProject=options.candidate??JSON.parse(model.serialize(true));
-  const errors = (options.candidate?new EditorModel(previewProject):model).diagnostics(resourceFiles).filter(d => d.severity === 'error');
+  const candidate=options.candidate, previewProject=candidate??JSON.parse(model.serialize(true));
+  const errors = (candidate?diagnoseProject(candidate,resourceFiles):model.diagnostics(resourceFiles)).filter(d => d.severity === 'error');
   if (errors.length) { $('preview-state').textContent = '先修复工程错误；当前保留上次有效预览'; return; }
   const current = ++revision; $('preview-state').textContent = '正在刷新…';
   routes.recording(false);if(routeRequest){clearTimeout(routeRequest.timer);routeRequest.reject(Error('预览已刷新，请重新录制'));routeRequest=undefined;}
-  $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'render', project: previewProject, sourceText:options.candidate?JSON.stringify(previewProject,null,2)+'\n':projectSource(), baseURL, urls: resourceURLs.size ? Object.fromEntries(resourceURLs) : undefined, revision: current, recordRoute:options.recordRoute===true,prefetch:resources.options() }, location.origin);
+  $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'render', project: previewProject,
+    ...(candidate ? {} : { sourceText: projectSource() }), baseURL, urls: resourceURLs.size ? Object.fromEntries(resourceURLs) : undefined,
+    revision: current, recordRoute: options.recordRoute === true, prefetch: resources.options() }, location.origin);
 }
 window.addEventListener('message', event => {
   if (event.source !== $('preview').contentWindow || event.origin !== location.origin || event.data?.source !== 'vn-engine-preview') return;

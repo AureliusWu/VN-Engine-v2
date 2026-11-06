@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict';
+import { createHash } from 'node:crypto';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { chromium } from 'playwright';
+import { compileTextScript } from '../dist/script/text.js';
 import { createDemoServer } from '../tools/serve.mjs';
 import { listenBrowserServer } from '../tools/browser-server.mjs';
 
@@ -12,7 +14,7 @@ const originalScript = await readFile('examples/dsl/stage.vn.txt', 'utf8');
 const edited = label => originalScript.replace('背景、立绘和声音来自同一份演出文本。', label);
 const checks = [], errors = [], scope = { controlledLifecycle: 'Only the DSL Worker is wrapped; hold/pass execute the real parser, then callbacks may be deliberately delivered after termination.',
   errorAndTimeout: 'Explicit simulated worker error/hang; only the 10000 ms task timer is shortened to 40 ms.',
-  realLargeWorker: 'Separate unwrapped browser context, 7000 cues; functional verification, not a replacement performance sample.',
+  realLargeWorker: 'Separate unwrapped browser context, 7000 cues; checks worker transfer, candidate play and source-bound evidence.',
   deviceAndListening: 'UNVERIFIED' };
 let browser;
 const server = await createDemoServer(); await listenBrowserServer(server);
@@ -148,22 +150,32 @@ try {
   const controlled = await page.evaluate(() => ({ workers: p4Workers.workers.length, terminated: p4Workers.workers.filter(worker => worker.terminated).length,
     heldCallbacks: p4Workers.held.length, forcedCallbacks: p4Workers.forcedCallbacks }));
   assert.equal(controlled.workers, controlled.terminated);
-  const realContext = await browser.newContext({ viewport: { width: 1360, height: 1000 } });
+  const realContext = await browser.newContext({ viewport: { width: 1360, height: 1000 }, acceptDownloads: true });
   const realPage = await realContext.newPage(), realWorkers = [];
   realPage.on('pageerror', error => errors.push(error.message)); realPage.on('dialog', dialog => dialog.accept());
   realPage.on('worker', worker => realWorkers.push(worker.url()));
-  await check('An unwrapped real worker compiles 7000 cues while the main thread keeps serving heartbeats', async () => {
-    await realPage.goto(url); await realPage.waitForSelector('body[data-editor-ready=true]');
+  let largeCandidate;
+  await check('Real 7000-cue compilation keeps serving heartbeats, bounds source ranges and plays a source-bound candidate', async () => {
+    await realPage.goto(url); await realPage.waitForSelector('body[data-editor-ready=true][data-preview-revision]');
+    await realPage.locator('#auto-preview').uncheck();
     const project = { ...originalProject, game: 'large-author', version: '1', assets: [{ id: 'room', kind: 'background', src: 'assets/classroom.svg' }],
       program: { schema: 1, game: 'large-author', version: '1', entry: 'start', variables: {}, blocks: [{ id: 'start', lines: [{ id: 'seed', speaker: 'N', text: 'Seed' }], exit: { type: 'end', ending: 'done' } }] } };
     delete project.font; delete project.routeTests;
-    await realPage.locator('#open-file').setInputFiles({ name: 'large.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(project)) });
+    const sourceBytes = JSON.stringify(project);
+    await realPage.locator('#open-file').setInputFiles({ name: 'large.json', mimeType: 'application/json', buffer: Buffer.from(sourceBytes) });
     await realPage.waitForFunction(() => document.querySelector('[aria-label="作品 ID"]').value === 'large-author');
     await realPage.locator('[data-tab=assets]').click(); await realPage.locator('#asset-directory').setInputFiles(resolve('examples/runtime'));
     await realPage.waitForFunction(() => document.querySelector('#asset-state').textContent.startsWith('已绑定 '));
+    const preview = realPage.frameLocator('#preview');
+    const previousRevision = Number(await realPage.locator('body').getAttribute('data-preview-revision'));
+    await realPage.locator('[data-command=preview]').click();
+    await realPage.waitForFunction(revision => Number(document.body.dataset.previewRevision) > revision, previousRevision);
+    await preview.locator('.vn-text').filter({ hasText: /^Seed$/ }).waitFor();
+    const initialRevision = Number(await realPage.locator('body').getAttribute('data-preview-revision'));
     await realPage.locator('[data-tab=text-script]').click();
+    const line = '界'.repeat(40);
     const text = 'vn-script 1\ngame "large-author"\nversion "1"\nentry start\nblock start\n'
-      + Array.from({ length: 7000 }, (_, i) => `line l${i} "旁白" "${'界'.repeat(40)}"\n`).join('') + 'end done\n'
+      + Array.from({ length: 7000 }, (_, i) => `line l${i} "旁白" "${line}"\n`).join('') + 'end done\n'
       + Array.from({ length: 7000 }, (_, i) => `cue line l${i} background room\n`).join('');
     await realPage.evaluate(text => { const input = document.querySelector('[data-dsl-source]'); input.value = text; input.dispatchEvent(new Event('input', { bubbles: true }));
       globalThis.p4Heartbeats = 0; globalThis.p4Pulse = setInterval(() => {
@@ -174,9 +186,72 @@ try {
     assert.ok(await realPage.evaluate(() => { clearInterval(p4Pulse); return p4Heartbeats; }) > 1);
     assert.equal(realWorkers.filter(url => url.endsWith('/editor/text-compile-worker.mjs')).length, 1);
     assert.equal(await realPage.locator('[data-dsl-command=apply]').isEnabled(), true);
+    await realPage.waitForFunction(revision => Number(document.body.dataset.previewRevision) === revision, initialRevision + 1);
+    await preview.locator('.vn-text').filter({ hasText: line }).waitFor();
+    await preview.locator('[data-control=next]').click();
+
+    const syntax = compileTextScript(text, { fileName: 'studio.vn' });
+    assert.equal(syntax.ok, true);
+    assert.ok(syntax.sourceMap.length > 200);
+    assert.equal(await realPage.locator('[data-dsl-range]').count(), 200);
+    // Send the same input directly to the actual module to inspect the reply boundary.
+    const wire = await realPage.evaluate(({ source, projectContext }) => new Promise((resolve, reject) => {
+      const worker = new Worker(new URL('text-compile-worker.mjs', location.href), { type: 'module' });
+      const finish = (settle, value) => { clearTimeout(timeout); worker.terminate(); settle(value); };
+      const timeout = setTimeout(() => finish(reject, Error('Standalone compile Worker timed out')), 15000);
+      worker.onerror = event => finish(reject, Error(event.message));
+      worker.onmessageerror = () => finish(reject, Error('Standalone compile reply could not be read'));
+      worker.onmessage = ({ data }) => finish(resolve, { requestId: data.requestId, error: data.error, ok: data.result?.ok,
+        sourceMapCount: data.sourceMapCount, sourceMap: data.result?.sourceMap, lineCount: data.result?.program?.blocks[0].lines.length });
+      worker.postMessage({ requestId: 41, source, fileName: 'studio.vn', projectContext });
+    }), { source: text, projectContext: { type: project.type, game: project.game, version: project.version, assets: [{ id: 'room', kind: 'background' }] } });
+    assert.equal(wire.error, undefined);
+    assert.equal(wire.requestId, 41);
+    assert.equal(wire.ok, true);
+    assert.equal(wire.lineCount, 7000);
+    assert.equal(wire.sourceMapCount, syntax.sourceMap.length);
+    assert.deepEqual(wire.sourceMap, syntax.sourceMap.slice(0, 200));
+
+    const candidateSHA = createHash('sha256').update(JSON.stringify({ ...project, program: syntax.program }, null, 2) + '\n').digest('hex');
+    const currentSHA = createHash('sha256').update(sourceBytes).digest('hex');
+    assert.notEqual(candidateSHA, currentSHA);
+    await realPage.locator('[data-tab=evidence]').click();
+    const captureStart = performance.now();
+    await realPage.locator('[data-evidence-command=capture]').click();
+    await realPage.waitForSelector('body[data-evidence-binding=stale]');
+    const firstEvidenceCaptureWallMs = performance.now() - captureStart;
+    const [evidenceDownload] = await Promise.all([realPage.waitForEvent('download'), realPage.locator('[data-evidence-command=download]').click()]);
+    const report = JSON.parse(await readFile(await evidenceDownload.path(), 'utf8'));
+    assert.equal(report.sourceSha256, candidateSHA);
+    assert.ok(report.events.some(event => event.type === 'navigation' && event.lineId === 'l1'));
+    const planSHA = await realPage.evaluate(() => new Promise((resolve, reject) => {
+      const frame = document.querySelector('#preview').contentWindow;
+      const revision = Number(document.body.dataset.previewRevision);
+      const requestId = 'p4-candidate-plan';
+      const timer = setTimeout(() => finish(reject, Error('Candidate resource plan timed out')), 10000);
+      function finish(settle, value) {
+        clearTimeout(timer);
+        window.removeEventListener('message', receive);
+        settle(value);
+      }
+      function receive(event) {
+        const message = event.data;
+        if (event.source !== frame || event.origin !== location.origin || message?.source !== 'vn-engine-preview' ||
+          message.type !== 'captured-plan' || message.requestId !== requestId || message.revision !== revision) return;
+        if (message.error) finish(reject, Error(message.error));
+        else finish(resolve, message.sourceSha256);
+      }
+      window.addEventListener('message', receive);
+      frame.postMessage({ source: 'vn-engine-studio', type: 'capture-plan', requestId, revision }, location.origin);
+    }));
+    assert.equal(planSHA, candidateSHA);
+    const [runtimeDownload] = await Promise.all([realPage.waitForEvent('download'), realPage.locator('[data-command=export]').click()]);
+    assert.equal(await readFile(await runtimeDownload.path(), 'utf8'), sourceBytes);
+    largeCandidate = { sourceMapCount: wire.sourceMapCount, transferredRanges: wire.sourceMap.length, lineCount: wire.lineCount,
+      candidateSHA, currentSHA, planSHA, firstEvidenceCaptureWallMs, evidenceBinding: 'stale', playedLine: 'l1' };
   });
   assert.deepEqual(errors, []);
-  await writeFile(join(output, 'REPORT.json'), JSON.stringify({ status: 'PASS', checks, scope, controlled, realWorkers, errors, browser: await browser.version() }, null, 2) + '\n');
+  await writeFile(join(output, 'REPORT.json'), JSON.stringify({ status: 'PASS', checks, scope, controlled, realWorkers, largeCandidate, errors, browser: await browser.version() }, null, 2) + '\n');
 } catch (error) {
   await writeFile(join(output, 'REPORT.json'), JSON.stringify({ status: 'FAIL', checks, scope, errors, failure: error.stack }, null, 2) + '\n');
   throw error;
