@@ -1,0 +1,297 @@
+{
+  "schema": 1,
+  "date": "2026-11-06",
+  "engineVersion": "1.4.3",
+  "baseCommit": "5e3f0c952c7584bf959758fcf1228aab3ab93ae7",
+  "plan": "docs/PLAN-v1.4.3.md",
+  "research": "docs/PLAN-v1.4.3.md#开源与社区证据",
+  "scope": {
+    "sourceGamesMigrated": false,
+    "publicDataOrSaveFormatChanged": false,
+    "newDependencies": false,
+    "releaseOrTagCreated": false
+  },
+  "local": {
+    "nodeVersion": "v24.14.0",
+    "check": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 383,
+      "pass": 379,
+      "fail": 4,
+      "skipped": 0,
+      "reason": "Windows symlink fixture creation EPERM",
+      "log": "test-results/v143-check.log"
+    },
+    "completeBrowserSuite": {
+      "status": "PASS",
+      "scripts": 48,
+      "log": "test-results/v143-browser.log"
+    },
+    "completeEditorSuite": {
+      "status": "PASS",
+      "scripts": 21,
+      "log": "test-results/v143-editor.log"
+    },
+    "pythonRenpy": {
+      "status": "PASS",
+      "total": 6
+    },
+    "schemaSync": "PASS",
+    "provenance": {
+      "status": "PASS",
+      "files": 200
+    },
+    "projectSchemas": {
+      "status": "PASS",
+      "total": 5
+    },
+    "portfolioPython": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 8,
+      "pass": 7,
+      "fail": 1,
+      "reason": "Windows symlink fixture creation WinError 1314",
+      "log": "test-results/v143-portfolio.log"
+    },
+    "workflowInventory": {
+      "status": "PASS",
+      "scope": "engine checkout only",
+      "log": "test-results/v143-workflow.log"
+    },
+    "graphCompatibility": {
+      "status": "PASS",
+      "newNodeCases": 2,
+      "orderedBaselineDiagnosticsEqual": true
+    },
+    "p4Studio": {
+      "status": "PASS",
+      "checks": [
+        "A running real compilation can be cancelled; a deliberately late callback cannot revive it; retry applies in one undo",
+        "Text edits cancel held work and the prior result never selects or applies the new text",
+        "JSON workspace replacement and New Project both reject held results from the prior workspace",
+        "Resource identity/kind changes replace a held job and automatically recheck without candidate preview; title edits reuse the result",
+        "Explicit worker-error and shortened-timeout simulations preserve data and allow a real retry",
+        "Real 7000-cue compilation keeps serving heartbeats, bounds source ranges and plays a source-bound candidate"
+      ],
+      "scope": {
+        "controlledLifecycle": "Only the DSL Worker is wrapped; hold/pass execute the real parser, then callbacks may be deliberately delivered after termination.",
+        "errorAndTimeout": "Explicit simulated worker error/hang; only the 10000 ms task timer is shortened to 40 ms.",
+        "realLargeWorker": "Separate unwrapped browser context, 7000 cues; checks worker transfer, candidate play and source-bound evidence.",
+        "deviceAndListening": "UNVERIFIED"
+      },
+      "controlled": {
+        "workers": 14,
+        "terminated": 14,
+        "heldCallbacks": 7,
+        "forcedCallbacks": 7
+      },
+      "realWorkers": [
+        "http://127.0.0.1:57526/editor/text-compile-worker.mjs",
+        "http://127.0.0.1:57526/editor/text-compile-worker.mjs"
+      ],
+      "largeCandidate": {
+        "sourceMapCount": 14006,
+        "transferredRanges": 200,
+        "lineCount": 7000,
+        "candidateSHA": "8bd61b18d24442f3b43fd3bd8f08e5e8c5af978d0f74220054791592189feeb3",
+        "currentSHA": "d5c7f6566b1d156c87cf1a6a0caf73819355470ab388f2dfbafc610536054a5c",
+        "planSHA": "8bd61b18d24442f3b43fd3bd8f08e5e8c5af978d0f74220054791592189feeb3",
+        "firstEvidenceCaptureWallMs": 75.00250000000051,
+        "evidenceBinding": "stale",
+        "playedLine": "l1"
+      },
+      "errors": [],
+      "browser": "153.0.8010.12"
+    },
+    "p4Package": {
+      "status": "PASS",
+      "checks": [
+        "Studio includes the worker/task/compiler/context modules; the player excludes all author modules",
+        "Generated nested Studio performs an actual module-worker compile, candidate preview, explicit apply and export",
+        "A new offline Studio page repeats the real worker compile/apply/export using cached modules and newly bound local assets"
+      ],
+      "scope": {
+        "actualModuleWorker": true,
+        "generatedStudio": true,
+        "nestedDeployment": true,
+        "offlineNewPage": true,
+        "localFileInputs": "automated project and resource-directory inputs; no manual system-dialog claim",
+        "physicalDevice": "UNVERIFIED",
+        "physicalListening": "UNVERIFIED"
+      },
+      "run": "D:\\AI项目\\VN-Engine-v2\\test-results\\p4-package\\run-W0aUdf",
+      "workers": [
+        "http://127.0.0.1:61671/nested/studio/editor/text-compile-worker.mjs",
+        "http://127.0.0.1:61671/nested/studio/editor/text-compile-worker.mjs"
+      ],
+      "errors": [],
+      "playerFiles": 84,
+      "studioFiles": 131,
+      "workerAndTaskCached": true,
+      "authorModulesPackagedInPlayer": false,
+      "browser": "153.0.8010.12"
+    }
+  },
+  "performance": {
+    "schema": 1,
+    "comparison": "1.4.2 to 1.4.3",
+    "environment": {
+      "node": "v24.14.0",
+      "platform": "win32",
+      "release": "10.0.26200",
+      "architecture": "x64",
+      "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+      "logicalCPUs": 12,
+      "memoryMiB": 16327
+    },
+    "fixtures": [
+      {
+        "name": "small",
+        "nodes": 12,
+        "edges": 14,
+        "calls": 1000,
+        "warmups": 200
+      },
+      {
+        "name": "large",
+        "nodes": 4096,
+        "edges": 5119,
+        "calls": 6,
+        "warmups": 4
+      }
+    ],
+    "sourceBefore": {
+      "modelTsSha256": "cea09342b0f75323fb10f288332ca3eae379e8e01843b68ec2155c2a60fb2795",
+      "modelDistSha256": "a977903e42a0d7600aaabca998ae48d54431791b574449c550e0a68dda5d9493"
+    },
+    "sourceAfter": {
+      "modelTsSha256": "49fac823aaacda4ba371b75b3a2093e07e1d72fe939ad8047ac1946ffc9ba49c",
+      "modelDistSha256": "9e19c857942480ec0a65c4e6356c0a567c4cc6c658822fe7a865c652c8788980"
+    },
+    "artifacts": {
+      "v143-baseline-diagnostics.json": "e189b0c3c370f09dd9caad5a9cf79dc7667fca07da553bd3716172438d186dd2",
+      "v143-after-diagnostics.json": "fcd4d702a135703c00d4715998d72340b46cb8ed8bd46f2416bf0db80082ac09"
+    },
+    "orderedDiagnosticsAndGraphHashesMatch": true,
+    "metrics": {
+      "small": {
+        "projectGraph": {
+          "baseline": {
+            "medianMs": 0.011138100000000008,
+            "worstMs": 0.011944900000000005
+          },
+          "after": {
+            "medianMs": 0.010937799999999996,
+            "worstMs": 0.011074200000000005
+          },
+          "deltaMs": -0.00020030000000001262,
+          "deltaPercent": -1.79833185193177,
+          "verdict": "PASS"
+        },
+        "graphDiagnostics": {
+          "baseline": {
+            "medianMs": 0.017459100000000005,
+            "worstMs": 0.018013800000000003
+          },
+          "after": {
+            "medianMs": 0.014930399999999991,
+            "worstMs": 0.015069299999999999
+          },
+          "deltaMs": -0.002528700000000014,
+          "deltaPercent": -14.483564444902733,
+          "verdict": "PASS"
+        },
+        "editorModelDiagnostics": {
+          "baseline": {
+            "medianMs": 0.1528982,
+            "worstMs": 0.15870489999999998
+          },
+          "after": {
+            "medianMs": 0.14730719999999997,
+            "worstMs": 0.15245889999999998
+          },
+          "deltaMs": -0.00559100000000004,
+          "deltaPercent": -3.6566813736198593,
+          "verdict": "PASS"
+        }
+      },
+      "large": {
+        "projectGraph": {
+          "baseline": {
+            "medianMs": 3.163316666666674,
+            "worstMs": 3.4408500000000117
+          },
+          "after": {
+            "medianMs": 3.490366666666669,
+            "worstMs": 3.491966666666665
+          },
+          "deltaMs": 0.32704999999999496,
+          "deltaPercent": 10.338832132940453,
+          "verdict": "WARN"
+        },
+        "graphDiagnostics": {
+          "baseline": {
+            "medianMs": 159.72293333333337,
+            "worstMs": 239.9365
+          },
+          "after": {
+            "medianMs": 4.882433333333324,
+            "worstMs": 5.184383333333339
+          },
+          "deltaMs": -154.84050000000005,
+          "deltaPercent": -96.94318578338157,
+          "verdict": "PASS"
+        },
+        "editorModelDiagnostics": {
+          "baseline": {
+            "medianMs": 173.27253333333329,
+            "worstMs": 178.16644999999994
+          },
+          "after": {
+            "medianMs": 24.020583333333338,
+            "worstMs": 25.638800000000003
+          },
+          "deltaMs": -149.25194999999994,
+          "deltaPercent": -86.13710847805075,
+          "verdict": "PASS"
+        }
+      }
+    },
+    "verdict": "WARN",
+    "scope": [
+      "Three fixed independent Node processes per side; microbenchmark, not Studio browser wall time.",
+      "Graph-only timing uses an in-memory production compiled module with an early return at the end of the graph diagnostic section.",
+      "Full EditorModel.diagnostics and graph extraction use the unmodified production module.",
+      "Large graph extraction increased by 0.327 ms, above the default 10 percent warning threshold. Extraction source was unchanged. Three samples do not distinguish transient noise from a persistent cost."
+    ]
+  },
+  "cloud": {
+    "status": "PENDING_EXACT_PUSHED_SHA",
+    "evidence": "test-results/v1.4.3-cloud.json"
+  },
+  "sourceHashBasis": "UTF-8 with CRLF normalized to LF to match Git blobs",
+  "sourceSha256": {
+    ".github/workflows/windows.yml": "cd2bc6e85e47c8794dde079713f903163ec4a134b603e1745bb71f838d60ca59",
+    "hosts/windows/VNEngine.Windows.csproj": "25c00366a57c437d196f60533d1858c79174e5fb8d1638091812d39edb6fde77",
+    "package-lock.json": "c470acb1edb8e7b5f099a0ee24b49d02176d809a1cd0d085122d63776a4913f0",
+    "package.json": "e9b95a45e368d31a3ffc6eb7491767897f89991885017cce06a016e31732443c",
+    "src/editor/model.ts": "49fac823aaacda4ba371b75b3a2093e07e1d72fe939ad8047ac1946ffc9ba49c",
+    "src/version.ts": "710307b6e2214fddbc654dc5f97550557d87bfd6a80f001cdc482637611c8546",
+    "tests/editor.test.mjs": "bb3c0843408068143682fb394f155a075a864f92306b12f8d2174bb6cb051603"
+  },
+  "evidenceSha256": {
+    "test-results/v143-check.log": "3726c695298c17efa656b77d5f37d0988365462a7c43bd361566b96b86b9ccdd",
+    "test-results/v143-browser.log": "c6802f666171a55d69194b03c369c1c799cc9d1e4ba11e264c670570cfecebfe",
+    "test-results/v143-editor.log": "7f4152a80aa0cbdd7ebecf0a8cea8381dfc889605ba8109d7fb2cbab934f7ab6",
+    "test-results/v143-residual.log": "d9f0dfe2143b5280e97b11dab594d746475e620544310b0451f1ae9f84b2747a",
+    "test-results/v143-portfolio.log": "0d51b7b4db1c480fdbd031220bec774b1f929a81d236f6e2c9bb46b604405d53",
+    "test-results/v143-workflow.log": "c204d495ce45719803e35a9246109d6ad8901466ad635f01f2d611fec3aeefe4",
+    "test-results/v143-baseline-diagnostics.json": "e189b0c3c370f09dd9caad5a9cf79dc7667fca07da553bd3716172438d186dd2",
+    "test-results/v143-after-diagnostics.json": "fcd4d702a135703c00d4715998d72340b46cb8ed8bd46f2416bf0db80082ac09",
+    "test-results/v143-diagnostic-performance-comparison.json": "51fb9192d7abe37c0a165cc0b05e3cb4e9bc41c8cb2259d55b785e9364d50d83",
+    "test-results/v143-diagnostic-benchmark.mjs": "3e29d79d569853e40d4408f5ea2861b0936f65c5c81594b5ccaf949b4e8b7d54",
+    "test-results/v143-exploratory-graph.json": "dbc7a3dcf5bb21c96f91f880fd0bc8c82200ee6defaf8f7bd1732e4042fa46e1",
+    "test-results/p4-studio/REPORT.json": "331551d483cba9222ba0ba6a7d7148033942f3c69b9d8486b241f710df38943c",
+    "test-results/p4-package/REPORT.json": "e3a9fc9313af818e8150cc293368e98109879d3382987ef866bf9356f07da1d6"
+  }
+}

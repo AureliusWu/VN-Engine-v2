@@ -454,7 +454,7 @@
       "target": "hosts/windows/VNEngine.Windows.csproj",
       "mode": "new",
       "origins": [],
-      "targetSha256": "0704a5289124a482d838e048674c0c8e461dae5b94d47245a17a456772e07dfd"
+      "targetSha256": "25c00366a57c437d196f60533d1858c79174e5fb8d1638091812d39edb6fde77"
     },
     {
       "target": "licenses/Healing-LICENSE.txt",
@@ -825,7 +825,7 @@
       "target": "src/editor/model.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "cea09342b0f75323fb10f288332ca3eae379e8e01843b68ec2155c2a60fb2795"
+      "targetSha256": "49fac823aaacda4ba371b75b3a2093e07e1d72fe939ad8047ac1946ffc9ba49c"
     },
     {
       "target": "src/history/search.ts",
@@ -1248,7 +1248,7 @@
       "target": "src/version.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "23d369289aa875ceeb4c99fc339345aaad60c8da787ad538faa774ac2d7c0c3f"
+      "targetSha256": "710307b6e2214fddbc654dc5f97550557d87bfd6a80f001cdc482637611c8546"
     },
     {
       "target": "tools/acceptance-node.mjs",

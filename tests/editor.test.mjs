@@ -56,6 +56,39 @@ test('node additions use independent IDs and investigation loops remain legal', 
   assert.deepEqual(model.diagnostics(), []); const key = model.addNode(); const second = model.addNode(); assert.notEqual(key, second);
   assert.ok(model.diagnostics().some(d => d.code === 'unreachable')); model.undo(); model.undo(); assert.deepEqual(model.diagnostics(), []);
 });
+test('graph diagnostics keep chapter entries and same-named nodes separate through loops and parallel edges', () => {
+  const project = newProject('investigation');
+  const first = project.chapters[0], second = structuredClone(first);
+  second.id = 'chapter-2';
+  second.order = 1;
+  second.nodes.room.actions = [{ id: 'leave', label: 'Leave directly', next: 'end' }];
+  project.chapters.push(second);
+  first.nodes.room.actions.push(
+    { id: 'again', label: 'Parallel path to the note', next: 'note' },
+    { id: 'missing', label: 'First missing target', next: 'missing' }
+  );
+  first.nodes.isolated = { ...structuredClone(first.nodes.end),
+    actions: [{ id: 'missing', label: 'Second missing target', next: 'also-missing' }] };
+
+  const model = new EditorModel(project);
+  const structural = model.diagnostics().filter(item => ['duplicate', 'target', 'unreachable'].includes(item.code));
+  assert.deepEqual(structural, [
+    { severity: 'error', code: 'target', node: '["chapter-1","room"]', message: '连线目标不存在：First missing target' },
+    { severity: 'error', code: 'target', node: '["chapter-1","isolated"]', message: '连线目标不存在：Second missing target' },
+    { severity: 'warning', code: 'unreachable', node: '["chapter-1","isolated"]', message: '没有从入口连到此节点：isolated' },
+    { severity: 'warning', code: 'unreachable', node: '["chapter-2","note"]', message: '没有从入口连到此节点：note' }
+  ]);
+});
+test('dynamic adapter routing preserves explicit broken edges without adding unreachable warnings', () => {
+  const project = newProject('vn');
+  project.adapter = 'netlove';
+  project.scenes[0].resolve = true;
+  project.scenes[0].choices[0].next = 'missing';
+  const structural = diagnoseProject(project).filter(item => ['target', 'dynamic-routing', 'unreachable'].includes(item.code));
+  assert.deepEqual(structural.map(({ severity, code, node }) => [severity, code, node]), [
+    ['error', 'target', '["start"]'], ['warning', 'dynamic-routing', undefined]
+  ]);
+});
 test('asset diagnostics distinguish missing IDs, roles, files and font licences', () => {
   const project = newProject('script'); project.assets = [{ id: 'music', kind: 'audio', src: 'assets/music.wav' }, { id: 'font', kind: 'font', src: 'assets/font.woff2' }];
   project.defaults = { background: 'music' }; project.font = 'font';

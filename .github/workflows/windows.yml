@@ -25,6 +25,8 @@ jobs:
       - run: npm ci
       - run: npm run build
       - run: npx playwright install chromium
+      - name: Verify EditorModel graph diagnostics and author project behavior
+        run: node --test tests/editor.test.mjs
       - name: Verify P0 runtime contracts, evidence and Studio on Windows
         run: npm run test:p0
       - name: Verify R3/R4 feedback recovery, AI acceptance and standalone dependency checks on Windows

@@ -91,12 +91,32 @@ export function diagnoseProject(project: EngineProject, availableFiles?: Readonl
   try { graph = projectGraph(project); } catch (error) { add('error', 'shape', '数据结构不完整：' + String(error)); return result; }
   const keys = new Set<string>();
   for (const node of graph.nodes) { if (keys.has(node.key)) add('error', 'duplicate', '节点 ID 重复：' + node.id, node.key); keys.add(node.key); }
-  for (const edge of graph.edges) if (!keys.has(edge.to)) add('error', 'target', '连线目标不存在：' + edge.label, edge.from);
-  const visited = new Set<string>(), pending = graph.nodes.filter(n => n.entry).map(n => n.key);
-  while (pending.length) { const key = pending.pop()!; if (visited.has(key)) continue; visited.add(key); for (const edge of graph.edges) if (edge.from === key && keys.has(edge.to)) pending.push(edge.to); }
   const dynamicRouting = project.type === 'narrative' && !!project.adapter && project.scenes.some(scene => scene.resolve);
-  if (dynamicRouting) add('warning', 'dynamic-routing', '兼容适配器按数值解析动态结局；静态图不推断这些连线，请通过试玩核对。');
-  else for (const node of graph.nodes) if (!visited.has(node.key)) add('warning', 'unreachable', '没有从入口连到此节点：' + node.id, node.key);
+  const outgoing = dynamicRouting ? undefined : new Map<string, string[]>();
+  for (const edge of graph.edges) {
+    if (!keys.has(edge.to)) {
+      add('error', 'target', '连线目标不存在：' + edge.label, edge.from);
+      continue;
+    }
+    if (!outgoing) continue;
+    const targets = outgoing.get(edge.from);
+    if (targets) targets.push(edge.to);
+    else outgoing.set(edge.from, [edge.to]);
+  }
+  if (outgoing) {
+    const visited = new Set(graph.nodes.filter(node => node.entry).map(node => node.key));
+    const pending = [...visited];
+    while (pending.length) {
+      for (const target of outgoing.get(pending.pop()!) ?? []) {
+        if (visited.has(target)) continue;
+        visited.add(target);
+        pending.push(target);
+      }
+    }
+    for (const node of graph.nodes) if (!visited.has(node.key)) add('warning', 'unreachable', '没有从入口连到此节点：' + node.id, node.key);
+  } else {
+    add('warning', 'dynamic-routing', '兼容适配器按数值解析动态结局；静态图不推断这些连线，请通过试玩核对。');
+  }
   const presentationTargets = project.type === 'narrative'
     ? [[project.stage?.scenes, new Set(graph.nodes.map(n => n.id)), 'scenes'], [project.stage?.lines, new Set(project.scenes.flatMap(scene => scene.lines.map((line, i) => line.id ?? `${scene.id}/${i}`))), 'lines']] as const
     : project.type === 'investigation' ? [[project.stage?.nodes, new Set(graph.nodes.map(n => `${n.chapter}/${n.id}`)), 'nodes']] as const : [];
