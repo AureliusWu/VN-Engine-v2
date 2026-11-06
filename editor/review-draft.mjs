@@ -2,7 +2,13 @@
 const categories = new Set(['story', 'text', 'art', 'music', 'sfx', 'ui', 'other']);
 const record = value => !!value && typeof value === 'object' && !Array.isArray(value);
 const signature = item => JSON.stringify([item.target, item.comment]);
+const matchesProject = (input, project) => record(input) && input.schema === 1
+  && input.game === project.game && input.storyVersion === project.version;
 export const newFeedbackDraft = () => ({ id: '', category: 'text', target: '', comment: '', actor: '作者（自报）' });
+
+export function hasDraftFeedbackTarget(input, project) {
+  return matchesProject(input, project) && typeof input.feedback?.target === 'string' && input.feedback.target.length > 0;
+}
 
 export function hasReviewDraft(feedback, notes, review) {
   return !!feedback.id || !!feedback.comment || review.items.some(item => {
@@ -23,7 +29,7 @@ export function captureReviewDraft(project, review, feedback, notes) {
 
 export function readReviewDraft(input, project, review, targets) {
   const feedback = newFeedbackDraft(), notes = new Map();
-  if (!record(input) || input.schema !== 1 || input.game !== project.game || input.storyVersion !== project.version) return { feedback, notes };
+  if (!matchesProject(input, project)) return { feedback, notes };
   if (record(input.feedback)) {
     for (const key of Object.keys(feedback)) if (typeof input.feedback[key] === 'string') feedback[key] = input.feedback[key];
     if (!categories.has(feedback.category)) feedback.category = 'text';

@@ -70,6 +70,48 @@ try {
   assert.deepEqual(filtering.keys, ['actor', 'category', 'comment', 'id', 'target']); assert.equal(filtering.category, 'text');
   assert.equal(filtering.target, ''); assert.deepEqual(filtering.noteIds, ['r5-note']); assert.equal(filtering.foreignComment, '');
   checks.push('Draft restoration whitelists strings and categories, rejects unknown targets and note IDs, and isolates workspace identity');
+
+  await panel.locator('[data-production-view=tasks]').click();
+  await panel.getByRole('button', { name: '添加剧情任务', exact: true }).click();
+  await field('task ID story-1', '');
+  assert.equal(await panel.getByLabel('task ID story-1', { exact: true }).getAttribute('aria-invalid'), 'true');
+  const [recovery] = await Promise.all([page.waitForEvent('download'), command('export-recovery')]);
+  const bytes = await readFile(await recovery.path());
+  const snapshot = JSON.parse(bytes);
+  assert.equal(snapshot.editorTab, 'production');
+  assert.equal(snapshot.productionView, 'tasks');
+  assert.deepEqual(snapshot.pendingFields, [{ key: '[["production-list","","tasks"],"task ID story-1",0]', baseline: 'story-1', value: '' }]);
+
+  const recipient = await browser.newPage({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
+  recipient.on('pageerror', error => errors.push(error.message));
+  recipient.on('dialog', dialog => dialog.accept());
+  await recipient.goto(`http://127.0.0.1:${server.address().port}/editor/`);
+  await recipient.waitForSelector('body[data-editor-ready=true]');
+  const recipientPanel = recipient.locator('#production-list');
+  await recipient.locator('[data-tab=production]').click();
+  await recipientPanel.locator('[data-production-view=tasks]').click();
+  const kindFilter = recipientPanel.getByLabel('任务种类', { exact: true });
+  await kindFilter.selectOption('art');
+  assert.equal(await kindFilter.inputValue(), 'art');
+  const [chooser] = await Promise.all([
+    recipient.waitForEvent('filechooser'), recipient.locator('[data-command=import-recovery]').click(),
+  ]);
+  await chooser.setFiles({ name: recovery.suggestedFilename(), mimeType: 'application/json', buffer: bytes });
+  await recipient.waitForFunction(() => document.querySelector('#status').textContent.includes('恢复文件已打开'));
+  assert.equal(await recipientPanel.locator('[data-production-view=tasks]').getAttribute('aria-pressed'), 'true');
+  assert.equal(await kindFilter.inputValue(), '');
+  assert.doesNotMatch(await recipient.locator('#status').textContent(), /无法定位/);
+  const restoredTaskId = recipientPanel.getByLabel('task ID story-1', { exact: true });
+  assert.equal(await restoredTaskId.inputValue(), '');
+  await restoredTaskId.fill('story-resumed');
+  await restoredTaskId.blur();
+  const [saved] = await Promise.all([
+    recipient.waitForEvent('download'), recipient.locator('[data-command=save]').click(),
+  ]);
+  assert.equal(JSON.parse(await readFile(await saved.path(), 'utf8')).project.production.tasks[0].id, 'story-resumed');
+  await recipient.close();
+  checks.push('Portable recovery resets the recipient task filter and preserves the pending field through correction and save');
+
   assert.deepEqual(errors, []);
   await writeFile(out + '/r5-feedback-browser.json', JSON.stringify({ status: 'PASS', checks, browser: await browser.version(), mode: 'headless', syntheticFeedback: true }, null, 2) + '\n');
   for (const check of checks) console.log('PASS', check);

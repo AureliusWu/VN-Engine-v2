@@ -243,6 +243,7 @@ try {
   const [chooser] = await Promise.all([recovered.waitForEvent('filechooser'), recovered.locator('[data-command=import-recovery]').click()]);
   await chooser.setFiles(fileInput(recovery.name, recovery.bytes));
   await recovered.waitForFunction(() => document.querySelector('#status').textContent.includes('恢复文件已打开'));
+  assert.equal((await draftOf(recovered)).sourceText, originalBytes.toString('utf8'));
   assert.equal(await recovered.locator('#project-name').innerText(), project.title);
   assert.match(await recovered.locator('#asset-state').innerText(), /未绑定/);
   assert.equal(await recovered.locator('#source').inputValue(), pendingSource);
@@ -291,6 +292,113 @@ try {
   assert.equal(await legacyPage.locator('#source').inputValue(), pendingSource);
   await legacyPage.close({ runBeforeUnload: false });
   passed('Local recovery preserves raw source across reload and still reads untagged legacy drafts');
+
+  const portableBytes = (project, extra = {}) => Buffer.from(JSON.stringify({ format: 'vn-engine-recovery', schema: 1,
+    document: { format: 'vn-engine-editor', schema: 1, project, positions: {} }, ...extra }));
+  const openPortable = async (workspace, bytes) => {
+    const [file] = await Promise.all([workspace.waitForEvent('filechooser'), workspace.locator('[data-command=import-recovery]').click()]);
+    await file.setFiles(fileInput('workspace.vnrecover', bytes));
+  };
+  const waitRecovered = workspace => workspace.waitForFunction(() => document.querySelector('#status').textContent.startsWith('恢复文件已打开'));
+
+  const guarded = await openDraftWorkspace();
+  await guarded.locator('#open-file').setInputFiles(fileInput('bound-source.json', originalBytes));
+  await guarded.waitForFunction(title => document.querySelector('#project-name').textContent === title, project.title);
+  await guarded.locator('#asset-directory').setInputFiles('examples/runtime');
+  await guarded.locator('[data-command=preview]').click();
+  await guarded.waitForFunction(() => {
+    const image = document.querySelector('#preview').contentDocument.querySelector('.vn-background');
+    return image?.src.startsWith('blob:') && image.naturalWidth > 0;
+  });
+  const mountedState = () => guarded.evaluate(() => {
+    const iframe = document.querySelector('#preview').contentDocument;
+    const image = iframe.querySelector('.vn-background');
+    return { revision: document.body.dataset.previewRevision, title: document.querySelector('#project-name').textContent,
+      binding: document.querySelector('#asset-state').textContent, line: iframe.querySelector('.vn-text').textContent,
+      image: image.src, width: image.naturalWidth };
+  });
+  const beforeMalformed = await mountedState();
+  const badEncoding = portableBytes({ ...newProject('script'), title: 'UTF8 sentinel X' });
+  const marker = badEncoding.indexOf('UTF8 sentinel X') + 'UTF8 sentinel '.length;
+  assert.equal(badEncoding[marker], 'X'.charCodeAt(0));
+  badEncoding[marker] = 0x80;
+  const badAssets = portableBytes({ ...newProject('script'), title: 'Invalid recovery asset', assets: [null] });
+  for (const [bytes, message] of [[badEncoding, 'UTF-8'], [badAssets, 'assets']]) {
+    await openPortable(guarded, bytes);
+    await guarded.waitForFunction(expected => {
+      const status = document.querySelector('#status');
+      return status.classList.contains('error') && status.textContent.includes(expected);
+    }, message, { timeout: 5000 });
+    assert.deepEqual(await mountedState(), beforeMalformed);
+    assert.ok((await downloadFrom(guarded, '[data-command=export]')).bytes.equals(originalBytes));
+  }
+  passed('Recovery rejects malformed UTF-8 and null assets without changing the mounted workspace');
+
+  const unicodeProject = { ...newProject('script'), title: '合法替换字符 � 与中文' };
+  const unicodeSource = '\r\n' + JSON.stringify(unicodeProject) + '\r\n';
+  const unicodeWire = JSON.stringify({ format: 'vn-engine-recovery', schema: 1, sourceText: unicodeSource, positions: {} });
+  await openPortable(guarded, Buffer.concat([Buffer.from([0xef, 0xbb, 0xbf]), Buffer.from(unicodeWire)]));
+  await waitRecovered(guarded);
+  assert.equal(await guarded.locator('#project-name').innerText(), unicodeProject.title);
+  assert.ok((await downloadFrom(guarded, '[data-command=export]')).bytes.equals(Buffer.from(unicodeSource)));
+  await guarded.close({ runBeforeUnload: false });
+  passed('Recovery accepts a UTF-8 BOM and preserves a legitimate replacement character and raw source bytes');
+
+  const rainPage = await openDraftWorkspace();
+  const rain = { schema: 1, type: 'rain', game: 'repairable-rain', version: '1', title: 'Repairable Rain', assets: [],
+    settings: { textDelayMs: 0 }, story: { schema_version: 1, entry: 'start', initial_state: {}, state_definitions: {},
+      nodes: [{ id: 'start', lines: [{ id: 'opening', speaker: 'unknown-speaker', text: '修复后的 Rain 台词。' }], ending: 'done' }] } };
+  const emptyFeedback = { schema: 1, game: rain.game, storyVersion: rain.version, reviewGame: rain.game, reviewVersion: rain.version,
+    feedback: { id: '', category: 'text', target: '', comment: '', actor: '作者（自报）' }, notes: [] };
+  await openPortable(rainPage, portableBytes(rain, { productionDraft: emptyFeedback, editorTab: 'source' }));
+  await waitRecovered(rainPage);
+  assert.match(await rainPage.locator('#diagnostics').innerText(), /Unknown Rain speaker/);
+  assert.equal(await rainPage.locator('[data-command=export]').isDisabled(), true);
+  const rainSource = rainPage.locator('#source'), repairedRain = JSON.parse(await rainSource.inputValue());
+  repairedRain.story.nodes[0].lines[0].speaker = 'n';
+  await rainSource.fill(JSON.stringify(repairedRain));
+  await rainPage.locator('[data-command=apply-source]').click();
+  assert.equal(await rainPage.locator('[data-command=export]').isEnabled(), true);
+  await rainPage.locator('[data-command=preview]').click();
+  await rainPage.frameLocator('#preview').getByText('修复后的 Rain 台词。', { exact: true }).waitFor();
+  await rainPage.close({ runBeforeUnload: false });
+  passed('Recovery opens a repairable Rain project with an empty feedback draft');
+
+  const incoming = newProject('script');
+  incoming.game = incoming.program.game = 'portable-draft-b'; incoming.title = 'Portable workspace B';
+  const incomingFile = portableBytes(incoming);
+  for (const hasExistingDraft of [false, true]) {
+    const slotPage = await openDraftWorkspace();
+    await holdDraftDebounce(slotPage);
+    const slotTitle = slotPage.getByLabel('作品名称', { exact: true });
+    if (hasExistingDraft) {
+      await slotTitle.fill('Older local draft A'); await slotTitle.blur();
+      assert.equal(await slotPage.evaluate(() => draftTimerGate.release()), 1);
+      assert.equal((await draftOf(slotPage)).document.project.title, 'Older local draft A');
+    } else assert.equal(await draftOf(slotPage), null);
+    await slotTitle.fill('Latest outgoing local draft A'); await slotTitle.blur();
+    assert.equal(await slotPage.evaluate(() => draftTimerGate.count()), 1);
+    assert.equal((await draftOf(slotPage))?.document.project.title, hasExistingDraft ? 'Older local draft A' : undefined);
+    await openPortable(slotPage, incomingFile); await waitRecovered(slotPage);
+    assert.equal(await slotPage.locator('#project-name').innerText(), incoming.title);
+    const savedA = await draftOf(slotPage);
+    assert.equal(savedA.document.project.title, 'Latest outgoing local draft A');
+    await slotPage.evaluate(() => draftTimerGate.release());
+    assert.deepEqual(await draftOf(slotPage), savedA);
+    await slotPage.reload(); await slotPage.waitForSelector('body[data-editor-ready=true]');
+    assert.deepEqual(await draftOf(slotPage), savedA);
+    await slotPage.locator('[data-command=restore-draft]').click();
+    await slotPage.waitForFunction(() => document.querySelector('#status').textContent.startsWith('草稿已恢复'));
+    assert.equal(await slotPage.locator('#project-name').innerText(), 'Latest outgoing local draft A');
+    await openPortable(slotPage, incomingFile); await waitRecovered(slotPage);
+    await slotTitle.fill('Genuine later edit to B'); await slotTitle.blur();
+    await slotPage.waitForFunction(() => {
+      const draft = JSON.parse(localStorage.getItem('vn-engine-studio:draft:v1'));
+      return draft?.document.project.game === 'portable-draft-b' && draft.document.project.title === 'Genuine later edit to B';
+    });
+    await slotPage.close({ runBeforeUnload: false });
+  }
+  passed('Portable recovery preserves outgoing local drafts through reload and saves later edits to the imported project');
 
   assert.deepEqual(errors, []);
   await writeFile(output + '/r6-studio-browser.json', JSON.stringify({ status: 'PASS', checks,

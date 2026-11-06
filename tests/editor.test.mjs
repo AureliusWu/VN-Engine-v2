@@ -159,6 +159,23 @@ test('asset diagnostics distinguish missing IDs, roles, files and font licences'
   const codes = new Set(diagnoseProject(project, new Set()).map(d => d.code));
   for (const code of ['asset-binding', 'font-license', 'asset-file']) assert.ok(codes.has(code));
 });
+test('editor rejects non-object assets without committing a replacement while incomplete asset objects stay repairable', () => {
+  const model = new EditorModel(newProject('script'));
+  model.set(['title'], 'Keep this edited workspace');
+  const before = model.serialize();
+  for (const asset of [null, 'missing', []]) {
+    const project = { ...newProject('script'), assets: [asset] };
+    assert.throws(() => readDocument(project), /assets/);
+    assert.throws(() => model.replaceProject(JSON.stringify(project)), /assets/);
+    assert.throws(() => readRecovery(JSON.stringify({ format: RECOVERY_FORMAT, schema: 1,
+      document: { format: 'vn-engine-editor', schema: 1, project, positions: {} } }), { portable: true }), /assets/);
+    assert.equal(model.serialize(), before);
+    assert.equal(model.canUndo, true);
+  }
+  const project = { ...newProject('script'), assets: [{ id: 'repairable', kind: 'background' }] };
+  assert.deepEqual(readDocument(project).project.assets, project.assets);
+  assert.ok(new EditorModel(project).diagnostics().some(diagnostic => diagnostic.code === 'asset-path'));
+});
 test('editor diagnoses invalid timelines in unvisited lines and keeps undoable repairs', () => {
   const project = newProject('script');
   project.program.blocks[1].lines[0].cue = { timeline: { durationMs: 100, animations: [{ id: 'enter', layer: 'character', to: { x: 10 }, durationMs: 200 }] } };

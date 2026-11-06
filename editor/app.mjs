@@ -12,6 +12,7 @@ import { createAsyncOperation } from './async-operation.mjs';
 import { createEvidencePanel } from './evidence.mjs';
 import { createTextScriptPanel } from './text-script.mjs';
 import { createResourcesPanel } from './resources.mjs';
+import { hasDraftFeedbackTarget } from './review-draft.mjs';
 
 const $ = id => document.getElementById(id);
 const DRAFT_KEY = 'vn-engine-studio:draft:v1';
@@ -19,6 +20,7 @@ let model = new EditorModel(newProject('script')), selected, tab = 'story', draf
 let baseURL = new URL('../samples/', location.href).href, resourceURLs = new Map(), resourceFiles, previewReady = false, revision = 0, savedSource = '';
 let nativeHidden = false, identitySource = '', identityProject = '';
 let workspaceVersion = 0, fileOpenRequest, fileRecoveryRequest;
+let uneditedPortableModel;
 function projectSource(text = model.serialize(true)) { return text === identityProject ? identitySource : text; }
 let previewSnapshot, captureSerial = 0;
 const previewCaptures = new Map();
@@ -28,7 +30,7 @@ const status = (text, error = false) => { $('status').textContent = text; $('sta
 const actionCallbacks = new WeakMap();
 const fieldEdits = createFieldEdits({
   scope: root => [root, root === 'inspector' ? selected : '', root === 'production-list' ? document.querySelector('[data-production-view][aria-pressed=true]')?.dataset.productionView : ''],
-  changed: () => { workspaceVersion++; syncDirty(); scheduleDraft(); },
+  changed: authorInputChanged,
   error: error => status(error.message, true)
 });
 const opening = createOpenGate({ version: () => workspaceVersion, cancelled: () => status('等待打开时工程已更改，已取消打开；当前更改仍保留', true) });
@@ -71,7 +73,7 @@ const routes = createRoutesPanel($('route-list'), {element,action,field,project:
     return capturePreview('route', id);
   },download,navigate:state=>{const node=model.graph().nodes.find(n=>n.id===state.sceneId&&(!n.chapter||state.lineId.startsWith(n.chapter+'/')));if(!node)throw Error('此运行节点没有对应的可编辑节点');selected=node.key;switchTab('story');renderGraph(model.graph());renderInspector();}});
 const production = createProductionPanel($('production-list'), {element,action,field,run,project:()=>model.getView().project,model:()=>model,version:()=>workspaceVersion,source:projectSource,
-  assetURL:relative=>resourceURLs.get(relative)??new URL(relative,baseURL).href,edit:fn=>mutate(fn,true),changed:()=>{workspaceVersion++;scheduleDraft();syncDirty();},status,download,preview,routes:()=>switchTab('routes'),
+  assetURL:relative=>resourceURLs.get(relative)??new URL(relative,baseURL).href,edit:fn=>mutate(fn,true),changed:authorInputChanged,status,download,preview,routes:()=>switchTab('routes'),
   navigate:target=>{
     const content=contentCatalogue(model.getView().project).find(c=>c.kind===target.kind&&c.id===target.id&&c.nodeId===target.nodeId&&c.chapterId===target.chapterId);
     const node=model.graph().nodes.find(n=>n.id===(content?.nodeId??target.nodeId??target.id)&&n.chapter===target.chapterId);
@@ -92,14 +94,23 @@ const evidence = createEvidencePanel($('evidence-list'), {element,action,source:
   navigate:origin=>{const node=model.graph().nodes.find(n=>n.id===origin.nodeId&&n.chapter===origin.chapterId);if(!node)throw Error('此来源没有对应的可编辑节点');selected=node.key;switchTab('story');renderGraph(model.graph());renderInspector();}
 });
 const textScript=createTextScriptPanel($('text-script-list'),{element,action,project:()=>model.getView().project,
-  changed:()=>{workspaceVersion++;syncDirty();scheduleDraft();},apply:program=>set(['program'],program,true),
+  changed:authorInputChanged,apply:program=>set(['program'],program,true),
   preview:program=>preview({candidate:{...model.getView().project,program}})
 });
 const resources=createResourcesPanel($('resources-list'),{element,action,source:projectSource,project:()=>model.getView().project,
   preview:()=>preview(),frame:()=>$('preview'),revision:()=>revision,ready:previewMounted,
   navigate:origin=>{const node=model.graph().nodes.find(n=>n.id===origin.nodeId&&n.chapter===origin.chapterId);if(!node)throw Error('此来源没有对应的可编辑节点');selected=node.key;switchTab('story');renderGraph(model.graph());renderInspector();}
 });
-function mutate(fn, inspector = false) { fn(); update(inspector); status('更改已记录，可撤销'); }
+function authorInputChanged() {
+  uneditedPortableModel = undefined;
+  workspaceVersion++; syncDirty(); scheduleDraft();
+}
+function mutate(fn, inspector = false) {
+  const before = model.getView();
+  fn();
+  if (model.getView() !== before) uneditedPortableModel = undefined;
+  update(inspector); status('更改已记录，可撤销');
+}
 function set(path, value, inspector = false) { mutate(() => model.set(path, value), inspector); }
 function scheduleDraft() {
   clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 350);
@@ -114,8 +125,16 @@ function recoveryState() {
     baseURL: baseURL.startsWith(location.origin + '/') ? baseURL : undefined, at: new Date().toISOString()
   };
 }
-function saveDraft() {
+function cancelDraftTimer() {
   clearTimeout(draftTimer); draftTimer = undefined;
+}
+function hasLocalDraft() {
+  try { return localStorage.getItem(DRAFT_KEY) !== null; }
+  catch { return false; }
+}
+function saveDraft() {
+  cancelDraftTimer();
+  if (uneditedPortableModel === model) return true;
   try {
     localStorage.setItem(DRAFT_KEY, writeRecovery(recoveryState()));
     return true;
@@ -132,10 +151,11 @@ function replace(input, options = {}) {
   const incomingReview = options.authorReview;
   if(incomingReview) readAuthorReview(incomingReview,options.draft?{...next.getView().project,game:incomingReview.game,version:incomingReview.storyVersion}:next.getView().project);
   // Validate the replacement before committing a draft or clearing the current resources.
-  const previousDraftSaved = options.draft || !workspaceDirty() || saveDraft();
-  clearTimeout(draftTimer); draftTimer = undefined;
+  const previousDraftSaved = (options.draft && !options.preserveOutgoingDraft) || !workspaceDirty() || saveDraft();
+  if (options.preserveOutgoingDraft && !previousDraftSaved) throw Error('当前工程的草稿未能保存。请先导出恢复文件或保存工程，再打开其他恢复文件');
+  cancelDraftTimer();
   opening.invalidate(); assetBinding.invalidate(); fieldEdits.reset();
-  clearResources(options.baseURL); if (options.files) resourceFiles = new Set(options.files); model = next;
+  clearResources(options.baseURL); if (options.files) resourceFiles = new Set(options.files); model = next; uneditedPortableModel = undefined;
   identityProject=model.serialize(true);identitySource=options.sourceText ?? (typeof input==='string'&&!JSON.parse(input).format?input:identityProject);production.reset(incomingReview,{detached:options.draft});evidence.reset();textScript.reset();resources.reset();selected = model.graph().nodes[0]?.key;
   savedSource = ''; tab = 'story'; renderProject(); update(true); switchTab('story');
   if (options.draft) { model.markUnsaved(); document.body.dataset.dirty = 'true'; $('save-state').textContent = '● 未保存'; status('草稿已恢复；请重新绑定本地资源目录'); }
@@ -150,7 +170,7 @@ function recoveryBaseURL(value) {
 }
 async function restoreRecovery(snapshot, portable = false) {
   replace(snapshot.document, { baseURL: portable ? undefined : recoveryBaseURL(snapshot.baseURL), draft: true,
-    authorReview: snapshot.authorReview, sourceText: snapshot.sourceText });
+    authorReview: snapshot.authorReview, sourceText: snapshot.sourceText, preserveOutgoingDraft: portable });
   const restoredModel = model;
   production.restoreDraft(snapshot.productionDraft);
   if (model.graph().nodes.some(node => node.key === snapshot.selectedNode)) { selected = snapshot.selectedNode; renderGraph(model.graph()); renderInspector(); }
@@ -164,21 +184,29 @@ async function restoreRecovery(snapshot, portable = false) {
   if (typeof snapshot.source === 'string') { switchTab('source'); $('source').value = snapshot.source; }
   const skipped = fieldEdits.restore(snapshot.pendingFields, { onlyBound: portable }); syncDirty();
   draft = undefined; $('draft-banner').hidden = true;
+  // If the slot is occupied, the imported file remains B's checkpoint until the first edit.
+  if (portable && hasLocalDraft()) uneditedPortableModel = restoredModel;
   if (saveDraft()) {
-    const message = portable ? '恢复文件已打开；请重新绑定本地资源目录' : '草稿已恢复；请重新绑定本地资源目录';
+    const kept = uneditedPortableModel === restoredModel ? '；原本地草稿保留至本次编辑或保存' : '';
+    const message = portable ? `恢复文件已打开；请重新绑定本地资源目录${kept}` : '草稿已恢复；请重新绑定本地资源目录';
     status(skipped ? `${message}。有 ${skipped} 个待提交字段无法定位` : message, skipped > 0);
   }
 }
 async function commitRecovery(request, content) {
   let restoration;
   request.commit(() => {
-    const snapshot = readRecovery(content, { portable: true });
-    const shape = diagnoseProject(snapshot.document.project).find(issue => issue.code === 'shape');
+    const text = typeof content === 'string' ? content : decodeRecoveryFile(content);
+    const snapshot = readRecovery(text, { portable: true }), project = snapshot.document.project;
+    const shape = diagnoseProject(project).find(issue => issue.code === 'shape');
     if (shape) throw Error(shape.message);
-    if (snapshot.productionDraft) contentCatalogue(snapshot.document.project);
+    if (hasDraftFeedbackTarget(snapshot.productionDraft, project)) contentCatalogue(project);
     if (canReplace()) restoration = restoreRecovery(snapshot, true);
   });
   await restoration;
+}
+function decodeRecoveryFile(bytes) {
+  try { return new TextDecoder('utf-8', { fatal: true }).decode(bytes); }
+  catch { throw Error('恢复文件包含无效的 UTF-8'); }
 }
 function renderProject() {
   const root = $('project-fields'); root.replaceChildren();
@@ -433,7 +461,7 @@ function switchTab(next) {
   if (tab === 'text-script') textScript.render();
   if (tab === 'resources') resources.render();
   syncDirty();
-  if (discardingSource) saveDraft();
+  if (discardingSource) { uneditedPortableModel = undefined; saveDraft(); }
 }
 function renderStructure() {
   renderStructureEditor($('structure-list'), { element, field, action, model, project: model.getView().project, mutate, set,
@@ -546,7 +574,7 @@ async function save(projectOnly) {
   if (nativeHost) { const result = await nativeRequest(projectOnly ? 'export-project' : 'save-workspace', { content, suggestedName, baseURL }); if (result.cancelled) { status('已取消保存，当前工程仍保留'); return; } }
   else download(content, suggestedName);
   if (!projectOnly && (model !== savedModel || content !== model.serialize(false) || fieldEdits.dirty || unappliedSource())) { syncDirty(); saveDraft(); status('工程快照已保存；等待期间的后续更改尚未保存'); return; }
-  if (!projectOnly) { model.markSaved(); syncDirty(); }
+  if (!projectOnly) { uneditedPortableModel = undefined; model.markSaved(); syncDirty(); }
   saveDraft(); status(projectOnly ? '运行数据已导出；请随数据保留相对路径对应的资源目录' : '工程已保存；资源路径相对于工程文件，请随工程保留资源');
 }
 const commands = {
@@ -574,8 +602,8 @@ const commands = {
     } else { fileRecoveryRequest = request; $('recovery-file').value = ''; $('recovery-file').click(); }
   },
   save: () => save(false), export: () => save(true),
-  undo: () => { if (model.undo()) { renderProject(); update(true); saveDraft(); } },
-  redo: () => { if (model.redo()) { renderProject(); update(true); saveDraft(); } },
+  undo: () => { if (model.undo()) { uneditedPortableModel = undefined; renderProject(); update(true); saveDraft(); } },
+  redo: () => { if (model.redo()) { uneditedPortableModel = undefined; renderProject(); update(true); saveDraft(); } },
   'add-node': () => mutate(() => { selected = model.addNode(graphNode()?.chapter); }, true),
   layout: () => mutate(() => model.transact((_p, positions) => { for (const key of Object.keys(positions)) delete positions[key]; }), true),
   preview,
@@ -605,14 +633,17 @@ const directCommands = new Set(['new', 'open', 'sample', 'restore-draft', 'disca
 for (const button of document.querySelectorAll('[data-command]')) button.addEventListener('click', () => run(() => directCommands.has(button.dataset.command) ? commands[button.dataset.command]() : afterFields(commands[button.dataset.command])));
 for (const button of document.querySelectorAll('[data-tab]')) button.addEventListener('click', () => run(() => afterFields(() => switchTab(button.dataset.tab))));
 $('auto-preview').addEventListener('change', () => { if ($('auto-preview').checked) preview(); });
-$('source').addEventListener('input', () => { workspaceVersion++; syncDirty(); scheduleDraft(); });
+$('source').addEventListener('input', authorInputChanged);
 $('open-file').addEventListener('change', () => run(async () => { const file = $('open-file').files[0]; if (!file) return; const request = fileOpenRequest ?? opening.begin(); fileOpenRequest = undefined; if (file.size > 8_000_000) throw new Error('工程超过 8 MB'); const input = await file.text(); request.commit(() => replace(input)); }));
 $('open-file').addEventListener('cancel', () => { fileOpenRequest = undefined; });
 $('recovery-file').addEventListener('change', () => run(async () => {
   const file = $('recovery-file').files[0]; if (!file) return;
   const request = fileRecoveryRequest ?? opening.begin(); fileRecoveryRequest = undefined;
   if (file.size > RECOVERY_MAX_BYTES) throw Error('恢复文件超过 16 MB');
-  await commitRecovery(request, await file.text());
+  let bytes;
+  try { bytes = await file.arrayBuffer(); }
+  catch (error) { request.commit(() => { throw error; }); return; }
+  await commitRecovery(request, bytes);
 }));
 $('recovery-file').addEventListener('cancel', () => { fileRecoveryRequest = undefined; });
 $('asset-directory').addEventListener('change', () => run(() => {

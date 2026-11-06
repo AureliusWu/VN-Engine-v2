@@ -48,6 +48,7 @@ export function readDocument(input: string | unknown): EditorDocument {
   if (!record(project) || project.schema !== 1 || typeof project.game !== 'string' || !project.game.trim()
     || typeof project.version !== 'string' || !project.version.trim() || typeof project.title !== 'string'
     || !Array.isArray(project.assets) || !['narrative', 'script', 'investigation', 'rain'].includes(project.type)) throw new Error('不是有效的引擎工程');
+  assertObjectList(project.assets, 'assets');
   if (project.type === 'narrative') {
     if (!Array.isArray(project.scenes) || project.scenes.some((s: unknown) => !record(s) || typeof s.id !== 'string' || !Array.isArray(s.lines))) throw new Error('缺少场景列表');
     project.scenes.forEach((scene, i) => {
