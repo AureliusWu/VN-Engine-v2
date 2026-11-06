@@ -385,6 +385,42 @@ internal static class SmokeTests
             await JS("const root=document.querySelector('#preview').contentDocument;for(const id of ['read','back','reason','@chapter:final'])root.querySelector('[data-action=\"'+id+'\"]').click();root.querySelector('[data-control=next]').click()");
             await Wait("document.querySelector('#preview').contentDocument?.querySelector('.vn-text')?.textContent === '本章结束。'");
             checks.Add("Native chapter workbench adds and renames a chapter, preserves route references, undoes reordering and completes actual cross-chapter play");
+            const string nativeDslSource = "vn-script 1\n# Native saved source, not compiled\n";
+            await JS("window.nativeDslSource=" + JsonSerializer.Serialize(nativeDslSource));
+            await JS("document.querySelector('#template').value='script';nativeDraftNew()");
+            await Wait("document.body.dataset.projectType==='script' && document.body.dataset.dirty==='false'");
+            await JS("""
+              (()=>{
+                document.querySelector('[data-tab=source]').click();
+                window.nativeDslRuntime=JSON.stringify(JSON.parse(document.querySelector('#source').value).program);
+                document.querySelector('[data-tab=text-script]').click();
+                const source=document.querySelector('[data-dsl-source]');
+                source.value=window.nativeDslSource;source.dispatchEvent(new Event('input',{bubbles:true}));
+              })()
+              """);
+            await Wait("document.body.dataset.dirty==='true'");
+            await JS("document.querySelector('[data-command=save]').click()");
+            await Wait("document.body.dataset.dirty==='false' && document.querySelector('#status').textContent.startsWith('工程已保存')");
+            string savedDslProgram;
+            using (var document = JsonDocument.Parse(HostFiles.ReadJson(window.SmokeSavedFile!)))
+            {
+                if (document.RootElement.GetProperty("textScriptSource").GetString() != nativeDslSource) throw new InvalidDataException("编辑器工程未保存文本 DSL 原文");
+                savedDslProgram = JsonSerializer.Serialize(HostFiles.Project(document.RootElement).GetProperty("program"));
+            }
+            await JS("window.nativeDslSavedDraftId=document.body.dataset.draftId;nativeDraftNew()");
+            await Wait("document.body.dataset.draftId!==window.nativeDslSavedDraftId && document.querySelector('[data-dsl-source]').value===''");
+            await JS("document.querySelector('[data-command=open]').click()");
+            await Wait("document.querySelector('#status').textContent.startsWith('工程已打开') && document.querySelector('[data-dsl-source]').value===window.nativeDslSource");
+            await JS("document.querySelector('[data-tab=source]').click()");
+            if (await JS("JSON.stringify(JSON.parse(document.querySelector('#source').value).program)===window.nativeDslRuntime") != "true") throw new InvalidDataException("打开工程时未应用的 DSL 改变了运行剧本");
+            await JS("document.querySelector('[data-command=export]').click()");
+            await Wait("document.querySelector('#status').textContent.startsWith('运行数据已导出')");
+            using (var document = JsonDocument.Parse(HostFiles.ReadJson(export)))
+            {
+                if (document.RootElement.TryGetProperty("textScriptSource", out _) || JsonSerializer.Serialize(document.RootElement.GetProperty("program")) != savedDslProgram)
+                    throw new InvalidDataException("运行数据导出改变了剧本或携带了作者文本");
+            }
+            checks.Add("Native Studio saves and reopens unapplied DSL in an editor workspace while runtime export preserves the original program");
             await JS("window.nativeDenied=false; const onDenied=e=>{if(e.data?.id==='smoke-invalid'){window.nativeDenied=e.data.ok===false;chrome.webview.removeEventListener('message',onDenied)}};chrome.webview.addEventListener('message',onDenied);chrome.webview.postMessage({id:'smoke-invalid',command:'read-any-file',path:'C:/Windows/win.ini'})");
             await Wait("window.nativeDenied === true");
             checks.Add("The native bridge rejects undeclared commands");

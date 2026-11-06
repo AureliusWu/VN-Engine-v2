@@ -3,10 +3,55 @@ import assert from 'node:assert/strict';
 import { readFile, mkdtemp, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { EditorModel, newProject, readDocument, diagnoseProject, RECOVERY_FORMAT, RECOVERY_MAX_BYTES, readRecovery, writeRecovery } from '../dist/editor/index.js';
+import { EditorModel, newProject, readDocument, assertWorkspaceStructure, diagnoseProject, RECOVERY_FORMAT, RECOVERY_MAX_BYTES, readRecovery, writeRecovery } from '../dist/editor/index.js';
 import { createProject, AssetCatalog, creativeDiagnostics, validateProjectCompliance } from '../dist/index.js';
 import { packageStudio } from '../tools/package-studio.mjs';
 import { packageGame } from '../tools/package-game.mjs';
+
+test('editor workspace saves editable DSL separately and applies it with the program in one history entry', () => {
+  const project = newProject('script');
+  const model = new EditorModel(project);
+  const original = model.serialize(true);
+  const draft = '# unfinished 中文\r\nline';
+  const snapshot = model.serializeWorkspace(draft);
+  assert.equal(model.getView().textScriptSource, undefined);
+  assert.equal(model.canUndo, false);
+  assert.deepEqual(JSON.parse(snapshot).project, project);
+  const reopened = new EditorModel(snapshot);
+  assert.equal(reopened.getView().textScriptSource, draft);
+  assert.equal(reopened.serialize(true), original);
+  const program = structuredClone(project.program);
+  program.blocks[0].lines[0].text = 'Applied';
+  assert.equal(reopened.applyTextScript(program, '# applied\n'), true);
+  assert.equal(reopened.getView().textScriptSource, '# applied\n');
+  assert.equal(reopened.getView().project.program.blocks[0].lines[0].text, 'Applied');
+  assert.equal(reopened.undo(), true);
+  assert.equal(reopened.getView().textScriptSource, draft);
+  assert.equal(reopened.serialize(true), original);
+  assert.equal(reopened.redo(), true);
+  assert.equal(reopened.getView().textScriptSource, '# applied\n');
+  assert.throws(() => reopened.applyTextScript({ ...program, game: 'another' }, 'invalid'), /身份/);
+  assert.throws(() => readDocument({ ...JSON.parse(snapshot), textScriptSource: [] }), /DSL 源稿/);
+  assert.throws(() => model.serializeWorkspace('a'.repeat(1_000_001)), /DSL 源稿/);
+});
+
+test('recovery keeps saved and pending DSL distinct for both document and original JSON representations', () => {
+  const model = new EditorModel(newProject('script'));
+  model.setTextScriptSource('# saved source\r\n');
+  const document = model.getView(), sourceText = '  ' + model.serialize(true);
+  for (const original of [undefined, sourceText]) {
+    const wire = writeRecovery({ document, sourceText: original, textScriptDraft: '' }, { portable: true });
+    const restored = readRecovery(wire, { portable: true });
+    assert.equal(restored.document.textScriptSource, '# saved source\r\n');
+    assert.equal(restored.textScriptDraft, '');
+    assert.equal(restored.sourceText, original);
+    assert.equal(new EditorModel(restored.document).serialize(true), model.serialize(true));
+  }
+  const wrapped = JSON.parse(writeRecovery({ document }));
+  assert.throws(() => readRecovery(JSON.stringify({ ...wrapped, textScriptSource: 'ambiguous' })), /唯一的工程表示/);
+  const raw = JSON.parse(writeRecovery({ document, sourceText }));
+  assert.throws(() => readRecovery(JSON.stringify({ ...raw, textScriptSource: 42 })), /DSL 源稿/);
+});
 
 test('all four editor templates validate against their real engine and have playable exits', () => {
   for (const kind of ['vn', 'chat', 'script', 'investigation']) {
@@ -175,6 +220,51 @@ test('editor rejects non-object assets without committing a replacement while in
   const project = { ...newProject('script'), assets: [{ id: 'repairable', kind: 'background' }] };
   assert.deepEqual(readDocument(project).project.assets, project.assets);
   assert.ok(new EditorModel(project).diagnostics().some(diagnostic => diagnostic.code === 'asset-path'));
+});
+test('editor rejects non-object story lines before changing the model or history', () => {
+  const model = new EditorModel(newProject('script'));
+  model.set(['title'], 'Keep this edited project');
+  model.set(['version'], '2');
+  model.undo();
+  const before = model.serialize();
+  const script = newProject('script'), narrative = newProject('vn');
+  script.program.blocks[0].lines = [null];
+  narrative.scenes[0].lines = ['not a line'];
+  for (const [project, field] of [[script, /program\.blocks\[0\]\.lines/], [narrative, /scenes\[0\]\.lines/]]) {
+    assert.throws(() => assertWorkspaceStructure(readDocument(project).project), field);
+    assert.throws(() => model.replaceProject(JSON.stringify(project)), field);
+    assert.equal(model.serialize(), before);
+    assert.equal(model.canUndo, true);
+    assert.equal(model.canRedo, true);
+  }
+  assert.equal(model.redo(), true);
+  assert.equal(model.getView().project.version, '2');
+  assert.equal(model.undo(), true);
+  assert.equal(model.serialize(), before);
+
+  const repairable = newProject('script');
+  repairable.program.blocks[0].lines[0].speaker = '';
+  assert.equal(model.replaceProject(repairable), true);
+  assert.ok(model.diagnostics().some(issue => issue.code === 'runtime' && issue.severity === 'error'));
+});
+test('editor rejects malformed investigation records while missing evidence references stay repairable', () => {
+  const model = new EditorModel(newProject('investigation'));
+  const before = model.serialize();
+  const missingCatalog = newProject('investigation');
+  delete missingCatalog.chapters[0].evidence;
+  const nullEvidence = newProject('investigation');
+  nullEvidence.chapters[0].evidence.note = null;
+  const nullNode = newProject('investigation');
+  nullNode.chapters[0].nodes.room = null;
+  for (const [project, field] of [[missingCatalog, /chapters\[0\]\.evidence/],
+    [nullEvidence, /chapters\[0\]\.evidence\["note"\]/], [nullNode, /chapters\[0\]\.nodes\["room"\]/]]) {
+    assert.throws(() => model.replaceProject(project), field);
+    assert.equal(model.serialize(), before);
+    assert.equal(model.canUndo, false);
+  }
+  missingCatalog.chapters[0].evidence = {};
+  assert.equal(model.replaceProject(missingCatalog), true);
+  assert.ok(model.diagnostics().some(issue => issue.code === 'evidence-reference'));
 });
 test('editor rejects malformed timeline entries before replacement while scalar errors stay repairable', () => {
   const script = newProject('script');

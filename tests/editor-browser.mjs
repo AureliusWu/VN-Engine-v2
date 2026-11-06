@@ -132,6 +132,7 @@ try {
   const currentView = () => repair.evaluate(() => ({
     title: document.querySelector('#project-name').textContent,
     binding: document.querySelector('#asset-state').textContent,
+    draftId: document.body.dataset.draftId,
     revision: document.body.dataset.previewRevision,
     image: document.querySelector('#preview').contentDocument.querySelector('.vn-background').src,
     line: document.querySelector('#preview').contentDocument.querySelector('.vn-text').textContent
@@ -140,10 +141,10 @@ try {
   const malformed = newProject('vn'); malformed.game = 'invalid-choice-shape'; malformed.scenes[0].choices = { next: 'end' };
   const repairTab = name => repair.locator(`[data-tab=${name}]`).click();
   const repairSource = repair.locator('#source');
-  const checkCurrent = async () => {
+  const checkCurrent = async (project = custom, view = mounted) => {
     await repairTab('story'); await repairTab('source');
     assert.deepEqual({ project: JSON.parse(await repairSource.inputValue()), ...await currentView() },
-      { project: custom, ...mounted }, 'A rejected document must preserve the actual model, binding and mounted iframe');
+      { project, ...view }, 'A rejected document must preserve the actual model, binding and mounted iframe');
   };
   await openProject(malformed);
   await repair.locator('#status.error').waitFor({ timeout: 5000 });
@@ -155,6 +156,46 @@ try {
   assert.equal(await repairSource.inputValue(), rejectedText);
   await checkCurrent();
   assert.match(await repair.locator('#status').innerText(), /scenes\[0\]\.choices/);
+
+  await repairTab('story');
+  const repairTitle = repair.getByLabel('作品名称', { exact: true });
+  const edited = { ...custom, title: 'Existing edit before malformed line import' };
+  await repairTitle.fill(edited.title); await repairTitle.blur();
+  const editedView = await currentView();
+  assert.equal(editedView.title, edited.title);
+  const malformedLines = newProject('script');
+  malformedLines.title = 'Must not replace the edited workspace';
+  malformedLines.program.blocks[0].lines[0] = null;
+  await openProject(malformedLines);
+  await repair.locator('#status.error').waitFor({ timeout: 5000 });
+  assert.deepEqual(await currentView(), editedView);
+  assert.match(await repair.locator('#status').innerText(), /program\.blocks\[0\]\.lines/);
+  await checkCurrent(edited, editedView);
+
+  const malformedNarrative = newProject('vn');
+  malformedNarrative.scenes[0].lines[0] = [];
+  const malformedText = JSON.stringify(malformedNarrative);
+  await repairSource.fill(malformedText);
+  await repair.locator('[data-command=apply-source]').click();
+  assert.match(await repair.locator('#status').innerText(), /scenes\[0\]\.lines/);
+  assert.equal(await repairSource.inputValue(), malformedText);
+  await checkCurrent(edited, editedView);
+  await repair.locator('[data-command=undo]').click();
+  await checkCurrent(custom, { ...editedView, title: custom.title });
+  assert.equal(await repair.locator('[data-command=undo]').isDisabled(), true);
+  await repair.locator('[data-command=redo]').click();
+  await checkCurrent(edited, editedView);
+  passed('Studio rejects non-object lines on open and JSON apply without changing the workspace or undo history');
+
+  const malformedInvestigation = newProject('investigation');
+  malformedInvestigation.chapters[0].evidence.note = null;
+  await repairTab('story');
+  await openProject(malformedInvestigation);
+  await repair.locator('#status.error').waitFor({ timeout: 5000 });
+  assert.deepEqual(await currentView(), editedView);
+  assert.match(await repair.locator('#status').innerText(), /chapters\[0\]\.evidence\["note"\]/);
+  await checkCurrent(edited, editedView);
+  passed('Studio rejects malformed investigation evidence before replacing the mounted workspace');
 
   const disconnected = newProject('script'); disconnected.title = 'Repairable missing route';
   disconnected.program.blocks[0].exit.choices[0].next = 'missing';

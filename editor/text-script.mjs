@@ -3,13 +3,23 @@ import { createTextCompileTask } from './text-compile-task.mjs';
 /** Author-only front end. Compilation, catalog checking and JSON formatting run off-thread. */
 export function createTextScriptPanel(root,ports){
   const {element,action}=ports;
-  let compiled,compiledText='',appliedText='',disposed=false,attempted=false,pending,checkedKey,syntaxOk=false,identity,formatted='';
+  let compiled,compiledText='',storedText='',disposed=false,attempted=false,pending,checkedKey,syntaxOk=false,identity,formatted='';
+  let loadedText='',displayedText='';
   const message=element('p','载入示例或输入文本，再编译预览。',{role:'status','data-dsl-status':'true'});
   const input=element('textarea',undefined,{'aria-label':'文本 DSL 内容',spellcheck:'false',maxlength:1000000,'data-dsl-source':'true'});
   const diagnostics=element('ol',undefined,{'aria-label':'DSL 编译诊断',class:'dsl-diagnostics'});
   const result=element('pre',undefined,{'aria-label':'编译 JSON 预览',class:'dsl-output'});
   const controls=element('div',undefined,{class:'author-actions'});
   function state(value,text){root.dataset.dslState=value;if(text)message.textContent=text;}
+  function showSource(text){
+    input.value=text;
+    loadedText=text;
+    displayedText=input.value;
+  }
+  // A textarea displays LF. Keep the loaded line endings until its visible content changes.
+  function sourceText(){return input.value===displayedText?loadedText:input.value;}
+  function draft(){const text=sourceText();return text===storedText?undefined:text;}
+  function idle(){state('idle',storedText?'已载入工程的 DSL 源文；编译预览后可显式应用。':'载入示例或输入文本，再编译预览。');}
   function snapshot(){
     const project=ports.project();
     const context={type:project.type,game:project.game,version:project.version,assets:project.assets.map(asset=>({id:asset?.id,kind:asset?.kind}))};
@@ -40,7 +50,7 @@ export function createTextScriptPanel(root,ports){
     const resource=kind=>project.assets.find(asset=>asset?.kind===kind&&typeof asset.id==='string'&&asset.id.trim()&&asset.id.length<=256)?.id;
     const cues=[['background',resource('background')],['portrait',resource('portrait')],['music',resource('audio')]]
       .filter(([,id])=>id).map(([field,id])=>`cue block start ${field} ${JSON.stringify(id)}\n`).join('');
-    input.value=`vn-script 1\ngame ${JSON.stringify(project.game)}\nversion ${JSON.stringify(project.version)}\nentry start\nvar trust number 0 min 0 max 10\n${cues}cue line hello pause 120\ncue line hello effect fade 150\nblock start "开场"\nline hello "旁白" "你好，这是受限文本 DSL。"\nchoice yes "继续" -> finish with add trust 1\nblock finish\nline final "旁白" "完成"\nend 完成\n`;
+    showSource(`vn-script 1\ngame ${JSON.stringify(project.game)}\nversion ${JSON.stringify(project.version)}\nentry start\nvar trust number 0 min 0 max 10\n${cues}cue line hello pause 120\ncue line hello effect fade 150\nblock start "开场"\nline hello "旁白" "你好，这是受限文本 DSL。"\nchoice yes "继续" -> finish with add trust 1\nblock finish\nline final "旁白" "完成"\nend 完成\n`);
     invalidate();ports.changed();
   });example.dataset.dslCommand='example';
   const compile=action('编译并预览',()=>begin(true));compile.dataset.dslCommand='compile';
@@ -51,12 +61,13 @@ export function createTextScriptPanel(root,ports){
     if(attempted&&current.key!==checkedKey){begin(false,current);throw Error('资源清单已变化，正在后台重新检查，请稍后应用');}
     if(!compiled?.ok||compiledText!==input.value)throw Error('请先成功编译当前文本');
     if(!matches(current.context))throw Error('文本 game/version 与当前工程不一致；请修改文本中的身份后重新编译');
-    ports.apply(compiled.program);appliedText=input.value;ports.changed();message.textContent='已应用剧本 · 仅替换 program，可用一次撤销恢复。';
+    ports.apply(compiled.program,sourceText());
+    message.textContent='已应用剧本与 DSL 源文，可一起撤销。';
   });apply.dataset.dslCommand='apply';apply.disabled=true;
   controls.append(example,compile,cancel,apply);
   const rangeList=element('details'),rangeSummary=element('summary','编译来源位置');
   const ranges=element('ol',undefined,{class:'dsl-ranges'});rangeList.append(rangeSummary,ranges);
-  root.replaceChildren(element('p','支持变量、对白、分支和选择效果；演出用 cue block 节点ID 或 cue line 台词ID。编译与资源清单检查在后台执行，可随时取消。应用只替换 program，可撤销。',{class:'help'}),controls,message,input,diagnostics,result,rangeList);
+  root.replaceChildren(element('p','支持变量、对白、分支和选择效果。编译与资源清单检查在后台执行，可随时取消。保存工程会保留源文；显式应用才更新剧本。图形和 JSON 编辑保留原有源文。',{class:'help'}),controls,message,input,diagnostics,result,rangeList);
   state('idle');root.setAttribute('aria-busy','false');
   function matches(context){return context.type==='script'&&identity?.game===context.game&&identity?.version===context.version;}
   function locate(span){input.focus();input.setSelectionRange(span.start.offset,span.end.offset);}
@@ -82,15 +93,31 @@ export function createTextScriptPanel(root,ports){
     state('running',preview?'正在后台编译，可随时取消；当前 JSON 保留。':'资源清单已变化，正在后台重新检查；当前 JSON 保留。');
     task.run({source:compiledText,fileName:'studio.vn',projectContext:current.context});
   }
-  function invalidate(){task.cancel();pending=undefined;attempted=false;compiledText='';clearResult();state('stale','文本已更改，请重新编译。');}
-  function changed(){if(disposed||!attempted)return;const current=snapshot();if(current.key!==(pending?.key??checkedKey))begin(false,current);}
+  function invalidate(text='文本已更改，请重新编译。'){
+    task.cancel();pending=undefined;attempted=false;compiledText='';clearResult();state('stale',text);
+  }
+  function changed(){
+    if(disposed)return;
+    const saved=ports.source()??'';
+    if(saved!==storedText){
+      const text=sourceText(), hadDraft=text!==storedText;
+      storedText=saved;
+      if(!hadDraft){showSource(saved);invalidate();idle();}
+      else if(text===saved)showSource(saved);
+    }
+    if(attempted){const current=snapshot();if(current.key!==(pending?.key??checkedKey))begin(false,current);}
+  }
   input.addEventListener('input',()=>{invalidate();ports.changed();});
   return {
-    get dirty(){return input.value!==appliedText;},getDraft:()=>input.value,
-    restore(value){if(typeof value==='string'&&value.length<=1000000){input.value=value;invalidate();}},
+    get dirty(){return draft()!==undefined;},getDraft:draft,
+    restore(value){
+      if(typeof value!=='string'||value.length>1000000)return;
+      showSource(value);
+      if(draft()!==undefined)invalidate('已恢复未应用的 DSL 文本；请先编译再应用。');
+    },
     render(){compile.disabled=ports.project().type!=='script';if(compile.disabled){invalidate();state('invalid','文本 DSL 只适用于条件剧本工程；当前工程保留。');}else changed();},
     changed,
-    reset(){task.cancel();pending=undefined;attempted=false;compiledText='';appliedText='';input.value='';clearResult();state('idle','载入示例或输入文本，再编译预览。');},
+    reset(source=''){storedText=source;showSource(source);invalidate();idle();},
     dispose(){disposed=true;task.dispose();pending=undefined;clearResult();}
   };
 }

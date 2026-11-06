@@ -1,0 +1,90 @@
+{
+  "schema": 1,
+  "engineVersion": "2.1.0",
+  "baseCommit": "67007fb5758473ac5775ef3ff8b5c5ce52a23b3d",
+  "plan": "docs/PLAN-v2.1.0.md",
+  "regressions": {
+    "status": "PASS",
+    "node": [
+      "editor rejects non-object story lines before changing the model or history",
+      "editor rejects malformed investigation records while missing evidence references stay repairable",
+      "editor workspace saves editable DSL separately and applies it with the program in one history entry",
+      "recovery keeps saved and pending DSL distinct for both document and original JSON representations"
+    ],
+    "chromium": [
+      "Studio rejects non-object lines on open and JSON apply without changing the workspace or undo history",
+      "Studio rejects malformed investigation evidence before replacing the mounted workspace",
+      "Studio saves and reopens editable DSL source independently of runtime JSON and applies it with undo and redo"
+    ]
+  },
+  "local": {
+    "nodeVersion": "v24.14.0",
+    "check": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 398,
+      "pass": 394,
+      "fail": 4,
+      "skipped": 0,
+      "reason": "Windows symlink fixture creation EPERM",
+      "failures": [
+        "symlink import parents are refused; pure SDK requires an explicit import/decoder host",
+        "project symlinks and escaping assets are rejected, imports create no files",
+        "resource symlinks, missing bytes, invalid encoding and report overwrite are structured failures",
+        "build refuses altered assets, escaping symlinks and generated-file collisions before writing output"
+      ]
+    },
+    "editorModel": {
+      "status": "PASS",
+      "total": 32
+    },
+    "pythonRenpy": {
+      "status": "PASS",
+      "total": 6
+    },
+    "schemaSync": "PASS",
+    "provenance": {
+      "status": "PASS",
+      "files": 202
+    },
+    "projectSchemas": {
+      "status": "PASS",
+      "total": 5
+    },
+    "portfolioPython": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 8,
+      "pass": 7,
+      "fail": 1,
+      "reason": "Windows symlink fixture creation WinError 1314"
+    },
+    "workflowInventory": "PASS"
+  },
+  "sourceSha256": {
+    "docs/provenance.json": "85f4f554463b4c87cd2357b647f55e920f640415491c0b44d363df1271e4420f",
+    "editor/app.mjs": "1063e165bc0daf219c6bb69349b9f1c9ac7d7dc84b9d5efe66c580edb7d23761",
+    "editor/text-script.mjs": "4565004013ab763dd5bf2442465efb8c3037ab0f9d20990b5350355f0e5c542c",
+    "hosts/windows/HostFiles.cs": "3892c3a673b332afea6132027a3f428947fbf505fcc8a4ff74af93d406a838c9",
+    "hosts/windows/HostTests.cs": "5ee4e1f0437562cdd566a290d7346b1e39c19e988081310a1eafefafa3fd0a6f",
+    "hosts/windows/SmokeTests.cs": "f7e5a811d07b3ba84e5c878dbf19ba5704c8299c221cc689aca4c7ed96378ef4",
+    "hosts/windows/VNEngine.Windows.csproj": "6ca5652d5a334ce875cd23d7b8f34b5a57961683fc5d8178e3cd09be96467b15",
+    "package-lock.json": "eeba790d16d1feac86ab55fa97c42b6e5dedb015cee09e41a7d7c559f5225d5f",
+    "package.json": "60f7827e5783f5a600e105dd99c81d91173bfde1a5e9fd7e92d2d052b44570ad",
+    "src/editor/model.ts": "6e0bfdb694e75b1dd979b0d677b675ca939c9d75127428466ba5eff0c3a7d2a8",
+    "src/editor/recovery.ts": "bf432fba150da55398e7c61e4880a91ec272a4642b104f908854abea00cc3c48",
+    "src/version.ts": "829aeee143dd8a7659bd8280e47c37212353e486b0e70285982da1019f50edc0",
+    "tests/editor-browser.mjs": "af102b7013a8c6eb5b1093f89ca0943be08b60f3e4fe18bee0a34a463315d2a5",
+    "tests/editor.test.mjs": "f2e9caf4c1ebc68ec5674f779e00034ce8e92758212d9c3d925e8f9eb09d036c",
+    "tests/p3-studio-browser.mjs": "0d41538074d1fc0db60e03e14ed33667dbb20cb8dacd2a74fed06c9fe1ca4dcf"
+  },
+  "evidenceSha256": {
+    "test-results/v210-line-shape-baseline-browser.log": "c21746cbe0d0b2cd52a299bd8be8371fae00898c8ed6a8591e2151168883a34f",
+    "test-results/v210-investigation-shape-baseline-browser.json": "7c0c3ed970a28136772ceff49697787d4e1f825ae96b66ea8610dcfa555561f9",
+    "test-results/v210-core-initial-contract-fail.log": "ac3c3fd9469248fd2e4747f6f304f46e96a848a16f573029de2f86eba2e33961",
+    "test-results/v210-final-check.log": "249d48c276686872966274de25f31f008ce74359a61855e208dd74d58cc7bea0",
+    "test-results/v210-final-remainder.log": "994ed1794861d49ba484a042712cef979d75bfc184b3671f4362672595e2f286",
+    "test-results/v210-editor-node.log": "77053ddd270b3b4d6012ac130ded6c4fb74718fa8fcbe31d1c87eccc744a67c6",
+    "test-results/v210-editor-focused.log": "124c881087fbe7307309f3ec526de6a564e56934f5c2cd430379f3bc63b2035d",
+    "test-results/v210-p3-focused.log": "8323d7c3abba997dbd321533d0f0c6eadd3397828c106877fd58705ac99c302c"
+  },
+  "delivery": "test-results/v2.1.0-delivery.json"
+}

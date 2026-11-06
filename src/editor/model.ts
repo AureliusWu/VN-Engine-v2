@@ -9,12 +9,16 @@ import { validateKeyVisual } from '../stage/key-visual.js';
 import { freezeData, type DeepReadonly } from '../runtime/readonly.js';
 import { assertAuthorID, evidenceReferences } from './authoring.js';
 import { validateVariable, validateEffects, variableReferences, chapterReferences, hasAuthoredReplay } from './catalogs.js';
-import type { Variable, Effect } from '../script/types.js';
+import type { Variable, Effect, ScriptProgram } from '../script/types.js';
 
 type Mutable<T> = { -readonly [P in keyof T]: T[P] extends object ? Mutable<T[P]> : T[P] };
 export type AuthorProject = Mutable<EngineProject>;
 export type Position = { x: number; y: number };
-export type EditorDocument = { format: 'vn-engine-editor'; schema: 1; project: EngineProject; positions: Record<string, Position> };
+export const TEXT_SCRIPT_SOURCE_LIMIT = 1_000_000;
+export type EditorDocument = {
+  format: 'vn-engine-editor'; schema: 1; project: EngineProject; positions: Record<string, Position>;
+  textScriptSource?: string;
+};
 export type EditorNode = { key: string; id: string; title: string; text: string; path: (string | number)[]; chapter?: string; entry: boolean; ending: boolean };
 export type EditorEdge = { from: string; to: string; label: string; path: (string | number)[] };
 export type Diagnostic = { severity: 'error' | 'warning'; code: string; message: string; node?: string; path?: (string | number)[] };
@@ -53,6 +57,10 @@ export function readDocument(input: string | unknown): EditorDocument {
   if (!record(value)) throw new Error('工程根节点必须是对象');
   const wrapped = value.format === 'vn-engine-editor';
   if (wrapped && value.schema !== 1) throw new Error('不支持的编辑器工程版本');
+  const textScriptSource = wrapped ? value.textScriptSource : undefined;
+  if (textScriptSource !== undefined && (typeof textScriptSource !== 'string' || textScriptSource.length > TEXT_SCRIPT_SOURCE_LIMIT)) {
+    throw new Error('无效的 DSL 源稿');
+  }
   const project = wrapped ? value.project : value;
   if (!record(project) || project.schema !== 1 || typeof project.game !== 'string' || !project.game.trim()
     || typeof project.version !== 'string' || !project.version.trim() || typeof project.title !== 'string'
@@ -99,7 +107,28 @@ export function readDocument(input: string | unknown): EditorDocument {
   if (wrapped && record(value.positions)) for (const [key, point] of Object.entries(value.positions)) {
     if (record(point) && [point.x, point.y].every(n => typeof n === 'number' && Number.isFinite(n) && n >= 0 && n <= 100000)) positions[key] = { x: point.x, y: point.y };
   }
-  return { format: 'vn-engine-editor', schema: 1, project: project as EngineProject, positions };
+  return { format: 'vn-engine-editor', schema: 1, project: project as EngineProject, positions,
+    ...(textScriptSource === undefined ? {} : { textScriptSource }) };
+}
+
+/** Check the records the Studio inspector needs before replacing an active workspace. */
+export function assertWorkspaceStructure(project: EngineProject): void {
+  if (project.type === 'narrative') project.scenes.forEach((scene, i) => {
+    assertObjectList(scene.lines, `scenes[${i}].lines`);
+  });
+  if (project.type === 'script') project.program.blocks.forEach((block, i) => {
+    assertObjectList(block.lines, `program.blocks[${i}].lines`);
+  });
+  if (project.type === 'investigation') project.chapters.forEach((chapter, i) => {
+    const path = `chapters[${i}]`;
+    if (!record(chapter.evidence)) throw new Error(`工程字段 ${path}.evidence 必须为对象`);
+    for (const [id, evidence] of Object.entries(chapter.evidence)) {
+      if (!record(evidence)) throw new Error(`工程字段 ${path}.evidence[${JSON.stringify(id)}] 必须为对象`);
+    }
+    for (const [id, node] of Object.entries(chapter.nodes)) {
+      if (!record(node)) throw new Error(`工程字段 ${path}.nodes[${JSON.stringify(id)}] 必须为对象`);
+    }
+  });
 }
 
 export function projectGraph(project: EngineProject): { nodes: EditorNode[]; edges: EditorEdge[] } {
@@ -289,10 +318,19 @@ export class EditorModel {
   markSaved() { this.saved = JSON.stringify(this.document); }
   markUnsaved() { this.saved = ''; }
   serialize(projectOnly = false) { return JSON.stringify(projectOnly ? this.document.project : this.document, null, 2) + '\n'; }
+  serializeWorkspace(sourceDraft?: string) {
+    if (sourceDraft === undefined) return this.serialize();
+    if (typeof sourceDraft !== 'string' || sourceDraft.length > TEXT_SCRIPT_SOURCE_LIMIT) throw new Error('无效的 DSL 源稿');
+    return JSON.stringify({ ...this.document, textScriptSource: sourceDraft }, null, 2) + '\n';
+  }
   graph() { return projectGraph(this.document.project); }
   diagnostics(files?: ReadonlySet<string>) { return diagnoseProject(this.document.project, files); }
   transact(edit: (project: AuthorProject, positions: Record<string, Position>) => void) {
-    const next = structuredClone(this.document); edit(next.project as AuthorProject, next.positions);
+    return this.editDocument(next => edit(next.project as AuthorProject, next.positions));
+  }
+  private editDocument(edit: (next: EditorDocument) => void) {
+    const next = structuredClone(this.document);
+    edit(next);
     const checked = readDocument(next);
     if (JSON.stringify(checked) === JSON.stringify(this.document)) return false;
     this.past.push(this.document); if (this.past.length > this.historyLimit) this.past.shift();
@@ -300,6 +338,19 @@ export class EditorModel {
   }
   undo() { const previous = this.past.pop(); if (!previous) return false; this.future.push(this.document); this.document = previous; this.view = undefined; return true; }
   redo() { const next = this.future.pop(); if (!next) return false; this.past.push(this.document); this.document = next; this.view = undefined; return true; }
+  setTextScriptSource(source: string) {
+    return this.editDocument(next => { next.textScriptSource = source; });
+  }
+  applyTextScript(program: ScriptProgram, source: string) {
+    return this.editDocument(next => {
+      const project = next.project;
+      if (project.type !== 'script' || !program || program.game !== project.game || program.version !== project.version) {
+        throw new Error('DSL 与当前工程的类型或身份不一致');
+      }
+      next.project = { ...project, program: structuredClone(program) };
+      next.textScriptSource = source;
+    });
+  }
   set(path: readonly (string | number)[], value: unknown) {
     if (!path.length || path.length > 60 || path.some(k => ['__proto__', 'constructor', 'prototype'].includes(String(k)) || (typeof k === 'number' && (!Number.isInteger(k) || k < 0 || k > 10000)))) throw new Error('无效字段路径');
     return this.transact(project => {
@@ -315,6 +366,7 @@ export class EditorModel {
   }
   replaceProject(project: unknown) {
     const next = readDocument(project).project;
+    assertWorkspaceStructure(next);
     return this.transact(current => { for (const key of Object.keys(current)) delete (current as any)[key]; Object.assign(current, next); });
   }
   move(key: string, position: Position) {

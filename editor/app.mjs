@@ -1,4 +1,4 @@
-import { EditorModel, diagnoseProject, newProject, readAuthorReview, contentCatalogue, readRecovery, writeRecovery, RECOVERY_MAX_BYTES } from '../lib/editor/index.js';
+import { EditorModel, assertWorkspaceStructure, diagnoseProject, newProject, readDocument, readAuthorReview, contentCatalogue, readRecovery, writeRecovery, RECOVERY_MAX_BYTES } from '../lib/editor/index.js';
 import { renderPresentationEditor } from './presentation.mjs';
 import { renderCollectionsEditor } from './collections.mjs';
 import { createRoutesPanel } from './routes.mjs';
@@ -101,7 +101,8 @@ const evidence = createEvidencePanel($('evidence-list'), {element,action,source:
   navigate:origin=>{const node=model.graph().nodes.find(n=>n.id===origin.nodeId&&n.chapter===origin.chapterId);if(!node)throw Error('此来源没有对应的可编辑节点');selected=node.key;switchTab('story');renderGraph(model.graph());renderInspector();}
 });
 const textScript=createTextScriptPanel($('text-script-list'),{element,action,project:()=>model.getView().project,
-  changed:authorInputChanged,apply:program=>set(['program'],program,true),
+  source:()=>model.getView().textScriptSource, changed:authorInputChanged,
+  apply:(program,source)=>mutate(()=>model.applyTextScript(program,source),true),
   preview:program=>preview({candidate:{...model.getView().project,program}})
 });
 const resources=createResourcesPanel($('resources-list'),{element,action,source:projectSource,project:()=>model.getView().project,
@@ -112,11 +113,11 @@ function authorInputChanged() {
   recoveryCheckpoint = undefined;
   workspaceVersion++; syncDirty(); scheduleDraft();
 }
-function mutate(fn, inspector = false) {
+function mutate(fn, inspector = false, diagnostics) {
   const before = model.getView();
   fn();
   if (model.getView() !== before) recoveryCheckpoint = undefined;
-  update(inspector); status('更改已记录，可撤销');
+  update(inspector, diagnostics); status('更改已记录，可撤销');
 }
 function set(path, value, inspector = false) { mutate(() => model.set(path, value), inspector); }
 function scheduleDraft() {
@@ -196,8 +197,17 @@ function clearResources(nextBase = new URL('./', location.href).href) {
   for (const url of resourceURLs.values()) URL.revokeObjectURL(url);
   resourceURLs.clear(); resourceFiles = undefined; baseURL = nextBase; $('asset-state').textContent = '未绑定目录；资源路径相对于工程文件。';
 }
+function preflightProject(project, files) {
+  assertWorkspaceStructure(project);
+  const diagnostics = diagnoseProject(project, files);
+  const shape = diagnostics.find(issue => issue.code === 'shape');
+  if (shape) throw Error(shape.message);
+  return diagnostics;
+}
 function replace(input, options = {}) {
   const next = new EditorModel(input);
+  const files = options.files ? new Set(options.files) : undefined;
+  const diagnostics = options.diagnostics ?? preflightProject(next.getView().project, files);
   const incomingReview = options.authorReview;
   if(incomingReview) readAuthorReview(incomingReview,options.draft?{...next.getView().project,game:incomingReview.game,version:incomingReview.storyVersion}:next.getView().project);
   // Validate the replacement before committing a draft or clearing the current resources.
@@ -206,10 +216,10 @@ function replace(input, options = {}) {
   }
   cancelDraftTimer();
   opening.invalidate(); assetBinding.invalidate(); fieldEdits.reset();
-  clearResources(options.baseURL); if (options.files) resourceFiles = new Set(options.files); model = next; recoveryCheckpoint = undefined;
+  clearResources(options.baseURL); resourceFiles = files; model = next; recoveryCheckpoint = undefined;
   beginDraftWorkspace();
-  identityProject=model.serialize(true);identitySource=options.sourceText ?? (typeof input==='string'&&!JSON.parse(input).format?input:identityProject);production.reset(incomingReview,{detached:options.draft});evidence.reset();textScript.reset();resources.reset();selected = model.graph().nodes[0]?.key;
-  savedSource = ''; tab = 'story'; renderProject(); update(true); switchTab('story');
+  identityProject=model.serialize(true);identitySource=options.sourceText ?? (typeof input==='string'&&!JSON.parse(input).format?input:identityProject);production.reset(incomingReview,{detached:options.draft});evidence.reset();textScript.reset(model.getView().textScriptSource);resources.reset();selected = model.graph().nodes[0]?.key;
+  savedSource = ''; tab = 'story'; renderProject(); update(true, diagnostics); switchTab('story');
   if (options.draft) { model.markUnsaved(); document.body.dataset.dirty = 'true'; $('save-state').textContent = '● 未保存'; status('草稿已恢复；请重新绑定本地资源目录'); }
   else status('工程已打开');
 }
@@ -219,9 +229,9 @@ function recoveryBaseURL(value) {
   try { const url = new URL(value); if (url.origin === location.origin && !url.username && !url.password) return url.href; }
   catch { /* A recovery record cannot grant access to an invalid directory. */ }
 }
-async function restoreRecovery(snapshot, portable = false, entry) {
+async function restoreRecovery(snapshot, portable = false, entry, diagnostics) {
   replace(snapshot.document, { baseURL: portable ? undefined : recoveryBaseURL(snapshot.baseURL), draft: true,
-    authorReview: snapshot.authorReview, sourceText: snapshot.sourceText });
+    authorReview: snapshot.authorReview, sourceText: snapshot.sourceText, diagnostics });
   const restoredModel = model;
   production.restoreDraft(snapshot.productionDraft);
   if (model.graph().nodes.some(node => node.key === snapshot.selectedNode)) { selected = snapshot.selectedNode; renderGraph(model.graph()); renderInspector(); }
@@ -247,10 +257,9 @@ async function commitRecovery(request, content) {
   request.commit(() => {
     const text = typeof content === 'string' ? content : decodeRecoveryFile(content);
     const snapshot = readRecovery(text, { portable: true }), project = snapshot.document.project;
-    const shape = diagnoseProject(project).find(issue => issue.code === 'shape');
-    if (shape) throw Error(shape.message);
+    const diagnostics = preflightProject(project);
     if (hasDraftFeedbackTarget(snapshot.productionDraft, project)) contentCatalogue(project);
-    if (canReplace()) restoration = restoreRecovery(snapshot, true);
+    if (canReplace()) restoration = restoreRecovery(snapshot, true, undefined, diagnostics);
   });
   await restoration;
 }
@@ -266,16 +275,20 @@ function renderProject() {
   field(root, '允许回退', project.rollback?.enabled === false ? 'false' : 'true', value => { set(['rollback'], { ...model.getView().project.rollback, enabled: value === 'true' }, true); renderProject(); }, { choices: [['true', '允许'], ['false', '关闭']] });
   field(root, '回退保留步数', project.rollback?.limit ?? 80, value => set(['rollback'], { ...model.getView().project.rollback, limit: Number(value) }, true));
 }
-function update(inspector = false) {
+function syncHistory() {
+  document.querySelector('[data-command=undo]').disabled = !model.canUndo;
+  document.querySelector('[data-command=redo]').disabled = !model.canRedo;
+}
+function update(inspector = false, diagnostics) {
   workspaceVersion++;
   routes.changed();production.changed();evidence.changed();textScript.changed();resources.changed();
   const startup = document.querySelector('#project-fields [aria-label="启动界面"]'); if (startup) startup.value = model.getView().project.titleScreen ? 'title' : 'story';
   const graph = model.graph(); if (!graph.nodes.some(n => n.key === selected)) selected = graph.nodes[0]?.key;
   $('project-name').textContent = model.getView().project.title || '未命名作品'; syncDirty(); document.body.dataset.projectType = model.getView().project.type;
-  document.querySelector('[data-command=undo]').disabled = !model.canUndo; document.querySelector('[data-command=redo]').disabled = !model.canRedo;
+  syncHistory();
   document.querySelector('[data-command=add-node]').disabled = model.getView().project.type === 'rain';
   $('graph-count').textContent = `${graph.nodes.length} 节点 · ${graph.edges.length} 连线`;
-  renderGraph(graph); renderDiagnostics();
+  renderGraph(graph); renderDiagnostics(diagnostics);
   if (inspector) {
     const panel = $('inspector').parentElement, scrollTop = panel.scrollTop;
     renderInspector(); panel.scrollTop = scrollTop;
@@ -330,8 +343,8 @@ function renderGraph(graph) {
   }
   if (!graph.nodes.length) $('nodes').append(element('p', '此格式使用 JSON 面板编辑；可直接在下方试玩。', { class: 'help' }));
 }
-function renderDiagnostics() {
-  const diagnostics = model.diagnostics(resourceFiles), errors = diagnostics.filter(d => d.severity === 'error').length;
+function renderDiagnostics(diagnostics = model.diagnostics(resourceFiles)) {
+  const errors = diagnostics.filter(d => d.severity === 'error').length;
   $('diagnostic-count').textContent = errors ? `${errors} 错误` : diagnostics.length ? `${diagnostics.length} 提醒` : '通过';
   $('diagnostics').replaceChildren();
   if (!diagnostics.length) $('diagnostics').append(element('li', '结构与运行校验通过', { class: 'good' }));
@@ -626,13 +639,23 @@ async function exportRecovery(state, game) {
 async function save(projectOnly) {
   const pending = fieldEdits.flush(); if (pending) await pending;
   if (projectOnly && model.diagnostics(resourceFiles).some(d => d.severity === 'error')) throw new Error('请先修复工程诊断中的错误');
-  const savedModel = model, content = projectOnly?projectSource():model.serialize(false);
+  const savedModel = model;
+  const sourceDraft = projectOnly ? undefined : textScript.getDraft();
+  const content = projectOnly ? projectSource() : model.serializeWorkspace(sourceDraft);
   const suggestedName = projectFilename() + (projectOnly ? '.json' : '.vnproj');
   if (unappliedSource()) throw new Error('JSON 面板有未应用的更改，请先点击“应用 JSON”');
+  if (!projectOnly && new Blob([content]).size > 8_000_000) throw new Error('工程和 DSL 源稿合计超过 8 MB');
   if (nativeHost) { const result = await nativeRequest(projectOnly ? 'export-project' : 'save-workspace', { content, suggestedName, baseURL }); if (result.cancelled) { status('已取消保存，当前工程仍保留'); return; } }
   else download(content, suggestedName);
-  if (!projectOnly && (model !== savedModel || content !== model.serialize(false) || fieldEdits.dirty || unappliedSource())) { syncDirty(); saveDraft(); status('工程快照已保存；等待期间的后续更改尚未保存'); return; }
-  if (!projectOnly) { recoveryCheckpoint = undefined; model.markSaved(); syncDirty(); }
+  if (!projectOnly && (model !== savedModel || content !== model.serializeWorkspace(textScript.getDraft()) || fieldEdits.dirty || unappliedSource())) { syncDirty(); saveDraft(); status('工程快照已保存；等待期间的后续更改尚未保存'); return; }
+  if (!projectOnly) {
+    if (sourceDraft !== undefined && model.setTextScriptSource(sourceDraft)) workspaceVersion++;
+    recoveryCheckpoint = undefined;
+    model.markSaved();
+    textScript.changed();
+    syncDirty();
+    syncHistory();
+  }
   saveDraft(); status(projectOnly ? '运行数据已导出；请随数据保留相对路径对应的资源目录' : '工程已保存；资源路径相对于工程文件，请随工程保留资源');
 }
 const commands = {
@@ -660,7 +683,9 @@ const commands = {
   preview,
   'apply-source': () => {
     const hadUnappliedSource = unappliedSource();
-    mutate(() => model.replaceProject($('source').value), true);
+    const { project } = readDocument($('source').value);
+    const diagnostics = preflightProject(project, resourceFiles);
+    mutate(() => model.replaceProject(project), true, diagnostics);
     renderProject(); savedSource = $('source').value;
     syncDirty();
     if (hadUnappliedSource) saveDraft();

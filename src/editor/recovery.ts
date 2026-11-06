@@ -1,6 +1,6 @@
 import { readAuthorReview } from '../creative/feedback.js';
 import { isRecord } from '../storage/save.js';
-import { readDocument, type EditorDocument } from './model.js';
+import { readDocument, TEXT_SCRIPT_SOURCE_LIMIT, type EditorDocument } from './model.js';
 
 export const RECOVERY_FORMAT = 'vn-engine-recovery';
 export const RECOVERY_MAX_BYTES = 16_000_000;
@@ -26,7 +26,7 @@ export type RecoveryState = {
   at?: string;
 };
 type RecoveryOptions = { portable?: boolean };
-const fields = new Set(['format', 'schema', 'document', 'sourceText', 'positions', 'authorReview', 'productionDraft', 'textScriptDraft',
+const fields = new Set(['format', 'schema', 'document', 'sourceText', 'positions', 'textScriptSource', 'authorReview', 'productionDraft', 'textScriptDraft',
   'source', 'pendingFields', 'editorTab', 'selectedNode', 'productionView', 'baseURL', 'at']);
 
 function checkBytes(text: string, max: number, label: string) {
@@ -85,7 +85,7 @@ function optionalFields(input: Record<string, unknown>, options: RecoveryOptions
   const { authorReview, productionDraft } = input;
   if (authorReview !== undefined && !isRecord(authorReview)) throw new Error('无效的作者审阅');
   if (productionDraft !== undefined && (!isRecord(productionDraft) || productionDraft.schema !== 1)) throw new Error('无效的制作草稿');
-  const textScriptDraft = optionalText(input.textScriptDraft, 1_000_000, '文本 DSL 草稿');
+  const textScriptDraft = optionalText(input.textScriptDraft, TEXT_SCRIPT_SOURCE_LIMIT, '文本 DSL 草稿');
   const source = optionalSource(input.source, '未应用 JSON');
   const editorTab = optionalText(input.editorTab, 32, '编辑页签');
   if (editorTab !== undefined && !tabs.has(editorTab)) throw new Error('无效的编辑页签');
@@ -127,14 +127,18 @@ export function readRecovery(text: string, options: RecoveryOptions = {}): Recov
   if (keys.some(key => !fields.has(key))) throw new Error('恢复数据包含未知字段');
 
   const hasSource = Object.hasOwn(value, 'sourceText'), hasDocument = Object.hasOwn(value, 'document');
-  if (hasSource === hasDocument || (hasDocument && Object.hasOwn(value, 'positions'))) throw new Error('恢复数据必须包含唯一的工程表示');
+  if (hasSource === hasDocument || (hasDocument && (Object.hasOwn(value, 'positions') || Object.hasOwn(value, 'textScriptSource')))) {
+    throw new Error('恢复数据必须包含唯一的工程表示');
+  }
   const sourceText = optionalSource(value.sourceText, '原始工程 JSON');
   let document: EditorDocument;
   if (sourceText !== undefined) {
     const project: unknown = JSON.parse(sourceText);
     if (!isRecord(project) || project.format) throw new Error('原始工程 JSON 必须是无包装的运行工程');
     checkPositions(value.positions);
-    document = readDocument({ format: 'vn-engine-editor', schema: 1, project, positions: value.positions });
+    const textScriptSource = optionalText(value.textScriptSource, TEXT_SCRIPT_SOURCE_LIMIT, ' DSL 源稿');
+    document = readDocument({ format: 'vn-engine-editor', schema: 1, project, positions: value.positions,
+      ...(textScriptSource === undefined ? {} : { textScriptSource }) });
   } else {
     if (!isRecord(value.document) || value.document.format !== 'vn-engine-editor') throw new Error('无效的恢复工程');
     if (tagged) checkPositions(value.document.positions);
@@ -155,7 +159,8 @@ export function writeRecovery(state: RecoveryState, options: RecoveryOptions = {
   const sourceText = optionalSource(state.sourceText, '原始工程 JSON');
   if (sourceText === '') throw new Error('无效的原始工程 JSON');
   checkPositions(document.positions);
-  const project = sourceText === undefined ? { document } : { sourceText, positions: document.positions };
+  const textScriptSource = optionalText(document.textScriptSource, TEXT_SCRIPT_SOURCE_LIMIT, ' DSL 源稿');
+  const project = sourceText === undefined ? { document } : { sourceText, positions: document.positions, textScriptSource };
   const wire = { format: RECOVERY_FORMAT, schema: 1, ...project, ...optionalFields(state, options) };
   const text = JSON.stringify(wire, (key, value: unknown) => {
     if (unsafeKeys.has(key)) throw new Error('恢复数据包含不安全的字段名');

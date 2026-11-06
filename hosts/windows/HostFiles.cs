@@ -13,7 +13,7 @@ internal static partial class HostFiles
     private static readonly HashSet<string> RecoveryFields = new(StringComparer.Ordinal)
     {
         "format", "schema", "document", "sourceText", "positions", "authorReview", "productionDraft", "textScriptDraft",
-        "source", "pendingFields", "editorTab", "selectedNode", "productionView", "at"
+        "textScriptSource", "source", "pendingFields", "editorTab", "selectedNode", "productionView", "at"
     };
     internal static string ProfileKey(string game) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(game))).ToLowerInvariant()[..24];
     internal static bool LocalPath(string path)
@@ -89,22 +89,30 @@ internal static partial class HostFiles
         var hasDocument = root.TryGetProperty("document", out var document);
         var hasSource = root.TryGetProperty("sourceText", out var source);
         var hasPositions = root.TryGetProperty("positions", out var positions);
-        if (hasDocument == hasSource || (hasDocument && hasPositions)) throw new InvalidDataException("恢复文件必须包含一份工程");
+        var hasTextScriptSource = root.TryGetProperty("textScriptSource", out var textScriptSource);
+        if (hasDocument == hasSource || (hasDocument && (hasPositions || hasTextScriptSource))) throw new InvalidDataException("恢复文件必须包含一份工程");
         if (hasDocument)
         {
             if (document.ValueKind != JsonValueKind.Object || !RecoveryVersion(document, "vn-engine-editor")
                 || !document.TryGetProperty("project", out var project) || project.ValueKind != JsonValueKind.Object
                 || !document.TryGetProperty("positions", out var layout) || layout.ValueKind != JsonValueKind.Object)
                 throw new InvalidDataException("恢复文件的编辑器工程无效");
+            if (document.TryGetProperty("textScriptSource", out var documentSource)) ValidateTextScriptSource(documentSource);
         }
         else
         {
             if (!hasPositions || positions.ValueKind != JsonValueKind.Object)
                 throw new InvalidDataException("恢复文件的原始工程或布局无效");
+            if (hasTextScriptSource) ValidateTextScriptSource(textScriptSource);
             using var original = JsonDocument.Parse(RecoverySource(source, "原始工程 JSON"), new JsonDocumentOptions { MaxDepth = 64 });
             if (original.RootElement.ValueKind != JsonValueKind.Object || HasTruthyFormat(original.RootElement))
                 throw new InvalidDataException("恢复文件的原始工程无效");
         }
+    }
+    private static void ValidateTextScriptSource(JsonElement source)
+    {
+        if (source.ValueKind != JsonValueKind.String || source.GetString()!.Length > 1_000_000)
+            throw new InvalidDataException("无效的 DSL 源稿");
     }
     private static bool RecoveryVersion(JsonElement root, string format) => root.TryGetProperty("format", out var kind)
         && kind.ValueKind == JsonValueKind.String && kind.GetString() == format

@@ -64,6 +64,25 @@ internal static class HostTests
             using (var stream = File.Create(oversizedRecovery)) stream.SetLength(HostFiles.MaxRecovery + 1);
             Reject(() => HostFiles.ReadRecovery(oversizedRecovery));
             checks.Add("Native recovery accepts either project representation, enforces the UTF-8 limit and rejects ambiguous, bound or unrelated files before writing");
+            const string savedDsl = "vn-script 1\r\n# 已保存来源\r\n";
+            const string pendingDsl = "vn-script 1\n# 待应用草稿";
+            string RecoveryWithRawDsl(object? value) => JsonSerializer.Serialize(new { format = "vn-engine-recovery", schema = 1,
+                sourceText = recoveryProject, positions, textScriptSource = value, textScriptDraft = pendingDsl });
+            string RecoveryWithDocumentDsl(object? value) => JsonSerializer.Serialize(new { format = "vn-engine-recovery", schema = 1,
+                document = new { recoveryDocument.format, recoveryDocument.schema, recoveryDocument.project, recoveryDocument.positions, textScriptSource = value }, textScriptDraft = pendingDsl });
+            foreach (var withDsl in new[] { RecoveryWithRawDsl(savedDsl), RecoveryWithDocumentDsl(savedDsl) })
+            {
+                HostFiles.WriteRecovery(recoveryPath, withDsl);
+                Check(HostFiles.ReadRecovery(recoveryPath) == withDsl, "恢复文件更改了已保存 DSL 或待保存草稿");
+            }
+            foreach (var invalid in new object?[] { null, 4, new object(), new string('x', 1_000_001) })
+            {
+                Reject(() => HostFiles.ValidateRecovery(RecoveryWithRawDsl(invalid)));
+                Reject(() => HostFiles.ValidateRecovery(RecoveryWithDocumentDsl(invalid)));
+            }
+            HostFiles.ValidateRecovery(RecoveryWithRawDsl(new string('x', 1_000_000)));
+            Reject(() => HostFiles.ValidateRecovery(recovery.Insert(1, "\"textScriptSource\":\"outside-document\",")));
+            checks.Add("Native recovery keeps saved DSL and pending text separate in both project representations and rejects invalid or ambiguous source fields");
             var content = "{\"schema\":1,\"game\":\"fixture\",\"title\":\"Fixture\",\"assets\":[{\"id\":\"a\",\"kind\":\"background\",\"src\":\"assets/a.svg\"}]}";
             Directory.CreateDirectory(Path.Combine(root, "assets")); File.WriteAllText(Path.Combine(root, "assets/a.svg"), "<svg/>"); File.WriteAllText(Path.Combine(root, "private.txt"), "private");
             var workspace = new AssetWorkspace(root, content);
