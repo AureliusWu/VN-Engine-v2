@@ -1,0 +1,205 @@
+{
+  "schema": 1,
+  "date": "2026-11-06",
+  "engineVersion": "1.4.6",
+  "baseCommit": "8deaa670dd32d26beeb3fd3ac7fc6c2516129e9b",
+  "plan": "docs/PLAN-v1.4.6.md",
+  "research": "docs/PLAN-v1.4.6.md#开源与社区证据",
+  "scope": {
+    "sourceGamesMigrated": false,
+    "publicDataOrSaveFormatChanged": false,
+    "newDependencies": false,
+    "releaseOrTagCreated": false
+  },
+  "baseline": {
+    "editor": {
+      "schema": 1,
+      "engineVersion": "1.4.5",
+      "head": "8deaa670dd32d26beeb3fd3ac7fc6c2516129e9b",
+      "cases": [
+        {
+          "id": "failed-open-replaces-active-model",
+          "beforeOpen": {
+            "title": "演出文本 · 自研引擎样例",
+            "formGame": "vn-stage-dsl",
+            "assetState": "已绑定 20 个文件（仅当前预览）"
+          },
+          "afterOpen": {
+            "title": "演出文本 · 自研引擎样例",
+            "formGame": "vn-stage-dsl",
+            "assetState": "未绑定目录；资源路径相对于工程文件。",
+            "status": "scene.choices?.forEach is not a function",
+            "sourceGame": "broken-choice-workspace"
+          },
+          "positiveControl": "Repaired choice workspace"
+        },
+        {
+          "id": "candidate-status-claims-start-after-preflight-rejects",
+          "blocked": {
+            "revision": "3",
+            "compileState": "success",
+            "compileStatus": "编译成功 · 正在预览候选；当前 JSON 尚未改变。",
+            "previewStatus": "先修复工程错误；当前保留上次有效预览",
+            "diagnostics": "资源目录缺少文件：assets/classroom.svg资源目录缺少文件：assets/bedroom.svg资源目录缺少文件：assets/student.svg资源目录缺少文件：assets/letter.svg资源目录缺少文件：assets/music-test.wav资源目录缺少文件：assets/music-test.wav资源目录缺少文件：assets/cue.wav资源目录缺少文件：assets/voice-test.wav资源目录缺少文件：assets/ui.woff2资源目录缺少文件：assets/OFL.txt",
+            "line": "背景、立绘和声音来自同一份演出文本。"
+          },
+          "positiveControl": {
+            "revision": "4",
+            "line": "Distinct candidate with complete compile context"
+          }
+        }
+      ],
+      "pageErrors": [],
+      "browser": "153.0.8010.12",
+      "status": "REPRODUCED"
+    },
+    "apply": {
+      "status": "scene.choices?.forEach is not a function",
+      "beforeGame": "my-script",
+      "reopenedSourceGame": "invalid-applied",
+      "headerGame": "my-script",
+      "undoDisabled": true
+    },
+    "draft": [
+      {
+        "repro": "workspace-replacement-overwrites-previous-draft",
+        "persistedATitle": "Draft A first",
+        "latestATitle": "Draft A latest",
+        "immediateDraftTitleAfterReplacement": "Draft A first",
+        "cleanReplacement": true,
+        "oldDebounceCallbacksReleased": 1,
+        "draftTitleAfterRelease": "未命名作品",
+        "draftTypeAfterRelease": "narrative",
+        "restoredType": "narrative"
+      },
+      {
+        "repro": "format-only-json-apply-reopens-as-unapplied",
+        "persistedRawBeforeApply": true,
+        "uiDirtyAfterApply": true,
+        "rawUnchangedAfterApply": true,
+        "undoDisabledAfterApply": true,
+        "unappliedRawStillInDraft": true,
+        "rawResurrectedAfterReloadAndRestore": true
+      }
+    ],
+    "files": [
+      "test-results/v145-studio-bug-audit.json",
+      "test-results/v145-studio-apply-json-bug.json",
+      "test-results/v146-draft-baseline-repro.json"
+    ]
+  },
+  "regressions": {
+    "status": "PASS",
+    "node": "editor validates branch list shapes before opening or committing while broken targets remain editable",
+    "chromium": [
+      "Studio rejects malformed open and apply without replacing the mounted workspace and still opens repairable broken branches",
+      "Accepting a workspace replacement preserves the latest outgoing draft and cannot write the clean replacement through an old timer",
+      "Applying formatting-only JSON immediately clears the dirty state and prevents a persisted raw draft from reappearing",
+      "A valid DSL compile reports blocked candidate playback and retries with the real asset directory"
+    ],
+    "reports": [
+      "test-results/v146-final-browser-artifacts/editor-browser-check.json",
+      "test-results/v146-final-browser-artifacts/r6-studio/r6-studio-browser.json",
+      "test-results/v146-final-browser-artifacts/p3-studio/REPORT.json",
+      "test-results/v146-final-browser-artifacts/p4-package/REPORT.json"
+    ]
+  },
+  "local": {
+    "nodeVersion": "v24.14.0",
+    "check": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 389,
+      "pass": 385,
+      "fail": 4,
+      "skipped": 0,
+      "reason": "Windows symlink fixture creation EPERM",
+      "log": "test-results/v146-final-check.log"
+    },
+    "editorModel": {
+      "status": "PASS",
+      "total": 23,
+      "newCases": 1,
+      "log": "test-results/v146-final-editor-node.log"
+    },
+    "completeBrowserSuite": {
+      "status": "PASS",
+      "scripts": 48,
+      "log": "test-results/v146-final-browser.log"
+    },
+    "completeEditorSuite": {
+      "status": "PASS",
+      "scripts": 21,
+      "log": "test-results/v146-final-editor.log"
+    },
+    "pythonRenpy": {
+      "status": "PASS",
+      "total": 6
+    },
+    "schemaSync": "PASS",
+    "provenance": {
+      "status": "PASS",
+      "files": 200
+    },
+    "projectSchemas": {
+      "status": "PASS",
+      "total": 5
+    },
+    "portfolioPython": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 8,
+      "pass": 7,
+      "fail": 1,
+      "reason": "Windows symlink fixture creation WinError 1314",
+      "log": "test-results/v146-final-portfolio.log"
+    },
+    "workflowInventory": {
+      "status": "PASS",
+      "scope": "engine checkout only",
+      "log": "test-results/v146-final-workflow.log"
+    }
+  },
+  "originalFailures": [
+    "symlink import parents are refused; pure SDK requires an explicit import/decoder host",
+    "project symlinks and escaping assets are rejected, imports create no files",
+    "resource symlinks, missing bytes, invalid encoding and report overwrite are structured failures",
+    "build refuses altered assets, escaping symlinks and generated-file collisions before writing output"
+  ],
+  "cloud": {
+    "status": "PENDING_EXACT_PUSHED_SHA",
+    "evidence": "test-results/v1.4.6-cloud.json"
+  },
+  "sourceHashBasis": "UTF-8 with CRLF normalized to LF to match Git blobs",
+  "sourceSha256": {
+    "docs/provenance.json": "12030752015362ff12415d29b1789739e5d3d782c9ef1e118bfc2ca61251f809",
+    "editor/app.mjs": "e4db6115720164713fefd7bdfedccd7ae40744c284c8fcb450594a66c49f81a3",
+    "editor/text-script.mjs": "c8917e072ce77b9c5238847b96a05060a244f9a1ac94c2e60175afb16e8e15e3",
+    "hosts/windows/VNEngine.Windows.csproj": "ff007c2b1b57367323665a850a322a3e57ee6eab650fe6efd49c54f60c4ce25d",
+    "package-lock.json": "74f598b807d621f940ea1e06897eb4004984be6f091ca09417c09f8c8f2dfd52",
+    "package.json": "6389d67548f6a0c4053b39b7b6b6fa5a124b5f5edfb42384428e90c531719a98",
+    "src/editor/model.ts": "9a3fd18ee44df88b3be2e51105a9eb83eff9a8012bea9d119d2101b0c6ad1b74",
+    "src/version.ts": "f3f08c8500a7ebc196afc6a4b264f27e10f65501261c1b5e06c498de29911ea6",
+    "tests/editor-browser.mjs": "03096a00446d7e77ae085dc928af13edff5de6fe2898803cf06d1c6823805325",
+    "tests/editor.test.mjs": "d5da39341a8f6a20c4028b879925f0816241c9149ff12acf887844c9acd4e763",
+    "tests/p3-studio-browser.mjs": "1614de2a29b9314307f6c4c5d28b5eeb6516223b85c28dcf12f43c123bf6cb03",
+    "tests/r6-studio-browser.mjs": "207aae0d318012bc4cb68d8909b5aedc2eb0e09e7262bebb144a24dbd8a9736a"
+  },
+  "evidenceSha256": {
+    "test-results/v146-final-browser-artifacts/editor-browser-check.json": "bfaee21ee8e6c8ce1902b5fe3fd9548c635e9dff3cda5f1932c588a150b23163",
+    "test-results/v146-final-browser-artifacts/r6-studio/r6-studio-browser.json": "65bf81e17c6554930eb83809d8d8d4bee4ae192945b07d4ba9b362a82ad5bfc4",
+    "test-results/v146-final-browser-artifacts/p3-studio/REPORT.json": "3b712e711ae78592495f98e45ac437c8e3ff8666d25baf7b0a2991ed17cc63e1",
+    "test-results/v146-final-browser-artifacts/p4-package/REPORT.json": "1525c94e1fa98637e381f7cc87d7432d2cdd4460f37992d1c204edd7fafb1450",
+    "test-results/v146-final-check.log": "48a480fc0d10523939ffdb90637225842846396662db8af36c2a005b1f8b3a95",
+    "test-results/v146-final-editor-node.log": "81e3a85583b083208f260d9580f6d9dfe751734005c534369d67fedf76e5a4d1",
+    "test-results/v146-final-residual.log": "aef991e6227d6eb57a2309474b7e22911a9cbb0503e49819dc06d371d77bffb6",
+    "test-results/v146-final-portfolio.log": "c7d2aafdd0fe3f3609473812322ed0219e87efce499259a557a2e196d37e837f",
+    "test-results/v146-final-workflow.log": "0a5fb817e381722db0f9f5b7be14e6719d4f98a8f02f97bf9f1aea074eb75bed",
+    "test-results/v146-final-browser.log": "54d62a19a22bfbc9b67dc172b50cd8e0fba8ee6c53c67d037b09f1f66353d483",
+    "test-results/v146-final-editor.log": "3209f0575fb5002c59d2ba7a37997382af233282a2b90c1405efac41a31c0f70",
+    "test-results/v145-studio-bug-audit.json": "b26307308777b08f22de044f00ef0a13af5254e2a90a2f4ee4ebb66f9ee68058",
+    "test-results/v145-studio-apply-json-bug.json": "934019db4f9c9c5fa68acf61602645a6fa90bf96316383a80226c685082e3882",
+    "test-results/v146-draft-baseline-repro.json": "cf2f52b4eadca3660325455150520d3245441966a3c8905cfee8df706bc1e5ac",
+    "test-results/v146-baseline-editor-shape.log": "fad4da82e1c41ce30bbf1844b0e72097ebdf83ae4e3fb961e322b380426184ca",
+    "test-results/v146-editor-browser-baseline-fail.log": "0bee6c611404c4988677838de1e3269aee0f3df4d9bf2a3eb4059885e23d0cc8",
+    "test-results/v146-p3-studio-baseline-fail.log": "6741f5a8d8fa8157ea8c91e2525b1728b275ff4c5c21f257eff9b526881e8ad6"
+  }
+}

@@ -178,6 +178,31 @@ test('editor import rejects dangerous keys and unsupported workspace schemas wit
   assert.throws(() => readDocument(' '.repeat(8_000_001)), /8 MB/);
 });
 
+test('editor validates branch list shapes before opening or committing while broken targets remain editable', () => {
+  const narrative = newProject('vn');
+  narrative.scenes[0].choices = { id: 'mistyped-list' };
+  assert.throws(() => readDocument(JSON.stringify(narrative)), /scenes\[0\]\.choices/);
+
+  const script = newProject('script');
+  const model = new EditorModel(script);
+  model.set(['title'], 'Kept edit');
+  const previous = model.serialize();
+  script.program.blocks[0].exit = { type: 'branch', routes: [null] };
+  assert.throws(() => model.replaceProject(JSON.stringify(script)), /program\.blocks\[0\]\.exit\.routes/);
+  assert.equal(model.serialize(), previous);
+  assert.equal(model.canUndo, true);
+
+  const investigation = newProject('investigation');
+  investigation.chapters[0].nodes.room.actions = {};
+  assert.throws(() => readDocument(investigation), /chapters\[0\]\.nodes\["room"\]\.actions/);
+
+  script.program.blocks[0].exit = { type: 'jump', next: 'missing' };
+  assert.equal(model.replaceProject(script), true);
+  assert.ok(model.diagnostics().some(issue => issue.code === 'target'));
+  assert.equal(model.undo(), true);
+  assert.equal(model.serialize(), previous);
+});
+
 test('collection replay diagnostics validate the real driver save and allow undoable repair', () => {
   const project = newProject('script'); project.collections = { endings: [{ id: 'complete', replay: { invalid: true } }] };
   const ending = project.program.blocks.find(block => block.exit.type === 'end').exit.ending;

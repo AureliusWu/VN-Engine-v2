@@ -58,8 +58,10 @@ function field(parent, label, value, callback, options = {}) {
 const valueAt = path => path.reduce((v, key) => v?.[key], model.getView().project);
 const graphNode = () => model.graph().nodes.find(n => n.key === selected);
 const unappliedSource = () => tab === 'source' && $('source').value !== savedSource;
+const projectDirty = () => model.dirty || fieldEdits.dirty || unappliedSource() || textScript.dirty;
+const workspaceDirty = () => projectDirty() || production.dirty;
 function syncDirty() {
-  const unsaved = model.dirty || fieldEdits.dirty || unappliedSource() || textScript.dirty;
+  const unsaved = projectDirty();
   document.body.dataset.dirty = String(unsaved || production.dirty);
   $('save-state').textContent = unsaved ? '● 未保存' : '已保存';
 }
@@ -103,8 +105,11 @@ function scheduleDraft() {
   clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 350);
 }
 function saveDraft() {
-  try { localStorage.setItem(DRAFT_KEY, JSON.stringify({ schema: 1, document: JSON.parse(model.serialize()), authorReview: production.getReview(), productionDraft: production.getDraft(), textScriptDraft:textScript.getDraft(), source: unappliedSource() ? $('source').value : undefined, pendingFields: fieldEdits.snapshot(), editorTab: tab, selectedNode: selected, productionView: document.querySelector('[data-production-view][aria-pressed=true]')?.dataset.productionView, baseURL: baseURL.startsWith(location.origin + '/') ? baseURL : undefined, at: new Date().toISOString() })); }
-  catch { status('本地草稿无法保存，请使用“保存工程”保留更改', true); }
+  clearTimeout(draftTimer); draftTimer = undefined;
+  try {
+    localStorage.setItem(DRAFT_KEY, JSON.stringify({ schema: 1, document: JSON.parse(model.serialize()), authorReview: production.getReview(), productionDraft: production.getDraft(), textScriptDraft:textScript.getDraft(), source: unappliedSource() ? $('source').value : undefined, pendingFields: fieldEdits.snapshot(), editorTab: tab, selectedNode: selected, productionView: document.querySelector('[data-production-view][aria-pressed=true]')?.dataset.productionView, baseURL: baseURL.startsWith(location.origin + '/') ? baseURL : undefined, at: new Date().toISOString() }));
+    return true;
+  } catch { status('本地草稿无法保存，请使用“保存工程”保留更改', true); return false; }
 }
 function clearResources(nextBase = new URL('./', location.href).href) {
   invalidatePreview();
@@ -116,15 +121,18 @@ function replace(input, options = {}) {
   const next = new EditorModel(input);
   const incomingReview = options.authorReview;
   if(incomingReview) readAuthorReview(incomingReview,options.draft?{...next.getView().project,game:incomingReview.game,version:incomingReview.storyVersion}:next.getView().project);
-  // Fully parse before touching the current editor or its resources.
+  // Validate the replacement before committing a draft or clearing the current resources.
+  const previousDraftSaved = options.draft || !workspaceDirty() || saveDraft();
+  clearTimeout(draftTimer); draftTimer = undefined;
   opening.invalidate(); assetBinding.invalidate(); fieldEdits.reset();
   clearResources(options.baseURL); if (options.files) resourceFiles = new Set(options.files); model = next;
   identityProject=model.serialize(true);identitySource=typeof input==='string'&&!JSON.parse(input).format?input:identityProject;production.reset(incomingReview,{detached:options.draft});evidence.reset();textScript.reset();resources.reset();selected = model.graph().nodes[0]?.key;
   savedSource = ''; tab = 'story'; renderProject(); update(true); switchTab('story');
   if (options.draft) { model.markUnsaved(); document.body.dataset.dirty = 'true'; $('save-state').textContent = '● 未保存'; status('草稿已恢复；请重新绑定本地资源目录'); }
-  else status('工程已打开');
+  else if (previousDraftSaved) status('工程已打开');
+  else status('工程已打开；上一个工程的本地草稿未能保存', true);
 }
-function canReplace() { return (!model.dirty && !production.dirty && !textScript.dirty && !fieldEdits.dirty && !unappliedSource()) || confirm('当前更改尚未保存。仍要替换当前工程吗？本地草稿只保留一份。'); }
+function canReplace() { return !workspaceDirty() || confirm('当前更改尚未保存。仍要替换当前工程吗？本地草稿只保留一份。'); }
 function renderProject() {
   const root = $('project-fields'); root.replaceChildren();
   const project = model.getView().project;
@@ -505,7 +513,13 @@ const commands = {
   'add-node': () => mutate(() => { selected = model.addNode(graphNode()?.chapter); }, true),
   layout: () => mutate(() => model.transact((_p, positions) => { for (const key of Object.keys(positions)) delete positions[key]; }), true),
   preview,
-  'apply-source': () => { mutate(() => model.replaceProject($('source').value), true); renderProject(); savedSource = $('source').value; },
+  'apply-source': () => {
+    const hadUnappliedSource = unappliedSource();
+    mutate(() => model.replaceProject($('source').value), true);
+    renderProject(); savedSource = $('source').value;
+    syncDirty();
+    if (hadUnappliedSource) saveDraft();
+  },
   'add-asset': () => { const assets = structuredClone(model.getView().project.assets), ids = new Set(assets.map(a => a.id)); let id = 'asset-1'; for (let i = 2; ids.has(id); i++) id = 'asset-' + i; assets.push({ id, kind: 'background', src: 'assets/image.png' }); set(['assets'], assets, true); },
   'bind-assets': async () => {
     if (nativeHost) {
@@ -548,7 +562,7 @@ window.addEventListener('keydown', event => {
   if (event.key.toLowerCase() === 's') { event.preventDefault(); run(commands.save); }
   if (event.key.toLowerCase() === 'z' && !typing) { event.preventDefault(); run(event.shiftKey ? commands.redo : commands.undo); }
 });
-window.addEventListener('beforeunload', event => { if (model.dirty || production.dirty || textScript.dirty || fieldEdits.dirty || unappliedSource()) { saveDraft(); event.preventDefault(); event.returnValue = ''; } });
+window.addEventListener('beforeunload', event => { if (workspaceDirty()) { saveDraft(); event.preventDefault(); event.returnValue = ''; } });
 window.addEventListener('pagehide', () => { clearTimeout(draftTimer); clearTimeout(previewTimer); for (const url of resourceURLs.values()) URL.revokeObjectURL(url); });
 window.addEventListener('vn-engine-host-visibility', event => { if (typeof event.detail?.hidden !== 'boolean') return; nativeHidden = event.detail.hidden;if(nativeHidden)production.stopMedia(); $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'visibility', hidden: nativeHidden }, location.origin); });
 $('version').textContent = ENGINE_VERSION; $('host-label').textContent = nativeHost ? 'Windows 原生宿主' : '浏览器工作区';

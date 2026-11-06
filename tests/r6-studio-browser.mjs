@@ -11,6 +11,32 @@ await listenBrowserServer(server);
 let browser;
 const checks = [], errors = [], confirmations = [];
 let confirmReplacement = false;
+
+async function holdDraftDebounce(page) {
+  await page.evaluate(() => {
+    const schedule = window.setTimeout.bind(window), cancel = window.clearTimeout.bind(window), held = new Map();
+    window.setTimeout = (callback, delay, ...args) => {
+      if (delay !== 350) return schedule(callback, delay, ...args);
+      const id = schedule(() => {}, 60_000);
+      held.set(id, () => callback(...args));
+      return id;
+    };
+    window.clearTimeout = id => { held.delete(id); cancel(id); };
+    window.draftTimerGate = {
+      count: () => held.size,
+      release() {
+        const pending = [...held];
+        for (const [id, callback] of pending) {
+          held.delete(id);
+          cancel(id);
+          callback();
+        }
+        return pending.length;
+      }
+    };
+  });
+}
+
 try {
   browser = await chromium.launch({ headless: true,
     ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}) });
@@ -103,6 +129,68 @@ try {
   assert.equal((await source.inputValue()).includes('R6 explicitly discarded JSON'), false);
   assert.deepEqual(await downloaded('export'), edited);
   passed('Restoring the post-discard draft cannot resurrect explicitly discarded JSON or change the applied project');
+
+  const openDraftWorkspace = async () => {
+    const workspace = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    workspace.on('pageerror', error => errors.push(error.message));
+    workspace.on('dialog', dialog => dialog.accept());
+    await workspace.goto(`http://127.0.0.1:${server.address().port}/editor/`);
+    await workspace.waitForSelector('body[data-editor-ready=true]');
+    await workspace.locator('#auto-preview').uncheck();
+    return workspace;
+  };
+  const draftOf = workspace => workspace.evaluate(() => JSON.parse(localStorage.getItem('vn-engine-studio:draft:v1')));
+  const replacement = await openDraftWorkspace();
+  await holdDraftDebounce(replacement);
+  const title = replacement.getByLabel('作品名称', { exact: true });
+  await title.fill('Draft A first edit'); await title.blur();
+  assert.equal(await replacement.evaluate(() => draftTimerGate.release()), 1);
+  assert.equal((await draftOf(replacement)).document.project.title, 'Draft A first edit');
+  await title.fill('Draft A latest edit'); await title.blur();
+  assert.equal(await replacement.evaluate(() => draftTimerGate.count()), 1);
+  assert.equal((await draftOf(replacement)).document.project.title, 'Draft A first edit');
+  await replacement.locator('#template').selectOption('vn');
+  await replacement.locator('[data-command=new]').click();
+  assert.equal(await replacement.locator('body').getAttribute('data-project-type'), 'narrative');
+  assert.equal(await replacement.locator('body').getAttribute('data-dirty'), 'false');
+  const savedBeforeRelease = await draftOf(replacement);
+  assert.equal(savedBeforeRelease.document.project.title, 'Draft A latest edit');
+  assert.equal(savedBeforeRelease.document.project.type, 'script');
+  await replacement.evaluate(() => draftTimerGate.release());
+  assert.deepEqual(await draftOf(replacement), savedBeforeRelease);
+  await replacement.locator('[data-tab=source]').click();
+  await replacement.locator('[data-command=apply-source]').click();
+  assert.deepEqual(await draftOf(replacement), savedBeforeRelease);
+  await replacement.reload();
+  await replacement.locator('[data-command=restore-draft]').click();
+  assert.equal(await replacement.locator('#project-name').innerText(), 'Draft A latest edit');
+  assert.equal(await replacement.locator('body').getAttribute('data-project-type'), 'script');
+  await replacement.close({ runBeforeUnload: false });
+  passed('Accepting a workspace replacement preserves the latest outgoing draft and cannot write the clean replacement through an old timer');
+
+  const formatOnly = await openDraftWorkspace();
+  await formatOnly.locator('[data-tab=source]').click();
+  const formatSource = formatOnly.getByLabel('工程 JSON 内容', { exact: true });
+  const canonical = await formatSource.inputValue();
+  const formatted = '\n' + JSON.stringify(JSON.parse(canonical), null, 4) + '\n\n';
+  assert.equal(await formatOnly.locator('body').getAttribute('data-dirty'), 'false');
+  await formatSource.fill(formatted);
+  await formatOnly.waitForFunction(formatted => JSON.parse(localStorage.getItem('vn-engine-studio:draft:v1'))?.source === formatted, formatted);
+  await holdDraftDebounce(formatOnly);
+  await formatOnly.locator('[data-command=apply-source]').click();
+  assert.equal(await formatOnly.locator('body').getAttribute('data-dirty'), 'false');
+  assert.equal(await formatOnly.locator('#save-state').innerText(), '已保存');
+  assert.equal(await formatOnly.locator('[data-command=undo]').isDisabled(), true);
+  assert.equal(await formatSource.inputValue(), formatted);
+  const appliedDraft = await draftOf(formatOnly);
+  assert.equal(appliedDraft.source, undefined);
+  assert.deepEqual(appliedDraft.document.project, JSON.parse(canonical));
+  await formatOnly.reload();
+  await formatOnly.locator('[data-command=restore-draft]').click();
+  await formatOnly.locator('[data-tab=source]').click();
+  assert.equal(await formatSource.inputValue(), canonical);
+  await formatOnly.close({ runBeforeUnload: false });
+  passed('Applying formatting-only JSON immediately clears the dirty state and prevents a persisted raw draft from reappearing');
 
   assert.deepEqual(errors, []);
   await writeFile(output + '/r6-studio-browser.json', JSON.stringify({ status: 'PASS', checks,

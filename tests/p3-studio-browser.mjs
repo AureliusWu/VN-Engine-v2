@@ -30,6 +30,38 @@ try {
   const settled = () => page.waitForSelector('#text-script-list[data-dsl-state=success],#text-script-list[data-dsl-state=invalid]');
   const compile = async text => { await input.fill(text); await page.locator('[data-dsl-command=compile]').click(); await settled(); };
   const check = async (name, run) => { await run(); checks.push(name); console.log('PASS', name); };
+  await check('A valid DSL compile reports blocked candidate playback and retries with the real asset directory', async () => {
+    const originalLine = project.program.blocks[0].lines[0].text, nextLine = '修复目录后才开始候选演出。';
+    const candidate = source.replace(originalLine, nextLine);
+    const prior = await page.locator('body').getAttribute('data-preview-revision');
+    await page.locator('[data-command=preview]').click();
+    await page.waitForFunction(prior => Number(document.body.dataset.previewRevision) > Number(prior), prior);
+    await preview.getByText(originalLine, { exact: true }).waitFor();
+    const revision = await page.locator('body').getAttribute('data-preview-revision');
+    await page.locator('[data-tab=assets]').click();
+    await page.locator('#asset-directory').setInputFiles(resolve('examples/dsl'));
+    await page.locator('#diagnostics').getByText(/资源目录缺少文件/).first().waitFor();
+    await page.locator('[data-tab=text-script]').click();
+    await compile(candidate);
+    assert.equal(await page.locator('#text-script-list').getAttribute('data-dsl-state'), 'success');
+    assert.equal(await page.locator('[data-dsl-command=apply]').isEnabled(), true);
+    assert.match(await page.locator('#preview-state').innerText(), /先修复工程错误/);
+    assert.equal(await page.locator('body').getAttribute('data-preview-revision'), revision);
+    assert.equal(await preview.locator('.vn-text').innerText(), originalLine);
+    assert.match(await page.locator('[data-dsl-status]').innerText(), /未启动/);
+
+    await page.locator('[data-tab=source]').click();
+    assert.deepEqual(JSON.parse(await page.locator('#source').inputValue()), project);
+    await page.locator('[data-tab=assets]').click();
+    await page.locator('#asset-directory').setInputFiles(resolve('examples/runtime'));
+    await page.locator('[data-tab=text-script]').click();
+    await page.locator('[data-dsl-command=compile]').click(); await settled();
+    assert.match(await page.locator('[data-dsl-status]').innerText(), /已请求候选试玩/);
+    await preview.getByText(nextLine, { exact: true }).waitFor();
+    await page.waitForFunction(revision => Number(document.body.dataset.previewRevision) > Number(revision), revision);
+    await page.waitForFunction(() => document.querySelector('#preview').contentDocument.querySelector('.vn-background')?.naturalWidth > 0);
+    assert.deepEqual(await exported(), project);
+  });
   await page.locator('[data-tab=text-script]').click();
   const candidate = source.replace('背景、立绘和声音来自同一份演出文本。', '候选演出文本，尚未改变当前工程。');
   await check('Studio compiles cue candidates with current assets, previews real images and applies one undoable transaction', async () => {

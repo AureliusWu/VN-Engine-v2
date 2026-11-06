@@ -70,7 +70,7 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "3dd87809abe3bfe3d25e798561227d65af2c3beaf8270f9bc0140b8329adbc62"
+      "targetSha256": "e4db6115720164713fefd7bdfedccd7ae40744c284c8fcb450594a66c49f81a3"
     },
     {
       "target": "editor/async-operation.mjs",
@@ -214,7 +214,7 @@
     {
       "target": "editor/text-script.mjs",
       "mode": "new",
-      "targetSha256": "32aacbdff352d8b690c429bf409d892dd9a242f0b7f234c90ae1b980aba82c39",
+      "targetSha256": "c8917e072ce77b9c5238847b96a05060a244f9a1ac94c2e60175afb16e8e15e3",
       "origins": []
     },
     {
@@ -454,7 +454,7 @@
       "target": "hosts/windows/VNEngine.Windows.csproj",
       "mode": "new",
       "origins": [],
-      "targetSha256": "32369053aee66d35e05560f217163ccad7ed45a78435e964fe51e633fa810dae"
+      "targetSha256": "ff007c2b1b57367323665a850a322a3e57ee6eab650fe6efd49c54f60c4ce25d"
     },
     {
       "target": "licenses/Healing-LICENSE.txt",
@@ -825,7 +825,7 @@
       "target": "src/editor/model.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "9b8773bfe71b50ad536c3d01cf0eac8db38b09ff2b4bec27c4b350d47d141167"
+      "targetSha256": "9a3fd18ee44df88b3be2e51105a9eb83eff9a8012bea9d119d2101b0c6ad1b74"
     },
     {
       "target": "src/history/search.ts",
@@ -1248,7 +1248,7 @@
       "target": "src/version.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "6d89da5d10e017e60a59dc3417bf9640e5b10c1a79d4d8d10a26c5f4104a4506"
+      "targetSha256": "f3f08c8500a7ebc196afc6a4b264f27e10f65501261c1b5e06c498de29911ea6"
     },
     {
       "target": "tools/acceptance-node.mjs",

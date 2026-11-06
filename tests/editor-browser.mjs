@@ -111,6 +111,65 @@ try {
   passed('Authored markup stays inert and the editor remains usable at 390px without page overflow');
   await context.close();
 
+  const repair = await browser.newPage({ viewport: { width: 1440, height: 1040 } });
+  repair.on('pageerror', error => errors.push(error.message)); repair.on('dialog', dialog => dialog.accept());
+  await repair.goto(base + '/editor/'); await repair.waitForSelector('body[data-editor-ready=true][data-preview-revision]');
+  const openProject = async project => {
+    const [chooser] = await Promise.all([repair.waitForEvent('filechooser'), repair.locator('[data-command=open]').click()]);
+    await chooser.setFiles({ name: 'shape-check.json', mimeType: 'application/json', buffer: Buffer.from(JSON.stringify(project)) });
+  };
+  await openProject(custom);
+  await repair.waitForFunction(title => document.querySelector('#project-name').textContent === title, custom.title);
+  await repair.locator('#asset-directory').setInputFiles(folder);
+  await repair.waitForFunction(() => {
+    const image = document.querySelector('#preview').contentDocument.querySelector('.vn-background');
+    return image?.src.startsWith('blob:') && image.naturalWidth === 400;
+  });
+  await repair.frameLocator('#preview').locator('.vn-text').getByText(custom.program.blocks[0].lines[0].text, { exact: true }).waitFor();
+  await repair.locator('#auto-preview').uncheck();
+  const currentView = () => repair.evaluate(() => ({
+    title: document.querySelector('#project-name').textContent,
+    binding: document.querySelector('#asset-state').textContent,
+    revision: document.body.dataset.previewRevision,
+    image: document.querySelector('#preview').contentDocument.querySelector('.vn-background').src,
+    line: document.querySelector('#preview').contentDocument.querySelector('.vn-text').textContent
+  }));
+  const mounted = await currentView();
+  const malformed = newProject('vn'); malformed.game = 'invalid-choice-shape'; malformed.scenes[0].choices = { next: 'end' };
+  const repairTab = name => repair.locator(`[data-tab=${name}]`).click();
+  const repairSource = repair.locator('#source');
+  const checkCurrent = async () => {
+    await repairTab('story'); await repairTab('source');
+    assert.deepEqual({ project: JSON.parse(await repairSource.inputValue()), ...await currentView() },
+      { project: custom, ...mounted }, 'A rejected document must preserve the actual model, binding and mounted iframe');
+  };
+  await openProject(malformed);
+  await repair.locator('#status.error').waitFor({ timeout: 5000 });
+  await checkCurrent();
+  assert.match(await repair.locator('#status').innerText(), /scenes\[0\]\.choices/);
+  const rejectedText = JSON.stringify(malformed);
+  await repairSource.fill(rejectedText); await repair.locator('[data-command=apply-source]').click();
+  await repair.locator('#status.error').waitFor({ timeout: 5000 });
+  assert.equal(await repairSource.inputValue(), rejectedText);
+  await checkCurrent();
+  assert.match(await repair.locator('#status').innerText(), /scenes\[0\]\.choices/);
+
+  const disconnected = newProject('script'); disconnected.title = 'Repairable missing route';
+  disconnected.program.blocks[0].exit.choices[0].next = 'missing';
+  await openProject(disconnected);
+  await repair.waitForFunction(title => document.querySelector('#project-name').textContent === title, disconnected.title);
+  assert.match(await repair.locator('#diagnostics').innerText(), /目标不存在/);
+  assert.equal(await repair.locator('[data-command=export]').isDisabled(), true);
+  await repair.getByLabel('选择 1 目标', { exact: true }).selectOption('end');
+  assert.equal(await repair.locator('[data-command=export]').isEnabled(), true);
+  const beforeRepairPreview = await repair.locator('body').getAttribute('data-preview-revision');
+  await repair.locator('[data-command=preview]').click();
+  await repair.waitForFunction(revision => Number(document.body.dataset.previewRevision) > Number(revision), beforeRepairPreview);
+  await repair.frameLocator('#preview').locator('[data-action=yes]').click();
+  await repair.frameLocator('#preview').locator('.vn-text').getByText('这里等待你的故事。', { exact: true }).waitFor();
+  await repair.close();
+  passed('Studio rejects malformed open and apply without replacing the mounted workspace and still opens repairable broken branches');
+
   const root = await mkdtemp(join(tmpdir(), 'vn-studio-bundle-')); const build = await packageStudio(join(root, 'studio'));
   standalone = createServer(async (request, response) => {
     try { const name = decodeURIComponent(new URL(request.url, 'http://localhost').pathname).replace(/^\//, ''), path = resolve(build.output, name.endsWith('/') ? name + 'index.html' : name); if (!path.startsWith(build.output + sep)) throw Error();

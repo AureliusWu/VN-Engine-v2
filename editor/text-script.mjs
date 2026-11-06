@@ -26,7 +26,11 @@ export function createTextScriptPanel(root,ports){
       if(current.key!==request.key){begin(false,current);return;}
       pending=undefined;compiled=data.result;syntaxOk=data.syntaxOk;identity=data.identity;formatted=data.output;checkedKey=request.key;draw(current.context,data.sourceMapCount);
       if(compiled.ok&&matches(current.context)&&request.preview){
-        try{ports.preview(compiled.program);message.textContent='编译成功 · 正在预览候选；当前 JSON 尚未改变。';}
+        try {
+          message.textContent = ports.preview(compiled.program)
+            ? '编译成功 · 已请求候选试玩；当前 JSON 尚未改变。'
+            : '编译成功 · 候选试玩未启动；请查看工程诊断或预览区。当前 JSON 保留。';
+        }
         catch(error){message.textContent='编译成功；候选预览未启动：'+error.message+'。当前 JSON 保留。';}
       }
     }

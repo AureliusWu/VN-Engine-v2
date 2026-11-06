@@ -32,6 +32,10 @@ function assertJSON(value: unknown, depth = 0): void {
   }
 }
 
+function assertObjectList(value: unknown, path: string): void {
+  if (!Array.isArray(value) || !value.every(record)) throw new Error(`工程字段 ${path} 必须为对象列表`);
+}
+
 /** Accept broken links for repair; never accept executable data or an unrecognised root. */
 export function readDocument(input: string | unknown): EditorDocument {
   if (typeof input === 'string' && input.length > 8_000_000) throw new Error('工程超过 8 MB');
@@ -44,9 +48,27 @@ export function readDocument(input: string | unknown): EditorDocument {
   if (!record(project) || project.schema !== 1 || typeof project.game !== 'string' || !project.game.trim()
     || typeof project.version !== 'string' || !project.version.trim() || typeof project.title !== 'string'
     || !Array.isArray(project.assets) || !['narrative', 'script', 'investigation', 'rain'].includes(project.type)) throw new Error('不是有效的引擎工程');
-  if (project.type === 'narrative' && (!Array.isArray(project.scenes) || project.scenes.some((s: unknown) => !record(s) || typeof s.id !== 'string' || !Array.isArray(s.lines)))) throw new Error('缺少场景列表');
-  if (project.type === 'script' && (!record(project.program) || !Array.isArray(project.program.blocks) || project.program.blocks.some((b: unknown) => !record(b) || typeof b.id !== 'string' || !Array.isArray(b.lines) || !record(b.exit)))) throw new Error('缺少脚本块');
-  if (project.type === 'investigation' && (!Array.isArray(project.chapters) || project.chapters.some((c: unknown) => !record(c) || typeof c.id !== 'string' || !record(c.nodes)))) throw new Error('缺少调查章节');
+  if (project.type === 'narrative') {
+    if (!Array.isArray(project.scenes) || project.scenes.some((s: unknown) => !record(s) || typeof s.id !== 'string' || !Array.isArray(s.lines))) throw new Error('缺少场景列表');
+    project.scenes.forEach((scene, i) => {
+      if (scene.choices != null) assertObjectList(scene.choices, `scenes[${i}].choices`);
+    });
+  }
+  if (project.type === 'script') {
+    if (!record(project.program) || !Array.isArray(project.program.blocks) || project.program.blocks.some((b: unknown) => !record(b) || typeof b.id !== 'string' || !Array.isArray(b.lines) || !record(b.exit))) throw new Error('缺少脚本块');
+    project.program.blocks.forEach(({ exit }, i) => {
+      if (exit.type === 'choice') assertObjectList(exit.choices, `program.blocks[${i}].exit.choices`);
+      if (exit.type === 'branch') assertObjectList(exit.routes, `program.blocks[${i}].exit.routes`);
+    });
+  }
+  if (project.type === 'investigation') {
+    if (!Array.isArray(project.chapters) || project.chapters.some((c: unknown) => !record(c) || typeof c.id !== 'string' || !record(c.nodes))) throw new Error('缺少调查章节');
+    project.chapters.forEach((chapter, i) => {
+      for (const [id, node] of Object.entries(chapter.nodes)) {
+        if (record(node)) assertObjectList(node.actions, `chapters[${i}].nodes[${JSON.stringify(id)}].actions`);
+      }
+    });
+  }
   if (project.type === 'rain' && !record(project.story)) throw new Error('缺少兼容剧本');
   const positions: Record<string, Position> = {};
   if (wrapped && record(value.positions)) for (const [key, point] of Object.entries(value.positions)) {
