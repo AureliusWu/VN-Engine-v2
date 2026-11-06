@@ -17,13 +17,20 @@ export function createResourcesPanel(root,ports){
   const actions=element('div',undefined,{class:'author-actions'}),refresh=action('应用预取设置并刷新预览',()=>{
     let next;try{next=readControls();}catch(error){message.textContent='设置未应用，保留上次预取预算：'+error.message;throw error;}
     appliedConfig=next?Object.freeze({...next,plan:Object.freeze(next.plan)}):false;
-    ports.preview();message.textContent='预览已刷新，请采集最新计划；预取不解码、不播放或解锁音频。';
+    const refreshing=ports.preview();
+    message.textContent=(refreshing?'预览正在刷新，请在就绪后采集最新计划':'设置已应用，预览尚未刷新')+'；预取不解码、不播放或解锁音频。';
   });refresh.dataset.resourceCommand='configure';
   const capture=action('采集当前资源计划',captureCurrent);capture.dataset.resourceCommand='capture';actions.append(refresh,capture);
   const summary=element('p',undefined,{class:'help','data-resource-summary':'true'}),list=element('ol',undefined,{'aria-label':'资源计划候选',class:'resource-candidates'}),cache=element('pre',undefined,{'aria-label':'编码缓存指标',class:'resource-cache'});
   root.replaceChildren(element('p','计划是下一交互窗口的候选估算，不保证分支会执行。编码下载缓存、图片/音频解码缓存和离线 SW 缓存分别计量。当前资源受保护；换分支、隐藏或关闭预览会取消过期预取。',{class:'help'}),controls,actions,message,summary,list,cache);
   const state=(binding,text)=>{root.dataset.resourceBinding=binding;message.textContent=text;};
-  const cancel=()=>{if(pending){clearTimeout(pending.timer);pending.reject(Error('预览已改变，请重新采集'));pending=undefined;}};
+  const cancel=()=>{
+    serial++;
+    if(!disposed)capture.disabled=false;
+    if(!pending)return;
+    const selected=pending;pending=undefined;
+    clearTimeout(selected.timer);selected.reject(Error('预览已改变，请重新采集'));
+  };
   const receive=event=>{
     if(event.source!==ports.frame().contentWindow||event.origin!==location.origin||event.data?.source!=='vn-engine-preview'||event.data.type!=='captured-plan')return;
     if(!pending||event.data.requestId!==pending.id||event.data.revision!==pending.revision)return;
@@ -31,19 +38,23 @@ export function createResourcesPanel(root,ports){
     if(event.data.error)request.reject(Error(event.data.error));else request.resolve(event.data);
   };window.addEventListener('message',receive);
   async function captureCurrent(){
-    cancel();const operationRequest=operation.begin();capture.disabled=true;
+    cancel();const request=operation.begin(),sequence=serial;capture.disabled=true;
+    const revision=ports.revision(),id='plan-'+sequence;
+    const samePreview=()=>!disposed&&sequence===serial&&ports.ready()&&ports.revision()===revision;
+    const failed=text=>{if(snapshot)markStale(text);else state('empty',text);};
     try{
-      if(!ports.ready())throw Error('预览尚未就绪，请先从头试玩');
-      const revision=ports.revision(),id='plan-'+(++serial),source=ports.source();
+      if(!ports.ready()){failed('预览尚未就绪，请先从头试玩');return;}
+      const source=ports.source();
       const report=await new Promise((resolve,reject)=>{
         pending={id,revision,resolve,reject,timer:setTimeout(()=>{pending=undefined;reject(Error('资源计划采集未响应，请重试'));},5000)};
         ports.frame().contentWindow.postMessage({source:'vn-engine-studio',type:'capture-plan',revision,requestId:id},location.origin);
       });
+      if(!samePreview())return;
       const sha=await sourceHash(source);
-      if(!operationRequest.current()||disposed)return;
+      if(!samePreview()||!request.current())return;
       if(report.sourceSha256!==sha)throw Error('预览来源与当前工程不同，请刷新当前工程预览后采集');
       snapshot=report.snapshot;draw();
-    }catch(error){if(operationRequest.current())state(snapshot?'stale':'empty',error.message);}finally{if(!disposed)capture.disabled=false;}
+    }catch(error){if(samePreview()&&request.current())failed(error.message);}finally{if(!disposed&&sequence===serial)capture.disabled=false;}
   }
   function draw(){
     const {plan,cache:metrics,enabled:active}=snapshot;
@@ -59,7 +70,14 @@ export function createResourcesPanel(root,ports){
     for(const item of plan.unknown)list.append(element('li','未知：'+JSON.stringify(item)));
     cache.textContent=metrics?JSON.stringify(metrics,null,2):'预取未启用，没有编码缓存指标。';
   }
-  return {options,render(){},changed(){operation.invalidate();cancel();if(snapshot){state('stale','工程已更改；请刷新并重新采集资源计划');for(const button of list.querySelectorAll('button'))button.disabled=true;}},
+  function markStale(text){
+    if(!snapshot)return;
+    state('stale',text);
+    for(const button of list.querySelectorAll('button'))button.disabled=true;
+  }
+  return {options,render(){},
+    previewChanged(){cancel();markStale('预览已刷新；请重新采集资源计划');},
+    changed(){operation.invalidate();cancel();markStale('工程已更改；请刷新并重新采集资源计划');},
     reset(){operation.invalidate();cancel();snapshot=undefined;appliedConfig=false;enabled.checked=false;list.replaceChildren();summary.textContent='';cache.textContent='';state('empty','尚未采集资源计划。');},
     dispose(){disposed=true;operation.invalidate();cancel();window.removeEventListener('message',receive);}};
 }

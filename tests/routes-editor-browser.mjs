@@ -4,9 +4,11 @@ import assert from 'node:assert/strict';
 import {mkdir,readFile} from 'node:fs/promises';
 import {createHash} from 'node:crypto';
 import {createDemoServer} from '../tools/serve.mjs';
+import {installPreviewReplyGate} from './preview-reply-fixture.mjs';
 const server=await createDemoServer();await listenBrowserServer(server);let browser;
 try{
   browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:1350,height:1000},acceptDownloads:true}),errors=[];page.on('pageerror',e=>errors.push(e.message));page.on('dialog',d=>d.accept());
+  const gate=await installPreviewReplyGate(page);
   await page.goto(`http://127.0.0.1:${server.address().port}/editor/`);await page.waitForSelector('body[data-editor-ready=true]');
   await page.evaluate(()=>localStorage.setItem('vn-engine:my-script:v2:save:manual-1','sentinel'));
   await page.locator('[data-tab=routes]').click();await page.locator('[data-route-command=record]').click();await page.waitForSelector('body[data-route-recording=true]');
@@ -26,7 +28,27 @@ try{
   await page.locator('[data-route-command=run]').click();await page.waitForSelector('body[data-route-status=PASS]');
   await page.locator('#auto-preview').uncheck();await page.locator('[data-route-command=record]').click();await page.waitForSelector('body[data-route-recording=true]');
   await page.getByLabel('作品名称',{exact:true}).fill('Recording invalidated');await page.getByLabel('作品名称',{exact:true}).blur();assert.equal(await page.locator('[data-route-command=capture]').isDisabled(),true);
+
+  await gate.hold('rendered');
+  await page.locator('[data-route-command=record]').click();
+  const oldRecording=await gate.wait();
+  assert.equal(oldRecording.recording,true);
+  await preview.locator('[data-action=yes]').click();
+  await page.locator('[data-tab=source]').click();
+  const source=page.locator('#source'),changed=JSON.parse(await source.inputValue());
+  changed.program.blocks[0].exit.choices[0].id='new-choice';
+  await source.fill(JSON.stringify(changed));await page.locator('[data-command=apply-source]').click();
+  await page.locator('[data-tab=routes]').click();
+  await gate.release(oldRecording);
+  assert.equal(await page.locator('body').getAttribute('data-route-recording'),'false');
+  assert.equal(await page.locator('[data-route-command=capture]').isDisabled(),true);
+  assert.equal(await page.locator('.route-card').count(),1);
+
+  await page.locator('[data-route-command=record]').click();await page.waitForSelector('body[data-route-recording=true]');
+  await preview.locator('[data-action=new-choice]').click();await page.locator('[data-route-command=capture]').click();
+  const newSteps=page.getByLabel('用例 2 步骤',{exact:true});await newSteps.waitFor();
+  assert.deepEqual(JSON.parse(await newSteps.inputValue()),[{type:'action',id:'new-choice'}]);
   const out=process.env.VN_ENGINE_TEST_OUTPUT??'test-results';await mkdir(out,{recursive:true});await page.screenshot({path:out+'/studio-routes.png',fullPage:true});await page.setViewportSize({width:390,height:844});assert.equal(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
   assert.equal(await page.evaluate(()=>localStorage.getItem('vn-engine:my-script:v2:save:manual-1')),'sentinel');assert.deepEqual(errors,[]);
-  console.log('PASS Studio records actual choices, exports source-bound route reports, diagnoses failures, navigates nodes, undoes changes and cancels/stales isolated workers');
+  console.log('PASS Studio records actual choices, rejects a late recording acknowledgement after edits, and validates source-bound route reports');
 }finally{await browser?.close();await new Promise(resolve=>server.close(resolve));}

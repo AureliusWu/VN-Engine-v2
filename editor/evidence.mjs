@@ -25,7 +25,13 @@ export function createEvidencePanel(root, ports) {
   catalogue.append(list);root.append(catalogue);
 
   const state=(binding,text)=>{message.textContent=text;root.dataset.evidenceBinding=binding;globalThis.document.body.dataset.evidenceBinding=binding;};
-  const cancel=()=>{if(!pending)return;clearTimeout(pending.timer);pending.reject(Error('预览已改变，请重新采集'));pending=undefined;};
+  const cancel=()=>{
+    serial++;
+    if(!disposed)capture.disabled=false;
+    if(!pending)return;
+    const selected=pending;pending=undefined;
+    clearTimeout(selected.timer);selected.reject(Error('预览已改变，请重新采集'));
+  };
   const receive=event=>{
     if(event.source!==ports.frame().contentWindow||event.origin!==location.origin||event.data?.source!=='vn-engine-preview'||event.data.type!=='captured-evidence')return;
     if(!pending||event.data.requestId!==pending.id||event.data.revision!==pending.revision)return;
@@ -34,17 +40,19 @@ export function createEvidencePanel(root, ports) {
   };
   window.addEventListener('message',receive);
   async function captureCurrent(){
-    cancel();const request=operation.begin();capture.disabled=true;
+    cancel();const request=operation.begin(),sequence=serial;capture.disabled=true;
+    const revision=ports.revision(),id='evidence-'+sequence;
+    const samePreview=()=>!disposed&&sequence===serial&&ports.ready()&&ports.revision()===revision;
+    const current=()=>samePreview()&&request.current();
     try{
-      if(!ports.ready())throw Error('预览尚未就绪，请先从头试玩');
-      const revision=ports.revision(),id='evidence-'+(++serial);
+      if(!ports.ready()){state(document?assessment.binding:'empty','预览尚未就绪，请先从头试玩');return;}
       const report=await new Promise((resolve,reject)=>{
         pending={id,revision,resolve,reject,timer:setTimeout(()=>{pending=undefined;reject(Error('运行证据采集未响应，请重试'));},5000)};
         ports.frame().contentWindow.postMessage({source:'vn-engine-studio',type:'capture-evidence',revision,requestId:id},location.origin);
       });
-      if(!request.current())return;
-      await accept(report,request);
-    }catch(error){if(request.current())state(document?'stale':'empty',error.message);}finally{if(!disposed)capture.disabled=false;}
+      if(!samePreview())return;
+      await accept(report,{current});
+    }catch(error){if(current())state(document?assessment.binding:'empty',error.message);}finally{if(!disposed&&sequence===serial)capture.disabled=false;}
   }
   async function accept(value,request=operation.begin()){
     const next=readRuntimeEvidenceReport(value),sha=await sourceHash(ports.source());
@@ -77,6 +85,7 @@ export function createEvidencePanel(root, ports) {
   state('empty','尚未采集运行证据');
   return {
     render:async()=>{if(!document)return;const request=operation.begin();try{await accept(document,request);}catch(error){if(request.current())state('stale',error.message);}},
+    previewChanged:cancel,
     changed(){operation.invalidate();cancel();if(document){assessment={...assessment,current:false,binding:'stale'};draw();}},
     reset(){operation.invalidate();cancel();document=undefined;assessment=undefined;download.disabled=true;events.replaceChildren();detail.textContent='';state('empty','尚未采集运行证据');},
     dispose(){disposed=true;operation.invalidate();cancel();window.removeEventListener('message',receive);}

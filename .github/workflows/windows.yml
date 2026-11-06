@@ -37,6 +37,11 @@ jobs:
         run: npm run test:p3
       - name: Verify P4 background author compilation, cancellation and offline worker packages
         run: npm run test:p4
+      - name: Verify Studio capture ownership and recording acknowledgements on Windows
+        run: |
+          node tests/collections-editor-browser.mjs
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          node tests/routes-editor-browser.mjs
       - name: Verify R5 authoring, focus and audio regressions on Windows
         run: |
           node --test tests/runtime-media.test.mjs

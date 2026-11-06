@@ -183,8 +183,8 @@ internal static class SmokeTests
             if (await JS("window.nativePresentationAuthor === 'ready'") != "true") throw new InvalidDataException("Native timeline authoring: " + await JS("window.nativePresentationAuthor"));
             await Wait("document.querySelector('#preview').contentDocument?.querySelector('.vn-character-front')?.naturalWidth > 0 && document.querySelector('#preview').contentDocument.querySelector('.vn-character-front').style.transform.includes('70px')");
             checks.Add("Native Studio authors a formal layer and timeline through visual controls and renders its final pose in WebView2");
-            await JS("document.querySelector('[data-tab=collections]').click(); [...document.querySelectorAll('#collection-list button')].find(button=>button.textContent==='添加CG').click()");
-            await Wait("Number(document.body.dataset.previewRevision)>0 && !!document.querySelector('#preview').contentDocument?.querySelector('[data-control=gallery]')");
+            await JS("window.nativeCollectionPreviewRevision = Number(document.body.dataset.previewRevision); document.querySelector('[data-tab=collections]').click(); [...document.querySelectorAll('#collection-list button')].find(button=>button.textContent==='添加CG').click()");
+            await Wait("Number(document.body.dataset.previewRevision) > window.nativeCollectionPreviewRevision && !!document.querySelector('#preview').contentDocument?.querySelector('[data-control=gallery]')");
             await JS("[...document.querySelectorAll('#collection-list button')].find(button=>button.textContent==='使用当前预览作为回看起点').click()");
             await Wait("document.querySelector('#collection-list [aria-label=\"CG 1 回看数据\"]')?.value.includes('storyVersion')");
             checks.Add("Native Studio configures a CG collection and captures a real driver replay save from WebView2 preview");

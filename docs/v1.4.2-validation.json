@@ -1,0 +1,215 @@
+{
+  "schema": 1,
+  "date": "2026-11-06",
+  "engineVersion": "1.4.2",
+  "baseCommit": "a476ed0a609941583cc3cf1b528ad7c5ea6e6287",
+  "plan": "docs/PLAN-v1.4.2.md",
+  "research": "docs/PLAN-v1.4.2.md#开源与社区证据",
+  "scope": {
+    "sourceGamesMigrated": false,
+    "publicDataOrSaveFormatChanged": false,
+    "newDependencies": false,
+    "releaseOrTagCreated": false
+  },
+  "local": {
+    "nodeVersion": "v24.14.0",
+    "check": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 381,
+      "pass": 377,
+      "fail": 4,
+      "skipped": 0,
+      "reason": "Windows symlink fixture creation EPERM",
+      "log": "test-results/v142-check.log"
+    },
+    "completeBrowserSuite": {
+      "status": "PASS",
+      "scripts": 48,
+      "log": "test-results/v142-browser.log"
+    },
+    "completeEditorSuite": {
+      "status": "PASS",
+      "scripts": 21,
+      "log": "test-results/v142-editor.log"
+    },
+    "pythonRenpy": {
+      "status": "PASS",
+      "total": 6
+    },
+    "schemaSync": "PASS",
+    "provenance": {
+      "status": "PASS",
+      "files": 200
+    },
+    "projectSchemas": {
+      "status": "PASS",
+      "total": 5
+    },
+    "portfolioPython": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 8,
+      "pass": 7,
+      "fail": 1,
+      "reason": "Windows symlink fixture creation WinError 1314",
+      "log": "test-results/v142-portfolio.log"
+    },
+    "workflowInventory": {
+      "status": "PASS",
+      "scope": "engine checkout only",
+      "log": "test-results/v142-workflow.log"
+    },
+    "captureBrowserRegressions": {
+      "status": "PASS",
+      "paths": [
+        "collections-editor",
+        "routes-editor",
+        "p0-studio",
+        "p1-studio"
+      ],
+      "delayedParentDigest": {
+        "baseCommit": "a476ed0a609941583cc3cf1b528ad7c5ea6e6287",
+        "source": "v1.4.2 preview and capture working tree on the base commit, before the final commit",
+        "method": {
+          "runner": "One-off Node stdin script using Playwright Chromium, createDemoServer and listenBrowserServer",
+          "actualPreview": "Studio campus example loaded and mounted in the actual preview iframe, with the visible portrait confirmed. The test used the real evidence and resource panel capture buttons and explicitly refreshed the same project source.",
+          "controlledDelay": "Only the next parent-page crypto.subtle.digest call was delayed for each late-capture check. The wrapper released the pending call to the original digest implementation after a newer preview revision rendered. Iframe playback, capture messaging and iframe digest used their normal implementations."
+        },
+        "result": "PASS",
+        "observations": {
+          "historicalEvidence": {
+            "bindingBeforeRefresh": "current",
+            "bindingAfterRefresh": "current",
+            "sessionSummaryUnchangedAfterLateCapture": true
+          },
+          "resourcePlan": {
+            "bindingBeforeRefresh": "current",
+            "enabledSourceLocationsBeforeRefresh": "greater than zero",
+            "bindingAfterSameSourceRefresh": "stale",
+            "enabledSourceLocationsAfterRefresh": 0,
+            "bindingAfterNewCapture": "current",
+            "bindingAfterReleasingLateDigest": "stale"
+          },
+          "delayedCapture": {
+            "resourceCaptureButtonEnabledAfterNewRevision": true,
+            "evidenceCaptureButtonEnabledAfterNewRevision": true
+          },
+          "pageErrors": []
+        },
+        "stdout": "PASS same-source rerender preserves historical evidence; invalidates resource snapshot/location and ignores both captures with deferred parent SHA"
+      }
+    },
+    "p4Studio": {
+      "status": "PASS",
+      "checks": [
+        "A running real compilation can be cancelled; a deliberately late callback cannot revive it; retry applies in one undo",
+        "Text edits cancel held work and the prior result never selects or applies the new text",
+        "JSON workspace replacement and New Project both reject held results from the prior workspace",
+        "Resource identity/kind changes replace a held job and automatically recheck without candidate preview; title edits reuse the result",
+        "Explicit worker-error and shortened-timeout simulations preserve data and allow a real retry",
+        "Real 7000-cue compilation keeps serving heartbeats, bounds source ranges and plays a source-bound candidate"
+      ],
+      "scope": {
+        "controlledLifecycle": "Only the DSL Worker is wrapped; hold/pass execute the real parser, then callbacks may be deliberately delivered after termination.",
+        "errorAndTimeout": "Explicit simulated worker error/hang; only the 10000 ms task timer is shortened to 40 ms.",
+        "realLargeWorker": "Separate unwrapped browser context, 7000 cues; checks worker transfer, candidate play and source-bound evidence.",
+        "deviceAndListening": "UNVERIFIED"
+      },
+      "controlled": {
+        "workers": 14,
+        "terminated": 14,
+        "heldCallbacks": 7,
+        "forcedCallbacks": 7
+      },
+      "realWorkers": [
+        "http://127.0.0.1:64735/editor/text-compile-worker.mjs",
+        "http://127.0.0.1:64735/editor/text-compile-worker.mjs"
+      ],
+      "largeCandidate": {
+        "sourceMapCount": 14006,
+        "transferredRanges": 200,
+        "lineCount": 7000,
+        "candidateSHA": "8bd61b18d24442f3b43fd3bd8f08e5e8c5af978d0f74220054791592189feeb3",
+        "currentSHA": "d5c7f6566b1d156c87cf1a6a0caf73819355470ab388f2dfbafc610536054a5c",
+        "planSHA": "8bd61b18d24442f3b43fd3bd8f08e5e8c5af978d0f74220054791592189feeb3",
+        "firstEvidenceCaptureWallMs": 128.01580000000013,
+        "evidenceBinding": "stale",
+        "playedLine": "l1"
+      },
+      "errors": [],
+      "browser": "153.0.8010.12"
+    },
+    "p4Package": {
+      "status": "PASS",
+      "checks": [
+        "Studio includes the worker/task/compiler/context modules; the player excludes all author modules",
+        "Generated nested Studio performs an actual module-worker compile, candidate preview, explicit apply and export",
+        "A new offline Studio page repeats the real worker compile/apply/export using cached modules and newly bound local assets"
+      ],
+      "scope": {
+        "actualModuleWorker": true,
+        "generatedStudio": true,
+        "nestedDeployment": true,
+        "offlineNewPage": true,
+        "localFileInputs": "automated project and resource-directory inputs; no manual system-dialog claim",
+        "physicalDevice": "UNVERIFIED",
+        "physicalListening": "UNVERIFIED"
+      },
+      "run": "D:\\AI项目\\VN-Engine-v2\\test-results\\p4-package\\run-u317D1",
+      "workers": [
+        "http://127.0.0.1:53752/nested/studio/editor/text-compile-worker.mjs",
+        "http://127.0.0.1:53752/nested/studio/editor/text-compile-worker.mjs"
+      ],
+      "errors": [],
+      "playerFiles": 84,
+      "studioFiles": 131,
+      "workerAndTaskCached": true,
+      "authorModulesPackagedInPlayer": false,
+      "browser": "153.0.8010.12"
+    }
+  },
+  "originalFailures": [
+    {
+      "report": "test-results/v142-baseline-repro.json",
+      "scope": "Unapplied candidate and late recording acknowledgement"
+    },
+    {
+      "report": "test-results/v142-baseline-preview-races.json",
+      "scope": "Five observed writes or displays from obsolete preview responses"
+    }
+  ],
+  "cloud": {
+    "status": "PENDING_EXACT_PUSHED_SHA",
+    "evidence": "test-results/v1.4.2-cloud.json"
+  },
+  "sourceHashBasis": "UTF-8 with CRLF normalized to LF to match Git blobs",
+  "sourceSha256": {
+    ".github/workflows/windows.yml": "6d9453f7e414fa355272f7cfda9560816f54287ac6dccc7250f3a32f906d22ae",
+    "editor/app.mjs": "3dd87809abe3bfe3d25e798561227d65af2c3beaf8270f9bc0140b8329adbc62",
+    "editor/evidence.mjs": "79b4e18ff6387da1ad1b75db501460537413c53e41d6f4184ef89c8c91d9aa1b",
+    "editor/preview.mjs": "a3f9221767db21f4d5831571e392dcecfa2c16a8d3167ef32c50d0680014fe3a",
+    "editor/resources.mjs": "4b577afc904af293952ba9ddc8c1d1532e6a23eaef11a4727f1455d57eaa7845",
+    "hosts/windows/SmokeTests.cs": "5f5fcc9cb90707ce70cb7b2501164c5069a7368be6576336be775c0f77e62db4",
+    "hosts/windows/VNEngine.Windows.csproj": "0704a5289124a482d838e048674c0c8e461dae5b94d47245a17a456772e07dfd",
+    "package-lock.json": "8725397110abe41c822360652b0fa2327e45518d60a1c99a4727ce73db25bf8d",
+    "package.json": "5576b7233a86cb2c2a27972c96432b38af3c48c96071819abe7e911df46153a4",
+    "src/version.ts": "23d369289aa875ceeb4c99fc339345aaad60c8da787ad538faa774ac2d7c0c3f",
+    "tests/collections-editor-browser.mjs": "d1740f8d7b2960f35099e94e92f6a306bef0c3b8abb22c0bbde78f9f065179c8",
+    "tests/p0-studio-browser.mjs": "a961b40ac6d0a42e8cb0c8de8920412958fb6e203388c15e6a0235cca849344b",
+    "tests/p1-studio-browser.mjs": "b5688e6d74e3802c0ccc96a5427d045ef696ef82646aee689041e0150a4a87e8",
+    "tests/preview-reply-fixture.mjs": "c9980ea8240a6fb3de680f3ef94558fa1ddc4332250b4aa125b4e12296d9995f",
+    "tests/routes-editor-browser.mjs": "1a93b62f2587a6f8912b4afb6346089e21b524239e4ca402c00f897c4dce72d6"
+  },
+  "evidenceSha256": {
+    "test-results/v142-check.log": "df11d98e63a7a1ed29db3f1d39ba5dad8b1f42fcae984967bd6f77678509b1a2",
+    "test-results/v142-browser.log": "a36781e1a0ebc865a3b1b3300c17fcbb30a804aea7f58312866fc31e69fa6b83",
+    "test-results/v142-editor.log": "e95b46abc4f2f5f82ab887c826614f5f443b28776370c656dcdf62eb8bbbbfff",
+    "test-results/v142-residual.log": "513e442b50650f5a1eaf0f5f69c06b261e6a89bd30157e0e025440605ee37c94",
+    "test-results/v142-portfolio.log": "b8624407ae25489150e31ded8f920348d2b787383fcaf9287387d82e9951fb1d",
+    "test-results/v142-workflow.log": "e28b32d54aefd2ec914bd8498bba7bafdb048f539e610296e68bddb8de8402f0",
+    "test-results/v142-baseline-repro.json": "4ff4a6b8e80319b07ee27038a70d4caf7fae4c53af779011f13bac49fd3edc41",
+    "test-results/v142-baseline-preview-races.json": "969a397bcfe68b6edb13f3485130dc2975ece688c6e38011d9c1b12b46b111b4",
+    "test-results/v142-capture-hash-check.json": "400c789936509888f7969c9d7e3a7061b3be596aae20c5177b67e61083d60715",
+    "test-results/p4-studio/REPORT.json": "bc84d2a255256a491133b82672b8f568207e504b7733ccf5244f4c3737b54854",
+    "test-results/p4-package/REPORT.json": "1c793d184f1423ea042a3b33160a8c7202db3434e7163466c6840b9ab7574a24"
+  }
+}

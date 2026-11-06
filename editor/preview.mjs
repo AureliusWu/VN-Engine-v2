@@ -29,13 +29,25 @@ window.addEventListener('message', event => {
       reply('captured-plan',{revision,requestId,sourceSha256,snapshot:selected.resourceSnapshot()});
     }catch(error){reply('captured-plan',{revision,requestId,error:error.message});}})();return;
   }
-  if (event.data.type === 'capture-replay') {
-    try { if (!mounted || event.data.revision !== currentRevision) throw new Error('预览已更新，请重试'); reply('captured-replay', { revision: event.data.revision, saved: mounted.session.save() }); }
-    catch (error) { reply('captured-replay', { revision: event.data.revision, error: error.message }); } return;
-  }
-  if(event.data.type==='capture-route'){
-    try{if(!mounted||event.data.revision!==currentRevision||!recorder?.active)throw Error('当前没有有效录制，请从头录制');const test=recorder.finish(event.data.id);recorder=undefined;reply('captured-route',{revision:currentRevision,test});}
-    catch(error){reply('captured-route',{revision:event.data.revision,error:error.message});}return;
+  if (event.data.type === 'capture-replay' || event.data.type === 'capture-route') {
+    const { revision, requestId, id } = event.data;
+    if (typeof requestId !== 'string' || !requestId || requestId.length > 128) return;
+    const route = event.data.type === 'capture-route';
+    const type = route ? 'captured-route' : 'captured-replay';
+    try {
+      if (!mounted || revision !== currentRevision) throw Error('预览已更新，请重试');
+      if (route) {
+        if (!recorder?.active) throw Error('当前没有有效录制，请从头录制');
+        const test = recorder.finish(id);
+        recorder = undefined;
+        reply(type, { revision, requestId, test });
+      } else {
+        reply(type, { revision, requestId, saved: mounted.session.save() });
+      }
+    } catch (error) {
+      reply(type, { revision, requestId, error: error.message });
+    }
+    return;
   }
   if (event.data.type !== 'render') return;
   const { project, baseURL, urls, revision } = event.data;

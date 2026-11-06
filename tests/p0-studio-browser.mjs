@@ -4,6 +4,7 @@ import {chromium} from 'playwright';
 import {mkdir,readFile} from 'node:fs/promises';
 import {createDemoServer} from '../tools/serve.mjs';
 import {newProject} from '../dist/editor/model.js';
+import {installPreviewReplyGate} from './preview-reply-fixture.mjs';
 
 const out=process.env.VN_ENGINE_TEST_OUTPUT??'test-results/p0-studio';await mkdir(out,{recursive:true});
 const server=await createDemoServer();await listenBrowserServer(server);let browser;
@@ -11,9 +12,17 @@ try{
   browser=await chromium.launch({headless:true,executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH,args:['--no-sandbox']});
   const page=await browser.newPage({viewport:{width:1360,height:1000},acceptDownloads:true}),errors=[];
   page.on('pageerror',error=>errors.push(error.message));page.on('dialog',dialog=>dialog.accept());
-  await page.goto(`http://127.0.0.1:${server.address().port}/editor/`);await page.waitForSelector('body[data-editor-ready=true]');
+  const gate=await installPreviewReplyGate(page);
+  await page.goto(`http://127.0.0.1:${server.address().port}/editor/`);await page.waitForSelector('body[data-editor-ready=true][data-preview-revision]');
   await page.frameLocator('#preview').locator('[data-action=yes]').waitFor();
   await page.locator('[data-tab=evidence]').click();
+  await gate.hold('captured-evidence');await page.locator('[data-evidence-command=capture]').click();
+  const oldEvidence=await gate.wait();
+  await page.locator('[data-command=preview]').click();
+  await page.waitForFunction(revision=>Number(document.body.dataset.previewRevision)>revision,oldEvidence.revision);
+  await gate.release(oldEvidence);
+  await page.locator('[data-evidence-command=capture]:enabled').waitFor();
+  assert.equal(await page.locator('[data-evidence-command=download]').isDisabled(),true);
   await page.locator('[data-evidence-command=capture]').click();await page.waitForSelector('body[data-evidence-binding=current]');
   assert.match(await page.locator('[data-evidence-status]').innerText(),/非验收通过/);
   assert.ok(await page.locator('[data-semantic-id]').count()>10);
@@ -22,6 +31,7 @@ try{
   await page.locator('[data-tab=evidence]').click();
   const [download]=await Promise.all([page.waitForEvent('download'),page.locator('[data-evidence-command=download]').click()]);
   const report=JSON.parse(await readFile(await download.path(),'utf8'));assert.equal(report.contract,'vn-runtime-evidence-v1');assert.match(report.sourceSha256,/^[a-f0-9]{64}$/);
+  assert.equal(report.sourceSha256,oldEvidence.report.sourceSha256);assert.notEqual(report.sessionId,oldEvidence.report.sessionId);
   await page.locator('#auto-preview').uncheck();await page.getByLabel('作品名称',{exact:true}).fill('改后需重新采集');await page.getByLabel('作品名称',{exact:true}).blur();
   await page.waitForSelector('body[data-evidence-binding=stale]');assert.equal(await page.locator('[data-evidence-navigate]:enabled').count(),0);
   await page.getByLabel('导入运行证据文件',{exact:true}).setInputFiles({name:'old-evidence.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(report))});
