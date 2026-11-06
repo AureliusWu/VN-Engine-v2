@@ -72,7 +72,7 @@
     "src/editor/model.ts": "6e0bfdb694e75b1dd979b0d677b675ca939c9d75127428466ba5eff0c3a7d2a8",
     "src/editor/recovery.ts": "bf432fba150da55398e7c61e4880a91ec272a4642b104f908854abea00cc3c48",
     "src/version.ts": "829aeee143dd8a7659bd8280e47c37212353e486b0e70285982da1019f50edc0",
-    "tests/editor-browser.mjs": "af102b7013a8c6eb5b1093f89ca0943be08b60f3e4fe18bee0a34a463315d2a5",
+    "tests/editor-browser.mjs": "f090f43d530884fd707afc5dc83adc058128426484f41824342ff3ed8d24b940",
     "tests/editor.test.mjs": "f2e9caf4c1ebc68ec5674f779e00034ce8e92758212d9c3d925e8f9eb09d036c",
     "tests/p3-studio-browser.mjs": "0d41538074d1fc0db60e03e14ed33667dbb20cb8dacd2a74fed06c9fe1ca4dcf"
   },
@@ -80,10 +80,12 @@
     "test-results/v210-line-shape-baseline-browser.log": "c21746cbe0d0b2cd52a299bd8be8371fae00898c8ed6a8591e2151168883a34f",
     "test-results/v210-investigation-shape-baseline-browser.json": "7c0c3ed970a28136772ceff49697787d4e1f825ae96b66ea8610dcfa555561f9",
     "test-results/v210-core-initial-contract-fail.log": "ac3c3fd9469248fd2e4747f6f304f46e96a848a16f573029de2f86eba2e33961",
+    "test-results/v210-core-concurrent-build-fail.log": "50f3e28f992aa2ea87a933fc255b60305b180cce4006a5c3336b6e652166e5c9",
+    "test-results/v210-ci-linux-initial-failure.log": "e0d88dde5311586f694451fbfbe6e60c65503f381b643f085feb0fb99eacd0e5",
     "test-results/v210-final-check.log": "249d48c276686872966274de25f31f008ce74359a61855e208dd74d58cc7bea0",
     "test-results/v210-final-remainder.log": "994ed1794861d49ba484a042712cef979d75bfc184b3671f4362672595e2f286",
     "test-results/v210-editor-node.log": "77053ddd270b3b4d6012ac130ded6c4fb74718fa8fcbe31d1c87eccc744a67c6",
-    "test-results/v210-editor-focused.log": "124c881087fbe7307309f3ec526de6a564e56934f5c2cd430379f3bc63b2035d",
+    "test-results/v210-editor-ci-sync-focused.log": "124c881087fbe7307309f3ec526de6a564e56934f5c2cd430379f3bc63b2035d",
     "test-results/v210-p3-focused.log": "8323d7c3abba997dbd321533d0f0c6eadd3397828c106877fd58705ac99c302c"
   },
   "delivery": "test-results/v2.1.0-delivery.json"
