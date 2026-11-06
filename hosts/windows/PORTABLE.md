@@ -1,6 +1,6 @@
 # VN Engine Studio · Windows
 
-这是 VN Engine Studio 的引擎便携构建。程序界面显示引擎版本，GitHub Release 的清单提供源提交与校验摘要。更新范围和兼容约定见 [1.5.0 版本说明](docs/RELEASE-v1.5.0.md) 与 [1.x 兼容](docs/V1_COMPATIBILITY.md)。
+这是 VN Engine Studio 的引擎便携构建。程序界面显示引擎版本，GitHub Release 的清单提供源提交与校验摘要。更新范围和兼容约定见 [2.0.0 版本说明](docs/RELEASE-v2.0.0.md) 与 [工程接入与兼容](docs/MIGRATION.md)。
 
 完整解压后运行 `VNEngine.exe`，保留旁边的 `site` 目录。程序需要系统中的 Microsoft Edge WebView2 Runtime；.NET 运行时已包含在此包内。
 

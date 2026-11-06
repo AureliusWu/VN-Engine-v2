@@ -57,8 +57,16 @@ try {
   const storyTab = () => page.getByRole('button', { name: '场景与分支', exact: true }).click();
   const command = name => page.locator(`[data-command=${name}]`).click();
   const passed = text => { checks.push(text); console.log('PASS', text); };
-  const waitDraft = value => page.waitForFunction(value =>
-    JSON.parse(localStorage.getItem('vn-engine-studio:draft:v1'))?.source === value, value);
+  const draftPrefix = 'vn-engine-studio:draft:v2:';
+  const draftIdOf = async workspace => {
+    const id = await workspace.locator('body').getAttribute('data-draft-id');
+    assert.ok(id, 'Current workspace draft ID is missing');
+    return id;
+  };
+  const draftBytes = (workspace, id) => workspace.evaluate(key => localStorage.getItem(key), draftPrefix + id);
+  const draftOf = async (workspace, id) => JSON.parse(await draftBytes(workspace, id ?? await draftIdOf(workspace)));
+  const waitDraft = (workspace, source) => workspace.waitForFunction(({ prefix, source }) =>
+    JSON.parse(localStorage.getItem(prefix + document.body.dataset.draftId))?.source === source, { prefix: draftPrefix, source });
   const downloaded = async name => {
     const event = page.waitForEvent('download'); await command(name);
     return JSON.parse(await readFile(await (await event).path(), 'utf8'));
@@ -68,7 +76,7 @@ try {
   const initial = JSON.parse(await source.inputValue());
   const edited = { ...initial, title: 'R6 applied JSON project' };
   const raw = '\n' + JSON.stringify(edited, null, 4) + '\n\n';
-  await source.fill(raw); await waitDraft(raw);
+  await source.fill(raw); await waitDraft(page, raw);
   await sourceTab(); await sourceTab();
   assert.equal(await source.inputValue(), raw);
   assert.equal(await page.locator('body').getAttribute('data-dirty'), 'true');
@@ -81,9 +89,15 @@ try {
   await source.fill(invalid); await sourceTab();
   assert.equal(await source.inputValue(), invalid);
   assert.deepEqual(confirmations, []);
-  await waitDraft(invalid);
+  await waitDraft(page, invalid);
+  const invalidId = await draftIdOf(page);
   await page.reload(); await page.waitForSelector('body[data-editor-ready=true]');
+  const invalidBytes = await draftBytes(page, invalidId);
   confirmReplacement = true; await command('restore-draft'); confirmReplacement = false;
+  await page.waitForFunction(() => document.querySelector('#status').textContent.startsWith('草稿已恢复'));
+  assert.notEqual(await draftIdOf(page), invalidId);
+  assert.equal(await draftOf(page), null);
+  assert.equal(await draftBytes(page, invalidId), invalidBytes);
   assert.equal(await source.inputValue(), invalid);
   await sourceTab();
   assert.equal(await source.inputValue(), invalid);
@@ -102,7 +116,7 @@ try {
   passed('Applying valid JSON exports and saves the exact applied project while active-tab clicks retain raw formatting');
 
   const discarded = JSON.stringify({ ...edited, title: 'R6 explicitly discarded JSON' }, null, 2);
-  await source.fill(discarded); await waitDraft(discarded);
+  await source.fill(discarded); await waitDraft(page, discarded);
   await storyTab();
   assert.equal(await page.locator('#source-panel').isVisible(), true);
   assert.equal(await source.inputValue(), discarded);
@@ -120,7 +134,7 @@ try {
   assert.equal(await page.locator('#story-panel').isVisible(), true);
   assert.equal(await page.locator('body').getAttribute('data-dirty'), 'false');
   assert.equal(await page.locator('#save-state').innerText(), '已保存');
-  assert.equal(await page.evaluate(() => JSON.parse(localStorage.getItem('vn-engine-studio:draft:v1')).source), undefined);
+  assert.equal((await draftOf(page)).source, undefined);
   assert.equal(confirmations.length, 2);
   passed('Confirmed departure synchronously discards unapplied text from the draft and refreshes saved state before reload');
 
@@ -141,9 +155,9 @@ try {
     await workspace.locator('#auto-preview').uncheck();
     return workspace;
   };
-  const draftOf = workspace => workspace.evaluate(() => JSON.parse(localStorage.getItem('vn-engine-studio:draft:v1')));
   const replacement = await openDraftWorkspace();
   await holdDraftDebounce(replacement);
+  const replacementA = await draftIdOf(replacement);
   const title = replacement.getByLabel('作品名称', { exact: true });
   await title.fill('Draft A first edit'); await title.blur();
   assert.equal(await replacement.evaluate(() => draftTimerGate.release()), 1);
@@ -155,16 +169,19 @@ try {
   await replacement.locator('[data-command=new]').click();
   assert.equal(await replacement.locator('body').getAttribute('data-project-type'), 'narrative');
   assert.equal(await replacement.locator('body').getAttribute('data-dirty'), 'false');
-  const savedBeforeRelease = await draftOf(replacement);
+  assert.notEqual(await draftIdOf(replacement), replacementA);
+  assert.equal(await draftOf(replacement), null);
+  const savedBeforeRelease = await draftOf(replacement, replacementA);
   assert.equal(savedBeforeRelease.document.project.title, 'Draft A latest edit');
   assert.equal(savedBeforeRelease.document.project.type, 'script');
   await replacement.evaluate(() => draftTimerGate.release());
-  assert.deepEqual(await draftOf(replacement), savedBeforeRelease);
+  assert.deepEqual(await draftOf(replacement, replacementA), savedBeforeRelease);
   await replacement.locator('[data-tab=source]').click();
   await replacement.locator('[data-command=apply-source]').click();
-  assert.deepEqual(await draftOf(replacement), savedBeforeRelease);
+  assert.deepEqual(await draftOf(replacement, replacementA), savedBeforeRelease);
   await replacement.reload();
   await replacement.locator('[data-command=restore-draft]').click();
+  await replacement.waitForFunction(() => document.querySelector('#status').textContent.startsWith('草稿已恢复'));
   assert.equal(await replacement.locator('#project-name').innerText(), 'Draft A latest edit');
   assert.equal(await replacement.locator('body').getAttribute('data-project-type'), 'script');
   await replacement.close({ runBeforeUnload: false });
@@ -177,7 +194,7 @@ try {
   const formatted = '\n' + JSON.stringify(JSON.parse(canonical), null, 4) + '\n\n';
   assert.equal(await formatOnly.locator('body').getAttribute('data-dirty'), 'false');
   await formatSource.fill(formatted);
-  await formatOnly.waitForFunction(formatted => JSON.parse(localStorage.getItem('vn-engine-studio:draft:v1'))?.source === formatted, formatted);
+  await waitDraft(formatOnly, formatted);
   await holdDraftDebounce(formatOnly);
   await formatOnly.locator('[data-command=apply-source]').click();
   assert.equal(await formatOnly.locator('body').getAttribute('data-dirty'), 'false');
@@ -189,6 +206,7 @@ try {
   assert.deepEqual(appliedDraft.document.project, JSON.parse(canonical));
   await formatOnly.reload();
   await formatOnly.locator('[data-command=restore-draft]').click();
+  await formatOnly.waitForFunction(() => document.querySelector('#status').textContent.startsWith('草稿已恢复'));
   await formatOnly.locator('[data-tab=source]').click();
   assert.equal(await formatSource.inputValue(), canonical);
   await formatOnly.close({ runBeforeUnload: false });
@@ -227,7 +245,7 @@ try {
   await original.locator('[data-tab=source]').click();
   const pendingSource = '{ "unfinished recovery JSON":\n';
   await original.locator('#source').fill(pendingSource);
-  await original.waitForFunction(pending => JSON.parse(localStorage.getItem('vn-engine-studio:draft:v1'))?.source === pending, pendingSource);
+  await waitDraft(original, pendingSource);
   const recovery = await downloadFrom(original, '[data-command=export-recovery]');
   assert.match(recovery.name, /\.vnrecover$/);
   const portable = JSON.parse(recovery.bytes), position = portable.positions['["start"]'];
@@ -341,6 +359,14 @@ try {
   }
   passed('Recovery rejects malformed UTF-8, assets and timeline entries without changing the mounted workspace');
 
+  const duplicateEnvelope = portableBytes({ ...newProject('script'), title: 'Duplicate recovery envelope must stay closed' });
+  const duplicateDocument = Buffer.from(duplicateEnvelope.toString('utf8').replace('{', '{"\\u0064ocument":null,'));
+  await openPortable(guarded, duplicateDocument);
+  await guarded.waitForFunction(() => document.querySelector('#status.error')?.textContent.includes('重复字段'), undefined, { timeout: 5000 });
+  assert.deepEqual(await mountedState(), beforeMalformed);
+  assert.ok((await downloadFrom(guarded, '[data-command=export]')).bytes.equals(originalBytes));
+  passed('Portable recovery rejects duplicate envelope keys without replacing the mounted workspace');
+
   const unicodeProject = { ...newProject('script'), title: '合法替换字符 � 与中文' };
   const unicodeSource = '\r\n' + JSON.stringify(unicodeProject) + '\r\n';
   const unicodeWire = JSON.stringify({ format: 'vn-engine-recovery', schema: 1, sourceText: unicodeSource, positions: {} });
@@ -377,6 +403,7 @@ try {
   for (const hasExistingDraft of [false, true]) {
     const slotPage = await openDraftWorkspace();
     await holdDraftDebounce(slotPage);
+    const outgoingId = await draftIdOf(slotPage);
     const slotTitle = slotPage.getByLabel('作品名称', { exact: true });
     if (hasExistingDraft) {
       await slotTitle.fill('Older local draft A'); await slotTitle.blur();
@@ -388,56 +415,76 @@ try {
     assert.equal((await draftOf(slotPage))?.document.project.title, hasExistingDraft ? 'Older local draft A' : undefined);
     await openPortable(slotPage, incomingFile); await waitRecovered(slotPage);
     assert.equal(await slotPage.locator('#project-name').innerText(), incoming.title);
-    const savedA = await draftOf(slotPage);
+    assert.notEqual(await draftIdOf(slotPage), outgoingId);
+    assert.equal(await draftOf(slotPage), null);
+    const savedA = await draftOf(slotPage, outgoingId), savedABytes = await draftBytes(slotPage, outgoingId);
     assert.equal(savedA.document.project.title, 'Latest outgoing local draft A');
     await slotPage.evaluate(() => draftTimerGate.release());
-    assert.deepEqual(await draftOf(slotPage), savedA);
+    assert.equal(await draftBytes(slotPage, outgoingId), savedABytes);
+    assert.equal(await draftOf(slotPage), null);
     await slotPage.reload(); await slotPage.waitForSelector('body[data-editor-ready=true]');
-    assert.deepEqual(await draftOf(slotPage), savedA);
+    assert.equal(await draftBytes(slotPage, outgoingId), savedABytes);
+    assert.equal(await slotPage.locator('#draft-choice').inputValue(), outgoingId);
     await slotPage.locator('[data-command=restore-draft]').click();
     await slotPage.waitForFunction(() => document.querySelector('#status').textContent.startsWith('草稿已恢复'));
     assert.equal(await slotPage.locator('#project-name').innerText(), 'Latest outgoing local draft A');
+    assert.notEqual(await draftIdOf(slotPage), outgoingId);
+    assert.equal(await draftOf(slotPage), null);
     await openPortable(slotPage, incomingFile); await waitRecovered(slotPage);
+    const incomingId = await draftIdOf(slotPage);
     await slotTitle.fill('Genuine later edit to B'); await slotTitle.blur();
-    await slotPage.waitForFunction(() => {
-      const draft = JSON.parse(localStorage.getItem('vn-engine-studio:draft:v1'));
+    await slotPage.waitForFunction(key => {
+      const draft = JSON.parse(localStorage.getItem(key));
       return draft?.document.project.game === 'portable-draft-b' && draft.document.project.title === 'Genuine later edit to B';
-    });
+    }, draftPrefix + incomingId);
+    assert.equal(await draftBytes(slotPage, outgoingId), savedABytes);
+    await slotPage.reload(); await slotPage.waitForSelector('body[data-editor-ready=true]');
+    assert.equal(await slotPage.locator('#draft-choice').inputValue(), incomingId);
+    await slotPage.locator('#draft-choice').selectOption(outgoingId);
+    await slotPage.locator('[data-command=restore-draft]').click();
+    await slotPage.waitForFunction(() => document.querySelector('#status').textContent.startsWith('草稿已恢复'));
+    assert.equal(await slotPage.locator('#project-name').innerText(), 'Latest outgoing local draft A');
+    assert.equal(await draftBytes(slotPage, outgoingId), savedABytes);
+    assert.equal((await draftOf(slotPage, incomingId)).document.project.title, 'Genuine later edit to B');
     await slotPage.close({ runBeforeUnload: false });
   }
-  passed('Portable recovery preserves outgoing local drafts through reload and saves later edits to the imported project');
+  passed('Portable recovery keeps independent drafts across reload and can restore an older workspace by ID');
 
   const discardPage = await openDraftWorkspace();
   await holdDraftDebounce(discardPage);
+  const discardOutgoingId = await draftIdOf(discardPage);
   const discardTitle = discardPage.getByLabel('作品名称', { exact: true });
   await discardTitle.fill('Outgoing draft to preserve'); await discardTitle.blur();
   const unappliedPortableJSON = '{ "unapplied portable draft":';
   await openPortable(discardPage, portableBytes(incoming, { source: unappliedPortableJSON }));
   await waitRecovered(discardPage);
-  const retained = await draftOf(discardPage);
-  assert.equal(retained.document.project.title, 'Outgoing draft to preserve');
+  const retained = await draftBytes(discardPage, discardOutgoingId);
+  assert.equal(JSON.parse(retained).document.project.title, 'Outgoing draft to preserve');
+  assert.equal(await draftOf(discardPage), null);
   assert.equal(await discardPage.locator('#source').inputValue(), unappliedPortableJSON);
   await discardPage.locator('[data-tab=story]').click();
   await discardPage.locator('[data-tab=source]').click();
   assert.equal(JSON.parse(await discardPage.locator('#source').inputValue()).title, incoming.title);
-  assert.deepEqual(await draftOf(discardPage), retained);
+  assert.equal(await draftBytes(discardPage, discardOutgoingId), retained);
+  assert.equal(await draftOf(discardPage), null);
   await discardPage.close({ runBeforeUnload: false });
   passed('Discarding imported unapplied JSON preserves the outgoing local draft');
 
   const quotaPage = await openDraftWorkspace();
   await holdDraftDebounce(quotaPage);
+  const quotaId = await draftIdOf(quotaPage);
   const quotaTitle = quotaPage.getByLabel('作品名称', { exact: true });
   await quotaTitle.fill('Earlier persisted quota fixture'); await quotaTitle.blur();
   assert.equal(await quotaPage.evaluate(() => draftTimerGate.release()), 1);
   const quotaSlot = await draftOf(quotaPage);
-  await quotaPage.evaluate(() => {
+  await quotaPage.evaluate(prefix => {
     const write = Storage.prototype.setItem;
     window.restoreDraftStorage = () => { Storage.prototype.setItem = write; };
     Storage.prototype.setItem = function (key, value) {
-      if (this === localStorage && key === 'vn-engine-studio:draft:v1') throw new DOMException('Fixture quota', 'QuotaExceededError');
+      if (this === localStorage && key.startsWith(prefix)) throw new DOMException('Fixture quota', 'QuotaExceededError');
       return write.call(this, key, value);
     };
-  });
+  }, draftPrefix);
   await quotaTitle.fill('Latest unsaved quota fixture'); await quotaTitle.blur();
   for (const replace of [
     () => quotaPage.locator('[data-command=new]').click(),
@@ -452,12 +499,15 @@ try {
     await quotaPage.waitForFunction(() => document.querySelector('#status').textContent.includes('当前工程的草稿未能保存，已取消切换'));
     assert.equal(await quotaTitle.inputValue(), 'Latest unsaved quota fixture');
     assert.equal(await quotaPage.locator('body').getAttribute('data-dirty'), 'true');
+    assert.equal(await draftIdOf(quotaPage), quotaId);
     assert.deepEqual(await draftOf(quotaPage), quotaSlot);
   }
   await quotaPage.evaluate(() => restoreDraftStorage());
   await quotaPage.locator('[data-command=new]').click();
   assert.equal(await quotaPage.locator('#status').textContent(), '工程已打开');
-  assert.equal((await draftOf(quotaPage)).document.project.title, 'Latest unsaved quota fixture');
+  assert.notEqual(await draftIdOf(quotaPage), quotaId);
+  assert.equal(await draftOf(quotaPage), null);
+  assert.equal((await draftOf(quotaPage, quotaId)).document.project.title, 'Latest unsaved quota fixture');
   await quotaPage.close({ runBeforeUnload: false });
   passed('Studio blocks new, sample and file replacement when the outgoing draft cannot be written');
 

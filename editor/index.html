@@ -3,7 +3,15 @@
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: https://assets.vnengine.test; media-src 'self' blob: https://assets.vnengine.test; font-src 'self' blob: https://assets.vnengine.test; connect-src 'self' blob: https://assets.vnengine.test; frame-src 'self'; object-src 'none'; base-uri 'self'"><title>VN Engine Studio</title><link rel="stylesheet" href="./style.css"></head>
 <body>
   <header><div class="brand"><span class="brand-icon">V</span><div><strong>VN Engine Studio</strong><small>自研叙事引擎 · <span id="version"></span></small></div></div><div class="file-title"><strong id="project-name">未命名作品</strong><span id="save-state">已保存</span></div><nav aria-label="工程操作"><button data-command="open">打开工程</button><button data-command="save">保存工程</button><button data-command="export" class="primary">导出运行数据</button></nav></header>
-  <div id="draft-banner" class="banner" hidden>检测到上次编辑的本地草稿。<button data-command="restore-draft">恢复草稿</button><button data-command="discard-draft">忽略</button></div>
+  <div id="draft-banner" class="banner draft-library" hidden>
+    <label for="draft-choice" id="draft-summary" aria-live="polite">本地草稿</label>
+    <select id="draft-choice" aria-label="选择本地草稿"></select>
+    <div class="draft-actions">
+      <button data-command="restore-draft">恢复草稿</button>
+      <button data-command="export-draft">导出草稿</button>
+      <button data-command="discard-draft">删除草稿</button>
+    </div>
+  </div>
   <main class="workspace">
     <aside class="sidebar"><div class="section-label">工程</div><div id="project-fields"></div><label class="field"><span>新建作品类型</span><select id="template"><option value="vn">视觉小说</option><option value="chat">聊天叙事</option><option value="script" selected>条件剧本</option><option value="investigation">调查解谜</option></select></label><button data-command="new">新建空白工程</button><label class="field"><span>独立引擎样例</span><select id="sample"><option value="campus">校园 VN</option><option value="netlove">聊天与通话</option><option value="circuit">调查与证据</option><option value="rain">结构化剧本兼容</option><option value="stage">文本演出（DSL）</option></select></label><button data-command="sample">打开样例</button>
       <div class="sidebar-separator"></div><div class="section-label">工程恢复</div><button data-command="export-recovery">导出恢复文件</button><button data-command="import-recovery">打开恢复文件</button><p class="help">恢复文件保留工程、布局与待提交的作者输入。请单独保管资源目录，打开后重新绑定。</p>

@@ -1,0 +1,98 @@
+{
+  "schema": 1,
+  "engineVersion": "2.0.0",
+  "baseCommit": "d6e8d83e43511967bdf9fc664e8c45bdbf079485",
+  "plan": "docs/PLAN-v2.0.0.md",
+  "baselineCases": [
+    "same-tab-workspace-overwrite",
+    "stale-tab-close-overwrite",
+    "duplicate-portable-envelope"
+  ],
+  "regressions": {
+    "status": "PASS",
+    "node": "portable recovery rejects duplicate envelope fields while nested and local data stay compatible",
+    "chromium": [
+      "Draft history isolates same-project tabs, forks restored drafts, exports the selection and deletes only after confirmation",
+      "Portable recovery keeps independent drafts across reload and can restore an older workspace by ID",
+      "Portable recovery rejects duplicate envelope keys without replacing the mounted workspace"
+    ],
+    "r5Checks": 8,
+    "r6Checks": 18
+  },
+  "local": {
+    "nodeVersion": "v24.14.0",
+    "check": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 394,
+      "pass": 390,
+      "fail": 4,
+      "skipped": 0,
+      "reason": "Windows symlink fixture creation EPERM",
+      "failures": [
+        "symlink import parents are refused; pure SDK requires an explicit import/decoder host",
+        "project symlinks and escaping assets are rejected, imports create no files",
+        "resource symlinks, missing bytes, invalid encoding and report overwrite are structured failures",
+        "build refuses altered assets, escaping symlinks and generated-file collisions before writing output"
+      ]
+    },
+    "editorModel": {
+      "status": "PASS",
+      "total": 28
+    },
+    "pythonRenpy": {
+      "status": "PASS",
+      "total": 6
+    },
+    "schemaSync": "PASS",
+    "provenance": {
+      "status": "PASS",
+      "files": 202
+    },
+    "projectSchemas": {
+      "status": "PASS",
+      "total": 5
+    },
+    "portfolioPython": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 8,
+      "pass": 7,
+      "fail": 1,
+      "reason": "Windows symlink fixture creation WinError 1314"
+    },
+    "workflowInventory": "PASS"
+  },
+  "sourceSha256": {
+    "docs/provenance.json": "f2f22d9fadd1a3622753bc5403bdb07e914beced8c7fa1a245d68e3b9a13d108",
+    "editor/app.mjs": "8bfb0d6e9995a927c8e46c992ef731596a9cc02a5f87ebbde3f2cb96d370cf32",
+    "editor/draft-library.mjs": "dfb34268225a2aa1ab6da4bc6875de1080441b078add1134cb8f0d4a6bd68928",
+    "editor/index.html": "e4616013adde8f416a09130de7c8a0129dc7869ed2015b8b39389c82a302022a",
+    "editor/style.css": "3b32b83d9cfffab14a74aa01e5b3b1d5981caa9ac15a1764543b64401cdb7066",
+    "hosts/windows/PORTABLE.md": "aeab5fadace363bad64063736018f9665d5b856854908ca5d5b627799ec37a5f",
+    "hosts/windows/SmokeTests.cs": "5b9b2f1edd3e0cae33aae0faf6e4b0cece73e98d3dff8449135a0130f3061816",
+    "hosts/windows/VNEngine.Windows.csproj": "d6b2ad828ca0110ebf26e9d092261322594aa9e5fbbea23f07a31b1aa3e8e187",
+    "package-lock.json": "a93e6e7ef3f65a90c5f73a921827658176764bb66291cc07f4bce52e2be29d7a",
+    "package.json": "0288eee0d7ea15c03283686766132ecf56984f1b8521736e9ef6a1678dbce6e8",
+    "src/editor/recovery.ts": "25b2ab83e16d6af166d122cf175000361a066b04f03e934271e56f80062e47de",
+    "src/version.ts": "5cbb8380792aad1a71668ad43d681fe7fdf63a67d01886cb5c340ab19bfe1cd9",
+    "tests/editor-browser.mjs": "c603a587bc667f423b039fd38a15f515ad2d0725b497da080d13f7ee23b4251f",
+    "tests/editor.test.mjs": "52ecb633b8576e335f5b3a3bcce900607ccbc0922d000f4b6150f1a6fe22cf8c",
+    "tests/production-editor-browser.mjs": "5d85752fe105cea2561a8671d2d0a80e2ba5ffb118069eab500000f1e1c04fed",
+    "tests/r5-feedback-browser.mjs": "8b176591fab40874277817559e76fd368a31f33df73bc9e07a0f30633bb757ef",
+    "tests/r5-studio-browser.mjs": "7df6770f89c839f52d5313cce2991696389b32ecd8dbaeb7d357f11cc7c53934",
+    "tests/r6-studio-browser.mjs": "25191e6d185fb6863e767d2698c0a8d7e027af9fa9cabd9d4aad3701dee7ab16"
+  },
+  "evidenceSha256": {
+    "test-results/v200-draft-history-baseline.json": "d3bb80954073022a74117a7f8b843fd22480ea92aa105348a1a9b4f64696db58",
+    "test-results/v200-recovery-duplicate-baseline-browser/run-ir8pcN/REPORT.json": "8ab13493c3c16da4a9735c031b314b68826b603edb89fe5f9cafb22eef1af7dc",
+    "test-results/v200-recovery-duplicate-baseline-node.log": "8f964be4329a86c97494a0cc30791b2c524598ae72510a234c132e4fd02a3279",
+    "test-results/v200-cross-tab-delete-repro.json": "8ef089d2ce7eb13f33230315074164acc9b27e211fa6bbe3942a124b502ad2d8",
+    "test-results/v200-final-check.log": "226dc58c876e18ed249926a9478b817167fd13fc250638eeee695d600b01ff6b",
+    "test-results/v200-final-remainder.log": "6a6ed28e020b4188795c712d5a8368172c7a52d545a3042cad972b06342e51ea",
+    "test-results/v200-editor-node.log": "21add6f13b2a31a37877de209702fa96733aa6187b3c43ec963a4ec05e8afd2c",
+    "test-results/v200-final-provenance.log": "d0a6f78b1d04b2c150c2f7c016ec71cbf120ec7c424f1ba7f1e87141beecaa54",
+    "test-results/v200-final-focused/r5-feedback/r5-feedback-browser.json": "3da330ddfdd9fd1eecfe1751d32c6dbafb3b188282cd6b5e3caf5668f8790283",
+    "test-results/v200-final-focused/r6-studio/r6-studio-browser.json": "502fbc7d401863e0457051e038b66d7c4ab3cd2490682347aafaa905a5c9d23f",
+    "test-results/v200-native-draft-chromium-profile-rpC86v/REPORT.json": "a36013c38ba00c15d2b72c5fade385e7ba387ad149dae9fae9fc931ce33afe96"
+  },
+  "delivery": "test-results/v2.0.0-delivery.json"
+}

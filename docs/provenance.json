@@ -70,7 +70,7 @@
       "target": "editor/app.mjs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "b4eec5a862d1342b606b6d9de4a41ab1a7750dd819495223bbd015cf9e2c558e"
+      "targetSha256": "8bfb0d6e9995a927c8e46c992ef731596a9cc02a5f87ebbde3f2cb96d370cf32"
     },
     {
       "target": "editor/async-operation.mjs",
@@ -85,6 +85,12 @@
       "origins": []
     },
     {
+      "target": "editor/draft-library.mjs",
+      "mode": "new",
+      "targetSha256": "dfb34268225a2aa1ab6da4bc6875de1080441b078add1134cb8f0d4a6bd68928",
+      "origins": []
+    },
+    {
       "target": "editor/evidence.mjs",
       "mode": "new",
       "targetSha256": "79b4e18ff6387da1ad1b75db501460537413c53e41d6f4184ef89c8c91d9aa1b",
@@ -94,7 +100,7 @@
       "target": "editor/index.html",
       "mode": "new",
       "origins": [],
-      "targetSha256": "a1ed55b4a9c92ba5174973b53c4ec2459355dcf09b5a77a025364b1fda207df0"
+      "targetSha256": "e4616013adde8f416a09130de7c8a0129dc7869ed2015b8b39389c82a302022a"
     },
     {
       "target": "editor/logic.mjs",
@@ -197,7 +203,7 @@
       "target": "editor/style.css",
       "mode": "new",
       "origins": [],
-      "targetSha256": "94c9050634918c6de983cc9e2d1a4ac1289314ec868d2e9eb80cc0ade926670f"
+      "targetSha256": "3b32b83d9cfffab14a74aa01e5b3b1d5981caa9ac15a1764543b64401cdb7066"
     },
     {
       "target": "editor/text-compile-task.mjs",
@@ -448,13 +454,13 @@
       "target": "hosts/windows/SmokeTests.cs",
       "mode": "new",
       "origins": [],
-      "targetSha256": "9d0db02f3af6d55ec806b3674a7ed77e431151da957cc6055e2da65a6ff037c7"
+      "targetSha256": "5b9b2f1edd3e0cae33aae0faf6e4b0cece73e98d3dff8449135a0130f3061816"
     },
     {
       "target": "hosts/windows/VNEngine.Windows.csproj",
       "mode": "new",
       "origins": [],
-      "targetSha256": "ca181f4319d91b0634fcdc45f0578340f3a5c2121734b4e840b76fc485405815"
+      "targetSha256": "d6b2ad828ca0110ebf26e9d092261322594aa9e5fbbea23f07a31b1aa3e8e187"
     },
     {
       "target": "licenses/Healing-LICENSE.txt",
@@ -830,7 +836,7 @@
     {
       "target": "src/editor/recovery.ts",
       "mode": "new",
-      "targetSha256": "d78e1b0ce6fa2fe90240fb99f45524bd49ff85ad1157af27c61a30a99df64e7f",
+      "targetSha256": "25b2ab83e16d6af166d122cf175000361a066b04f03e934271e56f80062e47de",
       "origins": []
     },
     {
@@ -1254,7 +1260,7 @@
       "target": "src/version.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "776cf19deb8f3f43cbb235d823264a2e25e377080418c2aea7ed0313e0e3f92e"
+      "targetSha256": "5cbb8380792aad1a71668ad43d681fe7fdf63a67d01886cb5c340ab19bfe1cd9"
     },
     {
       "target": "tools/acceptance-node.mjs",

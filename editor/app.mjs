@@ -13,18 +13,20 @@ import { createEvidencePanel } from './evidence.mjs';
 import { createTextScriptPanel } from './text-script.mjs';
 import { createResourcesPanel } from './resources.mjs';
 import { hasDraftFeedbackTarget } from './review-draft.mjs';
+import { createDraftLibrary, DRAFT_LIBRARY_PREFIX, LEGACY_DRAFT_ID } from './draft-library.mjs';
 
 const $ = id => document.getElementById(id);
-const DRAFT_KEY = 'vn-engine-studio:draft:v1';
+const drafts = createDraftLibrary(() => localStorage);
 const LEGACY_FILTER_FIELDS = new Set(Object.entries({
   tasks: ['任务搜索', '任务种类', '任务状态', '任务角色'],
   assets: ['素材搜索', '素材种类', '素材状态']
 }).flatMap(([view, labels]) => labels.map(label => JSON.stringify([['production-list', '', view], label, 0]))));
-let model = new EditorModel(newProject('script')), selected, tab = 'story', draft, draftTimer, previewTimer;
+let model = new EditorModel(newProject('script')), selected, tab = 'story', draftTimer, previewTimer;
+let draftEntries = [], activeDraftId, draftSelectionRequired = false;
 let baseURL = new URL('../samples/', location.href).href, resourceURLs = new Map(), resourceFiles, previewReady = false, revision = 0, savedSource = '';
 let nativeHidden = false, identitySource = '', identityProject = '';
 let workspaceVersion = 0, fileOpenRequest, fileRecoveryRequest;
-let uneditedPortableModel;
+let recoveryCheckpoint;
 function projectSource(text = model.serialize(true)) { return text === identityProject ? identitySource : text; }
 let previewSnapshot, captureSerial = 0;
 const previewCaptures = new Map();
@@ -107,13 +109,13 @@ const resources=createResourcesPanel($('resources-list'),{element,action,source:
   navigate:origin=>{const node=model.graph().nodes.find(n=>n.id===origin.nodeId&&n.chapter===origin.chapterId);if(!node)throw Error('此来源没有对应的可编辑节点');selected=node.key;switchTab('story');renderGraph(model.graph());renderInspector();}
 });
 function authorInputChanged() {
-  uneditedPortableModel = undefined;
+  recoveryCheckpoint = undefined;
   workspaceVersion++; syncDirty(); scheduleDraft();
 }
 function mutate(fn, inspector = false) {
   const before = model.getView();
   fn();
-  if (model.getView() !== before) uneditedPortableModel = undefined;
+  if (model.getView() !== before) recoveryCheckpoint = undefined;
   update(inspector); status('更改已记录，可撤销');
 }
 function set(path, value, inspector = false) { mutate(() => model.set(path, value), inspector); }
@@ -133,29 +135,60 @@ function recoveryState() {
 function cancelDraftTimer() {
   clearTimeout(draftTimer); draftTimer = undefined;
 }
-function showDraftPrompt(raw) {
-  draft = undefined;
-  $('draft-banner').hidden = true;
-  if (raw) {
-    draft = { raw, snapshot: readRecovery(raw) };
-    $('draft-banner').hidden = false;
+function refreshDraftLibrary() {
+  const picker = $('draft-choice'), preferred = picker.value;
+  let corrupt = 0, readable = true;
+  try {
+    const result = drafts.list(activeDraftId);
+    draftEntries = result.entries;
+    corrupt = result.corruptCount;
+  } catch {
+    draftEntries = [];
+    readable = false;
   }
+  picker.replaceChildren(...draftEntries.map(({ id, snapshot }) => {
+    const { title, game, version } = snapshot.document.project;
+    const date = snapshot.at ? new Date(snapshot.at).toLocaleString() : '无时间';
+    const identity = id === LEGACY_DRAFT_ID ? '旧版' : id.slice(0, 8);
+    const label = `${(title || '未命名作品').slice(0, 80)} · ${game.slice(0, 60)} / ${version.slice(0, 30)} · ${date} · ${identity}`;
+    return element('option', label, { value: id });
+  }));
+  if (draftEntries.some(entry => entry.id === preferred)) picker.value = preferred;
+  else if (preferred || draftSelectionRequired) {
+    draftSelectionRequired = true;
+    picker.selectedIndex = -1;
+  }
+  const empty = !draftEntries.length;
+  picker.disabled = empty;
+  syncDraftActions();
+  $('draft-summary').textContent = readable ? `本地草稿 ${draftEntries.length} 份${corrupt ? `，另有 ${corrupt} 份无法读取` : ''}` : '本地草稿暂时无法读取';
+  $('draft-banner').hidden = readable && empty && !corrupt;
+}
+function syncDraftActions() {
+  const selected = $('draft-choice').value;
+  for (const button of $('draft-banner').querySelectorAll('button')) button.disabled = !selected;
 }
 function selectedDraft() {
-  if (!draft) return;
-  const raw = localStorage.getItem(DRAFT_KEY);
-  if (raw === draft.raw) return draft.snapshot;
-  showDraftPrompt(raw);
-  status('本地草稿已变化，请检查后重试', true);
+  const entry = draftEntries.find(item => item.id === $('draft-choice').value);
+  if (!entry || drafts.get(entry.id) === entry.raw) return entry;
+  refreshDraftLibrary();
+  status('本地草稿已变化，请核对后重试', true);
+}
+function beginDraftWorkspace() {
+  activeDraftId = drafts.newId();
+  document.body.dataset.draftId = activeDraftId;
+  refreshDraftLibrary();
 }
 function saveDraft() {
   cancelDraftTimer();
-  if (uneditedPortableModel === model) return true;
   try {
-    localStorage.setItem(DRAFT_KEY, writeRecovery(recoveryState()));
-    showDraftPrompt();
+    if (recoveryCheckpoint?.model === model) {
+      const entry = recoveryCheckpoint.entry;
+      if (!entry || drafts.get(entry.id) === entry.raw) return true;
+    }
+    drafts.put(activeDraftId, writeRecovery(recoveryState()));
     return true;
-  } catch { status('本地草稿无法保存，请导出恢复文件或保存工程', true); return false; }
+  } catch { status('本地草稿无法保存。可导出恢复文件，或整理草稿库后重试', true); return false; }
 }
 function clearResources(nextBase = new URL('./', location.href).href) {
   invalidatePreview();
@@ -168,27 +201,27 @@ function replace(input, options = {}) {
   const incomingReview = options.authorReview;
   if(incomingReview) readAuthorReview(incomingReview,options.draft?{...next.getView().project,game:incomingReview.game,version:incomingReview.storyVersion}:next.getView().project);
   // Validate the replacement before committing a draft or clearing the current resources.
-  const restoringLocalDraft = options.draft && !options.preserveOutgoingDraft;
-  if (!restoringLocalDraft && workspaceDirty() && !saveDraft()) {
-    throw Error('当前工程的草稿未能保存，已取消切换。请先保存工程，或导出恢复文件后重新打开 Studio');
+  if (workspaceDirty() && !saveDraft()) {
+    throw Error('当前工程的草稿未能保存，已取消切换。请先保存工程、整理草稿库或导出恢复文件');
   }
   cancelDraftTimer();
   opening.invalidate(); assetBinding.invalidate(); fieldEdits.reset();
-  clearResources(options.baseURL); if (options.files) resourceFiles = new Set(options.files); model = next; uneditedPortableModel = undefined;
+  clearResources(options.baseURL); if (options.files) resourceFiles = new Set(options.files); model = next; recoveryCheckpoint = undefined;
+  beginDraftWorkspace();
   identityProject=model.serialize(true);identitySource=options.sourceText ?? (typeof input==='string'&&!JSON.parse(input).format?input:identityProject);production.reset(incomingReview,{detached:options.draft});evidence.reset();textScript.reset();resources.reset();selected = model.graph().nodes[0]?.key;
   savedSource = ''; tab = 'story'; renderProject(); update(true); switchTab('story');
   if (options.draft) { model.markUnsaved(); document.body.dataset.dirty = 'true'; $('save-state').textContent = '● 未保存'; status('草稿已恢复；请重新绑定本地资源目录'); }
   else status('工程已打开');
 }
-function canReplace() { return !workspaceDirty() || confirm('当前更改尚未保存。仍要替换当前工程吗？本地草稿只保留一份。'); }
+function canReplace() { return !workspaceDirty() || confirm('当前更改尚未保存。要保留本地草稿并切换工程吗？'); }
 function recoveryBaseURL(value) {
   if (value === undefined) return;
   try { const url = new URL(value); if (url.origin === location.origin && !url.username && !url.password) return url.href; }
   catch { /* A recovery record cannot grant access to an invalid directory. */ }
 }
-async function restoreRecovery(snapshot, portable = false) {
+async function restoreRecovery(snapshot, portable = false, entry) {
   replace(snapshot.document, { baseURL: portable ? undefined : recoveryBaseURL(snapshot.baseURL), draft: true,
-    authorReview: snapshot.authorReview, sourceText: snapshot.sourceText, preserveOutgoingDraft: portable });
+    authorReview: snapshot.authorReview, sourceText: snapshot.sourceText });
   const restoredModel = model;
   production.restoreDraft(snapshot.productionDraft);
   if (model.graph().nodes.some(node => node.key === snapshot.selectedNode)) { selected = snapshot.selectedNode; renderGraph(model.graph()); renderInspector(); }
@@ -202,18 +235,10 @@ async function restoreRecovery(snapshot, portable = false) {
   if (typeof snapshot.source === 'string') { switchTab('source'); $('source').value = snapshot.source; }
   const pendingFields = snapshot.pendingFields?.filter(field => !LEGACY_FILTER_FIELDS.has(field.key));
   const skipped = fieldEdits.restore(pendingFields, { onlyBound: portable }); syncDirty();
-  // If the slot is occupied, the imported file remains B's checkpoint until the first edit.
-  let retainedMessage = '';
-  try {
-    const retained = portable ? localStorage.getItem(DRAFT_KEY) : null;
-    if (retained !== null) uneditedPortableModel = restoredModel;
-    showDraftPrompt(retained);
-    if (retained) retainedMessage = '；原本地草稿可恢复，保留至本次编辑或保存';
-  } catch {
-    retainedMessage = '；原本地草稿无法读取';
-  }
+  // An existing checkpoint remains available until this copy has its own edits.
+  if (!portable || draftEntries.length) recoveryCheckpoint = { model: restoredModel, entry };
   if (saveDraft()) {
-    const message = portable ? `恢复文件已打开；请重新绑定本地资源目录${retainedMessage}` : '草稿已恢复；请重新绑定本地资源目录';
+    const message = portable ? '恢复文件已打开；请重新绑定本地资源目录' : '草稿已恢复；请重新绑定本地资源目录';
     status(skipped ? `${message}。有 ${skipped} 个待提交字段无法定位` : message, skipped > 0);
   }
 }
@@ -586,9 +611,17 @@ function download(content, filename) {
   const url = URL.createObjectURL(new Blob([content], { type: 'application/json' })), anchor = element('a', undefined, { href: url, download: filename });
   document.body.append(anchor); anchor.click(); anchor.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
-function projectFilename() {
-  const game = model.getView().project.game;
+function projectFilename(game = model.getView().project.game) {
   return /^[a-zA-Z0-9_-]+$/.test(game) ? game : 'project';
+}
+async function exportRecovery(state, game) {
+  const content = writeRecovery(state, { portable: true });
+  const suggestedName = projectFilename(game) + '.vnrecover';
+  if (nativeHost) {
+    const result = await nativeRequest('save-recovery', { content, suggestedName });
+    if (result.cancelled) return;
+  } else download(content, suggestedName);
+  status('恢复文件已导出，请单独保管资源目录');
 }
 async function save(projectOnly) {
   const pending = fieldEdits.flush(); if (pending) await pending;
@@ -599,7 +632,7 @@ async function save(projectOnly) {
   if (nativeHost) { const result = await nativeRequest(projectOnly ? 'export-project' : 'save-workspace', { content, suggestedName, baseURL }); if (result.cancelled) { status('已取消保存，当前工程仍保留'); return; } }
   else download(content, suggestedName);
   if (!projectOnly && (model !== savedModel || content !== model.serialize(false) || fieldEdits.dirty || unappliedSource())) { syncDirty(); saveDraft(); status('工程快照已保存；等待期间的后续更改尚未保存'); return; }
-  if (!projectOnly) { uneditedPortableModel = undefined; model.markSaved(); syncDirty(); }
+  if (!projectOnly) { recoveryCheckpoint = undefined; model.markSaved(); syncDirty(); }
   saveDraft(); status(projectOnly ? '运行数据已导出；请随数据保留相对路径对应的资源目录' : '工程已保存；资源路径相对于工程文件，请随工程保留资源');
 }
 const commands = {
@@ -611,14 +644,7 @@ const commands = {
     if (nativeHost) { const result = await nativeRequest('open-project'); if (!result.cancelled) request.commit(() => replace(result.content, { baseURL: result.baseURL, files: result.files })); }
     else { fileOpenRequest = request; $('open-file').value = ''; $('open-file').click(); }
   },
-  'export-recovery': async () => {
-    const content = writeRecovery(recoveryState(), { portable: true }), suggestedName = projectFilename() + '.vnrecover';
-    if (nativeHost) {
-      const result = await nativeRequest('save-recovery', { content, suggestedName });
-      if (result.cancelled) return;
-    } else download(content, suggestedName);
-    status('恢复文件已导出；请将其与资源目录分开保管');
-  },
+  'export-recovery': () => exportRecovery(recoveryState()),
   'import-recovery': async () => {
     const request = opening.begin();
     if (nativeHost) {
@@ -627,8 +653,8 @@ const commands = {
     } else { fileRecoveryRequest = request; $('recovery-file').value = ''; $('recovery-file').click(); }
   },
   save: () => save(false), export: () => save(true),
-  undo: () => { if (model.undo()) { uneditedPortableModel = undefined; renderProject(); update(true); saveDraft(); } },
-  redo: () => { if (model.redo()) { uneditedPortableModel = undefined; renderProject(); update(true); saveDraft(); } },
+  undo: () => { if (model.undo()) { recoveryCheckpoint = undefined; renderProject(); update(true); saveDraft(); } },
+  redo: () => { if (model.redo()) { recoveryCheckpoint = undefined; renderProject(); update(true); saveDraft(); } },
   'add-node': () => mutate(() => { selected = model.addNode(graphNode()?.chapter); }, true),
   layout: () => mutate(() => model.transact((_p, positions) => { for (const key of Object.keys(positions)) delete positions[key]; }), true),
   preview,
@@ -651,17 +677,27 @@ const commands = {
     else { $('asset-directory').value = ''; $('asset-directory').click(); }
   },
   'restore-draft': async () => {
-    const snapshot = selectedDraft();
-    if (snapshot && canReplace() && selectedDraft() === snapshot) await restoreRecovery(snapshot);
+    const entry = selectedDraft();
+    if (entry && canReplace() && selectedDraft() === entry) await restoreRecovery(entry.snapshot, false, entry);
+  },
+  'export-draft': () => {
+    const entry = selectedDraft();
+    if (entry) return exportRecovery(entry.snapshot, entry.snapshot.document.project.game);
   },
   'discard-draft': () => {
-    if (!selectedDraft()) return;
-    localStorage.removeItem(DRAFT_KEY);
-    showDraftPrompt();
+    const entry = selectedDraft();
+    if (!entry) return;
+    if (recoveryCheckpoint?.entry?.id === entry.id) throw Error('当前工程来自此草稿。请先保存工程，再删除草稿');
+    const label = $('draft-choice').selectedOptions[0].textContent;
+    if (!confirm(`删除本地草稿「${label}」？此操作无法撤销。`)) return;
+    const removed = drafts.remove(entry.id, entry.raw);
+    refreshDraftLibrary();
+    status(removed ? '已删除所选本地草稿' : '本地草稿已变化，请核对后重试', !removed);
   }
 };
 // Recovery can preserve pending form text even when that text cannot be committed yet.
-const directCommands = new Set(['new', 'open', 'sample', 'restore-draft', 'discard-draft', 'export-recovery', 'import-recovery']);
+const directCommands = new Set(['new', 'open', 'sample', 'restore-draft', 'export-draft', 'discard-draft', 'export-recovery', 'import-recovery']);
+$('draft-choice').addEventListener('change', () => { draftSelectionRequired = false; syncDraftActions(); });
 for (const button of document.querySelectorAll('[data-command]')) button.addEventListener('click', () => run(() => directCommands.has(button.dataset.command) ? commands[button.dataset.command]() : afterFields(commands[button.dataset.command])));
 for (const button of document.querySelectorAll('[data-tab]')) button.addEventListener('click', () => run(() => afterFields(() => switchTab(button.dataset.tab))));
 $('auto-preview').addEventListener('change', () => { if ($('auto-preview').checked) preview(); });
@@ -692,12 +728,14 @@ window.addEventListener('keydown', event => {
 });
 window.addEventListener('beforeunload', event => { if (workspaceDirty()) { saveDraft(); event.preventDefault(); event.returnValue = ''; } });
 window.addEventListener('pagehide', () => { clearTimeout(draftTimer); clearTimeout(previewTimer); for (const url of resourceURLs.values()) URL.revokeObjectURL(url); });
+window.addEventListener('storage', event => {
+  if (!event.key || event.key === 'vn-engine-studio:draft:v1' || event.key.startsWith(DRAFT_LIBRARY_PREFIX)) refreshDraftLibrary();
+});
 window.addEventListener('vn-engine-host-visibility', event => { if (typeof event.detail?.hidden !== 'boolean') return; nativeHidden = event.detail.hidden;if(nativeHidden)production.stopMedia(); $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'visibility', hidden: nativeHidden }, location.origin); });
 $('version').textContent = ENGINE_VERSION; $('host-label').textContent = nativeHost ? 'Windows 原生宿主' : '浏览器工作区';
-let draftReadError = false;
-try { showDraftPrompt(localStorage.getItem(DRAFT_KEY)); } catch { draftReadError = true; }
+beginDraftWorkspace();
 selected = model.graph().nodes[0]?.key; renderProject(); update(true);
-status(draftReadError ? '本地草稿无法读取，可继续新建或打开工程' : '编辑器已就绪', draftReadError);
+status('编辑器已就绪');
 document.body.dataset.editorReady = 'true';
 const connectPreview = () => $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'connect' }, location.origin);
 $('preview').addEventListener('load', () => { previewReady = false; invalidatePreview(); connectPreview(); });

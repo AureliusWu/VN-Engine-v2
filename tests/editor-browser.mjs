@@ -100,8 +100,10 @@ try {
   passed('Browser directory selection maps real local image bytes into preview without changing relative project paths');
 
   await page.locator('[data-tab=source]').click(); const pending = JSON.parse(await source.inputValue()); pending.title = '尚未应用的草稿'; await source.fill(JSON.stringify(pending));
-  await page.waitForFunction(() => JSON.parse(localStorage.getItem('vn-engine-studio:draft:v1'))?.source?.includes('尚未应用的草稿'));
-  await page.reload(); await page.waitForSelector('body[data-editor-ready=true]'); await command('restore-draft');
+  await page.waitForFunction(() => JSON.parse(localStorage.getItem('vn-engine-studio:draft:v2:' + document.body.dataset.draftId))?.source?.includes('尚未应用的草稿'));
+  const draftId = await page.locator('body').getAttribute('data-draft-id');
+  await page.reload(); await page.waitForSelector('body[data-editor-ready=true]');
+  await page.locator('#draft-choice').selectOption(draftId); await command('restore-draft');
   assert.match(await source.inputValue(), /尚未应用的草稿/); await command('apply-source'); assert.equal(await page.locator('#project-name').innerText(), '尚未应用的草稿');
   passed('Draft recovery preserves both the applied document and unapplied JSON across a page reload');
 

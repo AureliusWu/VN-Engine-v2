@@ -23,12 +23,40 @@ internal static class SmokeTests
             var assemblyVersion = typeof(SmokeTests).Assembly.GetName().Version?.ToString(3) ?? throw new InvalidDataException("Missing assembly version");
             if (await JS("document.querySelector('#version').textContent === " + JsonSerializer.Serialize(assemblyVersion)) != "true") throw new InvalidDataException("Native executable and bundled engine versions differ");
             checks.Add("Native executable and bundled engine report the same version: " + assemblyVersion);
+            await JS("""
+              window.nativeDraftNew=()=>{
+                const confirm=window.confirm;
+                try { window.confirm=()=>true;document.querySelector('[data-command=new]').click(); }
+                finally { window.confirm=confirm; }
+              };
+              window.nativeDraftRead=id=>localStorage.getItem('vn-engine-studio:draft:v2:'+id);
+              window.nativeDraftsListed=()=>{
+                const ids=window.nativeDraftIds;
+                const options=[...document.querySelector('#draft-choice').options];
+                return Array.isArray(ids)&&ids.length===2&&new Set(ids).size===2&&ids.every((id,index)=>
+                  /^[a-f0-9]{32}$/.test(id)&&id!==document.body.dataset.draftId&&options.some(option=>option.value===id)&&
+                  JSON.parse(nativeDraftRead(id))?.document?.project?.title===['Native archive A','Native archive B'][index]);
+              };
+              """);
             if (window.Options.VerifyPersistence)
             {
-                if (await JS("localStorage.getItem('vn-native-smoke:studio') === 'retained'") != "true") throw new InvalidDataException("编辑器本地配置未持久化");
+                await JS("window.nativeDraftIds=JSON.parse(localStorage.getItem('vn-native-smoke:studio'))");
+                await Wait("nativeDraftsListed()");
                 checks.Add("Editor profile survives a complete process restart");
+                await JS("""
+                  window.nativeDraftBefore=window.nativeDraftIds.map(nativeDraftRead);
+                  document.querySelector('#draft-choice').value=window.nativeDraftIds[0];
+                  document.querySelector('[data-command=restore-draft]').click();
+                  """);
+                await Wait("""
+                  document.querySelector('#status').textContent.startsWith('草稿已恢复')&&document.querySelector('#project-name').textContent==='Native archive A'&&
+                  !window.nativeDraftIds.includes(document.body.dataset.draftId)&&nativeDraftRead(document.body.dataset.draftId)===null&&
+                  window.nativeDraftIds.every((id,index)=>nativeDraftRead(id)===window.nativeDraftBefore[index])
+                  """);
+                checks.Add("Native Studio lists both workspace drafts after a full process restart and restores the older archive without rewriting either draft");
+                await JS("nativeDraftNew()");
+                await Wait("document.body.dataset.dirty==='false'");
             }
-            else await JS("localStorage.setItem('vn-native-smoke:studio','retained')");
             await JS("document.querySelector('[data-command=open]').click()");
             await Wait("document.body.dataset.projectType === 'narrative' && document.querySelector('#preview').contentDocument?.querySelector('.vn-portrait')?.naturalWidth > 0");
             checks.Add("Trusted editor RPC opens JSON through native file IO and loads manifest-only local assets");
@@ -370,6 +398,24 @@ internal static class SmokeTests
               """);
             await Wait("window.nativeRecoveryDenied === true");
             checks.Add("The trusted native recovery command rejects renderer-supplied filesystem paths");
+            if (!window.Options.VerifyPersistence)
+            {
+                await JS("""
+                  (()=>{
+                    nativeDraftNew();
+                    const first=document.body.dataset.draftId;
+                    nativeR3Change('作品名称','Native archive A');
+                    nativeDraftNew();
+                    const second=document.body.dataset.draftId;
+                    nativeR3Change('作品名称','Native archive B');
+                    nativeDraftNew();
+                    window.nativeDraftIds=[first,second];
+                  })();
+                  """);
+                await Wait("nativeDraftsListed() && document.body.dataset.dirty==='false'");
+                await JS("localStorage.setItem('vn-native-smoke:studio',JSON.stringify(window.nativeDraftIds))");
+                checks.Add("Native Studio archives two independently edited workspaces through confirmed switches");
+            }
         }
         else
         {

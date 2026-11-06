@@ -252,6 +252,24 @@ test('recovery preserves original source bytes, layout and drafts with a single 
   assert.deepEqual(readRecovery(changed), { document });
 });
 
+test('portable recovery rejects duplicate envelope fields while nested and local data stay compatible', () => {
+  const document = readDocument(newProject('script'));
+  const source = 'Unapplied "document": {"camera":["[", "}", "\\", "a:b"]}';
+  const portable = { portable: true };
+  const wrapped = writeRecovery({ document, source }, portable);
+  assert.deepEqual(readRecovery(wrapped, portable), { document, source });
+
+  assert.throws(() => readRecovery(wrapped.replace('{', '{"schema":1,'), portable), /重复字段/);
+  assert.throws(() => readRecovery(wrapped.replace('{', '{"\\u0064ocument":null,'), portable), /重复字段/);
+  const nested = wrapped.replace('"project":{', '"project":{"title":"Earlier title",');
+  assert.deepEqual(readRecovery(nested, portable), { document, source });
+
+  const sourceText = JSON.stringify(document.project).replace('{', '{"title":"Earlier title",');
+  assert.deepEqual(readRecovery(writeRecovery({ document, sourceText }, portable), portable), { document, sourceText });
+  const legacy = `{"schema":1,"document":null,"document":${JSON.stringify(document)}}`;
+  assert.deepEqual(readRecovery(legacy), { document });
+});
+
 test('recovery rejects ambiguous, unsafe, malformed and oversized inputs before restoring', () => {
   const document = readDocument(newProject('script'));
   const wire = { format: RECOVERY_FORMAT, schema: 1, document };

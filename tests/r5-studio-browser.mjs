@@ -10,7 +10,7 @@ await listenBrowserServer(server);
 const base = `http://127.0.0.1:${server.address().port}`;
 let browser;
 const checks = [], errors = [];
-const output = 'test-results/r5-studio';
+const output = (process.env.VN_ENGINE_TEST_OUTPUT ?? 'test-results') + '/r5-studio';
 try {
   await mkdir(output, { recursive: true });
   browser = await chromium.launch({ headless: true, executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH });
@@ -38,9 +38,11 @@ try {
   console.log('PASS', checks.at(-1));
 
   await title.fill('R5 pending field draft');
-  await page.waitForFunction(() => JSON.stringify(JSON.parse(localStorage.getItem('vn-engine-studio:draft:v1')).pendingFields).includes('R5 pending field draft'));
+  await page.waitForFunction(() => JSON.stringify(JSON.parse(localStorage.getItem('vn-engine-studio:draft:v2:' + document.body.dataset.draftId))?.pendingFields ?? []).includes('R5 pending field draft'));
+  const draftId = await page.locator('body').getAttribute('data-draft-id');
   await page.reload();
   await page.waitForSelector('body[data-editor-ready=true]');
+  await page.locator('#draft-choice').selectOption(draftId);
   await page.locator('[data-command=restore-draft]').click();
   assert.equal(await title.inputValue(), 'R5 pending field draft');
   await title.focus();

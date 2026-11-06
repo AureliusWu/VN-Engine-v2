@@ -33,6 +33,23 @@ function checkBytes(text: string, max: number, label: string) {
   if (text.length > max || encoder.encode(text).length > max) throw new Error(`${label}超过 ${max / 1_000_000} MB`);
 }
 
+function checkPortableFieldCount(text: string, parsedFieldCount: number) {
+  // JSON.parse has already checked the syntax and collapsed duplicate decoded names.
+  // Each outer object field contributes one unquoted colon, even when its name uses escapes.
+  let depth = 0, insideString = false, fieldCount = 0;
+  for (let index = 0; index < text.length; index++) {
+    const char = text[index];
+    if (insideString) {
+      if (char === '\\') index++;
+      else if (char === '"') insideString = false;
+    } else if (char === '"') insideString = true;
+    else if (char === '{' || char === '[') depth++;
+    else if (char === '}' || char === ']') depth--;
+    else if (char === ':' && depth === 1) fieldCount++;
+  }
+  if (fieldCount !== parsedFieldCount) throw new Error('恢复文件包含重复字段');
+}
+
 function optionalText(value: unknown, max: number, label: string) {
   if (value === undefined) return undefined;
   if (typeof value !== 'string' || value.length > max) throw new Error(`无效的${label}`);
@@ -103,9 +120,11 @@ export function readRecovery(text: string, options: RecoveryOptions = {}): Recov
   const tagged = value.format === RECOVERY_FORMAT;
   if (!tagged && (options.portable || Object.hasOwn(value, 'format') || !Object.hasOwn(value, 'document')
     || Object.hasOwn(value, 'sourceText') || Object.hasOwn(value, 'positions'))) throw new Error('不支持的恢复数据格式');
+  const keys = Object.keys(value);
+  if (options.portable) checkPortableFieldCount(text, keys.length);
   if (options.portable && Object.hasOwn(value, 'baseURL')) throw new Error('恢复文件不能包含资源基址');
   checkJSON(value);
-  if (Object.keys(value).some(key => !fields.has(key))) throw new Error('恢复数据包含未知字段');
+  if (keys.some(key => !fields.has(key))) throw new Error('恢复数据包含未知字段');
 
   const hasSource = Object.hasOwn(value, 'sourceText'), hasDocument = Object.hasOwn(value, 'document');
   if (hasSource === hasDocument || (hasDocument && Object.hasOwn(value, 'positions'))) throw new Error('恢复数据必须包含唯一的工程表示');
