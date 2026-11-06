@@ -2,7 +2,9 @@ import { listenBrowserServer } from '../tools/browser-server.mjs';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
 import { createDemoServer } from '../tools/serve.mjs';
+import { newProject } from '../dist/editor/index.js';
 
 const output = (process.env.VN_ENGINE_TEST_OUTPUT ?? 'test-results') + '/r6-studio';
 await mkdir(output, { recursive: true });
@@ -131,7 +133,7 @@ try {
   passed('Restoring the post-discard draft cannot resurrect explicitly discarded JSON or change the applied project');
 
   const openDraftWorkspace = async () => {
-    const workspace = await browser.newPage({ viewport: { width: 1440, height: 1000 } });
+    const workspace = await browser.newPage({ viewport: { width: 1440, height: 1000 }, acceptDownloads: true });
     workspace.on('pageerror', error => errors.push(error.message));
     workspace.on('dialog', dialog => dialog.accept());
     await workspace.goto(`http://127.0.0.1:${server.address().port}/editor/`);
@@ -191,6 +193,104 @@ try {
   assert.equal(await formatSource.inputValue(), canonical);
   await formatOnly.close({ runBeforeUnload: false });
   passed('Applying formatting-only JSON immediately clears the dirty state and prevents a persisted raw draft from reappearing');
+
+  const fileInput = (name, buffer) => ({ name, mimeType: 'application/json', buffer });
+  const downloadFrom = async (workspace, selector) => {
+    const [file] = await Promise.all([workspace.waitForEvent('download'), workspace.locator(selector).click()]);
+    return { name: file.suggestedFilename(), bytes: await readFile(await file.path()) };
+  };
+  const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
+  const original = await openDraftWorkspace();
+  const project = newProject('script');
+  project.title = 'Portable recovery raw project';
+  project.assets = [{ id: 'classroom', kind: 'background', src: 'assets/classroom.svg' }];
+  project.program.blocks[0].cue = { background: 'classroom' };
+  project.settings = { textDelayMs: 0 };
+  const originalBytes = Buffer.from('\r\n' + JSON.stringify(project) + '\r\n\r\n');
+  await original.locator('#open-file').setInputFiles(fileInput('recovery-source.json', originalBytes));
+  await original.waitForFunction(title => document.querySelector('#project-name').textContent === title, project.title);
+  await original.locator('.node').first().press('Alt+ArrowRight');
+  await original.locator('[data-tab=assets]').click();
+  await original.locator('#asset-directory').setInputFiles('examples/runtime');
+  await original.waitForFunction(() => document.querySelector('#asset-state').textContent.includes('已绑定'));
+  const priorRevision = Number(await original.locator('body').getAttribute('data-preview-revision'));
+  await original.locator('[data-command=preview]').click();
+  await original.waitForFunction(prior => Number(document.body.dataset.previewRevision) > prior, priorRevision);
+  await original.locator('[data-tab=evidence]').click();
+  await original.locator('[data-evidence-command=capture]').click();
+  await original.waitForSelector('body[data-evidence-binding=current]');
+  const evidence = await downloadFrom(original, '[data-evidence-command=download]');
+  assert.equal(JSON.parse(evidence.bytes).sourceSha256, sha256(originalBytes));
+  const dslDraft = 'vn-script 1\n# unfinished recovery draft\n';
+  await original.locator('[data-tab=text-script]').click();
+  await original.locator('[data-dsl-source]').fill(dslDraft);
+  await original.locator('[data-tab=source]').click();
+  const pendingSource = '{ "unfinished recovery JSON":\n';
+  await original.locator('#source').fill(pendingSource);
+  await original.waitForFunction(pending => JSON.parse(localStorage.getItem('vn-engine-studio:draft:v1'))?.source === pending, pendingSource);
+  const recovery = await downloadFrom(original, '[data-command=export-recovery]');
+  assert.match(recovery.name, /\.vnrecover$/);
+  const portable = JSON.parse(recovery.bytes), position = portable.positions['["start"]'];
+  assert.equal(portable.format, 'vn-engine-recovery');
+  assert.equal(portable.document, undefined);
+  assert.equal(portable.sourceText, originalBytes.toString('utf8'));
+  assert.deepEqual(position, { x: 56, y: 38 });
+  assert.equal(portable.source, pendingSource);
+  assert.equal(portable.textScriptDraft, dslDraft);
+  assert.equal(portable.baseURL, undefined);
+
+  const recovered = await openDraftWorkspace();
+  const [chooser] = await Promise.all([recovered.waitForEvent('filechooser'), recovered.locator('[data-command=import-recovery]').click()]);
+  await chooser.setFiles(fileInput(recovery.name, recovery.bytes));
+  await recovered.waitForFunction(() => document.querySelector('#status').textContent.includes('恢复文件已打开'));
+  assert.equal(await recovered.locator('#project-name').innerText(), project.title);
+  assert.match(await recovered.locator('#asset-state').innerText(), /未绑定/);
+  assert.equal(await recovered.locator('#source').inputValue(), pendingSource);
+  assert.equal(await recovered.locator('.node').first().evaluate(node => node.style.left), position.x + 'px');
+  await recovered.locator('[data-tab=text-script]').click();
+  assert.equal(await recovered.locator('[data-dsl-source]').inputValue(), dslDraft);
+  const runtime = await downloadFrom(recovered, '[data-command=export]');
+  assert.ok(runtime.bytes.equals(originalBytes));
+  await recovered.locator('[data-tab=evidence]').click();
+  await recovered.locator('#evidence-list input[type=file]').setInputFiles(fileInput(evidence.name, evidence.bytes));
+  await recovered.waitForSelector('body[data-evidence-binding=current]');
+  passed('Portable recovery restores original runtime bytes, layout and draft inputs in a fresh Chromium context without restoring resource access');
+
+  const legacy = { schema: 1, document: { format: 'vn-engine-editor', schema: 1, project, positions: {} }, source: pendingSource };
+  for (const [bytes, expectedError] of [
+    [Buffer.from('{broken'), 'JSON'],
+    [Buffer.from(JSON.stringify(legacy)), '格式'],
+    [Buffer.from(JSON.stringify({ ...portable, baseURL: 'https://forged.invalid/' })), '资源基址']
+  ]) {
+    await recovered.locator('#recovery-file').setInputFiles(fileInput('invalid.vnrecover', bytes));
+    await recovered.waitForFunction(expected => {
+      const status = document.querySelector('#status');
+      return status.classList.contains('error') && status.textContent.includes(expected);
+    }, expectedError);
+    assert.equal(await recovered.locator('#project-name').innerText(), project.title);
+    assert.equal(await recovered.locator('.node').first().evaluate(node => node.style.left), position.x + 'px');
+    assert.equal(await recovered.locator('body').getAttribute('data-evidence-binding'), 'current');
+    await recovered.locator('#recovery-file').evaluate(input => { input.value = ''; });
+  }
+  await recovered.close({ runBeforeUnload: false });
+  passed('Invalid and untagged portable recovery files preserve the current workspace and source-bound evidence');
+
+  await original.reload();
+  await original.locator('[data-command=restore-draft]').click();
+  await original.waitForFunction(() => document.querySelector('#status').textContent.includes('草稿已恢复'));
+  assert.equal(await original.locator('#source').inputValue(), pendingSource);
+  await original.locator('[data-tab=story]').click();
+  assert.ok((await downloadFrom(original, '[data-command=export]')).bytes.equals(originalBytes));
+  await original.close({ runBeforeUnload: false });
+  const legacyPage = await openDraftWorkspace();
+  await legacyPage.evaluate(legacy => localStorage.setItem('vn-engine-studio:draft:v1', JSON.stringify(legacy)), legacy);
+  await legacyPage.reload();
+  await legacyPage.locator('[data-command=restore-draft]').click();
+  await legacyPage.waitForFunction(() => document.querySelector('#status').textContent.includes('草稿已恢复'));
+  assert.equal(await legacyPage.locator('#project-name').innerText(), project.title);
+  assert.equal(await legacyPage.locator('#source').inputValue(), pendingSource);
+  await legacyPage.close({ runBeforeUnload: false });
+  passed('Local recovery preserves raw source across reload and still reads untagged legacy drafts');
 
   assert.deepEqual(errors, []);
   await writeFile(output + '/r6-studio-browser.json', JSON.stringify({ status: 'PASS', checks,

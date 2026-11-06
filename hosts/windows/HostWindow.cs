@@ -20,6 +20,7 @@ internal sealed class HostWindow : Form
     private Rectangle normalBounds;
     private FormWindowState normalState;
     internal string SmokeFolder { get; }
+    internal string SmokeRecoveryFile => Path.Combine(SmokeFolder, "recovery", "workspace.vnrecover");
     internal string? SmokeSavedFile { get; private set; }
     internal WebView2 Browser => web;
     internal HostOptions Options => options;
@@ -46,6 +47,8 @@ internal sealed class HostWindow : Form
             file.DropDownItems.Add("打开工程", null, async (_, _) => await ClickCommand("open"));
             file.DropDownItems.Add("保存工程", null, async (_, _) => await ClickCommand("save"));
             file.DropDownItems.Add("导出运行数据", null, async (_, _) => await ClickCommand("export"));
+            file.DropDownItems.Add("打开恢复文件", null, async (_, _) => await ClickCommand("import-recovery"));
+            file.DropDownItems.Add("导出恢复文件", null, async (_, _) => await ClickCommand("export-recovery"));
             file.DropDownItems.Add(new ToolStripSeparator());
         }
         file.DropDownItems.Add("运行打包作品…", null, (_, _) => OpenGame());
@@ -135,20 +138,24 @@ internal sealed class HostWindow : Form
         string? id = null;
         try
         {
-            if (e.WebMessageAsJson.Length > HostFiles.MaxJson * 3) throw new InvalidDataException("消息过大");
-            using var message = JsonDocument.Parse(e.WebMessageAsJson);
+            var raw = e.WebMessageAsJson;
+            if (raw.Length > HostFiles.MaxRecovery * 3) throw new InvalidDataException("消息过大");
+            using var message = JsonDocument.Parse(raw);
             var value = message.RootElement;
             id = value.GetProperty("id").GetString(); if (id == null || id.Length > 100 || id.Any(c => !char.IsAsciiLetterOrDigit(c) && c != '-')) return;
+            var command = value.GetProperty("command").GetString();
+            if (command != "save-recovery" && raw.Length > HostFiles.MaxJson * 3) throw new InvalidDataException("消息过大");
             if (bridgeBusy) throw new InvalidOperationException("请完成当前文件操作");
             bridgeBusy = true;
             try
             {
-                var command = value.GetProperty("command").GetString();
                 object result = command switch
                 {
                     "open-project" => OpenProject(),
                     "save-workspace" => SaveProject(value, false),
                     "export-project" => SaveProject(value, true),
+                    "open-recovery" => OpenRecovery(value),
+                    "save-recovery" => SaveRecovery(value),
                     "bind-assets" => BindAssets(value),
                     "open-author-review" => OpenAuthorReview(),
                     "save-author-review" => SaveAuthorReview(value),
@@ -208,6 +215,44 @@ internal sealed class HostWindow : Form
             if (baseUri.AbsoluteUri == "https://studio.vnengine.test/samples/") source = new AssetWorkspace(Path.Combine(options.Site, "samples"), content);
         }
         HostFiles.SaveWithAssets(path, content, source, projectOnly); if (!projectOnly) SmokeSavedFile = path;
+        return new { cancelled = false };
+    }
+    private static void ValidateRecoveryMessage(JsonElement message, bool save)
+    {
+        var allowed = new HashSet<string>(save ? new[] { "id", "command", "content", "suggestedName" } : new[] { "id", "command" }, StringComparer.Ordinal);
+        foreach (var property in message.EnumerateObject())
+            if (!allowed.Remove(property.Name)) throw new InvalidDataException("恢复文件命令不能携带路径、目录绑定或重复字段");
+    }
+    private object OpenRecovery(JsonElement message)
+    {
+        ValidateRecoveryMessage(message, false);
+        var path = SmokeRecoveryFile;
+        if (!options.Smoke)
+        {
+            using var picker = new OpenFileDialog { Filter = "工程恢复文件 (*.vnrecover)|*.vnrecover", CheckFileExists = true, Multiselect = false, DereferenceLinks = false };
+            if (picker.ShowDialog(this) != DialogResult.OK) return new { cancelled = true };
+            path = picker.FileName;
+        }
+        return new { cancelled = false, content = HostFiles.ReadRecovery(path) };
+    }
+    private object SaveRecovery(JsonElement message)
+    {
+        ValidateRecoveryMessage(message, true);
+        var content = message.GetProperty("content").GetString() ?? throw new InvalidDataException("缺少恢复文件内容");
+        HostFiles.ValidateRecovery(content);
+        var name = message.GetProperty("suggestedName").GetString();
+        if (name == null || name.Length > 150 || !HostFiles.LocalPath(name) || Path.GetFileName(name) != name
+            || !Path.GetExtension(name).Equals(".vnrecover", StringComparison.OrdinalIgnoreCase)) name = "project.vnrecover";
+        var path = SmokeRecoveryFile;
+        if (options.Smoke) Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+        else
+        {
+            using var picker = new SaveFileDialog { Filter = "工程恢复文件 (*.vnrecover)|*.vnrecover", FileName = name,
+                DefaultExt = "vnrecover", AddExtension = true, OverwritePrompt = true, DereferenceLinks = false };
+            if (picker.ShowDialog(this) != DialogResult.OK) return new { cancelled = true };
+            path = picker.FileName;
+        }
+        HostFiles.WriteRecovery(path, content);
         return new { cancelled = false };
     }
     private static string FileSha(string path) { using var stream = File.OpenRead(path); return Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant(); }

@@ -8,6 +8,13 @@ namespace VNEngine.Windows;
 internal static partial class HostFiles
 {
     internal const int MaxJson = 8_000_000;
+    internal const int MaxRecovery = 16_000_000;
+    private static readonly UTF8Encoding RecoveryEncoding = new(false, true);
+    private static readonly HashSet<string> RecoveryFields = new(StringComparer.Ordinal)
+    {
+        "format", "schema", "document", "sourceText", "positions", "authorReview", "productionDraft", "textScriptDraft",
+        "source", "pendingFields", "editorTab", "selectedNode", "productionView", "at"
+    };
     internal static string ProfileKey(string game) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(game))).ToLowerInvariant()[..24];
     internal static bool LocalPath(string path)
     {
@@ -68,12 +75,105 @@ internal static partial class HostFiles
         foreach (var input in doc.GetProperty("inputs").EnumerateArray())
             if (input.GetProperty("src").GetString() is not string src || (src != "$source" && !LocalPath(src))) throw new InvalidDataException("终审证据路径无效");
     }
+    internal static void ValidateRecovery(string content)
+    {
+        if (RecoveryEncoding.GetByteCount(content) > MaxRecovery) throw new InvalidDataException("恢复文件超过 16 MB");
+        using var parsed = JsonDocument.Parse(content, new JsonDocumentOptions { MaxDepth = 64 });
+        var root = parsed.RootElement;
+        if (root.ValueKind != JsonValueKind.Object || !RecoveryVersion(root, "vn-engine-recovery"))
+            throw new InvalidDataException("不是受支持的工程恢复文件");
+        var keys = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var field in root.EnumerateObject())
+            if (!RecoveryFields.Contains(field.Name) || !keys.Add(field.Name)) throw new InvalidDataException("恢复文件包含未知、重复或目录绑定字段");
+        if (root.TryGetProperty("source", out var draft)) RecoverySource(draft, "未应用 JSON");
+        var hasDocument = root.TryGetProperty("document", out var document);
+        var hasSource = root.TryGetProperty("sourceText", out var source);
+        var hasPositions = root.TryGetProperty("positions", out var positions);
+        if (hasDocument == hasSource || (hasDocument && hasPositions)) throw new InvalidDataException("恢复文件必须包含一份工程");
+        if (hasDocument)
+        {
+            if (document.ValueKind != JsonValueKind.Object || !RecoveryVersion(document, "vn-engine-editor")
+                || !document.TryGetProperty("project", out var project) || project.ValueKind != JsonValueKind.Object
+                || !document.TryGetProperty("positions", out var layout) || layout.ValueKind != JsonValueKind.Object)
+                throw new InvalidDataException("恢复文件的编辑器工程无效");
+        }
+        else
+        {
+            if (!hasPositions || positions.ValueKind != JsonValueKind.Object)
+                throw new InvalidDataException("恢复文件的原始工程或布局无效");
+            using var original = JsonDocument.Parse(RecoverySource(source, "原始工程 JSON"), new JsonDocumentOptions { MaxDepth = 64 });
+            if (original.RootElement.ValueKind != JsonValueKind.Object || HasTruthyFormat(original.RootElement))
+                throw new InvalidDataException("恢复文件的原始工程无效");
+        }
+    }
+    private static bool RecoveryVersion(JsonElement root, string format) => root.TryGetProperty("format", out var kind)
+        && kind.ValueKind == JsonValueKind.String && kind.GetString() == format
+        && root.TryGetProperty("schema", out var schema) && schema.ValueKind == JsonValueKind.Number && schema.TryGetDouble(out var version) && version == 1;
+    private static bool HasTruthyFormat(JsonElement root)
+    {
+        if (!root.TryGetProperty("format", out var format)) return false;
+        return format.ValueKind switch
+        {
+            JsonValueKind.Null or JsonValueKind.False => false,
+            JsonValueKind.String => format.GetString()!.Length != 0,
+            JsonValueKind.Number => !format.TryGetDouble(out var number) || number != 0,
+            _ => true
+        };
+    }
+    private static string RecoverySource(JsonElement field, string label)
+    {
+        if (field.ValueKind != JsonValueKind.String) throw new InvalidDataException(label + "必须是文本");
+        var content = field.GetString()!;
+        if (RecoveryEncoding.GetByteCount(content) > MaxJson) throw new InvalidDataException(label + "超过 8 MB");
+        return content;
+    }
+
+    private static string RecoveryPath(string path, bool allowMissing)
+    {
+        var full = Path.GetFullPath(path);
+        if (!Path.GetExtension(full).Equals(".vnrecover", StringComparison.OrdinalIgnoreCase) || !LocalPath(Path.GetFileName(full)))
+            throw new InvalidDataException("请选择 .vnrecover 恢复文件");
+        for (var directory = Directory.GetParent(full); directory != null; directory = directory.Parent)
+            if ((File.GetAttributes(directory.FullName) & FileAttributes.ReparsePoint) != 0)
+                throw new InvalidDataException("恢复文件路径不能经过链接或联接点");
+        try
+        {
+            if ((File.GetAttributes(full) & (FileAttributes.ReparsePoint | FileAttributes.Directory)) != 0)
+                throw new InvalidDataException("恢复文件不能是链接或目录");
+        }
+        catch (FileNotFoundException) when (allowMissing) { }
+        return full;
+    }
+    internal static string ReadRecovery(string path)
+    {
+        var full = RecoveryPath(path, false);
+        using var stream = new FileStream(full, FileMode.Open, FileAccess.Read, FileShare.Read);
+        if (stream.Length > MaxRecovery) throw new InvalidDataException("恢复文件超过 16 MB");
+        var bytes = new byte[checked((int)stream.Length)];
+        stream.ReadExactly(bytes);
+        if (stream.ReadByte() != -1) throw new InvalidDataException("读取期间恢复文件已改变");
+        var offset = bytes.Length >= 3 && bytes[0] == 0xef && bytes[1] == 0xbb && bytes[2] == 0xbf ? 3 : 0;
+        var content = RecoveryEncoding.GetString(bytes, offset, bytes.Length - offset);
+        ValidateRecovery(content);
+        return content;
+    }
+    internal static void WriteRecovery(string path, string content)
+    {
+        ValidateRecovery(content);
+        var full = RecoveryPath(path, true);
+        if (File.Exists(full)) ReadRecovery(full);
+        WriteAtomicJson(full, content);
+    }
     internal static void WriteJson(string path, string content)
     {
         if (Encoding.UTF8.GetByteCount(content) > MaxJson) throw new InvalidDataException("工程超过 8 MB");
         using var parsed = JsonDocument.Parse(content, new JsonDocumentOptions { MaxDepth = 64 });
         var full = Path.GetFullPath(path);
         if (File.Exists(full) && (File.GetAttributes(full) & FileAttributes.ReparsePoint) != 0) throw new InvalidDataException("不能覆盖链接文件");
+        WriteAtomicJson(full, content);
+    }
+    private static void WriteAtomicJson(string full, string content)
+    {
         var temp = full + "." + Guid.NewGuid().ToString("N") + ".tmp";
         try { File.WriteAllText(temp, content, new UTF8Encoding(false)); File.Move(temp, full, true); }
         finally { if (File.Exists(temp)) File.Delete(temp); }

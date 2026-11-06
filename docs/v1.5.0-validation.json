@@ -1,0 +1,291 @@
+{
+  "schema": 1,
+  "date": "2026-11-06",
+  "engineVersion": "1.5.0",
+  "baseCommit": "f5aadb149f8beb516a3205fb0778a47f0add5bf2",
+  "plan": "docs/PLAN-v1.5.0.md",
+  "releaseNotes": "docs/RELEASE-v1.5.0.md",
+  "baseline": {
+    "repro": "draft-loses-original-project-source",
+    "engineVersion": "1.4.6",
+    "baseCommit": "f5aadb149f8beb516a3205fb0778a47f0add5bf2",
+    "browser": "153.0.8010.12",
+    "projectDataEqual": true,
+    "originalSourceBytes": 662,
+    "restoredSourceBytes": 1313,
+    "originalSha256": "c0d5a3fd26a45de10e37ece27604c85785ec8c5358dca39ba3282bb66c532b04",
+    "restoredSha256": "6274332072a184ace514c94baacec29efb749f90c76062c21e329b95b50618e3",
+    "evidenceSha256": "c0d5a3fd26a45de10e37ece27604c85785ec8c5358dca39ba3282bb66c532b04",
+    "evidenceBindingBefore": "current",
+    "evidenceBindingAfterReimport": "stale",
+    "legacyDraftFields": [
+      "schema",
+      "document",
+      "authorReview",
+      "productionDraft",
+      "textScriptDraft",
+      "pendingFields",
+      "editorTab",
+      "selectedNode",
+      "baseURL",
+      "at"
+    ],
+    "pageErrors": []
+  },
+  "performance": {
+    "schema": 1,
+    "verdict": "PASS",
+    "browserVersion": "153.0.8010.12",
+    "nodeVersion": "v24.14.0",
+    "os": "win32",
+    "cpu": "AMD Ryzen 5 3600 6-Core Processor",
+    "scope": "Packaged Studio on localhost; fresh Chromium context per cold trial, warm service worker per paired trial, real file open to visible preview. Raw and gzip JS/CSS from package manifests. No physical-device or WAN timing claim.",
+    "fixtureSha256": "6e861acc93e63c4c2e39abbf3fd7d736dd0b1748a636f0086286804db0cb6172",
+    "packageEvidence": {
+      "baseline": {
+        "version": "1.4.6",
+        "manifestSha256": "a16a121726789deee1b995847842805c1b31963b11750b7e4313c4c88c1c4197",
+        "files": 131,
+        "scriptAndCssBytes": 793378,
+        "gzipScriptAndCssBytes": 236092
+      },
+      "candidate": {
+        "version": "1.5.0",
+        "manifestSha256": "af2067e8e420530426ca1c8199ef381b05e01a8e3ecaaec6d6f537ff50e29bea",
+        "files": 132,
+        "scriptAndCssBytes": 804721,
+        "gzipScriptAndCssBytes": 239431
+      }
+    },
+    "samples": [
+      {
+        "round": 1,
+        "scope": "baseline",
+        "coldReadyMs": 343.31359999999995,
+        "warmReadyMs": 217.01740000000018,
+        "openPreviewMs": 358.3303000000001
+      },
+      {
+        "round": 1,
+        "scope": "candidate",
+        "coldReadyMs": 287.3398000000002,
+        "warmReadyMs": 221.07390000000032,
+        "openPreviewMs": 350.17599999999993
+      },
+      {
+        "round": 2,
+        "scope": "candidate",
+        "coldReadyMs": 266.5297999999998,
+        "warmReadyMs": 219.79289999999992,
+        "openPreviewMs": 344.36619999999994
+      },
+      {
+        "round": 2,
+        "scope": "baseline",
+        "coldReadyMs": 263.28920000000016,
+        "warmReadyMs": 224.27970000000005,
+        "openPreviewMs": 362.2537999999995
+      },
+      {
+        "round": 3,
+        "scope": "baseline",
+        "coldReadyMs": 259.22760000000017,
+        "warmReadyMs": 214.83839999999964,
+        "openPreviewMs": 344.9328000000005
+      },
+      {
+        "round": 3,
+        "scope": "candidate",
+        "coldReadyMs": 282.5162,
+        "warmReadyMs": 223.04700000000048,
+        "openPreviewMs": 345.6921000000002
+      }
+    ],
+    "metrics": {
+      "coldReadyMs": {
+        "baseline": {
+          "median": 263.28920000000016,
+          "worst": 343.31359999999995
+        },
+        "candidate": {
+          "median": 282.5162,
+          "worst": 287.3398000000002
+        },
+        "deltaPercent": 7.302616286577601,
+        "verdict": "PASS"
+      },
+      "warmReadyMs": {
+        "baseline": {
+          "median": 217.01740000000018,
+          "worst": 224.27970000000005
+        },
+        "candidate": {
+          "median": 221.07390000000032,
+          "worst": 223.04700000000048
+        },
+        "deltaPercent": 1.8692049577592185,
+        "verdict": "PASS"
+      },
+      "openPreviewMs": {
+        "baseline": {
+          "median": 358.3303000000001,
+          "worst": 362.2537999999995
+        },
+        "candidate": {
+          "median": 345.6921000000002,
+          "worst": 350.17599999999993
+        },
+        "deltaPercent": -3.526969391089696,
+        "verdict": "PASS"
+      },
+      "scriptAndCssBytes": {
+        "baseline": {
+          "median": 793378,
+          "worst": 793378
+        },
+        "candidate": {
+          "median": 804721,
+          "worst": 804721
+        },
+        "deltaPercent": 1.4297094197217364,
+        "verdict": "PASS"
+      },
+      "gzipScriptAndCssBytes": {
+        "baseline": {
+          "median": 236092,
+          "worst": 236092
+        },
+        "candidate": {
+          "median": 239431,
+          "worst": 239431
+        },
+        "deltaPercent": 1.4142791793029907,
+        "verdict": "PASS"
+      }
+    }
+  },
+  "recovery": {
+    "sourceIdentity": "TRUSTED",
+    "nodeChecks": [
+      "recovery preserves original source bytes, layout and drafts with a single project representation",
+      "recovery rejects ambiguous, unsafe, malformed and oversized inputs before restoring"
+    ],
+    "authorChecks": [
+      "Portable recovery restores original runtime bytes, layout and draft inputs in a fresh Chromium context without restoring resource access",
+      "Invalid and untagged portable recovery files preserve the current workspace and source-bound evidence",
+      "Local recovery preserves raw source across reload and still reads untagged legacy drafts"
+    ],
+    "offlineCheck": "Generated offline Studio exports and restores a portable recovery without carrying resource access",
+    "reports": [
+      "test-results/v150-final-browser-artifacts/r6-studio/r6-studio-browser.json",
+      "test-results/v150-final-browser-artifacts/p4-package/REPORT.json"
+    ],
+    "resourceAccess": "Rebind on restore; source identity is independent of file-byte freshness",
+    "legacyLocalDraft": "PASS"
+  },
+  "local": {
+    "nodeVersion": "v24.14.0",
+    "check": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 391,
+      "pass": 387,
+      "fail": 4,
+      "skipped": 0,
+      "reason": "Windows symlink fixture creation EPERM",
+      "log": "test-results/v150-final-check.log"
+    },
+    "editorModel": {
+      "status": "PASS",
+      "total": 25,
+      "newCases": 2,
+      "log": "test-results/v150-final-editor-node.log"
+    },
+    "completeBrowserSuite": {
+      "status": "PASS",
+      "scripts": 48,
+      "log": "test-results/v150-final-browser.log"
+    },
+    "completeEditorSuite": {
+      "status": "PASS",
+      "scripts": 21,
+      "log": "test-results/v150-final-editor.log"
+    },
+    "pythonRenpy": {
+      "status": "PASS",
+      "total": 6
+    },
+    "schemaSync": "PASS",
+    "provenance": {
+      "status": "PASS",
+      "files": 201
+    },
+    "projectSchemas": {
+      "status": "PASS",
+      "total": 5
+    },
+    "portfolioPython": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 8,
+      "pass": 7,
+      "fail": 1,
+      "reason": "Windows symlink fixture creation WinError 1314",
+      "log": "test-results/v150-final-portfolio.log"
+    },
+    "workflowInventory": {
+      "status": "PASS",
+      "scope": "engine checkout only",
+      "log": "test-results/v150-final-workflow.log"
+    }
+  },
+  "originalFailures": [
+    "symlink import parents are refused; pure SDK requires an explicit import/decoder host",
+    "project symlinks and escaping assets are rejected, imports create no files",
+    "resource symlinks, missing bytes, invalid encoding and report overwrite are structured failures",
+    "build refuses altered assets, escaping symlinks and generated-file collisions before writing output"
+  ],
+  "sampleContentGate": {
+    "status": "BLOCKED",
+    "report": "test-results/v150-sample-content-gate/QA_REPORT.json"
+  },
+  "cloud": {
+    "status": "PENDING_EXACT_PUSHED_SHA",
+    "evidence": "test-results/v1.5.0-cloud.json"
+  },
+  "sourceHashBasis": "UTF-8 with CRLF normalized to LF to match Git blobs",
+  "sourceSha256": {
+    "docs/provenance.json": "26f5224c1d9fd905a1388263dab41c960e03a74a4f7c93f4aa54f0d014c07691",
+    "editor/app.mjs": "8ac90c42305f6d0d8edc0e46a5fc3b363ec8ea8c9f4631ff7aaeb0662e42f09c",
+    "editor/index.html": "a1ed55b4a9c92ba5174973b53c4ec2459355dcf09b5a77a025364b1fda207df0",
+    "editor/operations.mjs": "a4ac36a1e06d3b7bf496ac918641f390ae278033e61342cbd68ef38606bffd1e",
+    "hosts/windows/HostFiles.cs": "4583b7e2d129941674930dd45a312d994d2c3e598122538799f3e3130f2c99e7",
+    "hosts/windows/HostTests.cs": "a4262ff7cb38f3a16a1bb6f9a13ff9bb05ae21734fe5921e1a9fd35c194217df",
+    "hosts/windows/HostWindow.cs": "9c3bd5d1e5fe2df7c5cca4186cdff0682ed87452d03476ad2073ae42c2bb7229",
+    "hosts/windows/PORTABLE.md": "2480fe5a4772698e98e09272c4f8a383c14cb379b7d35814c38e1885e5f1a3c3",
+    "hosts/windows/SmokeTests.cs": "9d0db02f3af6d55ec806b3674a7ed77e431151da957cc6055e2da65a6ff037c7",
+    "hosts/windows/VNEngine.Windows.csproj": "acffea2a758902ad5c43b0c1df4b9bae55db6e8f5c17690e995439ae03d5fb71",
+    "package-lock.json": "24e431f6c261614ada34ef4c113f0c7badba7939995bff30613ad6286099f96a",
+    "package.json": "7804432c39858fe15e3123c6e5b2aa35591d674d14b5a8319ed2aad2c56e8d31",
+    "src/editor/index.ts": "949de1725842666a983e10c117c620d31c58ef8efdeb456ff8d4721e11e9505e",
+    "src/editor/recovery.ts": "d78e1b0ce6fa2fe90240fb99f45524bd49ff85ad1157af27c61a30a99df64e7f",
+    "src/version.ts": "571022061d6f4415b12286c7f1380c9f2585b281d26bd12de0885d19ec672c85",
+    "tests/editor.test.mjs": "fe1be2a7fba36cad2aa400db1beca6900e4b228f7b8a11004d355e53c463a248",
+    "tests/p4-package-browser.mjs": "bb86dbbd62cf4db816c9e255a566c72adfe91b97bc56c9907afd7cf7ed079950",
+    "tests/r6-studio-browser.mjs": "4f7df5533dba92d4caf4a156b884ea99578d94ca9847da28a32bd17e6b8f0b43"
+  },
+  "evidenceSha256": {
+    "test-results/v150-final-browser-artifacts/r6-studio/r6-studio-browser.json": "040b193a519f43761718b1cf77b0d485e4a5ee52b8bcf0fddbf03fee192bf0e8",
+    "test-results/v150-final-browser-artifacts/p4-package/REPORT.json": "660df9fda76329d78448c8ccdcbf81fbaff17e248c544562b9a4370dd2d0366e",
+    "test-results/v150-final-check.log": "57a7bbf2524bb5e12a9cb5acdf7d88f2d8111d809012f37bbaec54915ff405df",
+    "test-results/v150-final-editor-node.log": "09e28fb60df8094a383d9966023021d16953cb276cde42f28b284264bd7c5296",
+    "test-results/v150-final-residual.log": "ec46300ba9289aa7b9028aad6c2de4e138014fe64d9e6562296895ae141a75df",
+    "test-results/v150-final-portfolio.log": "51024418f3c711744f4db28e46bf4a1b83783cbab69f3d53430055e4ee1e52ba",
+    "test-results/v150-final-workflow.log": "cfc1fa77e21ff81e11b1e323e3cfb2215e12440bfaa2ae4d1127c233b4a30d40",
+    "test-results/v150-final-browser.log": "8b71922815034362a7d0fe4feee9c29d5e111272b7a584a3a5c26c18eaefdb83",
+    "test-results/v150-final-editor.log": "c3f7c7122475e606d4610975703602a1facbdc930e8549850501559d20fd6158",
+    "test-results/v150-draft-source-baseline-repro.json": "63b61e7103f9af11ff7dd9a15a1a7793d598e88aec627ad476490db8593bd0e9",
+    "test-results/v150-studio-performance.json": "05ac6d7e3b83a792cb93ba134d8550710830d35709dc34b0c6243cb2430ee313",
+    "test-results/v150-studio-performance.mjs": "2ffba0fab1c1a518618f1051f15ecb3923ce4463f63645fe91e743d6b48d3e22",
+    "test-results/v150-sample-content-gate/QA_REPORT.json": "6b658f7a2bb4314e5029edbbb055e06692ef149ebd5e8f7417a2b3723a7409a6",
+    "test-results/v150-sample-content-gate.log": "98892fda2acfbe4c6d0cc75d73117da68139f305cfa679421a0e944494e688df"
+  }
+}

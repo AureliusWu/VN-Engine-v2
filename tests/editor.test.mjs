@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFile, mkdtemp, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { EditorModel, newProject, readDocument, diagnoseProject } from '../dist/editor/index.js';
+import { EditorModel, newProject, readDocument, diagnoseProject, RECOVERY_FORMAT, RECOVERY_MAX_BYTES, readRecovery, writeRecovery } from '../dist/editor/index.js';
 import { createProject, AssetCatalog, creativeDiagnostics, validateProjectCompliance } from '../dist/index.js';
 import { packageStudio } from '../tools/package-studio.mjs';
 import { packageGame } from '../tools/package-game.mjs';
@@ -176,6 +176,66 @@ test('editor import rejects dangerous keys and unsupported workspace schemas wit
   assert.throws(() => model.set(['__proto__', 'polluted'], true), /路径/); assert.equal({}.polluted, undefined);
   assert.throws(() => readDocument('{"__proto__":{"polluted":true}}'), /不安全/);
   assert.throws(() => readDocument(' '.repeat(8_000_001)), /8 MB/);
+});
+
+test('recovery preserves original source bytes, layout and drafts with a single project representation', () => {
+  const project = newProject('script'), model = new EditorModel(project);
+  model.move('["start"]', { x: 15, y: 25 });
+  const document = JSON.parse(model.serialize());
+  const sourceText = '\r\n' + JSON.stringify(project) + '\r\n\r\n';
+  const source = '{ "unfinished":';
+  const state = { document, sourceText, source, textScriptDraft: 'vn-script 1\n',
+    baseURL: 'https://studio.example/samples/', selectedNode: '["start"]', editorTab: 'source' };
+  const text = writeRecovery(state), wire = JSON.parse(text);
+  assert.equal(wire.format, RECOVERY_FORMAT);
+  assert.equal(wire.schema, 1);
+  assert.equal(Object.hasOwn(wire, 'document'), false);
+  assert.deepEqual(wire.positions, document.positions);
+  assert.deepEqual(readRecovery(text), state);
+
+  const portable = writeRecovery({ ...state, unknown: 'ignored' }, { portable: true });
+  assert.equal(Object.hasOwn(JSON.parse(portable), 'baseURL'), false);
+  assert.equal(Object.hasOwn(JSON.parse(portable), 'unknown'), false);
+  assert.throws(() => readRecovery(text, { portable: true }), /资源基址/);
+  assert.deepEqual(readRecovery(portable, { portable: true }), { document, sourceText, source,
+    textScriptDraft: state.textScriptDraft, selectedNode: state.selectedNode, editorTab: state.editorTab });
+  for (const format of ['', null]) {
+    const legacyProject = { ...project, format };
+    const legacySource = { document: { ...document, project: legacyProject }, sourceText: JSON.stringify(legacyProject) };
+    assert.deepEqual(readRecovery(writeRecovery(legacySource, { portable: true }), { portable: true }), legacySource);
+  }
+  const legacy = JSON.stringify({ schema: 1, document, source });
+  assert.deepEqual(readRecovery(legacy), { document, source });
+  assert.throws(() => readRecovery(legacy, { portable: true }), /格式/);
+
+  const changed = writeRecovery({ document });
+  assert.deepEqual(JSON.parse(changed), { format: RECOVERY_FORMAT, schema: 1, document });
+  assert.deepEqual(readRecovery(changed), { document });
+});
+
+test('recovery rejects ambiguous, unsafe, malformed and oversized inputs before restoring', () => {
+  const document = readDocument(newProject('script'));
+  const wire = { format: RECOVERY_FORMAT, schema: 1, document };
+  const raw = { format: RECOVERY_FORMAT, schema: 1, sourceText: JSON.stringify(document.project), positions: {} };
+  const parse = value => readRecovery(JSON.stringify(value), { portable: true });
+  assert.throws(() => parse({ ...raw, document }), /唯一/);
+  assert.throws(() => parse({ ...wire, positions: {} }), /唯一/);
+  assert.throws(() => parse({ ...raw, sourceText: JSON.stringify(document) }), /无包装/);
+  assert.throws(() => parse({ ...raw, sourceText: JSON.stringify({ ...document.project, format: 'unknown' }) }), /无包装/);
+  assert.throws(() => parse({ ...raw, sourceText: '{"__proto__":{"polluted":true}}' }), /不安全/);
+  assert.throws(() => parse({ ...wire, productionDraft: JSON.parse('{"schema":1,"constructor":{"polluted":true}}') }), /不安全/);
+  assert.throws(() => parse({ ...raw, positions: { key: { x: -1, y: 2 } } }), /布局/);
+  assert.throws(() => parse({ ...wire, source: 1 }), /未应用 JSON/);
+  assert.throws(() => parse({ ...wire, pendingFields: [{ key: 'field', value: 3, baseline: '' }] }), /未提交字段/);
+  assert.throws(() => parse({ ...wire, textScriptDraft: 'a'.repeat(1_000_001) }), /文本 DSL/);
+  assert.throws(() => parse({ ...wire, editorTab: 'unknown' }), /编辑页签/);
+  assert.equal({}.polluted, undefined);
+
+  const oversizedSource = '界'.repeat(2_666_667);
+  assert.throws(() => parse({ ...wire, source: oversizedSource }), /超过 8 MB/);
+  assert.throws(() => writeRecovery({ document, sourceText: oversizedSource }), /超过 8 MB/);
+  assert.throws(() => readRecovery(' '.repeat(RECOVERY_MAX_BYTES + 1)), /超过 16 MB/);
+  assert.throws(() => writeRecovery({ document, productionDraft: { schema: 1, extra: '界'.repeat(5_333_334) } }), /超过 16 MB/);
 });
 
 test('editor validates branch list shapes before opening or committing while broken targets remain editable', () => {

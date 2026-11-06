@@ -1,4 +1,4 @@
-# Windows 原生宿主 1.0.0
+# Windows 原生宿主
 
 本仓库实现 WinForms 原生窗口与 WebView2 宿主。剧本、状态、调度、DOM 和媒体仍由本仓库自研引擎执行。桌面程序不启动 Node 服务；本地虚拟 HTTPS 来源映射自身内容，运行作品可完全使用磁盘资源。
 
@@ -6,9 +6,10 @@
 
 ## 使用
 
-从 `Windows native host` Actions 的 `VNEngine-Studio-win-x64` artifact 下载便携包，完整解压，然后运行 `VNEngine.exe`。保留同目录的 `site`；包内 `demo-game` 是引擎独立校园样例，未迁移任何正式游戏。需要 Microsoft Edge WebView2 Runtime，.NET 运行时已随自包含构建带入。程序以普通用户权限运行。
+从 [GitHub Releases](https://github.com/AureliusWu/VN-Engine-v2/releases) 下载 Windows x64 便携包并核对 SHA-256，完整解压，然后运行 `VNEngine.exe`。保留同目录的 `site`；包内 `demo-game` 是引擎独立校园样例。需要 Microsoft Edge WebView2 Runtime，.NET 运行时已随自包含构建带入。程序以普通用户权限运行。
 
 - 默认进入可视化编辑器，原生打开 `.vnproj` / `.json`、保存工程、导出运行数据、选择资源目录。
+- 工程恢复使用独立的 `.vnrecover` 文件类型和原生原子保存。恢复文件读取不会建立素材授权，打开后按需重新绑定。
 - 0.4 的“章节与变量”工作台和类型化效果表单与浏览器共用实现；CI 额外核对 EXE 与内置引擎版本一致，并在真实 WebView2 / 进程重启后执行变量和跨章流程。
 - 文件菜单“运行打包作品”选择包含 `build-manifest.json` 的引擎产物目录；启动前核对每个文件的大小与 SHA-256。
 - F11 全屏/恢复，记住窗口位置。最小化暂停实际引擎会话，恢复继续；编辑器的预览同样受控。

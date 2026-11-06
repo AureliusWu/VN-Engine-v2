@@ -70,15 +70,18 @@ export function createFieldEdits({ scope, changed, error }) {
     bind, flush,
     get dirty() { return pending.size > 0; },
     snapshot() { return [...pending.values()].map(item => ({ ...item })); },
-    restore(items) {
-      if (!Array.isArray(items)) return;
+    restore(items, { onlyBound = false } = {}) {
+      if (!Array.isArray(items)) return 0;
+      let skipped = 0;
       for (const item of items) {
         if (!item || typeof item.key !== 'string' || typeof item.value !== 'string' || typeof item.baseline !== 'string') continue;
-        pending.set(item.key, { key: item.key, value: item.value, baseline: item.baseline });
         const binding = bindings.get(item.key);
+        if (onlyBound && !binding?.input.isConnected) { skipped++; continue; }
+        pending.set(item.key, { key: item.key, value: item.value, baseline: item.baseline });
         if (binding) { binding.baseline = item.baseline; binding.input.value = item.value; }
       }
       notify();
+      return skipped;
     },
     reset() { pending.clear(); bindings.clear(); committing.clear(); }
   };

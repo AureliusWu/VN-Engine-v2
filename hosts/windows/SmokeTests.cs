@@ -215,6 +215,59 @@ internal static class SmokeTests
             await JS("document.querySelector('[data-command=open]').click()");
             await Wait("Number(document.body.dataset.previewRevision)>" + previousRevision + " && document.querySelector('#project-name').textContent === 'Windows native smoke' && document.querySelector('#preview').contentDocument?.querySelector('.vn-portrait')?.naturalWidth > 0");
             checks.Add("Saved workspace reopens from its new directory with its copied assets");
+            var pendingRecoveryText = "{ 未应用的恢复文本 " + Guid.NewGuid().ToString("N");
+            await JS("window.nativeRecoveryDraft=" + JsonSerializer.Serialize(pendingRecoveryText));
+            await JS("""
+              document.querySelector('[data-tab=source]').click();
+              const recoverySource=document.querySelector('#source');
+              recoverySource.value=window.nativeRecoveryDraft;
+              recoverySource.dispatchEvent(new Event('input',{bubbles:true}));
+              document.querySelector('[data-command=export-recovery]').click();
+              """);
+            await Wait("document.querySelector('#status').textContent.startsWith('恢复文件已导出')");
+            var recoveryFile = window.SmokeRecoveryFile;
+            using (var recovery = JsonDocument.Parse(HostFiles.ReadRecovery(recoveryFile)))
+            {
+                var root = recovery.RootElement;
+                if (root.GetProperty("source").GetString() != pendingRecoveryText || root.TryGetProperty("baseURL", out _))
+                    throw new InvalidDataException("恢复文件没有保留未应用文本或携带资源目录授权");
+            }
+            if (Directory.EnumerateFileSystemEntries(Path.GetDirectoryName(recoveryFile)!).Count() != 1 || window.SmokeSavedFile != saved)
+                throw new IOException("恢复导出复制了资源或更改了普通工程保存路径");
+            previousRevision = await JS("Number(document.body.dataset.previewRevision)");
+            await JS("""
+              (()=>{
+                const title=document.querySelector('[aria-label="作品名称"]');
+                title.value='Changed after portable backup';title.dispatchEvent(new Event('change'));
+                const source=document.querySelector('#source');
+                source.value='Other pending text';source.dispatchEvent(new Event('input',{bubbles:true}));
+                window.nativeRecoveryReplyKeys='';
+                const receive=event=>{
+                  const result=event.data?.result;
+                  if(!event.data?.ok||typeof result?.content!=='string'||JSON.parse(result.content).format!=='vn-engine-recovery')return;
+                  window.nativeRecoveryReplyKeys=Object.keys(result).sort().join(',');
+                  chrome.webview.removeEventListener('message',receive);
+                };
+                chrome.webview.addEventListener('message',receive);
+                const confirm=window.confirm;
+                window.restoreNativeRecoveryConfirm=()=>{window.confirm=confirm;delete window.restoreNativeRecoveryConfirm;};
+                window.confirm=()=>true;
+                document.querySelector('[data-command=import-recovery]').click();
+              })()
+              """);
+            try
+            {
+                await Wait("document.querySelector('#status').textContent.startsWith('恢复文件已打开') && document.querySelector('#source').value === window.nativeRecoveryDraft");
+                await Wait("Number(document.body.dataset.previewRevision)>" + previousRevision);
+                if (await JS("""
+                  document.querySelector('#project-name').textContent === 'Windows native smoke' &&
+                  document.body.dataset.dirty === 'true' && window.nativeRecoveryReplyKeys === 'cancelled,content' &&
+                  document.querySelector('#asset-state').textContent.startsWith('未绑定目录') &&
+                  ![...document.querySelector('#preview').contentDocument.querySelectorAll('[src]')].some(node=>node.getAttribute('src')?.startsWith('https://assets.vnengine.test/'))
+                  """) != "true") throw new InvalidDataException("恢复未恢复实际工程和待提交文本，或保留了旧资源授权");
+            }
+            finally { await JS("window.restoreNativeRecoveryConfirm?.()"); }
+            checks.Add("Native Studio exports and imports a preset recovery file, restores unapplied JSON and grants no resource directory access");
             await JS("""
               window.nativeLogicAuthor='pending';
               (async()=>{try {
@@ -307,6 +360,16 @@ internal static class SmokeTests
             await JS("window.nativeDenied=false; const onDenied=e=>{if(e.data?.id==='smoke-invalid'){window.nativeDenied=e.data.ok===false;chrome.webview.removeEventListener('message',onDenied)}};chrome.webview.addEventListener('message',onDenied);chrome.webview.postMessage({id:'smoke-invalid',command:'read-any-file',path:'C:/Windows/win.ini'})");
             await Wait("window.nativeDenied === true");
             checks.Add("The native bridge rejects undeclared commands");
+            await JS("""
+              window.nativeRecoveryDenied=false;
+              (()=>{
+                const receive=event=>{if(event.data?.id!=='smoke-recovery-path')return;window.nativeRecoveryDenied=event.data.ok===false;chrome.webview.removeEventListener('message',receive);};
+                chrome.webview.addEventListener('message',receive);
+                chrome.webview.postMessage({id:'smoke-recovery-path',command:'open-recovery',path:'C:/Windows/win.ini'});
+              })()
+              """);
+            await Wait("window.nativeRecoveryDenied === true");
+            checks.Add("The trusted native recovery command rejects renderer-supplied filesystem paths");
         }
         else
         {

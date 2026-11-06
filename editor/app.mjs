@@ -1,4 +1,4 @@
-import { EditorModel, diagnoseProject, newProject, readAuthorReview, contentCatalogue } from '../lib/editor/index.js';
+import { EditorModel, diagnoseProject, newProject, readAuthorReview, contentCatalogue, readRecovery, writeRecovery, RECOVERY_MAX_BYTES } from '../lib/editor/index.js';
 import { renderPresentationEditor } from './presentation.mjs';
 import { renderCollectionsEditor } from './collections.mjs';
 import { createRoutesPanel } from './routes.mjs';
@@ -18,7 +18,7 @@ const DRAFT_KEY = 'vn-engine-studio:draft:v1';
 let model = new EditorModel(newProject('script')), selected, tab = 'story', draft, draftTimer, previewTimer;
 let baseURL = new URL('../samples/', location.href).href, resourceURLs = new Map(), resourceFiles, previewReady = false, revision = 0, savedSource = '';
 let nativeHidden = false, identitySource = '', identityProject = '';
-let workspaceVersion = 0, fileOpenRequest;
+let workspaceVersion = 0, fileOpenRequest, fileRecoveryRequest;
 function projectSource(text = model.serialize(true)) { return text === identityProject ? identitySource : text; }
 let previewSnapshot, captureSerial = 0;
 const previewCaptures = new Map();
@@ -104,12 +104,22 @@ function set(path, value, inspector = false) { mutate(() => model.set(path, valu
 function scheduleDraft() {
   clearTimeout(draftTimer); draftTimer = setTimeout(saveDraft, 350);
 }
+function recoveryState() {
+  const sourceText = identitySource !== identityProject && projectSource() === identitySource ? identitySource : undefined;
+  return {
+    document: model.getView(), sourceText, authorReview: production.getReview(), productionDraft: production.getDraft(),
+    textScriptDraft: textScript.getDraft(), source: unappliedSource() ? $('source').value : undefined,
+    pendingFields: fieldEdits.snapshot(), editorTab: tab, selectedNode: selected,
+    productionView: document.querySelector('[data-production-view][aria-pressed=true]')?.dataset.productionView,
+    baseURL: baseURL.startsWith(location.origin + '/') ? baseURL : undefined, at: new Date().toISOString()
+  };
+}
 function saveDraft() {
   clearTimeout(draftTimer); draftTimer = undefined;
   try {
-    localStorage.setItem(DRAFT_KEY, JSON.stringify({ schema: 1, document: JSON.parse(model.serialize()), authorReview: production.getReview(), productionDraft: production.getDraft(), textScriptDraft:textScript.getDraft(), source: unappliedSource() ? $('source').value : undefined, pendingFields: fieldEdits.snapshot(), editorTab: tab, selectedNode: selected, productionView: document.querySelector('[data-production-view][aria-pressed=true]')?.dataset.productionView, baseURL: baseURL.startsWith(location.origin + '/') ? baseURL : undefined, at: new Date().toISOString() }));
+    localStorage.setItem(DRAFT_KEY, writeRecovery(recoveryState()));
     return true;
-  } catch { status('本地草稿无法保存，请使用“保存工程”保留更改', true); return false; }
+  } catch { status('本地草稿无法保存，请导出恢复文件或保存工程', true); return false; }
 }
 function clearResources(nextBase = new URL('./', location.href).href) {
   invalidatePreview();
@@ -126,13 +136,50 @@ function replace(input, options = {}) {
   clearTimeout(draftTimer); draftTimer = undefined;
   opening.invalidate(); assetBinding.invalidate(); fieldEdits.reset();
   clearResources(options.baseURL); if (options.files) resourceFiles = new Set(options.files); model = next;
-  identityProject=model.serialize(true);identitySource=typeof input==='string'&&!JSON.parse(input).format?input:identityProject;production.reset(incomingReview,{detached:options.draft});evidence.reset();textScript.reset();resources.reset();selected = model.graph().nodes[0]?.key;
+  identityProject=model.serialize(true);identitySource=options.sourceText ?? (typeof input==='string'&&!JSON.parse(input).format?input:identityProject);production.reset(incomingReview,{detached:options.draft});evidence.reset();textScript.reset();resources.reset();selected = model.graph().nodes[0]?.key;
   savedSource = ''; tab = 'story'; renderProject(); update(true); switchTab('story');
   if (options.draft) { model.markUnsaved(); document.body.dataset.dirty = 'true'; $('save-state').textContent = '● 未保存'; status('草稿已恢复；请重新绑定本地资源目录'); }
   else if (previousDraftSaved) status('工程已打开');
   else status('工程已打开；上一个工程的本地草稿未能保存', true);
 }
 function canReplace() { return !workspaceDirty() || confirm('当前更改尚未保存。仍要替换当前工程吗？本地草稿只保留一份。'); }
+function recoveryBaseURL(value) {
+  if (value === undefined) return;
+  try { const url = new URL(value); if (url.origin === location.origin && !url.username && !url.password) return url.href; }
+  catch { /* A recovery record cannot grant access to an invalid directory. */ }
+}
+async function restoreRecovery(snapshot, portable = false) {
+  replace(snapshot.document, { baseURL: portable ? undefined : recoveryBaseURL(snapshot.baseURL), draft: true,
+    authorReview: snapshot.authorReview, sourceText: snapshot.sourceText });
+  const restoredModel = model;
+  production.restoreDraft(snapshot.productionDraft);
+  if (model.graph().nodes.some(node => node.key === snapshot.selectedNode)) { selected = snapshot.selectedNode; renderGraph(model.graph()); renderInspector(); }
+  if (typeof snapshot.textScriptDraft === 'string') textScript.restore(snapshot.textScriptDraft);
+  if (['story','structure','assets','collections','routes','production','evidence','text-script','resources','source'].includes(snapshot.editorTab)) switchTab(snapshot.editorTab);
+  if (tab === 'production' && snapshot.productionView) {
+    const button = [...document.querySelectorAll('[data-production-view]')].find(node => node.dataset.productionView === snapshot.productionView);
+    if (button) await actionCallbacks.get(button)?.();
+  }
+  if (model !== restoredModel) return;
+  if (typeof snapshot.source === 'string') { switchTab('source'); $('source').value = snapshot.source; }
+  const skipped = fieldEdits.restore(snapshot.pendingFields, { onlyBound: portable }); syncDirty();
+  draft = undefined; $('draft-banner').hidden = true;
+  if (saveDraft()) {
+    const message = portable ? '恢复文件已打开；请重新绑定本地资源目录' : '草稿已恢复；请重新绑定本地资源目录';
+    status(skipped ? `${message}。有 ${skipped} 个待提交字段无法定位` : message, skipped > 0);
+  }
+}
+async function commitRecovery(request, content) {
+  let restoration;
+  request.commit(() => {
+    const snapshot = readRecovery(content, { portable: true });
+    const shape = diagnoseProject(snapshot.document.project).find(issue => issue.code === 'shape');
+    if (shape) throw Error(shape.message);
+    if (snapshot.productionDraft) contentCatalogue(snapshot.document.project);
+    if (canReplace()) restoration = restoreRecovery(snapshot, true);
+  });
+  await restoration;
+}
 function renderProject() {
   const root = $('project-fields'); root.replaceChildren();
   const project = model.getView().project;
@@ -486,11 +533,15 @@ function download(content, filename) {
   const url = URL.createObjectURL(new Blob([content], { type: 'application/json' })), anchor = element('a', undefined, { href: url, download: filename });
   document.body.append(anchor); anchor.click(); anchor.remove(); setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+function projectFilename() {
+  const game = model.getView().project.game;
+  return /^[a-zA-Z0-9_-]+$/.test(game) ? game : 'project';
+}
 async function save(projectOnly) {
   const pending = fieldEdits.flush(); if (pending) await pending;
   if (projectOnly && model.diagnostics(resourceFiles).some(d => d.severity === 'error')) throw new Error('请先修复工程诊断中的错误');
-  const savedModel = model, content = projectOnly?projectSource():model.serialize(false), name = /^[a-zA-Z0-9_-]+$/.test(model.getView().project.game) ? model.getView().project.game : 'project';
-  const suggestedName = name + (projectOnly ? '.json' : '.vnproj');
+  const savedModel = model, content = projectOnly?projectSource():model.serialize(false);
+  const suggestedName = projectFilename() + (projectOnly ? '.json' : '.vnproj');
   if (unappliedSource()) throw new Error('JSON 面板有未应用的更改，请先点击“应用 JSON”');
   if (nativeHost) { const result = await nativeRequest(projectOnly ? 'export-project' : 'save-workspace', { content, suggestedName, baseURL }); if (result.cancelled) { status('已取消保存，当前工程仍保留'); return; } }
   else download(content, suggestedName);
@@ -506,6 +557,21 @@ const commands = {
     const request = opening.begin();
     if (nativeHost) { const result = await nativeRequest('open-project'); if (!result.cancelled) request.commit(() => replace(result.content, { baseURL: result.baseURL, files: result.files })); }
     else { fileOpenRequest = request; $('open-file').value = ''; $('open-file').click(); }
+  },
+  'export-recovery': async () => {
+    const content = writeRecovery(recoveryState(), { portable: true }), suggestedName = projectFilename() + '.vnrecover';
+    if (nativeHost) {
+      const result = await nativeRequest('save-recovery', { content, suggestedName });
+      if (result.cancelled) return;
+    } else download(content, suggestedName);
+    status('恢复文件已导出；请将其与资源目录分开保管');
+  },
+  'import-recovery': async () => {
+    const request = opening.begin();
+    if (nativeHost) {
+      const result = await nativeRequest('open-recovery');
+      if (!result.cancelled) await commitRecovery(request, result.content);
+    } else { fileRecoveryRequest = request; $('recovery-file').value = ''; $('recovery-file').click(); }
   },
   save: () => save(false), export: () => save(true),
   undo: () => { if (model.undo()) { renderProject(); update(true); saveDraft(); } },
@@ -531,25 +597,24 @@ const commands = {
     }
     else { $('asset-directory').value = ''; $('asset-directory').click(); }
   },
-  'restore-draft': async () => { if (draft && canReplace()) {
-    replace(draft.document, { baseURL: draft.baseURL ?? new URL('./', location.href).href, draft: true, authorReview:draft.authorReview });
-    production.restoreDraft(draft.productionDraft);
-    if (model.graph().nodes.some(node => node.key === draft.selectedNode)) { selected = draft.selectedNode; renderGraph(model.graph()); renderInspector(); }
-    if(typeof draft.textScriptDraft==='string')textScript.restore(draft.textScriptDraft);
-    if (['story','structure','assets','collections','routes','production','evidence','text-script','resources','source'].includes(draft.editorTab)) switchTab(draft.editorTab);
-    if (tab === 'production' && draft.productionView) { const button = [...document.querySelectorAll('[data-production-view]')].find(node => node.dataset.productionView === draft.productionView); if (button) await actionCallbacks.get(button)?.(); }
-    if (typeof draft.source === 'string') { switchTab('source'); $('source').value = draft.source; }
-    fieldEdits.restore(draft.pendingFields); syncDirty(); $('draft-banner').hidden = true;
-  } },
+  'restore-draft': async () => { if (draft && canReplace()) await restoreRecovery(draft); },
   'discard-draft': () => { draft = undefined; $('draft-banner').hidden = true; try { localStorage.removeItem(DRAFT_KEY); } catch {} }
 };
-const replacementCommands = new Set(['new', 'open', 'sample', 'restore-draft', 'discard-draft']);
-for (const button of document.querySelectorAll('[data-command]')) button.addEventListener('click', () => run(() => replacementCommands.has(button.dataset.command) ? commands[button.dataset.command]() : afterFields(commands[button.dataset.command])));
+// Recovery can preserve pending form text even when that text cannot be committed yet.
+const directCommands = new Set(['new', 'open', 'sample', 'restore-draft', 'discard-draft', 'export-recovery', 'import-recovery']);
+for (const button of document.querySelectorAll('[data-command]')) button.addEventListener('click', () => run(() => directCommands.has(button.dataset.command) ? commands[button.dataset.command]() : afterFields(commands[button.dataset.command])));
 for (const button of document.querySelectorAll('[data-tab]')) button.addEventListener('click', () => run(() => afterFields(() => switchTab(button.dataset.tab))));
 $('auto-preview').addEventListener('change', () => { if ($('auto-preview').checked) preview(); });
 $('source').addEventListener('input', () => { workspaceVersion++; syncDirty(); scheduleDraft(); });
 $('open-file').addEventListener('change', () => run(async () => { const file = $('open-file').files[0]; if (!file) return; const request = fileOpenRequest ?? opening.begin(); fileOpenRequest = undefined; if (file.size > 8_000_000) throw new Error('工程超过 8 MB'); const input = await file.text(); request.commit(() => replace(input)); }));
 $('open-file').addEventListener('cancel', () => { fileOpenRequest = undefined; });
+$('recovery-file').addEventListener('change', () => run(async () => {
+  const file = $('recovery-file').files[0]; if (!file) return;
+  const request = fileRecoveryRequest ?? opening.begin(); fileRecoveryRequest = undefined;
+  if (file.size > RECOVERY_MAX_BYTES) throw Error('恢复文件超过 16 MB');
+  await commitRecovery(request, await file.text());
+}));
+$('recovery-file').addEventListener('cancel', () => { fileRecoveryRequest = undefined; });
 $('asset-directory').addEventListener('change', () => run(() => {
   const files = [...$('asset-directory').files]; if (!files.length) return;
   if (files.length > 10000 || files.some(f => f.size > 128_000_000)) throw new Error('目录过大：最多 10000 文件，单文件 128 MB');
@@ -566,8 +631,11 @@ window.addEventListener('beforeunload', event => { if (workspaceDirty()) { saveD
 window.addEventListener('pagehide', () => { clearTimeout(draftTimer); clearTimeout(previewTimer); for (const url of resourceURLs.values()) URL.revokeObjectURL(url); });
 window.addEventListener('vn-engine-host-visibility', event => { if (typeof event.detail?.hidden !== 'boolean') return; nativeHidden = event.detail.hidden;if(nativeHidden)production.stopMedia(); $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'visibility', hidden: nativeHidden }, location.origin); });
 $('version').textContent = ENGINE_VERSION; $('host-label').textContent = nativeHost ? 'Windows 原生宿主' : '浏览器工作区';
-try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { const value = JSON.parse(raw); if (value.schema === 1 && value.document) { new EditorModel(value.document); draft = value; $('draft-banner').hidden = false; } } } catch { status('旧草稿无法读取，可继续新建或打开工程', true); }
-selected = model.graph().nodes[0]?.key; renderProject(); update(true); status('编辑器已就绪'); document.body.dataset.editorReady = 'true';
+let draftReadError = false;
+try { const raw = localStorage.getItem(DRAFT_KEY); if (raw) { draft = readRecovery(raw); $('draft-banner').hidden = false; } } catch { draftReadError = true; }
+selected = model.graph().nodes[0]?.key; renderProject(); update(true);
+status(draftReadError ? '本地草稿无法读取，可继续新建或打开工程' : '编辑器已就绪', draftReadError);
+document.body.dataset.editorReady = 'true';
 const connectPreview = () => $('preview').contentWindow.postMessage({ source: 'vn-engine-studio', type: 'connect' }, location.origin);
 $('preview').addEventListener('load', () => { previewReady = false; invalidatePreview(); connectPreview(); });
 connectPreview();
