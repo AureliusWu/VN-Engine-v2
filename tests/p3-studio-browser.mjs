@@ -4,6 +4,7 @@ import { chromium } from 'playwright';
 import { resolve } from 'node:path';
 import { createDemoServer } from '../tools/serve.mjs';
 import { listenBrowserServer } from '../tools/browser-server.mjs';
+import { compileTextScript } from '../dist/script/text.js';
 
 const output = (process.env.VN_ENGINE_TEST_OUTPUT ?? 'test-results') + '/p3-studio';
 await mkdir(output, { recursive: true });
@@ -14,7 +15,14 @@ const errors = [], checks = []; let browser;
 try {
   browser = await chromium.launch({ headless: true, ...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH ? { executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH } : {}), args: ['--no-sandbox'] });
   const page = await browser.newPage({ viewport: { width: 1360, height: 1000 }, acceptDownloads: true });
-  page.on('pageerror', error => errors.push(error.message)); page.on('dialog', dialog => dialog.accept());
+  let allowExampleReplacement;
+  const exampleConfirmations = [];
+  page.on('pageerror', error => errors.push(error.message));
+  page.on('dialog', dialog => {
+    if (allowExampleReplacement === undefined) return dialog.accept();
+    exampleConfirmations.push(dialog.message());
+    return allowExampleReplacement ? dialog.accept() : dialog.dismiss();
+  });
   await page.goto(`http://127.0.0.1:${server.address().port}/editor/`); await page.waitForSelector('body[data-editor-ready=true]');
   await page.locator('#auto-preview').uncheck();
   await page.locator('#sample').selectOption('stage'); await page.locator('[data-command=sample]').click();
@@ -185,15 +193,26 @@ try {
     assert.equal(applied.textScriptSource, appliedText);
     assert.equal(applied.project.program.blocks[0].lines[0].text, '已显式应用的 DSL 台词。');
 
-    const crlfText = appliedText.replaceAll('\n', '\r\n');
+    const multiline = 'line hello "旁白" """第一行\n第二行"""';
+    const displayed = appliedText.replace(/^line hello .*$/m, multiline);
+    const crlfText = displayed.replaceAll('\n', '\r\n');
     const crlfFile = { ...workspace, buffer: Buffer.from(JSON.stringify({ ...applied, textScriptSource: crlfText })) };
     await openFile(reopened, 'open', crlfFile, '工程已打开');
     await reopened.locator('[data-tab=text-script]').click();
-    assert.equal(await reopenedInput.inputValue(), appliedText);
+    assert.equal(await reopenedInput.inputValue(), displayed);
     await reopened.locator('[data-dsl-command=compile]').click();
     await reopened.waitForSelector('#text-script-list[data-dsl-state=success]');
+    const exact = compileTextScript(crlfText);
+    assert.equal(exact.ok, true);
+    assert.equal(exact.program.blocks[0].lines[0].text, '第一行\r\n第二行');
+    assert.deepEqual(JSON.parse(await reopened.getByLabel('编译 JSON 预览', { exact: true }).innerText()), exact.program);
+    await reopened.getByText('编译来源位置', { exact: true }).click();
+    await reopened.locator('[data-dsl-range]').filter({ hasText: /^line hello ·/ }).click();
+    assert.equal(await reopenedInput.evaluate(element => element.value.slice(element.selectionStart, element.selectionEnd)), multiline);
     await reopened.locator('[data-dsl-command=apply]').click();
-    assert.equal(JSON.parse((await savedFile(reopened, 'save')).buffer).textScriptSource, crlfText);
+    const savedCrlf = JSON.parse((await savedFile(reopened, 'save')).buffer);
+    assert.equal(savedCrlf.textScriptSource, crlfText);
+    assert.deepEqual(savedCrlf.project.program, exact.program);
     await reopened.close({ runBeforeUnload: false });
 
     const recovered = await newWorkspace();
@@ -203,6 +222,36 @@ try {
     assert.equal(restored.document.textScriptSource, baselineText);
     assert.equal(restored.textScriptDraft, pendingText);
     await recovered.close({ runBeforeUnload: false });
+  });
+
+  await check('Loading the DSL example asks before replacing a pending draft and cancel preserves the compiled result', async () => {
+    const draft = source.replace(project.program.blocks[0].lines[0].text, '尚未保存的作者文本。').replace(/\r\n?/g, '\n');
+    await compile(draft);
+    const panel = page.locator('#text-script-list'), status = page.locator('[data-dsl-status]');
+    const output = page.getByLabel('编译 JSON 预览', { exact: true });
+    const apply = page.locator('[data-dsl-command=apply]'), example = page.locator('[data-dsl-command=example]');
+    assert.equal(await apply.isEnabled(), true);
+    const compiled = await output.innerText(), compiledStatus = await status.innerText();
+    allowExampleReplacement = false;
+    await example.click();
+    assert.equal(exampleConfirmations.length, 1);
+    assert.match(exampleConfirmations[0], /DSL 文本尚未保存/);
+    assert.equal(await input.inputValue(), draft);
+    assert.equal(await output.innerText(), compiled);
+    assert.equal(await status.innerText(), compiledStatus);
+    assert.equal(await panel.getAttribute('data-dsl-state'), 'success');
+    assert.equal(await apply.isEnabled(), true);
+
+    allowExampleReplacement = true;
+    await example.click();
+    assert.equal(exampleConfirmations.length, 2);
+    assert.match(await input.inputValue(), /你好，这是受限文本 DSL。/);
+    assert.equal(await output.innerText(), '');
+    assert.equal(await panel.getAttribute('data-dsl-state'), 'stale');
+    assert.equal(await apply.isDisabled(), true);
+    await example.click();
+    assert.equal(exampleConfirmations.length, 2);
+    allowExampleReplacement = undefined;
   });
 
   await compile(source.replace('voice greeting', 'voice missing-voice'));

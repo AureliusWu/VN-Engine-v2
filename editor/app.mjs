@@ -12,7 +12,6 @@ import { createAsyncOperation } from './async-operation.mjs';
 import { createEvidencePanel } from './evidence.mjs';
 import { createTextScriptPanel } from './text-script.mjs';
 import { createResourcesPanel } from './resources.mjs';
-import { hasDraftFeedbackTarget } from './review-draft.mjs';
 import { createDraftLibrary, DRAFT_LIBRARY_PREFIX, LEGACY_DRAFT_ID } from './draft-library.mjs';
 
 const $ = id => document.getElementById(id);
@@ -233,7 +232,7 @@ async function restoreRecovery(snapshot, portable = false, entry, diagnostics) {
   replace(snapshot.document, { baseURL: portable ? undefined : recoveryBaseURL(snapshot.baseURL), draft: true,
     authorReview: snapshot.authorReview, sourceText: snapshot.sourceText, diagnostics });
   const restoredModel = model;
-  production.restoreDraft(snapshot.productionDraft);
+  const unverifiedTarget = production.restoreDraft(snapshot.productionDraft);
   if (model.graph().nodes.some(node => node.key === snapshot.selectedNode)) { selected = snapshot.selectedNode; renderGraph(model.graph()); renderInspector(); }
   if (typeof snapshot.textScriptDraft === 'string') textScript.restore(snapshot.textScriptDraft);
   if (['story','structure','assets','collections','routes','production','evidence','text-script','resources','source'].includes(snapshot.editorTab)) switchTab(snapshot.editorTab);
@@ -249,7 +248,10 @@ async function restoreRecovery(snapshot, portable = false, entry, diagnostics) {
   if (!portable || draftEntries.length) recoveryCheckpoint = { model: restoredModel, entry };
   if (saveDraft()) {
     const message = portable ? '恢复文件已打开；请重新绑定本地资源目录' : '草稿已恢复；请重新绑定本地资源目录';
-    status(skipped ? `${message}。有 ${skipped} 个待提交字段无法定位` : message, skipped > 0);
+    const warnings = [];
+    if (skipped) warnings.push(`有 ${skipped} 个待提交字段无法定位`);
+    if (unverifiedTarget) warnings.push('原反馈目标暂未核实，意见已保留');
+    status([message, ...warnings].join('。'), warnings.length > 0);
   }
 }
 async function commitRecovery(request, content) {
@@ -258,7 +260,6 @@ async function commitRecovery(request, content) {
     const text = typeof content === 'string' ? content : decodeRecoveryFile(content);
     const snapshot = readRecovery(text, { portable: true }), project = snapshot.document.project;
     const diagnostics = preflightProject(project);
-    if (hasDraftFeedbackTarget(snapshot.productionDraft, project)) contentCatalogue(project);
     if (canReplace()) restoration = restoreRecovery(snapshot, true, undefined, diagnostics);
   });
   await restoration;

@@ -397,6 +397,69 @@ try {
   await rainPage.close({ runBeforeUnload: false });
   passed('Recovery opens a repairable Rain project with an empty feedback draft');
 
+  const openFeedback = async workspace => {
+    await workspace.locator('[data-tab=production]').click();
+    await workspace.locator('[data-production-view=feedback]').click();
+  };
+  for (const portable of [false, true]) {
+    const author = await openDraftWorkspace();
+    const validRain = structuredClone(rain);
+    validRain.story.nodes[0].lines[0].speaker = 'n';
+    await author.locator('#open-file').setInputFiles(fileInput('reviewable-rain.json', Buffer.from(JSON.stringify(validRain))));
+    await author.waitForFunction(title => document.querySelector('#project-name').textContent === title, rain.title);
+    await openFeedback(author);
+    const target = JSON.stringify(portable ? { kind: 'line', id: 'opening', nodeId: 'start' } : { kind: 'project', id: rain.game });
+    await author.getByLabel('反馈目标', { exact: true }).selectOption(target);
+    const comment = 'Feedback retained while the Rain speaker is repaired.';
+    const feedback = author.getByLabel('反馈意见', { exact: true });
+    await feedback.fill(comment); await feedback.blur();
+
+    await author.locator('[data-tab=source]').click();
+    await author.locator('#source').fill(JSON.stringify(rain));
+    await author.locator('[data-command=apply-source]').click();
+    await author.locator('#diagnostics').getByText(/Unknown Rain speaker/).first().waitFor();
+    const archivedId = await draftIdOf(author);
+    const archived = await draftOf(author, archivedId);
+    assert.equal(archived.productionDraft.feedback.target, target);
+    assert.equal(archived.productionDraft.feedback.comment, comment);
+    await author.locator('[data-command=new]').click();
+    assert.notEqual(await draftIdOf(author), archivedId);
+    await author.locator('#draft-choice').selectOption(archivedId);
+
+    const recipient = portable ? await openDraftWorkspace() : author;
+    if (portable) {
+      const file = await downloadFrom(author, '[data-command=export-draft]');
+      await openPortable(recipient, file.bytes);
+      await waitRecovered(recipient);
+      assert.match(await recipient.locator('#status').innerText(), /原反馈目标暂未核实，意见已保留/);
+    } else {
+      await recipient.locator('[data-command=restore-draft]').click();
+      await recipient.waitForFunction(() => document.querySelector('#status').textContent.startsWith('草稿已恢复；'));
+      assert.doesNotMatch(await recipient.locator('#status').innerText(), /原反馈目标暂未核实/);
+    }
+    await recipient.locator('#diagnostics').getByText(/Unknown Rain speaker/).first().waitFor();
+    assert.equal(JSON.parse(await recipient.locator('#source').inputValue()).story.nodes[0].lines[0].speaker, 'unknown-speaker');
+    await openFeedback(recipient);
+    const recoveredTarget = recipient.getByLabel('反馈目标', { exact: true });
+    const record = recipient.getByRole('button', { name: '记录问题', exact: true });
+    assert.equal(await recipient.getByLabel('反馈意见', { exact: true }).inputValue(), comment);
+    assert.equal(await recoveredTarget.inputValue(), portable ? '' : target);
+    assert.equal(await record.isDisabled(), portable);
+    const exportedDraft = JSON.parse((await downloadFrom(recipient, '[data-command=export-recovery]')).bytes);
+    assert.equal(exportedDraft.productionDraft.feedback.target, target);
+
+    await recipient.locator('[data-tab=source]').click();
+    await recipient.locator('#source').fill(JSON.stringify(validRain));
+    await recipient.locator('[data-command=apply-source]').click();
+    await openFeedback(recipient);
+    assert.equal(await recoveredTarget.inputValue(), target);
+    assert.equal(await recipient.getByLabel('反馈意见', { exact: true }).inputValue(), comment);
+    assert.equal(await record.isEnabled(), true);
+    if (portable) await author.close({ runBeforeUnload: false });
+    await recipient.close({ runBeforeUnload: false });
+  }
+  passed('Local and portable recovery preserve feedback while a repairable Rain project cannot catalogue content');
+
   const incoming = newProject('script');
   incoming.game = incoming.program.game = 'portable-draft-b'; incoming.title = 'Portable workspace B';
   const incomingFile = portableBytes(incoming);

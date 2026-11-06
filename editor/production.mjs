@@ -86,7 +86,18 @@ export function createProductionPanel(root,ctx){
   for(const [key,label]of [['surface','页面底色'],['panel','面板底色'],['text','正文颜色'],['muted','辅助文字'],['accent','强调颜色'],['border','边框颜色']]){const input=field(box,label,resolved.colors[key],v=>change({colors:{...ui.colors,[key]:v}}));input.type='color';}
   box.append(action('恢复预设颜色',()=>change({colors:{}})),e('p','下方调用当前播放器。玩家字号与高对比设置仍优先。',{class:'help'}),action('立即试玩',ctx.preview),action('反馈界面',()=>reviewFor({kind:'project',id:p.game})));
  }
- function feedbackTargets(){const p=project();return [{kind:'project',id:p.game},...creativeNodes(p).map(n=>({kind:'node',id:n.nodeId,...(n.chapterId?{chapterId:n.chapterId}:{})})),...contentCatalogue(p).map(c=>({kind:c.kind,id:c.id,nodeId:c.nodeId,...(c.chapterId?{chapterId:c.chapterId}:{})})),...['task','character','beat'].flatMap((kind,i)=>(p.production?.[['tasks','characters','beats'][i]]??[]).map(v=>({kind,id:v.id}))),...p.assets.map(v=>({kind:'asset',id:v.id}))];}
+ function feedbackTargets(){
+  const p=project();
+  const nodes=p.type==='rain'?(Array.isArray(p.story.nodes)?p.story.nodes.filter(node=>typeof node?.id==='string').map(node=>({nodeId:node.id})):[]):creativeNodes(p);
+  const productionTargets=[['task','tasks'],['character','characters'],['beat','beats']].flatMap(([kind,key])=>{
+   const entries=p.production?.[key];
+   return Array.isArray(entries)?entries.filter(entry=>typeof entry?.id==='string').map(entry=>({kind,id:entry.id})):[];
+  });
+  let content=[],unavailable=false;
+  try { content=contentCatalogue(p); } catch { unavailable=true; }
+  return {unavailable,targets:[{kind:'project',id:p.game},...nodes.map(n=>({kind:'node',id:n.nodeId,...(n.chapterId?{chapterId:n.chapterId}:{})})),
+   ...content.map(c=>({kind:c.kind,id:c.id,nodeId:c.nodeId,...(c.chapterId?{chapterId:c.chapterId}:{})})),...productionTargets,...p.assets.map(v=>({kind:'asset',id:v.id}))]};
+ }
  async function currentBinding(force=false){
   const text=source();if(!force&&binding&&bindingSource===text)return binding;
   controller?.abort();const request=new AbortController();controller=request;const token=++generation;
@@ -95,7 +106,7 @@ export function createProductionPanel(root,ctx){
  }
  function changeReview(next){past.push(review);if(past.length>32)past.shift();future=[];review=next;reviewEpoch++;ctx.changed();render();}
  async function feedbackEdit(operation){if(review.game!==project().game||review.storyVersion!==project().version)throw Error('审阅属于其他作品身份，请先保存并打开当前作品的审阅文档');const stamp=reviewEpoch,text=source(),bound=await currentBinding(true);if(stamp!==reviewEpoch||text!==source())throw Error('审阅内容已改变，请重试');changeReview(editAuthorReview(review,project(),bound,operation));ctx.status('审阅已记录；'+(operation.op==='put'?'待处理':'状态：'+stateName[operation.state]));}
- function openReview(content){const next=readAuthorReview(content,project()),prior=captureReviewDraft(project(),review,feedbackDraft,notes);notes=readReviewDraft(prior,project(),next,feedbackTargets().map(target=>JSON.stringify(target))).notes;documentEpoch++;reviewSaving.invalidate();changeReview(next);saved=JSON.stringify(next);ctx.changed();ctx.status('审阅文档已打开，正在核对源与实际文件');}
+ function openReview(content){const next=readAuthorReview(content,project()),prior=captureReviewDraft(project(),review,feedbackDraft,notes);notes=readReviewDraft(prior,project(),next,[]).notes;documentEpoch++;reviewSaving.invalidate();changeReview(next);saved=JSON.stringify(next);ctx.changed();ctx.status('审阅文档已打开，正在核对源与实际文件');}
  async function openLatestReview(read,request=reviewOpening.begin()){
   try{const content=await read();if(content!==undefined)request.commit(()=>openReview(content));}
   catch(error){if(request.current())throw error;}
@@ -116,15 +127,34 @@ export function createProductionPanel(root,ctx){
   const p=project(),matching=review.game===p.game&&review.storyVersion===p.version,bar=controls(root);if(!matching)root.append(e('p','此审阅属于 '+review.game+' / '+review.storyVersion+'。请单独保存，再打开当前作品的审阅；返回原身份后可继续处理。',{class:'help'}));bar.append(action('打开审阅文档',async()=>{if(nativeHost)await openLatestReview(async()=>{const result=await nativeRequest('open-author-review');return result.cancelled?undefined:result.content;});else{reviewFileRequest=reviewOpening.begin();const input=root.querySelector('[data-review-file]');input.value='';input.click();}}),action('保存审阅文档',saveReview),action('撤销审阅',()=>{if(past.length){future.push(review);review=past.pop();reviewEpoch++;ctx.changed();render();}}),action('重做审阅',()=>{if(future.length){past.push(review);review=future.pop();reviewEpoch++;ctx.changed();render();}}),action('重新核对文件',async()=>refreshBadges(await currentBinding(true))));
   bar.children[2].disabled=!past.length;bar.children[3].disabled=!future.length;
   const input=e('input',undefined,{type:'file',accept:'.json',hidden:'','data-review-file':''});input.addEventListener('change',()=>ctx.run(async()=>{const file=input.files[0];if(!file)return;const request=reviewFileRequest??reviewOpening.begin();reviewFileRequest=undefined;await openLatestReview(()=>{if(file.size>8_000_000)throw Error('审阅超过 8 MB');return file.text();},request);}));input.addEventListener('cancel',()=>{reviewFileRequest=undefined;});root.append(input,e('p','正在核对当前源与素材…',{'data-review-summary':'',class:'help'}));
-  const box=card('新增问题');const options=feedbackTargets().map(t=>[JSON.stringify(t),t.kind+' · '+(t.chapterId?t.chapterId+'/':'')+(t.nodeId?t.nodeId+'/':'')+t.id]);if(!options.some(o=>o[0]===feedbackDraft.target))feedbackDraft.target=options[0]?.[0]??'';
-  draftField(box,'反馈 ID',feedbackDraft.id,v=>feedbackDraft.id=v);draftField(box,'反馈类别',feedbackDraft.category,v=>feedbackDraft.category=v,{choices:categories});draftField(box,'反馈目标',feedbackDraft.target,v=>feedbackDraft.target=v,{choices:options.slice(0,1000)});draftField(box,'反馈意见',feedbackDraft.comment,v=>feedbackDraft.comment=v,{multiline:true});draftField(box,'操作者（自报）',feedbackDraft.actor,v=>feedbackDraft.actor=v);
-  box.append(action('记录问题',async()=>{const submitted={...feedbackDraft},value={category:submitted.category,target:JSON.parse(submitted.target),comment:submitted.comment},id=submitted.id||nextId('feedback',review.items);await feedbackEdit({op:'put',id,actor:submitted.actor,value});if(feedbackDraft.id===submitted.id)feedbackDraft.id='';if(feedbackDraft.comment===submitted.comment)feedbackDraft.comment='';ctx.changed();render();}));
+  const box=card('新增问题'),{targets,unavailable}=feedbackTargets();
+  const options=targets.map(t=>[JSON.stringify(t),t.kind+' · '+(t.chapterId?t.chapterId+'/':'')+(t.nodeId?t.nodeId+'/':'')+t.id]);
+  const selected=options.findIndex(option=>option[0]===feedbackDraft.target);
+  const unverifiedFeedbackTarget=selected<0&&!!feedbackDraft.target;
+  if(!feedbackDraft.target)feedbackDraft.target=options[0]?.[0]??'';
+  if(unverifiedFeedbackTarget)options.unshift(['','请选择反馈目标']);
+  const visibleOptions=options.slice(0,1000);
+  if(selected>=visibleOptions.length)visibleOptions[visibleOptions.length-1]=options[selected];
+  if(unavailable)box.append(e('p','内容目标暂不可核对，请查看工程诊断。',{class:'help'}));
+  const warning=unverifiedFeedbackTarget?e('p','原反馈目标暂未核实。可修复工程后重试，或明确选择其他目标。',{class:'help'}):undefined;
+  if(warning)box.append(warning);
+  const recordIssue=action('记录问题',async()=>{
+   if(!feedbackDraft.target||!visibleOptions.some(option=>option[0]===feedbackDraft.target))throw Error('请先核实或选择反馈目标');
+   const submitted={...feedbackDraft},value={category:submitted.category,target:JSON.parse(submitted.target),comment:submitted.comment},id=submitted.id||nextId('feedback',review.items);
+   await feedbackEdit({op:'put',id,actor:submitted.actor,value});if(feedbackDraft.id===submitted.id)feedbackDraft.id='';if(feedbackDraft.comment===submitted.comment)feedbackDraft.comment='';ctx.changed();render();
+  });
+  recordIssue.disabled=unverifiedFeedbackTarget||!feedbackDraft.target;
+  draftField(box,'反馈 ID',feedbackDraft.id,v=>feedbackDraft.id=v);draftField(box,'反馈类别',feedbackDraft.category,v=>feedbackDraft.category=v,{choices:categories});
+  draftField(box,'反馈目标',unverifiedFeedbackTarget?'':feedbackDraft.target,v=>{feedbackDraft.target=v;recordIssue.disabled=!v;warning?.remove();},{choices:visibleOptions});
+  draftField(box,'反馈意见',feedbackDraft.comment,v=>feedbackDraft.comment=v,{multiline:true});draftField(box,'操作者（自报）',feedbackDraft.actor,v=>feedbackDraft.actor=v);
+  box.append(recordIssue);
   for(const item of review.items){const section=card(item.id+' · '+categories.find(c=>c[0]===item.category)?.[1]);section.dataset.feedbackId=item.id;section.append(e('p',stateName[item.state]+' · 正在核对',{'data-freshness':'',class:'review-state'}),e('p',item.target.kind+' · '+item.target.id+'\n'+item.comment,{class:'review-comment'}),e('p','绑定源：'+item.binding.sourceSha256,{class:'help'}));
    const n=notes.get(item.id)??{note:'',evidence:''};notes.set(item.id,n);draftField(section,'修复或重开说明 '+item.id,n.note,v=>n.note=v,{multiline:true});draftField(section,'复验声明 '+item.id,n.evidence,v=>n.evidence=v,{multiline:true});
    const buttons=controls(section);for(const [state,label]of [['addressed','记录修复'],['verified','确认复验'],['reopened','重开问题']])buttons.append(action(label+' '+item.id,async()=>{const note=n.note,evidence=n.evidence;await feedbackEdit({op:'transition',id:item.id,actor:feedbackDraft.actor,state,note:note||label,evidence:evidence||undefined});if(notes.get(item.id)===n){n.savedNote=note;n.savedEvidence=evidence;ctx.changed();render();}}));buttons.append(action('定位问题 '+item.id,()=>locate(item.target)));
    const history=e('details');history.append(e('summary',`操作记录（${item.events.length}）`));for(const event of item.events)history.append(e('p',`${event.at} · ${event.actor} · ${stateName[event.state]}\n${event.note}${event.evidence?'\n复验声明：'+event.evidence:''}`,{class:'help'}));section.append(history);
   }
-  currentBinding().then(refreshBadges).catch(error=>{if(active&&!disposed)ctx.status(error.message,true);});
+  if(unavailable)root.querySelector('[data-review-summary]').textContent='内容目标暂不可核对，修复工程后可重新核对反馈。';
+  else currentBinding().then(refreshBadges).catch(error=>{if(active&&!disposed)ctx.status(error.message,true);});
  }
  function locate(target){if(['task','character','beat'].includes(target.kind)){view=target.kind==='task'?'tasks':'context';query='';kind='';state='';character='';render();const input=root.querySelector(`[aria-label="${target.kind} ID ${CSS.escape(target.id)}"]`);input?.scrollIntoView({block:'center'});input?.focus();}else if(target.kind==='asset'){view='assets';query=target.id;kind='';state='';render();root.querySelector('[data-asset-id]')?.scrollIntoView({block:'center'});}else if(target.kind==='project'){view='context';render();}else ctx.navigate(target);}
  function validationView(){
@@ -147,10 +177,13 @@ export function createProductionPanel(root,ctx){
   review=next;past=[];future=[];saved=JSON.stringify(next);reviewEpoch++;previous=undefined;impact=undefined;impactError='';notes.clear();controller?.abort();generation++;binding=undefined;feedbackDraft=newFeedbackDraft();stopMedia();
  }
  function restoreDraft(input){
-  const current=project();
-  const targets=hasDraftFeedbackTarget(input,current)?feedbackTargets().map(target=>JSON.stringify(target)):[];
+  const current=project(),hasTarget=hasDraftFeedbackTarget(input,current);
+  const targets=hasTarget?feedbackTargets().targets.map(target=>JSON.stringify(target)):[];
   const restored=readReviewDraft(input,current,review,targets);
+  const unverifiedFeedbackTarget=hasTarget&&!restored.feedback.target;
+  if(unverifiedFeedbackTarget)restored.feedback.target=input.feedback.target;
   feedbackDraft=restored.feedback;notes=restored.notes;ctx.changed();if(active)render();
+  return unverifiedFeedbackTarget;
  }
  return {render,changed(){acceptance.changed();if(!review.items.length&&(review.game!==project().game||review.storyVersion!==project().version)){review=readAuthorReview(null,project());documentEpoch++;reviewSaving.invalidate();}const text=source();if(previous?.text===text){if(active)render();return;}const prior=previous;previous={project:structuredClone(project()),text};controller?.abort();generation++;binding=undefined;stopMedia();if(prior){const current=previous;Promise.all([reviewSourceHash(prior.text),reviewSourceHash(text)]).then(([a,b])=>{if(previous===current){impact=analyseContentImpact(prior.project,current.project,a,b);impactError='';if(active&&view==='validation')render();}}).catch(error=>{if(previous===current){impact=undefined;impactError=error.message;if(active&&view==='validation')ctx.status('修改影响尚未核实：'+error.message,true);}});}if(active)render();},leave(){acceptance.leave();active=false;reviewOpening.invalidate();reviewFileRequest=undefined;controller?.abort();generation++;stopMedia();},dispose(){disposed=true;this.leave();},reset,getReview:()=>structuredClone(review),getDraft:()=>captureReviewDraft(project(),review,feedbackDraft,notes),restoreDraft,get dirty(){return saved!==JSON.stringify(review)||hasReviewDraft(feedbackDraft,notes,review);},stopMedia,reviewFor};
 }

@@ -4,7 +4,7 @@
 [![Version](https://img.shields.io/github/v/tag/AureliusWu/VN-Engine-v2?sort=semver&style=flat-square&label=version)](https://github.com/AureliusWu/VN-Engine-v2/tags) [![Build](https://github.com/AureliusWu/VN-Engine-v2/actions/workflows/check.yml/badge.svg?branch=main)](https://github.com/AureliusWu/VN-Engine-v2/actions/workflows/check.yml) [![Last commit](https://img.shields.io/github/last-commit/AureliusWu/VN-Engine-v2?style=flat-square)](https://github.com/AureliusWu/VN-Engine-v2/commits/main) [![License](https://img.shields.io/github/license/AureliusWu/VN-Engine-v2?style=flat-square)](LICENSE)
 <!-- project-badges:end -->
 
-`main` 当前引擎版本为 `2.1.0`。正式版 Windows x64 便携包和校验清单见 [GitHub Releases](https://github.com/AureliusWu/VN-Engine-v2/releases)。
+`main` 当前引擎版本为 `2.1.1`。正式版 Windows x64 便携包和校验清单见 [GitHub Releases](https://github.com/AureliusWu/VN-Engine-v2/releases)。
 
 自研 TypeScript 叙事引擎，包含剧本解释器、状态机、播放器、画面 / 音频调度、作者工具、路线 QA、Windows 宿主与独立 PWA 打包。主运行链不依赖 Ren’Py、Electron 或 Tauri。
 

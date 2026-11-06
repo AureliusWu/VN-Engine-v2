@@ -32,7 +32,7 @@ export function createTextScriptPanel(root,ports){
     onResult(data){
       if(disposed||!pending)return;
       const request=pending,current=snapshot();
-      if(input.value!==request.source){invalidate();return;}
+      if(sourceText()!==request.source){invalidate();return;}
       if(current.key!==request.key){begin(false,current);return;}
       pending=undefined;compiled=data.result;syntaxOk=data.syntaxOk;identity=data.identity;formatted=data.output;checkedKey=request.key;draw(current.context,data.sourceMapCount);
       if(compiled.ok&&matches(current.context)&&request.preview){
@@ -50,7 +50,10 @@ export function createTextScriptPanel(root,ports){
     const resource=kind=>project.assets.find(asset=>asset?.kind===kind&&typeof asset.id==='string'&&asset.id.trim()&&asset.id.length<=256)?.id;
     const cues=[['background',resource('background')],['portrait',resource('portrait')],['music',resource('audio')]]
       .filter(([,id])=>id).map(([field,id])=>`cue block start ${field} ${JSON.stringify(id)}\n`).join('');
-    showSource(`vn-script 1\ngame ${JSON.stringify(project.game)}\nversion ${JSON.stringify(project.version)}\nentry start\nvar trust number 0 min 0 max 10\n${cues}cue line hello pause 120\ncue line hello effect fade 150\nblock start "开场"\nline hello "旁白" "你好，这是受限文本 DSL。"\nchoice yes "继续" -> finish with add trust 1\nblock finish\nline final "旁白" "完成"\nend 完成\n`);
+    const exampleSource=`vn-script 1\ngame ${JSON.stringify(project.game)}\nversion ${JSON.stringify(project.version)}\nentry start\nvar trust number 0 min 0 max 10\n${cues}cue line hello pause 120\ncue line hello effect fade 150\nblock start "开场"\nline hello "旁白" "你好，这是受限文本 DSL。"\nchoice yes "继续" -> finish with add trust 1\nblock finish\nline final "旁白" "完成"\nend 完成\n`;
+    const current=sourceText();
+    if(current!==storedText&&current!==exampleSource&&!confirm('当前 DSL 文本尚未保存。载入示例会替换这段文本，仍要继续吗？'))return;
+    showSource(exampleSource);
     invalidate();ports.changed();
   });example.dataset.dslCommand='example';
   const compile=action('编译并预览',()=>begin(true));compile.dataset.dslCommand='compile';
@@ -59,7 +62,7 @@ export function createTextScriptPanel(root,ports){
     if(task.busy||pending)throw Error('后台检查尚未完成，请稍后应用');
     const current=snapshot();
     if(attempted&&current.key!==checkedKey){begin(false,current);throw Error('资源清单已变化，正在后台重新检查，请稍后应用');}
-    if(!compiled?.ok||compiledText!==input.value)throw Error('请先成功编译当前文本');
+    if(!compiled?.ok||compiledText!==sourceText())throw Error('请先成功编译当前文本');
     if(!matches(current.context))throw Error('文本 game/version 与当前工程不一致；请修改文本中的身份后重新编译');
     ports.apply(compiled.program,sourceText());
     message.textContent='已应用剧本与 DSL 源文，可一起撤销。';
@@ -70,7 +73,11 @@ export function createTextScriptPanel(root,ports){
   root.replaceChildren(element('p','支持变量、对白、分支和选择效果。编译与资源清单检查在后台执行，可随时取消。保存工程会保留源文；显式应用才更新剧本。图形和 JSON 编辑保留原有源文。',{class:'help'}),controls,message,input,diagnostics,result,rangeList);
   state('idle');root.setAttribute('aria-busy','false');
   function matches(context){return context.type==='script'&&identity?.game===context.game&&identity?.version===context.version;}
-  function locate(span){input.focus();input.setSelectionRange(span.start.offset,span.end.offset);}
+  function locate(span){
+    // Compiler offsets refer to the original source; the textarea collapses CRLF to LF.
+    const displayedOffset=offset=>compiledText.slice(0,offset).replaceAll('\r\n','\n').length;
+    input.focus();input.setSelectionRange(displayedOffset(span.start.offset),displayedOffset(span.end.offset));
+  }
   function draw(context,sourceMapCount){
     diagnostics.replaceChildren();ranges.replaceChildren();result.textContent='';
     if(!compiled){apply.disabled=true;return;}
@@ -83,13 +90,13 @@ export function createTextScriptPanel(root,ports){
       jump.dataset.dslRange='true';row.append(jump);ranges.append(row);
     }
     if(sourceMapCount>compiled.sourceMap.length)ranges.append(element('li',`仅显示前 ${compiled.sourceMap.length} 个位置（共 ${sourceMapCount} 个）；完整 source map 可由只读 Agent 编译获取。`));
-    apply.disabled=!compiled.ok||!matches(context)||compiledText!==input.value||task.busy;
+    apply.disabled=!compiled.ok||!matches(context)||compiledText!==sourceText()||task.busy;
     if(compiled.ok)result.textContent=formatted;
     state(compiled.ok&&matches(context)?'success':'invalid',!syntaxOk?'编译失败 · 当前 JSON 保留。':!matches(context)?'文本 game/version 或工程类型不匹配；拒绝预览和应用。':!compiled.ok?'编译失败 · 当前资源清单检查未通过，当前 JSON 保留。':'编译成功 · 当前资源清单已核对；可显式应用，当前 JSON 尚未改变。');
   }
   function begin(preview,current=snapshot()){
     if(disposed)return;
-    compiledText=input.value;attempted=true;pending={source:compiledText,key:current.key,preview};clearResult();
+    compiledText=sourceText();attempted=true;pending={source:compiledText,key:current.key,preview};clearResult();
     state('running',preview?'正在后台编译，可随时取消；当前 JSON 保留。':'资源清单已变化，正在后台重新检查；当前 JSON 保留。');
     task.run({source:compiledText,fileName:'studio.vn',projectContext:current.context});
   }
