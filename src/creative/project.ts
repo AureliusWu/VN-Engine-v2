@@ -17,6 +17,22 @@ export function textCatalogue(p:EngineProject):TextEntry[] {
 export function creativeNodes(p:EngineProject):CreativeTarget[] {
   return p.type==='script'?p.program.blocks.map(b=>({nodeId:b.id})):p.type==='narrative'?p.scenes.map(s=>({nodeId:s.id})):p.type==='investigation'?p.chapters.flatMap(c=>Object.keys(c.nodes).map(nodeId=>({nodeId,chapterId:c.id}))):p.story.nodes.map(n=>({nodeId:n.id}));
 }
+
+function indexProductionTargets(nodes: readonly CreativeTarget[], lines: readonly TextEntry[]) {
+  type Match = { count: number; lineIds?: Set<string> };
+  const chapters = new Map<string | undefined, Map<string, Match>>();
+  const matchFor = ({ chapterId, nodeId }: CreativeTarget) => {
+    let chapter = chapters.get(chapterId);
+    if (!chapter) chapters.set(chapterId, chapter = new Map());
+    let match = chapter.get(nodeId);
+    if (!match) chapter.set(nodeId, match = { count: 0 });
+    return match;
+  };
+  nodes.forEach(node => { matchFor(node).count++; });
+  for (const line of lines) (matchFor(line).lineIds ??= new Set()).add(line.id);
+  return chapters;
+}
+
 export function creativeDiagnostics(p:EngineProject):CreativeDiagnostic[] {
   if(p.production===undefined)return [];const errors=schemaErrors(PRODUCTION_SCHEMA,p.production,['production']);
   if(errors.length)return errors.slice(0,64).map(e=>({code:'CREATIVE_SCHEMA',severity:'error',message:e.message,path:e.path}));
@@ -24,16 +40,32 @@ export function creativeDiagnostics(p:EngineProject):CreativeDiagnostic[] {
   const chars=new Set<string>(),tasks=new Set<string>(),beats=new Set<string>();
   for(const [kind,set]of [['characters',chars],['tasks',tasks],['beats',beats]]as const)(plan[kind]??[]).forEach((item,i)=>{if(set.has(item.id))add('CREATIVE_DUPLICATE','Duplicate '+kind+' ID: '+item.id,['production',kind,i,'id']);set.add(item.id);});
   const nodes=creativeNodes(p),lines=textCatalogue(p),assets=new Set(p.assets.map(a=>a.id));
+  let targetIndex: ReturnType<typeof indexProductionTargets> | undefined;
   const targets=(values:CreativeTarget[]|undefined,path:(string|number)[])=>values?.forEach((target,i)=>{
-    const matches=nodes.filter(n=>n.nodeId===target.nodeId&&n.chapterId===target.chapterId);
-    if(matches.length!==1)add('CREATIVE_TARGET','Missing or ambiguous target node: '+target.nodeId,[...path,i,'nodeId']);
-    if(target.lineId&&!lines.some(l=>l.id===target.lineId&&l.nodeId===target.nodeId&&l.chapterId===target.chapterId))add('CREATIVE_TARGET','Missing target line: '+target.lineId,[...path,i,'lineId']);
+    targetIndex ??= indexProductionTargets(nodes, lines);
+    const match = targetIndex.get(target.chapterId)?.get(target.nodeId);
+    if(match?.count!==1)add('CREATIVE_TARGET','Missing or ambiguous target node: '+target.nodeId,[...path,i,'nodeId']);
+    if(target.lineId&&!match?.lineIds?.has(target.lineId))add('CREATIVE_TARGET','Missing target line: '+target.lineId,[...path,i,'lineId']);
   });
   plan.beats?.forEach((b,i)=>{targets(b.targets,['production','beats',i,'targets']);for(const [key,valid]of [['characters',chars],['tasks',tasks]]as const)b[key]?.forEach((id,j)=>{if(!valid.has(id))add('CREATIVE_REFERENCE','Missing '+key+' ID: '+id,['production','beats',i,key,j]);});});
-  plan.tasks?.forEach((t,i)=>{targets(t.targets,['production','tasks',i,'targets']);t.dependsOn?.forEach((id,j)=>{if(!tasks.has(id))add('CREATIVE_REFERENCE','Missing task: '+id,['production','tasks',i,'dependsOn',j]);});t.assets?.forEach((id,j)=>{if(!assets.has(id))add('CREATIVE_REFERENCE','Missing output asset: '+id,['production','tasks',i,'assets',j]);});});
+  const firstTaskById = new Map<string, CreativeTask>();
+  plan.tasks?.forEach((task, i) => {
+    // Dependency traversal uses the first definition even when validation reports a duplicate.
+    if (!firstTaskById.has(task.id)) firstTaskById.set(task.id, task);
+    targets(task.targets, ['production', 'tasks', i, 'targets']);
+    task.dependsOn?.forEach((id, j) => { if (!tasks.has(id)) add('CREATIVE_REFERENCE', 'Missing task: ' + id, ['production', 'tasks', i, 'dependsOn', j]); });
+    task.assets?.forEach((id, j) => { if (!assets.has(id)) add('CREATIVE_REFERENCE', 'Missing output asset: ' + id, ['production', 'tasks', i, 'assets', j]); });
+  });
   plan.tasks?.forEach((t,i)=>t.characters?.forEach((id,j)=>{if(!chars.has(id))add('CREATIVE_REFERENCE','Missing character: '+id,['production','tasks',i,'characters',j]);}));
   const visited=new Set<string>(),active=new Set<string>();let cycle=false;
-  const visit=(id:string)=>{if(active.has(id)){cycle=true;return;}if(visited.has(id))return;active.add(id);for(const dep of plan.tasks?.find(t=>t.id===id)?.dependsOn??[])visit(dep);active.delete(id);visited.add(id);};
+  const visit = (id: string) => {
+    if (active.has(id)) { cycle = true; return; }
+    if (visited.has(id)) return;
+    active.add(id);
+    for (const dependency of firstTaskById.get(id)?.dependsOn ?? []) visit(dependency);
+    active.delete(id);
+    visited.add(id);
+  };
   for(const id of tasks)visit(id);if(cycle)add('CREATIVE_CYCLE','Task dependencies contain a cycle',['production','tasks']);
   return issues;
 }

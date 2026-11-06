@@ -1,0 +1,931 @@
+{
+  "schema": 1,
+  "date": "2026-11-06",
+  "engineVersion": "1.4.5",
+  "baseCommit": "5fc6adf55fe0021bda108ecb48599cf3609b3653",
+  "plan": "docs/PLAN-v1.4.5.md",
+  "research": "docs/PLAN-v1.4.5.md#开源与社区证据",
+  "scope": {
+    "sourceGamesMigrated": false,
+    "publicDataOrSaveFormatChanged": false,
+    "newDependencies": false,
+    "releaseOrTagCreated": false
+  },
+  "local": {
+    "nodeVersion": "v24.14.0",
+    "check": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 388,
+      "pass": 384,
+      "fail": 4,
+      "skipped": 0,
+      "reason": "Windows symlink fixture creation EPERM",
+      "log": "test-results/v145-final-check.log"
+    },
+    "editorModel": {
+      "status": "PASS",
+      "total": 22,
+      "newCases": 2,
+      "log": "test-results/v145-final-editor-node.log"
+    },
+    "completeBrowserSuite": {
+      "status": "PASS",
+      "scripts": 48,
+      "log": "test-results/v145-final-browser.log"
+    },
+    "completeEditorSuite": {
+      "status": "PASS",
+      "scripts": 21,
+      "log": "test-results/v145-final-editor.log"
+    },
+    "pythonRenpy": {
+      "status": "PASS",
+      "total": 6
+    },
+    "schemaSync": "PASS",
+    "provenance": {
+      "status": "PASS",
+      "files": 200
+    },
+    "projectSchemas": {
+      "status": "PASS",
+      "total": 5
+    },
+    "portfolioPython": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 8,
+      "pass": 7,
+      "fail": 1,
+      "reason": "Windows symlink fixture creation WinError 1314",
+      "log": "test-results/v145-final-portfolio.log"
+    },
+    "workflowInventory": {
+      "status": "PASS",
+      "scope": "engine checkout only",
+      "log": "test-results/v145-final-workflow.log"
+    },
+    "p4Studio": {
+      "status": "PASS",
+      "report": "test-results/v145-final-editor-artifacts/p4-studio/REPORT.json"
+    },
+    "p4Package": {
+      "status": "PASS",
+      "report": "test-results/v145-final-browser-artifacts/p4-package/REPORT.json"
+    }
+  },
+  "originalFailures": [
+    "symlink import parents are refused; pure SDK requires an explicit import/decoder host",
+    "project symlinks and escaping assets are rejected, imports create no files",
+    "resource symlinks, missing bytes, invalid encoding and report overwrite are structured failures",
+    "build refuses altered assets, escaping symlinks and generated-file collisions before writing output"
+  ],
+  "performance": {
+    "schema": 1,
+    "comparison": "1.4.4 to 1.4.5",
+    "environment": {
+      "node": "v24.14.0",
+      "platform": "win32",
+      "release": "10.0.26200",
+      "architecture": "x64",
+      "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+      "logicalCPUs": 12,
+      "memoryMiB": 16327
+    },
+    "protocol": {
+      "schema": 1,
+      "method": {
+        "rounds": 3,
+        "timing": "Unmodified production functions. performance.now around synchronous fixed-count calls, after fixed per-case warmups and one explicit GC.",
+        "creativeDiagnostics": "Direct production-plan diagnostics on the immutable EditorModel project.",
+        "editorModelDiagnostics": "Full author diagnosis, including graph, assets and runtime project construction.",
+        "control": "Same large project; optional task targets absent and mandatory beat target lists empty. All other fields remain identical.",
+        "scope": "Real valid script IR plus production plans. Runtime route smoke, ordered malformed cases, hashes and immutability outside timing. No assets fetched. All fixed rounds retained."
+      },
+      "fixtureConfig": [
+        {
+          "name": "small",
+          "blocks": 12,
+          "tasks": 8,
+          "beats": 8,
+          "taskTargets": 2,
+          "beatTargets": 2,
+          "creativeDiagnostics": {
+            "warmups": 120,
+            "calls": 500
+          },
+          "editorModelDiagnostics": {
+            "warmups": 120,
+            "calls": 500
+          }
+        },
+        {
+          "name": "large",
+          "blocks": 1536,
+          "tasks": 128,
+          "beats": 192,
+          "taskTargets": 16,
+          "beatTargets": 12,
+          "creativeDiagnostics": {
+            "warmups": 3,
+            "calls": 6
+          },
+          "editorModelDiagnostics": {
+            "warmups": 2,
+            "calls": 4
+          }
+        },
+        {
+          "name": "largeWithoutTargets",
+          "blocks": 1536,
+          "tasks": 128,
+          "beats": 192,
+          "taskTargets": 0,
+          "beatTargets": 0,
+          "creativeDiagnostics": {
+            "warmups": 4,
+            "calls": 12
+          },
+          "editorModelDiagnostics": {
+            "warmups": 3,
+            "calls": 8
+          },
+          "sourceName": "large"
+        }
+      ]
+    },
+    "environmentSha256": "f8743b32abbc34f49df38e065c4762f560437b0bf3eb2fc8372b0aa0e8d95756",
+    "protocolSha256": "63aeb6c4f93df197a192ff903fef7d837ddc34dfd0c9cfc66aab4e1d1ff0eafd",
+    "orderedCompatibility": {
+      "ordered": [
+        {
+          "code": "CREATIVE_DUPLICATE",
+          "severity": "error",
+          "message": "Duplicate tasks ID: task-1",
+          "path": [
+            "production",
+            "tasks",
+            2,
+            "id"
+          ]
+        },
+        {
+          "code": "CREATIVE_TARGET",
+          "severity": "error",
+          "message": "Missing or ambiguous target node: missing",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "targets",
+            0,
+            "nodeId"
+          ]
+        },
+        {
+          "code": "CREATIVE_TARGET",
+          "severity": "error",
+          "message": "Missing target line: missing-line",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "targets",
+            0,
+            "lineId"
+          ]
+        },
+        {
+          "code": "CREATIVE_TARGET",
+          "severity": "error",
+          "message": "Missing target line: chapter:1/scene/line:0",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "targets",
+            1,
+            "lineId"
+          ]
+        },
+        {
+          "code": "CREATIVE_REFERENCE",
+          "severity": "error",
+          "message": "Missing characters ID: missing-character",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "characters",
+            0
+          ]
+        },
+        {
+          "code": "CREATIVE_REFERENCE",
+          "severity": "error",
+          "message": "Missing tasks ID: missing-task",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "tasks",
+            0
+          ]
+        },
+        {
+          "code": "CREATIVE_REFERENCE",
+          "severity": "error",
+          "message": "Missing task: missing-dependency",
+          "path": [
+            "production",
+            "tasks",
+            0,
+            "dependsOn",
+            1
+          ]
+        },
+        {
+          "code": "CREATIVE_REFERENCE",
+          "severity": "error",
+          "message": "Missing output asset: missing-asset",
+          "path": [
+            "production",
+            "tasks",
+            0,
+            "assets",
+            0
+          ]
+        },
+        {
+          "code": "CREATIVE_REFERENCE",
+          "severity": "error",
+          "message": "Missing character: missing-character",
+          "path": [
+            "production",
+            "tasks",
+            0,
+            "characters",
+            0
+          ]
+        }
+      ],
+      "editor": [
+        {
+          "code": "CREATIVE_DUPLICATE",
+          "severity": "error",
+          "message": "Duplicate tasks ID: task-1",
+          "path": [
+            "production",
+            "tasks",
+            2,
+            "id"
+          ]
+        },
+        {
+          "code": "CREATIVE_TARGET",
+          "severity": "error",
+          "message": "Missing or ambiguous target node: missing",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "targets",
+            0,
+            "nodeId"
+          ]
+        },
+        {
+          "code": "CREATIVE_TARGET",
+          "severity": "error",
+          "message": "Missing target line: missing-line",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "targets",
+            0,
+            "lineId"
+          ]
+        },
+        {
+          "code": "CREATIVE_TARGET",
+          "severity": "error",
+          "message": "Missing target line: chapter:1/scene/line:0",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "targets",
+            1,
+            "lineId"
+          ]
+        },
+        {
+          "code": "CREATIVE_REFERENCE",
+          "severity": "error",
+          "message": "Missing characters ID: missing-character",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "characters",
+            0
+          ]
+        },
+        {
+          "code": "CREATIVE_REFERENCE",
+          "severity": "error",
+          "message": "Missing tasks ID: missing-task",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "tasks",
+            0
+          ]
+        },
+        {
+          "code": "CREATIVE_REFERENCE",
+          "severity": "error",
+          "message": "Missing task: missing-dependency",
+          "path": [
+            "production",
+            "tasks",
+            0,
+            "dependsOn",
+            1
+          ]
+        },
+        {
+          "code": "CREATIVE_REFERENCE",
+          "severity": "error",
+          "message": "Missing output asset: missing-asset",
+          "path": [
+            "production",
+            "tasks",
+            0,
+            "assets",
+            0
+          ]
+        },
+        {
+          "code": "CREATIVE_REFERENCE",
+          "severity": "error",
+          "message": "Missing character: missing-character",
+          "path": [
+            "production",
+            "tasks",
+            0,
+            "characters",
+            0
+          ]
+        },
+        {
+          "severity": "error",
+          "code": "runtime",
+          "message": "运行校验：CREATIVE_DUPLICATE: Duplicate tasks ID: task-1 at [\"production\",\"tasks\",2,\"id\"]"
+        }
+      ],
+      "withCycle": [
+        {
+          "code": "CREATIVE_DUPLICATE",
+          "severity": "error",
+          "message": "Duplicate tasks ID: task-1",
+          "path": [
+            "production",
+            "tasks",
+            2,
+            "id"
+          ]
+        },
+        {
+          "code": "CREATIVE_TARGET",
+          "severity": "error",
+          "message": "Missing or ambiguous target node: missing",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "targets",
+            0,
+            "nodeId"
+          ]
+        },
+        {
+          "code": "CREATIVE_TARGET",
+          "severity": "error",
+          "message": "Missing target line: missing-line",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "targets",
+            0,
+            "lineId"
+          ]
+        },
+        {
+          "code": "CREATIVE_TARGET",
+          "severity": "error",
+          "message": "Missing target line: chapter:1/scene/line:0",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "targets",
+            1,
+            "lineId"
+          ]
+        },
+        {
+          "code": "CREATIVE_REFERENCE",
+          "severity": "error",
+          "message": "Missing characters ID: missing-character",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "characters",
+            0
+          ]
+        },
+        {
+          "code": "CREATIVE_REFERENCE",
+          "severity": "error",
+          "message": "Missing tasks ID: missing-task",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "tasks",
+            0
+          ]
+        },
+        {
+          "code": "CREATIVE_REFERENCE",
+          "severity": "error",
+          "message": "Missing task: missing-dependency",
+          "path": [
+            "production",
+            "tasks",
+            0,
+            "dependsOn",
+            1
+          ]
+        },
+        {
+          "code": "CREATIVE_REFERENCE",
+          "severity": "error",
+          "message": "Missing output asset: missing-asset",
+          "path": [
+            "production",
+            "tasks",
+            0,
+            "assets",
+            0
+          ]
+        },
+        {
+          "code": "CREATIVE_REFERENCE",
+          "severity": "error",
+          "message": "Missing character: missing-character",
+          "path": [
+            "production",
+            "tasks",
+            0,
+            "characters",
+            0
+          ]
+        },
+        {
+          "code": "CREATIVE_CYCLE",
+          "severity": "error",
+          "message": "Task dependencies contain a cycle",
+          "path": [
+            "production",
+            "tasks"
+          ]
+        }
+      ],
+      "scoped": [
+        {
+          "code": "CREATIVE_TARGET",
+          "severity": "error",
+          "message": "Missing or ambiguous target node: leaf",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "targets",
+            2,
+            "nodeId"
+          ]
+        },
+        {
+          "code": "CREATIVE_TARGET",
+          "severity": "error",
+          "message": "Missing target line: left/right/leaf",
+          "path": [
+            "production",
+            "beats",
+            0,
+            "targets",
+            2,
+            "lineId"
+          ]
+        }
+      ]
+    },
+    "orderedCompatibilitySha256": "2715bda3c61a8c47056ca3acc21453c01495d181059759149b83007ae74d467a",
+    "projectInputsAndOrderedDiagnosticsMatch": true,
+    "inputIntegrity": "Successful harness rounds require the source object and immutable EditorModel project to serialize identically before and after timing.",
+    "artifacts": {
+      "v145-baseline-creative-diagnostics.json": "78bd98bd511e1a79365d9f877014377faf52fa090c5cd199283053daa25e6427",
+      "v145-after-creative-diagnostics.json": "b319fd87b1097cb2ed1640f4896cb7088a81319d057003d3394188b2e4e0efae"
+    },
+    "source": {
+      "baseline": {
+        "head": "5fc6adf55fe0021bda108ecb48599cf3609b3653",
+        "engineVersion": "1.4.4",
+        "files": {
+          "src/creative/project.ts": "ddf3472d07fe91d5a3eb6892f416bd3d37f7e2ff8e6506db05a1868a09789013",
+          "dist/creative/project.js": "83b366f1a5e06a85d734ad6c51c8209c5eeb6bf6d4c87543b6fe9d9b1754d8df",
+          "dist/creative/content.js": "6908d5e9a45e6873146fe48106181a47176b3d686f4d6cea9a87ccb402670d22",
+          "dist/editor/model.js": "1362d84cd41343fd174c762fe7f72f48de84bb003dc2f8a44be718f4edc827ce",
+          "dist/runtime/project.js": "4d43d7f3966cf172a070c28bc6f31e7b9a4762b6db06fb7e365cde7aafbb463e"
+        }
+      },
+      "after": {
+        "head": "5fc6adf55fe0021bda108ecb48599cf3609b3653",
+        "engineVersion": "1.4.5",
+        "files": {
+          "src/creative/project.ts": "1e0c9608fd31b4153cfc81701dd83b9ab8619a0a31a028a07a5367546e89f755",
+          "dist/creative/project.js": "c9ca49ae5fc41ed32d2accdd407b2ac27b9b555d9e1ee4a4448ff58cf2e20e80",
+          "dist/creative/content.js": "6908d5e9a45e6873146fe48106181a47176b3d686f4d6cea9a87ccb402670d22",
+          "dist/editor/model.js": "1362d84cd41343fd174c762fe7f72f48de84bb003dc2f8a44be718f4edc827ce",
+          "dist/runtime/project.js": "4d43d7f3966cf172a070c28bc6f31e7b9a4762b6db06fb7e365cde7aafbb463e"
+        }
+      }
+    },
+    "metrics": {
+      "small": {
+        "projectSha256": "946da70ea2af458109848e2a75082d9430473fd957d4aacba1a6e4d15ab72b0c",
+        "projectBytes": 7283,
+        "targets": 32,
+        "timings": {
+          "creativeDiagnostics": {
+            "diagnostics": [],
+            "diagnosticsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "before": {
+              "medianMs": 0.25539900000000004,
+              "worstMs": 0.26442440000000006,
+              "samples": [
+                {
+                  "round": 1,
+                  "elapsedMs": 132.21220000000002,
+                  "meanPerCallMs": 0.26442440000000006
+                },
+                {
+                  "round": 2,
+                  "elapsedMs": 127.69950000000003,
+                  "meanPerCallMs": 0.25539900000000004
+                },
+                {
+                  "round": 3,
+                  "elapsedMs": 127.0241,
+                  "meanPerCallMs": 0.2540482
+                }
+              ]
+            },
+            "after": {
+              "medianMs": 0.24874359999999995,
+              "worstMs": 0.24950219999999995,
+              "samples": [
+                {
+                  "round": 1,
+                  "elapsedMs": 124.75109999999998,
+                  "meanPerCallMs": 0.24950219999999995
+                },
+                {
+                  "round": 2,
+                  "elapsedMs": 124.02040000000002,
+                  "meanPerCallMs": 0.24804080000000003
+                },
+                {
+                  "round": 3,
+                  "elapsedMs": 124.37179999999998,
+                  "meanPerCallMs": 0.24874359999999995
+                }
+              ]
+            },
+            "deltaMs": -0.006655400000000089,
+            "deltaPercent": -2.6058833433177453,
+            "verdict": "PASS"
+          },
+          "editorModelDiagnostics": {
+            "diagnostics": [],
+            "diagnosticsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "before": {
+              "medianMs": 0.5681538,
+              "worstMs": 0.5769123999999999,
+              "samples": [
+                {
+                  "round": 1,
+                  "elapsedMs": 284.0769,
+                  "meanPerCallMs": 0.5681538
+                },
+                {
+                  "round": 2,
+                  "elapsedMs": 288.45619999999997,
+                  "meanPerCallMs": 0.5769123999999999
+                },
+                {
+                  "round": 3,
+                  "elapsedMs": 279.74840000000006,
+                  "meanPerCallMs": 0.5594968000000001
+                }
+              ]
+            },
+            "after": {
+              "medianMs": 0.5564,
+              "worstMs": 0.558172,
+              "samples": [
+                {
+                  "round": 1,
+                  "elapsedMs": 279.086,
+                  "meanPerCallMs": 0.558172
+                },
+                {
+                  "round": 2,
+                  "elapsedMs": 278.2,
+                  "meanPerCallMs": 0.5564
+                },
+                {
+                  "round": 3,
+                  "elapsedMs": 278.16110000000003,
+                  "meanPerCallMs": 0.5563222000000001
+                }
+              ]
+            },
+            "deltaMs": -0.011753800000000036,
+            "deltaPercent": -2.0687708152264466,
+            "verdict": "PASS"
+          }
+        }
+      },
+      "large": {
+        "projectSha256": "74ca3ca4d1b268f65d7f4524103cef7f5207bef366c82ab4e4fbd32f66209d70",
+        "projectBytes": 698247,
+        "targets": 4352,
+        "timings": {
+          "creativeDiagnostics": {
+            "diagnostics": [],
+            "diagnosticsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "before": {
+              "medianMs": 122.28631666666668,
+              "worstMs": 144.63058333333333,
+              "samples": [
+                {
+                  "round": 1,
+                  "elapsedMs": 733.3704,
+                  "meanPerCallMs": 122.22840000000001
+                },
+                {
+                  "round": 2,
+                  "elapsedMs": 867.7835,
+                  "meanPerCallMs": 144.63058333333333
+                },
+                {
+                  "round": 3,
+                  "elapsedMs": 733.7179000000001,
+                  "meanPerCallMs": 122.28631666666668
+                }
+              ]
+            },
+            "after": {
+              "medianMs": 19.752349999999996,
+              "worstMs": 19.835483333333343,
+              "samples": [
+                {
+                  "round": 1,
+                  "elapsedMs": 118.51409999999998,
+                  "meanPerCallMs": 19.752349999999996
+                },
+                {
+                  "round": 2,
+                  "elapsedMs": 119.01290000000006,
+                  "meanPerCallMs": 19.835483333333343
+                },
+                {
+                  "round": 3,
+                  "elapsedMs": 117.77440000000001,
+                  "meanPerCallMs": 19.62906666666667
+                }
+              ]
+            },
+            "deltaMs": -102.53396666666669,
+            "deltaPercent": -83.84745690407718,
+            "verdict": "PASS"
+          },
+          "editorModelDiagnostics": {
+            "diagnostics": [],
+            "diagnosticsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "before": {
+              "medianMs": 211.60637499999996,
+              "worstMs": 214.22387500000002,
+              "samples": [
+                {
+                  "round": 1,
+                  "elapsedMs": 846.4254999999998,
+                  "meanPerCallMs": 211.60637499999996
+                },
+                {
+                  "round": 2,
+                  "elapsedMs": 856.8955000000001,
+                  "meanPerCallMs": 214.22387500000002
+                },
+                {
+                  "round": 3,
+                  "elapsedMs": 844.9548,
+                  "meanPerCallMs": 211.2387
+                }
+              ]
+            },
+            "after": {
+              "medianMs": 49.89359999999999,
+              "worstMs": 50.289625,
+              "samples": [
+                {
+                  "round": 1,
+                  "elapsedMs": 201.1585,
+                  "meanPerCallMs": 50.289625
+                },
+                {
+                  "round": 2,
+                  "elapsedMs": 199.36580000000004,
+                  "meanPerCallMs": 49.84145000000001
+                },
+                {
+                  "round": 3,
+                  "elapsedMs": 199.57439999999997,
+                  "meanPerCallMs": 49.89359999999999
+                }
+              ]
+            },
+            "deltaMs": -161.71277499999997,
+            "deltaPercent": -76.42150431431945,
+            "verdict": "PASS"
+          }
+        }
+      },
+      "largeWithoutTargets": {
+        "projectSha256": "8cd5cf05b8220a80e03306d33719661a645922316eea6ea1c064f6a3ce952a8a",
+        "projectBytes": 403133,
+        "targets": 0,
+        "timings": {
+          "creativeDiagnostics": {
+            "diagnostics": [],
+            "diagnosticsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "before": {
+              "medianMs": 14.86388333333332,
+              "worstMs": 15.550916666666694,
+              "samples": [
+                {
+                  "round": 1,
+                  "elapsedMs": 186.61100000000033,
+                  "meanPerCallMs": 15.550916666666694
+                },
+                {
+                  "round": 2,
+                  "elapsedMs": 178.36659999999983,
+                  "meanPerCallMs": 14.86388333333332
+                },
+                {
+                  "round": 3,
+                  "elapsedMs": 177.1894000000002,
+                  "meanPerCallMs": 14.765783333333351
+                }
+              ]
+            },
+            "after": {
+              "medianMs": 13.878433333333325,
+              "worstMs": 14.0117,
+              "samples": [
+                {
+                  "round": 1,
+                  "elapsedMs": 165.38980000000015,
+                  "meanPerCallMs": 13.782483333333346
+                },
+                {
+                  "round": 2,
+                  "elapsedMs": 168.1404,
+                  "meanPerCallMs": 14.0117
+                },
+                {
+                  "round": 3,
+                  "elapsedMs": 166.5411999999999,
+                  "meanPerCallMs": 13.878433333333325
+                }
+              ]
+            },
+            "deltaMs": -0.9854499999999948,
+            "deltaPercent": -6.629828678687573,
+            "verdict": "PASS"
+          },
+          "editorModelDiagnostics": {
+            "diagnostics": [],
+            "diagnosticsSha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+            "before": {
+              "medianMs": 37.59455000000003,
+              "worstMs": 37.743912499999965,
+              "samples": [
+                {
+                  "round": 1,
+                  "elapsedMs": 297.4729999999995,
+                  "meanPerCallMs": 37.18412499999994
+                },
+                {
+                  "round": 2,
+                  "elapsedMs": 300.7564000000002,
+                  "meanPerCallMs": 37.59455000000003
+                },
+                {
+                  "round": 3,
+                  "elapsedMs": 301.9512999999997,
+                  "meanPerCallMs": 37.743912499999965
+                }
+              ]
+            },
+            "after": {
+              "medianMs": 35.1384875,
+              "worstMs": 35.74154999999999,
+              "samples": [
+                {
+                  "round": 1,
+                  "elapsedMs": 281.1079,
+                  "meanPerCallMs": 35.1384875
+                },
+                {
+                  "round": 2,
+                  "elapsedMs": 285.9323999999999,
+                  "meanPerCallMs": 35.74154999999999
+                },
+                {
+                  "round": 3,
+                  "elapsedMs": 281.0448000000001,
+                  "meanPerCallMs": 35.130600000000015
+                }
+              ]
+            },
+            "deltaMs": -2.45606250000003,
+            "deltaPercent": -6.5330280585883544,
+            "verdict": "PASS"
+          }
+        }
+      }
+    },
+    "thresholds": {
+      "warnMedianIncreasePercent": 10,
+      "failMedianIncreasePercent": 20,
+      "failMedianAboveMs": 3000
+    },
+    "warnings": [],
+    "failures": [],
+    "verdict": "PASS",
+    "scope": "Three fixed Node processes per side. Synthetic author diagnostic workload with no browser or deployed timing claim."
+  },
+  "cloud": {
+    "status": "PENDING_EXACT_PUSHED_SHA",
+    "evidence": "test-results/v1.4.5-cloud.json"
+  },
+  "sourceHashBasis": "UTF-8 with CRLF normalized to LF to match Git blobs",
+  "sourceSha256": {
+    "docs/provenance.json": "2210b1d4d1de42cb095774bdff1b59eb8f681f9cb27f536eaf7d7b11ba375dea",
+    "hosts/windows/VNEngine.Windows.csproj": "32369053aee66d35e05560f217163ccad7ed45a78435e964fe51e633fa810dae",
+    "package-lock.json": "70b04c9d4a84ec533adbab00e3542ac7284f4f5a958a7fa8913ebf8e438e9089",
+    "package.json": "c4fdde662247b570e241290dd3ad15aea57e457d5f55c364500a1c343de71c58",
+    "src/creative/project.ts": "1e0c9608fd31b4153cfc81701dd83b9ab8619a0a31a028a07a5367546e89f755",
+    "src/version.ts": "6d89da5d10e017e60a59dc3417bf9640e5b10c1a79d4d8d10a26c5f4104a4506",
+    "tests/editor.test.mjs": "58bdc6422744f8db2c423c2fedeaa3e2d904492027b801d6bac138583f288006"
+  },
+  "evidenceSha256": {
+    "test-results/v145-final-editor-artifacts/p4-studio/REPORT.json": "62da21596a4bd63bbb8fb5cd9ea9ba25a2c03a0e34ef08668c080efbad16d0db",
+    "test-results/v145-final-browser-artifacts/p4-package/REPORT.json": "7571d86507c17281b8062f62e3ae6cefceacd276e15a28174963a73ad1edff3b",
+    "test-results/v145-final-check.log": "43346936ddc0e65cd65d231a7e786742b4df2d8c4232702558e65a645f13bcc7",
+    "test-results/v145-final-editor-node.log": "20a3ef3955088ee9a63c83d6265beae3b09e9a047533467dd082fbfee13dd118",
+    "test-results/v145-final-residual.log": "ee98ba8b88a9629e0ab9ce719f075bfe5c6700223775d921638f0840d3bf7ed1",
+    "test-results/v145-final-portfolio.log": "ff3a7766c241251f4066ccdd26ed6922a3c4613e687882e4b3dde5d21665cdb1",
+    "test-results/v145-final-workflow.log": "f6968dd880abd0f1ecfcdfea322a76bb0d2f6065a8c093763ceab4c38df6444e",
+    "test-results/v145-final-browser.log": "d3ee317c423733d7b88362db8da7ddb43e263dd3b039f20a34a498a80f782d08",
+    "test-results/v145-final-editor.log": "2533b9d3baf111d9fe4c0d9e6f2910d5679677e07a7113aa4b7fc5c892e03677",
+    "test-results/v145-creative-benchmark.mjs": "b1df2a79d4a09dfdbdfb4d906e3c6a28ea1b788727669201072829dcda0a47bf",
+    "test-results/v145-baseline-creative-diagnostics.json": "78bd98bd511e1a79365d9f877014377faf52fa090c5cd199283053daa25e6427",
+    "test-results/v145-after-creative-diagnostics.json": "b319fd87b1097cb2ed1640f4896cb7088a81319d057003d3394188b2e4e0efae",
+    "test-results/v145-creative-diagnostics-comparison.mjs": "98e88954f83fdb159f4a4453b8385f6c225d97fc3a9a8d7e035240ceaff0e9ff",
+    "test-results/v145-creative-diagnostics-comparison.json": "51f6b4fbcb19e30f5e089886aad3ba09c751324b165fc7ee8fc24a74bd8a1e1a",
+    "test-results/v145-candidate-creative-diagnostics.json": "d873efbfcd971994187dae15f5378eef2c3345fd63142adcce5c8294153bc658",
+    "test-results/v145-candidate-comparison.json": "0aed03d2fc10430001c929eaab2e4ad09fb1faa2189f30c42b1bea050a0f8211",
+    "test-results/v145-sparse-fixture-json-boundary.log": "f0b1f055aee4305ce107f5faec367b350cc159c5df3e58accfaceace96011c13",
+    "test-results/v145-sparse-fixture-check.log": "aaf9f2bc47e34045a498d690b3e43d547b5968443bf703f06a697528cd0f5214",
+    "test-results/v145-direct-sparse-compatibility.log": "cc21fd32f2748a730059e40c5f63b8ee0940c8a43c98424ac9fe8334ea5f6ca3"
+  }
+}

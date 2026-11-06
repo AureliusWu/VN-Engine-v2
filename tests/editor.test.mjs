@@ -4,7 +4,7 @@ import { readFile, mkdtemp, readdir } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { EditorModel, newProject, readDocument, diagnoseProject } from '../dist/editor/index.js';
-import { createProject, AssetCatalog, validateProjectCompliance } from '../dist/index.js';
+import { createProject, AssetCatalog, creativeDiagnostics, validateProjectCompliance } from '../dist/index.js';
 import { packageStudio } from '../tools/package-studio.mjs';
 import { packageGame } from '../tools/package-game.mjs';
 
@@ -89,6 +89,70 @@ test('dynamic adapter routing preserves explicit broken edges without adding unr
     ['error', 'target', '["start"]'], ['warning', 'dynamic-routing', undefined]
   ]);
 });
+
+function creativeIssuePaths(project) {
+  return new EditorModel(project).diagnostics().filter(item => item.code.startsWith('CREATIVE_'))
+    .map(({ code, path }) => [code, path]);
+}
+
+test('production targets keep chapter identity, node ambiguity and line existence separate', () => {
+  const project = newProject('investigation');
+  const first = project.chapters[0], second = structuredClone(first);
+  first.id = 'a';
+  first.nodes['b/c'] = structuredClone(first.nodes.note);
+  second.id = 'a/b';
+  second.order = 1;
+  second.nodes.c = structuredClone(second.nodes.note);
+  project.chapters.push(second, { ...first, order: 2, nodes: { room: first.nodes.room } });
+  project.production = { schema: 1, beats: [{ id: 'opening', summary: 'Opening', targets: [
+    { chapterId: 'a', nodeId: 'b/c', lineId: 'a/b/c' },
+    { chapterId: 'a/b', nodeId: 'c', lineId: 'a/b/c' },
+    { chapterId: 'a/b', nodeId: 'room', lineId: 'a/b/room' },
+    { nodeId: 'c', lineId: 'a/b/c' },
+    { chapterId: 'a', nodeId: 'room', lineId: 'a/room' },
+    { chapterId: 'a', nodeId: 'room', lineId: 'a/b/room' },
+    { chapterId: 'a', nodeId: 'c', lineId: 'a/b/c' }
+  ] }] };
+  assert.deepEqual(creativeIssuePaths(project), [
+    [3, 'nodeId'], [3, 'lineId'], [4, 'nodeId'], [5, 'nodeId'],
+    [5, 'lineId'], [6, 'nodeId'], [6, 'lineId']
+  ].map(([index, field]) => ['CREATIVE_TARGET', ['production', 'beats', 0, 'targets', index, field]]));
+
+  const narrative = newProject('vn');
+  narrative.scenes[0].lines.push({ ...narrative.scenes[0].lines[0] });
+  narrative.production = { schema: 1, beats: [{ id: 'opening', summary: 'Opening', targets: [{ nodeId: 'start', lineId: 'start-1' }] }] };
+  assert.deepEqual(creativeIssuePaths(narrative), []);
+
+  // The direct diagnostics API can receive an array with an empty slot.
+  narrative.scenes.length++;
+  assert.deepEqual(creativeDiagnostics(narrative), []);
+});
+
+test('production task cycles follow the first duplicate definition and keep issue order', () => {
+  const project = newProject('script');
+  const task = (id, fields = {}) => ({ id, kind: 'story', state: 'draft', brief: 'Check route', ...fields });
+  project.production = { schema: 1, beats: [{ id: 'opening', summary: 'Opening',
+    targets: [{ nodeId: 'missing', lineId: 'missing' }], characters: ['unknown'], tasks: ['unknown'] }],
+    tasks: [task('toString', { dependsOn: ['leaf'] }), task('leaf'), task('toString', {
+      dependsOn: ['toString', 'unknown'], assets: ['unknown'], characters: ['unknown']
+    })] };
+  const expected = [
+    ['CREATIVE_DUPLICATE', ['production', 'tasks', 2, 'id']],
+    ['CREATIVE_TARGET', ['production', 'beats', 0, 'targets', 0, 'nodeId']],
+    ['CREATIVE_TARGET', ['production', 'beats', 0, 'targets', 0, 'lineId']],
+    ['CREATIVE_REFERENCE', ['production', 'beats', 0, 'characters', 0]],
+    ['CREATIVE_REFERENCE', ['production', 'beats', 0, 'tasks', 0]],
+    ['CREATIVE_REFERENCE', ['production', 'tasks', 2, 'dependsOn', 1]],
+    ['CREATIVE_REFERENCE', ['production', 'tasks', 2, 'assets', 0]],
+    ['CREATIVE_REFERENCE', ['production', 'tasks', 2, 'characters', 0]]
+  ];
+  assert.deepEqual(creativeIssuePaths(project), expected);
+
+  project.production.tasks[0].dependsOn = ['toString'];
+  project.production.tasks[2].dependsOn = ['leaf', 'unknown'];
+  assert.deepEqual(creativeIssuePaths(project), [...expected, ['CREATIVE_CYCLE', ['production', 'tasks']]]);
+});
+
 test('asset diagnostics distinguish missing IDs, roles, files and font licences', () => {
   const project = newProject('script'); project.assets = [{ id: 'music', kind: 'audio', src: 'assets/music.wav' }, { id: 'font', kind: 'font', src: 'assets/font.woff2' }];
   project.defaults = { background: 'music' }; project.font = 'font';
