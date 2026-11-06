@@ -454,7 +454,7 @@
       "target": "hosts/windows/VNEngine.Windows.csproj",
       "mode": "new",
       "origins": [],
-      "targetSha256": "25c00366a57c437d196f60533d1858c79174e5fb8d1638091812d39edb6fde77"
+      "targetSha256": "0a46243e3e38ca8dab9d408271f396a4206915934af9af4378acbb34ce8b8e24"
     },
     {
       "target": "licenses/Healing-LICENSE.txt",
@@ -825,7 +825,7 @@
       "target": "src/editor/model.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "49fac823aaacda4ba371b75b3a2093e07e1d72fe939ad8047ac1946ffc9ba49c"
+      "targetSha256": "9b8773bfe71b50ad536c3d01cf0eac8db38b09ff2b4bec27c4b350d47d141167"
     },
     {
       "target": "src/history/search.ts",
@@ -843,7 +843,7 @@
     {
       "target": "src/index.ts",
       "mode": "new",
-      "targetSha256": "6bc68b858cf09b22951a156f6fb1b73ef255c2412b0cf1dc69dc7362b3af4906",
+      "targetSha256": "dd4edef88a704d7b947f0e361646800fbf19916b266c51be3db4fb2f9a349965",
       "origins": []
     },
     {
@@ -1071,7 +1071,7 @@
       "target": "src/runtime/project.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "373cdc308be73c1e8df3c144c78dafbd24bd212f20e511560c0957c53786204f"
+      "targetSha256": "468e5a5ac507fd127230b362c3a7d6e375b8ba883606270823597f973206f5a3"
     },
     {
       "target": "src/runtime/read.ts",
@@ -1248,7 +1248,7 @@
       "target": "src/version.ts",
       "mode": "new",
       "origins": [],
-      "targetSha256": "710307b6e2214fddbc654dc5f97550557d87bfd6a80f001cdc482637611c8546"
+      "targetSha256": "2827a371e2b6bb3467e73e73417defda7d6e464bf99f8183996c2bb1240f4739"
     },
     {
       "target": "tools/acceptance-node.mjs",

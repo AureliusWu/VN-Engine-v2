@@ -31,7 +31,32 @@ export type EngineProject = ProjectBase & (
   | { type: 'rain'; story: RainStory; defaults?: StageCue }
   | { type: 'investigation'; chapters: readonly InvestigationChapter[]; stage?: InvestigationStage }
 );
-export function createProject(project: EngineProject, baseURL: string | URL, options: { clock?: Clock; settings?: Partial<RuntimeSettings>; assetURL?: (path: string) => string; assetCacheURL?: (assetId: string) => string | undefined; initialPause?: string; readProgress?: ReadProgressPort; evidence?: RuntimeEvidence } = {}) {
+type ProjectOptions = { clock?: Clock; settings?: Partial<RuntimeSettings>; assetURL?: (path: string) => string; assetCacheURL?: (assetId: string) => string | undefined; initialPause?: string; readProgress?: ReadProgressPort; evidence?: RuntimeEvidence };
+
+function createDriverFactory(project: EngineProject) {
+  if (project.type === 'narrative') {
+    let config: NarrativeConfig, presentation = project.stage?.presentation;
+    if (project.adapter === 'healing') { config = createHealingEngine(project.scenes).config; presentation = healingPresentationAt; }
+    else if (project.adapter === 'netlove') { config = createNetLoveEngine(project.scenes).config; presentation = netlovePresentationAt; }
+    else config = { game: project.game, storyVersion: project.version, entry: project.entry ?? project.scenes[0]?.id, stats: project.stats ?? {}, scenes: project.scenes };
+    const engine = new NarrativeEngine({ ...config, game: project.game, storyVersion: project.version, legacyStoryVersions: [] });
+    const stage = { ...project.stage, presentation };
+    return () => new NarrativeDriver(engine, stage);
+  }
+  if (project.type === 'investigation') {
+    const engine = new InvestigationEngine(project.chapters);
+    return () => new InvestigationDriver(project.game, project.version, engine, project.stage);
+  }
+  if (project.type === 'script' || project.type === 'rain') {
+    const engine = project.type === 'script'
+      ? new ScriptEngine({ ...project.program, game: project.game, version: project.version })
+      : createRainRuntime(project.story, { game: project.game, version: project.version });
+    return () => new ScriptDriver(engine, project.defaults);
+  }
+  throw new Error('Unknown project runtime');
+}
+
+function prepareProject(project: EngineProject, baseURL: string | URL, options: ProjectOptions) {
   if (project.schema !== 1 || !project.game || !project.version || !project.title || !Array.isArray(project.assets)) throw new Error('Invalid engine project');
   validateProjectUI(project.ui); validateCreativeProject(project);
   if (project.titleScreen !== undefined && typeof project.titleScreen !== 'boolean') throw new Error('titleScreen must be boolean');
@@ -60,18 +85,33 @@ export function createProject(project: EngineProject, baseURL: string | URL, opt
       for (const id of policy.cgs ?? []) assets.get(id, 'cg');
     }
   }
-  let driver: NarrativeDriver | ScriptDriver | InvestigationDriver;
-  if (project.type === 'narrative') {
-    let config: NarrativeConfig, presentation = project.stage?.presentation;
-    if (project.adapter === 'healing') { config = createHealingEngine(project.scenes).config; presentation = healingPresentationAt; }
-    else if (project.adapter === 'netlove') { config = createNetLoveEngine(project.scenes).config; presentation = netlovePresentationAt; }
-    else config = { game: project.game, storyVersion: project.version, entry: project.entry ?? project.scenes[0]?.id, stats: project.stats ?? {}, scenes: project.scenes };
-    driver = new NarrativeDriver(new NarrativeEngine({ ...config, game: project.game, storyVersion: project.version, legacyStoryVersions: [] }), { ...project.stage, presentation });
-  } else if (project.type === 'investigation') driver = new InvestigationDriver(project.game, project.version, new InvestigationEngine(project.chapters), project.stage);
-  else if (project.type === 'script') driver = new ScriptDriver(new ScriptEngine({ ...project.program, game: project.game, version: project.version }), project.defaults);
-  else if (project.type === 'rain') driver = new ScriptDriver(createRainRuntime(project.story, { game: project.game, version: project.version }), project.defaults);
-  else throw new Error('Unknown project runtime');
+  const createDriver = createDriverFactory(project);
+  const driver = createDriver();
   if (project.rollback !== undefined && !isRecord(project.rollback)) throw new Error('Invalid rollback options');
   validateProjectMiniGames(project);
-  return { session: new RuntimeSession(driver, { clock: options.clock, settings: { ...project.settings, ...options.settings }, rollback: project.rollback, initialPause: options.initialPause, readProgress: options.readProgress, evidence: options.evidence }), assets };
+  const sessionOptions = { clock: options.clock, settings: { ...project.settings, ...options.settings }, rollback: project.rollback, initialPause: options.initialPause, readProgress: options.readProgress, evidence: options.evidence };
+  return { assets, session: new RuntimeSession(driver, sessionOptions), createSession: () => new RuntimeSession(createDriver(), sessionOptions) };
+}
+
+export function createProject(project: EngineProject, baseURL: string | URL, options: ProjectOptions = {}) {
+  const { session, assets } = prepareProject(project, baseURL, options);
+  return { session, assets };
+}
+
+/** Internal authoring check. Share validated definitions within a diagnostic pass. */
+export function createCollectionReplayCheck(project: EngineProject, baseURL: string | URL) {
+  let createSession: (() => RuntimeSession) | undefined;
+  return (replay: unknown) => {
+    let session: RuntimeSession;
+    if (createSession) session = createSession();
+    else {
+      // An injected presentation callback can observe or modify its story data.
+      const canReuse = project.type !== 'narrative' || project.stage?.presentation === undefined;
+      const prepared = prepareProject({ ...project, collections: undefined }, baseURL, {});
+      session = prepared.session;
+      if (canReuse) createSession = prepared.createSession;
+    }
+    try { session.restore(replay); }
+    finally { session.dispose(); }
+  };
 }

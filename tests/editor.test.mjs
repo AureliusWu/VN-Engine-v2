@@ -126,6 +126,93 @@ test('collection replay diagnostics validate the real driver save and allow undo
   assert.doesNotThrow(() => validateProjectCompliance(JSON.parse(model.serialize(true))));
   model.undo(); assert.equal(model.diagnostics().some(item => item.code === 'collection-replay'), true);
 });
+
+function captureCollectionReplay(project, drive) {
+  const { session } = createProject(project, 'https://test.invalid/', { settings: { textDelayMs: 0 } });
+  try { drive(session); return session.save(); }
+  finally { session.dispose(); }
+}
+
+test('collection replay diagnoses interleaved mini-game and route failures even with bad metadata', () => {
+  const project = newProject('script');
+  project.program.blocks[0].cue = { miniGame: { id: 'switches', kind: 'switches', initial: [false, false], target: [true, true], maxMoves: 3,
+    results: { success: 'yes', failure: 'yes', abort: 'yes' } } };
+  const valid = captureCollectionReplay(project, session => {
+    assert.equal(session.startMiniGame(), true);
+    assert.equal(session.playMiniGame(0), true);
+  });
+  const forgedMiniGame = structuredClone(valid);
+  Object.assign(forgedMiniGame.vnMiniGame.state, { phase: 'complete', result: 'success' });
+  const unreachable = { ...valid, state: { ...valid.state, blockId: 'missing' } };
+  project.assets = ['forged', 'valid'].map(id => ({ id, kind: 'cg', src: `assets/${id}.svg` }));
+  const ending = project.program.blocks[1].exit.ending;
+  project.collections = { cgs: [{ id: 'forged', replay: forgedMiniGame }, { id: 'valid', replay: valid }],
+    endings: [{ id: ending, replay: unreachable }] };
+  const expected = ['forged', ending].map(id => ({ severity: 'error', code: 'collection-replay', message: `回看起点不属于当前作品或版本：${id}` }));
+  const before = structuredClone(project);
+  assert.deepEqual(new EditorModel(project).diagnostics(), expected);
+  assert.deepEqual(project, before);
+
+  project.collections.cgs[1].id = 'missing-cg';
+  assert.deepEqual(diagnoseProject(project), [
+    { severity: 'error', code: 'runtime', message: '运行校验：Unknown or mismatched asset: missing-cg' }, ...expected
+  ]);
+});
+
+test('collection replay validates real Investigation and Rain route histories', () => {
+  const rain = { schema: 1, type: 'rain', game: 'replay-rain-fixture', version: '1', title: 'Rain replay fixture', assets: [],
+    story: { schema_version: 1, entry: 'start', initial_state: {}, state_definitions: {}, nodes: [
+      { id: 'start', lines: [{ id: 'intro', speaker: 'n', text: 'Start' }], choices: [{ id: 'go', text: 'Go', next: 'finish', effects: {} }] },
+      { id: 'finish', lines: [{ id: 'done', speaker: 'n', text: 'Finish' }], ending: 'done' }
+    ] } };
+  for (const [project, ending, actions] of [[newProject('investigation'), 'chapter-1:complete', ['read', 'back', 'reason']], [rain, 'done', ['go']]]) {
+    const valid = captureCollectionReplay(project, session => {
+      for (const action of actions) assert.equal(session.act(action), true, `${project.type}: ${action}`);
+    });
+    const invalid = structuredClone(valid);
+    if (project.type === 'investigation') invalid.journal[0].id = 'unknown-action';
+    else invalid.state.decisions[0].choiceId = 'unknown-choice';
+    project.assets = [{ id: 'invalid', kind: 'cg', src: 'assets/invalid.svg' }];
+    project.collections = { cgs: [{ id: 'invalid', replay: invalid }], endings: [{ id: ending, replay: valid }] };
+    assert.deepEqual(new EditorModel(project).diagnostics(), [
+      { severity: 'error', code: 'collection-replay', message: '回看起点不属于当前作品或版本：invalid' }
+    ], project.type);
+  }
+});
+
+test('direct diagnosis evaluates custom narrative presentation in a fresh session for every replay', () => {
+  const project = newProject('vn');
+  project.scenes[1].lines.push({ id: 'end-2', speaker: '作者', text: '第二段结局。' });
+  const first = captureCollectionReplay(project, session => assert.equal(session.act('continue'), true));
+  const second = captureCollectionReplay(project, session => {
+    assert.equal(session.act('continue'), true);
+    assert.equal(session.next(), true);
+  });
+  project.assets = [{ id: 'first', kind: 'cg', src: 'assets/first.svg' }];
+  project.collections = { cgs: [{ id: 'first', replay: first }], endings: [{ id: project.scenes[1].ending, replay: second }] };
+  const visits = [];
+  project.stage = { presentation(scene, line) {
+    visits.push(`${scene.id}/${line}`);
+    if (scene.id === 'end' && line === 0) throw Error('First ending frame has invalid presentation');
+    return { expression: 'default' };
+  } };
+  assert.deepEqual(diagnoseProject(project), [
+    { severity: 'error', code: 'collection-replay', message: '回看起点不属于当前作品或版本：first' }
+  ]);
+  assert.deepEqual(visits, ['start/0', 'start/0', 'end/0', 'start/0', 'end/1']);
+
+  const callback = project.stage.presentation;
+  visits.length = 0;
+  project.stage.presentation = (scene, line) => {
+    if (visits.length === 1) delete project.stage.presentation;
+    return callback(scene, line);
+  };
+  assert.deepEqual(diagnoseProject(project), [
+    { severity: 'error', code: 'collection-replay', message: '回看起点不属于当前作品或版本：first' }
+  ]);
+  assert.deepEqual(visits, ['start/0', 'start/0', 'end/0']);
+});
+
 test('history is bounded, command inputs cannot escape, and same-value changes keep redo', () => {
   const model = new EditorModel(newProject('script'), 2); let escaped;
   model.transact(p => { p.title = 'one'; escaped = p; }); escaped.title = 'outside'; assert.equal(model.getView().project.title, 'one');

@@ -1,0 +1,527 @@
+{
+  "schema": 1,
+  "date": "2026-11-06",
+  "engineVersion": "1.4.4",
+  "baseCommit": "12bc490f8cc41b459c3f6515cedcaa231608be06",
+  "plan": "docs/PLAN-v1.4.4.md",
+  "research": "docs/PLAN-v1.4.4.md#开源与社区证据",
+  "scope": {
+    "sourceGamesMigrated": false,
+    "publicDataOrSaveFormatChanged": false,
+    "newDependencies": false,
+    "releaseOrTagCreated": false
+  },
+  "local": {
+    "nodeVersion": "v24.14.0",
+    "check": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 386,
+      "pass": 382,
+      "fail": 4,
+      "skipped": 0,
+      "reason": "Windows symlink fixture creation EPERM",
+      "log": "test-results/v144-final-check.log"
+    },
+    "editorModel": {
+      "status": "PASS",
+      "total": 20,
+      "newCases": 3,
+      "log": "test-results/v144-final-editor-node.log"
+    },
+    "completeBrowserSuite": {
+      "status": "PASS",
+      "scripts": 48,
+      "log": "test-results/v144-final-browser.log"
+    },
+    "completeEditorSuite": {
+      "status": "PASS",
+      "scripts": 21,
+      "log": "test-results/v144-final-editor.log"
+    },
+    "pythonRenpy": {
+      "status": "PASS",
+      "total": 6
+    },
+    "schemaSync": "PASS",
+    "provenance": {
+      "status": "PASS",
+      "files": 200
+    },
+    "projectSchemas": {
+      "status": "PASS",
+      "total": 5
+    },
+    "portfolioPython": {
+      "status": "ENVIRONMENT_LIMITED",
+      "total": 8,
+      "pass": 7,
+      "fail": 1,
+      "reason": "Windows symlink fixture creation WinError 1314",
+      "log": "test-results/v144-final-portfolio.log"
+    },
+    "workflowInventory": {
+      "status": "PASS",
+      "scope": "engine checkout only",
+      "log": "test-results/v144-final-workflow.log"
+    },
+    "p4Studio": {
+      "status": "PASS",
+      "report": "test-results/v144-final-editor-artifacts/p4-studio/REPORT.json"
+    },
+    "p4Package": {
+      "status": "PASS",
+      "report": "test-results/v144-final-browser-artifacts/p4-package/REPORT.json"
+    }
+  },
+  "originalFailures": [
+    "symlink import parents are refused; pure SDK requires an explicit import/decoder host",
+    "project symlinks and escaping assets are rejected, imports create no files",
+    "resource symlinks, missing bytes, invalid encoding and report overwrite are structured failures",
+    "build refuses altered assets, escaping symlinks and generated-file collisions before writing output"
+  ],
+  "performance": {
+    "schema": 1,
+    "comparison": "1.4.3 to 1.4.4",
+    "environment": {
+      "node": "v24.14.0",
+      "platform": "win32",
+      "release": "10.0.26200",
+      "architecture": "x64",
+      "cpu": "AMD Ryzen 5 3600 6-Core Processor              ",
+      "logicalCPUs": 12,
+      "memoryMiB": 16327
+    },
+    "protocol": {
+      "schema": 1,
+      "fixtureConfig": [
+        {
+          "name": "small",
+          "branches": 2,
+          "depth": 4,
+          "cgOffsets": [
+            0
+          ],
+          "expectedBlocks": 9,
+          "expectedReplays": 4,
+          "metadataOnly": {
+            "warmups": 100,
+            "calls": 300
+          },
+          "withReplays": {
+            "warmups": 100,
+            "calls": 300
+          }
+        },
+        {
+          "name": "large",
+          "branches": 16,
+          "depth": 128,
+          "cgOffsets": [
+            0,
+            8,
+            24
+          ],
+          "expectedBlocks": 2049,
+          "expectedReplays": 64,
+          "metadataOnly": {
+            "warmups": 4,
+            "calls": 20
+          },
+          "withReplays": {
+            "warmups": 1,
+            "calls": 3
+          }
+        }
+      ],
+      "method": {
+        "timing": "Three independent fresh Node processes. EditorModel.diagnostics uses the production built module, with fixed per-case warmups and one GC before each timed batch.",
+        "control": "The same valid project and collection entries, with only each replay property removed.",
+        "fixture": "Real RuntimeSession actions produce distinct actual saves, then each save is restored and round-tripped outside the timing.",
+        "instrumentation": "A separate untimed diagnosis observes whole ScriptProgram structuredClone and ScriptEngine.decode calls.",
+        "scope": "Synchronous author diagnostic CPU workload. Asset entries use valid local paths without fetching/decoding. All three samples retained, no retry or selective removal."
+      }
+    },
+    "environmentSha256": "f8743b32abbc34f49df38e065c4762f560437b0bf3eb2fc8372b0aa0e8d95756",
+    "protocolSha256": "b813072210ac856ca28202970b625b3d38a76b3793f8432b4c3b3dcb1710f355",
+    "orderedCompatibilitySha256": "d9bf091e400e22d7110f6e091cdd35f95a12eed29dc20d461dafbfd6f0031bbf",
+    "projectInputsAndOrderedDiagnosticsMatch": true,
+    "artifacts": {
+      "v144-baseline-replay-diagnostics.json": "cfc0e10f26813abbde36f1ef805b61b509e5d4b6c5f886f3e18f3afef98c5bc1",
+      "v144-after-replay-diagnostics.json": "b13a6bd32c090db99342107c9dba4e0e2c585e8f35bd5b5fe53fe28345f3d508"
+    },
+    "source": {
+      "baseline": {
+        "head": "12bc490f8cc41b459c3f6515cedcaa231608be06",
+        "engineVersion": "1.4.3",
+        "files": {
+          "src/editor/model.ts": "49fac823aaacda4ba371b75b3a2093e07e1d72fe939ad8047ac1946ffc9ba49c",
+          "dist/editor/model.js": "9e19c857942480ec0a65c4e6356c0a567c4cc6c658822fe7a865c652c8788980",
+          "dist/runtime/project.js": "6c35c52bf2176cc594297f877cfc8bfe0a78914c5a1e9c2c86a364e4c4a9dfe6",
+          "dist/runtime/session.js": "76847677ed397e906ee3fa5c3ce40f9b6d7251284da8f6e445c477674cd38c95"
+        }
+      },
+      "after": {
+        "head": "12bc490f8cc41b459c3f6515cedcaa231608be06",
+        "engineVersion": "1.4.4",
+        "files": {
+          "src/editor/model.ts": "9b8773bfe71b50ad536c3d01cf0eac8db38b09ff2b4bec27c4b350d47d141167",
+          "dist/editor/model.js": "1362d84cd41343fd174c762fe7f72f48de84bb003dc2f8a44be718f4edc827ce",
+          "dist/runtime/project.js": "4d43d7f3966cf172a070c28bc6f31e7b9a4762b6db06fb7e365cde7aafbb463e",
+          "dist/runtime/session.js": "76847677ed397e906ee3fa5c3ce40f9b6d7251284da8f6e445c477674cd38c95"
+        }
+      }
+    },
+    "metrics": {
+      "small": {
+        "metadataOnly": {
+          "projectSha256": "cf187b86becc0390e8f69ccd5fdafc8f3ed75b22a4b0a578dbf2a7bd6f25b37e",
+          "projectBytes": 3847,
+          "replayCount": 0,
+          "before": {
+            "medianMs": 0.17916366666666667,
+            "worstMs": 0.20813866666666664,
+            "samples": [
+              {
+                "round": 1,
+                "elapsedMs": 53.7491,
+                "meanPerCallMs": 0.17916366666666667,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 1,
+                  "replayDecodes": 0
+                }
+              },
+              {
+                "round": 2,
+                "elapsedMs": 49.47800000000001,
+                "meanPerCallMs": 0.1649266666666667,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 1,
+                  "replayDecodes": 0
+                }
+              },
+              {
+                "round": 3,
+                "elapsedMs": 62.441599999999994,
+                "meanPerCallMs": 0.20813866666666664,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 1,
+                  "replayDecodes": 0
+                }
+              }
+            ]
+          },
+          "after": {
+            "medianMs": 0.16885466666666663,
+            "worstMs": 0.17307799999999995,
+            "samples": [
+              {
+                "round": 1,
+                "elapsedMs": 49.930499999999995,
+                "meanPerCallMs": 0.16643499999999997,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 1,
+                  "replayDecodes": 0
+                }
+              },
+              {
+                "round": 2,
+                "elapsedMs": 51.92339999999999,
+                "meanPerCallMs": 0.17307799999999995,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 1,
+                  "replayDecodes": 0
+                }
+              },
+              {
+                "round": 3,
+                "elapsedMs": 50.65639999999999,
+                "meanPerCallMs": 0.16885466666666663,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 1,
+                  "replayDecodes": 0
+                }
+              }
+            ]
+          },
+          "deltaMs": -0.01030900000000004,
+          "deltaPercent": -5.753956810439639,
+          "verdict": "PASS"
+        },
+        "withReplays": {
+          "projectSha256": "96c01b8c37f6f4f567c6053ebe182e4251c9f8bcb4fd113c263b570d034a819c",
+          "projectBytes": 5483,
+          "replayCount": 4,
+          "before": {
+            "medianMs": 0.7871619999999999,
+            "worstMs": 1.040374666666667,
+            "samples": [
+              {
+                "round": 1,
+                "elapsedMs": 236.1486,
+                "meanPerCallMs": 0.7871619999999999,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 5,
+                  "replayDecodes": 4
+                }
+              },
+              {
+                "round": 2,
+                "elapsedMs": 225.4869,
+                "meanPerCallMs": 0.7516229999999999,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 5,
+                  "replayDecodes": 4
+                }
+              },
+              {
+                "round": 3,
+                "elapsedMs": 312.11240000000004,
+                "meanPerCallMs": 1.040374666666667,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 5,
+                  "replayDecodes": 4
+                }
+              }
+            ]
+          },
+          "after": {
+            "medianMs": 0.5802849999999999,
+            "worstMs": 0.597562,
+            "samples": [
+              {
+                "round": 1,
+                "elapsedMs": 169.92309999999998,
+                "meanPerCallMs": 0.5664103333333332,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 2,
+                  "replayDecodes": 4
+                }
+              },
+              {
+                "round": 2,
+                "elapsedMs": 179.26860000000002,
+                "meanPerCallMs": 0.597562,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 2,
+                  "replayDecodes": 4
+                }
+              },
+              {
+                "round": 3,
+                "elapsedMs": 174.0855,
+                "meanPerCallMs": 0.5802849999999999,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 2,
+                  "replayDecodes": 4
+                }
+              }
+            ]
+          },
+          "deltaMs": -0.20687699999999998,
+          "deltaPercent": -26.281375371270464,
+          "verdict": "PASS"
+        }
+      },
+      "large": {
+        "metadataOnly": {
+          "projectSha256": "d5964ea0c6247f79c4bf6dd3f90868d0b855abbcf1361f6d49139c7f73d7a4f4",
+          "projectBytes": 643761,
+          "replayCount": 0,
+          "before": {
+            "medianMs": 12.633375000000001,
+            "worstMs": 15.383080000000001,
+            "samples": [
+              {
+                "round": 1,
+                "elapsedMs": 252.66750000000002,
+                "meanPerCallMs": 12.633375000000001,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 1,
+                  "replayDecodes": 0
+                }
+              },
+              {
+                "round": 2,
+                "elapsedMs": 236.90049999999997,
+                "meanPerCallMs": 11.845024999999998,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 1,
+                  "replayDecodes": 0
+                }
+              },
+              {
+                "round": 3,
+                "elapsedMs": 307.6616,
+                "meanPerCallMs": 15.383080000000001,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 1,
+                  "replayDecodes": 0
+                }
+              }
+            ]
+          },
+          "after": {
+            "medianMs": 12.023699999999996,
+            "worstMs": 12.109789999999998,
+            "samples": [
+              {
+                "round": 1,
+                "elapsedMs": 240.47399999999993,
+                "meanPerCallMs": 12.023699999999996,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 1,
+                  "replayDecodes": 0
+                }
+              },
+              {
+                "round": 2,
+                "elapsedMs": 238.25030000000004,
+                "meanPerCallMs": 11.912515000000003,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 1,
+                  "replayDecodes": 0
+                }
+              },
+              {
+                "round": 3,
+                "elapsedMs": 242.19579999999996,
+                "meanPerCallMs": 12.109789999999998,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 1,
+                  "replayDecodes": 0
+                }
+              }
+            ]
+          },
+          "deltaMs": -0.6096750000000046,
+          "deltaPercent": -4.825907566267958,
+          "verdict": "PASS"
+        },
+        "withReplays": {
+          "projectSha256": "6d1b7fbcc47aecd203e322ddf01829042ae865832d894a28aefe234be54b88f3",
+          "projectBytes": 670033,
+          "replayCount": 64,
+          "before": {
+            "medianMs": 480.09356666666673,
+            "worstMs": 496.39380000000006,
+            "samples": [
+              {
+                "round": 1,
+                "elapsedMs": 1440.2807000000003,
+                "meanPerCallMs": 480.09356666666673,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 65,
+                  "replayDecodes": 64
+                }
+              },
+              {
+                "round": 2,
+                "elapsedMs": 1489.1814000000002,
+                "meanPerCallMs": 496.39380000000006,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 65,
+                  "replayDecodes": 64
+                }
+              },
+              {
+                "round": 3,
+                "elapsedMs": 1429.6599999999999,
+                "meanPerCallMs": 476.5533333333333,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 65,
+                  "replayDecodes": 64
+                }
+              }
+            ]
+          },
+          "after": {
+            "medianMs": 33.09603333333333,
+            "worstMs": 34.89396666666668,
+            "samples": [
+              {
+                "round": 1,
+                "elapsedMs": 99.28809999999999,
+                "meanPerCallMs": 33.09603333333333,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 2,
+                  "replayDecodes": 64
+                }
+              },
+              {
+                "round": 2,
+                "elapsedMs": 104.68190000000004,
+                "meanPerCallMs": 34.89396666666668,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 2,
+                  "replayDecodes": 64
+                }
+              },
+              {
+                "round": 3,
+                "elapsedMs": 98.59599999999989,
+                "meanPerCallMs": 32.8653333333333,
+                "callsObservedOutsideTimer": {
+                  "wholeProgramClones": 2,
+                  "replayDecodes": 64
+                }
+              }
+            ]
+          },
+          "deltaMs": -446.9975333333334,
+          "deltaPercent": -93.10633684114492,
+          "verdict": "PASS"
+        }
+      }
+    },
+    "thresholds": {
+      "warnMedianIncreasePercent": 10,
+      "failMedianIncreasePercent": 20,
+      "failMedianAboveMs": 3000
+    },
+    "warnings": [],
+    "failures": [],
+    "verdict": "PASS",
+    "scope": [
+      "Fixed three independent Node process samples per side. Synthetic author diagnostic workload, no browser or player timing claim.",
+      "Every replay was generated and restored by a real runtime outside measurement; image file I/O and decoding were excluded.",
+      "Whole-program clone counts and replay decode counts come from one separate untimed call per round.",
+      "The initial fixture message mismatch ended before any timing and is preserved separately."
+    ]
+  },
+  "cloud": {
+    "status": "PENDING_EXACT_PUSHED_SHA",
+    "evidence": "test-results/v1.4.4-cloud.json"
+  },
+  "sourceHashBasis": "UTF-8 with CRLF normalized to LF to match Git blobs",
+  "sourceSha256": {
+    "docs/provenance.json": "7e6f7fc599b894fb23401f57abb06e4187b4e769cca317e0dd49e50120695086",
+    "hosts/windows/VNEngine.Windows.csproj": "0a46243e3e38ca8dab9d408271f396a4206915934af9af4378acbb34ce8b8e24",
+    "package-lock.json": "620b7615a56e84d2059581160eca845403a9a0abc4f0433e00e505f3e8c09536",
+    "package.json": "121c63a1863c508992bf40f60bb4464fe54f4d3e32d7ede46df83de9e02e1ede",
+    "src/editor/model.ts": "9b8773bfe71b50ad536c3d01cf0eac8db38b09ff2b4bec27c4b350d47d141167",
+    "src/index.ts": "dd4edef88a704d7b947f0e361646800fbf19916b266c51be3db4fb2f9a349965",
+    "src/runtime/project.ts": "468e5a5ac507fd127230b362c3a7d6e375b8ba883606270823597f973206f5a3",
+    "src/version.ts": "2827a371e2b6bb3467e73e73417defda7d6e464bf99f8183996c2bb1240f4739",
+    "tests/editor.test.mjs": "caedcadb77fd399398a89bf97a893bc08aa8e84266da09c182257d6d3ed26284"
+  },
+  "evidenceSha256": {
+    "test-results/v144-final-editor-artifacts/p4-studio/REPORT.json": "1732971775648f9fd833f3364d2f500bd34373378157bf9cb0c3aa2d1487c6b6",
+    "test-results/v144-final-browser-artifacts/p4-package/REPORT.json": "c1e18596bce39ad6a3d8622a80863bce896e5039f35e6867e10effb1ad06d8a4",
+    "test-results/v144-final-check.log": "9fd638658eaef5eabec70e90d49ddb97607833787997ce4972d12c733c052bce",
+    "test-results/v144-final-editor-node.log": "c9026987ffd1a247d55147e72ff9d70e820e2ebbc0630bcafd8a88921d9888ea",
+    "test-results/v144-final-residual.log": "f00307770d625026b5385aad9b43ad159e856bbcd99505fcc4c68dddbd61b74c",
+    "test-results/v144-final-portfolio.log": "e82c00cb9558954e73a888ffaec47294a7256d6ada79234333da6fb0d9697e71",
+    "test-results/v144-final-workflow.log": "dfbed539a51c13f6fc7e6ea49dc286dc8d4e2a1a8ba8505e99b9ee57eefc220e",
+    "test-results/v144-final-browser.log": "09ffe5b6b07e3d901bf5cd383b25d5d5a4c9fc26a24a175ef146a472f9d1906a",
+    "test-results/v144-final-editor.log": "8fc52708895578350484fa1ae470f4cabb43ad3996db2711d82944c63a7e4a38",
+    "test-results/v144-replay-benchmark.mjs": "524a5a6a1c570b3aa957a143c81b3f8d695b242812bd1e52d8247eefa7683b57",
+    "test-results/v144-baseline-replay-diagnostics.json": "cfc0e10f26813abbde36f1ef805b61b509e5d4b6c5f886f3e18f3afef98c5bc1",
+    "test-results/v144-after-replay-diagnostics.json": "b13a6bd32c090db99342107c9dba4e0e2c585e8f35bd5b5fe53fe28345f3d508",
+    "test-results/v144-replay-diagnostics-comparison.mjs": "0cded9cf6f80987e566959af4028a90a07f2ef3380e67bc6d647bc28419e0e26",
+    "test-results/v144-replay-diagnostics-comparison.json": "297b84bff0007f5f28100c4e58c33ac5fb67b5299071b65439d8a9b22164957d",
+    "test-results/v144-initial-fixture-assumption.json": "78a8cee4c92ef808ffb6ec666462c71f79a25f81ad02dd463414b6f26eceeb62",
+    "test-results/v144-candidate-replay-diagnostics.json": "30bdbcfa15617614bac68a0484a2c9bc87863c8c634a89ef48433cb1b9b48334",
+    "test-results/v144-candidate-replay-comparison.json": "9b1106044b8c00b2b5658d48248ff9ec864be4e103aa4ef74ab8ce65147f6692",
+    "test-results/v144-candidate-callback-regression.log": "2fa712196362a91c8ef5c1bc3ca9ffa636e0e5ac2e8fbda8985e31d7b60be142"
+  }
+}
